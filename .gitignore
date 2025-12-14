@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+
+# IntelliJ / VSCode
+.idea/
+*.iml
+.vscode/
+
+# Maven / Java
+**/target/
+**/*.log
+
+# Node
+**/node_modules/
+**/.next/
+**/dist/
+**/.turbo/
+**/.env.local

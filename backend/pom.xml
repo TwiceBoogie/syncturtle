@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.4.12</version>
+    <relativePath />
+  </parent>
+
+  <groupId>com.syncturtle</groupId>
+  <artifactId>syncturtle-backend</artifactId>
+  <version>${revision}</version>
+  <packaging>pom</packaging>
+
+  <name>syncturtle-backend</name>
+
+  <modules>
+    <!-- libs -->
+    <module>libs/common-core</module>
+    <module>libs/common-spring</module>
+    <module>libs/common-web</module>
+    <module>libs/test-support</module>
+
+    <!-- platform (infra apps) -->
+    <module>platform/config-server</module>
+    <module>platform/discovery-server</module>
+    <module>platform/api-gateway</module>
+
+    <!-- services -->
+    <module>services/instance-service</module>
+    <module>services/user-service</module>
+    <!-- <module>services/password-service</module>
+    <module>services/email-service</module> -->
+
+    <!-- cross-service tests -->
+    <module>tests/system-tests</module>
+  </modules>
+
+  <properties>
+    <java.version>21</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <revision>0.0.1-SNAPSHOT</revision>
+
+    <!-- default for local/dev builds -->
+    <release.tag>UNRELEASED</release.tag>
+    <git.branch>UNKOWN</git.branch>
+    <git.commit.id.abbrev>UNKNOWN</git.commit.id.abbrev>
+    <git.commit.id.full>UNKNOWN</git.commit.id.full>
+    <git.commit.time>UNKNOWN</git.commit.time>
+
+    <!-- CI defaults -->
+    <build.id>local</build.id>
+    <build.ci>local</build.ci>
+    <build.platform>unkown</build.platform>
+    <!-- git plugin version -->
+    <git-commit-id.version>9.0.2</git-commit-id.version>
+
+    <!-- default: PR-friendly -->
+    <skipITs>true</skipITs>
+    <skipSystemTests>true</skipSystemTests>
+
+    <!-- Spring Cloud BOM -->
+    <spring-cloud.version>2024.0.1</spring-cloud.version>
+
+    <!-- Testcontainers BOM -->
+    <testcontainers.version>1.20.3</testcontainers.version>
+  </properties>
+
+  <profiles>
+    <profile>
+      <id>it</id>
+      <properties>
+        <skipITs>false</skipITs>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>system</id>
+      <properties>
+        <skipSystemTests>false</skipSystemTests>
+      </properties>
+    </profile>
+  </profiles>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <!-- Spring Cloud BOM -->
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>${spring-cloud.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Testcontainers BOM -->
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>${testcontainers.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- internal libs: so services can omit versions -->
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>common-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>common-spring</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>common-web</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>test-support</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <!-- Inherited by all children -->
+    <plugins>
+      <!-- Enforce java/maven version -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <id>enforce</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireJavaVersion>
+                  <version>(21,)</version>
+                </requireJavaVersion>
+                <requireMavenVersion>
+                  <version>(3.9.0,)</version>
+                </requireMavenVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Unit tests -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.2</version>
+        <configuration>
+          <includes>
+            <include>**/*Test.java</include>
+          </includes>
+          <excludes>
+            <exclude>**/*IT.java</exclude>
+            <exclude>**/*E2E.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+
+      <!-- Integration/System tests -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>3.5.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <skipITs>${skipITs}</skipITs>
+          <includes>
+            <include>**/*IT.java</include>
+          </includes>
+        </configuration>
+      </plugin>
+    </plugins>
+
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>build-info</id>
+              <goals>
+                <goal>build-info</goal>
+              </goals>
+              <!-- run early enough so it ends up in the jar -->
+              <phase>process-resources</phase>
+              <configuration>
+                <additionalProperties>
+                  <syncturtle.release.tag>${release.tag}</syncturtle.release.tag>
+
+                  <syncturtle.build.id>${build.id}</syncturtle.build.id>
+                  <syncturtle.build.ci>${build.ci}</syncturtle.build.ci>
+                  <syncturtle.build.platform>${build.platform}</syncturtle.build.platform>
+
+                  <syncturtle.git.commit>${git.commit.id.full}</syncturtle.git.commit>
+                  <syncturtle.git.commit.short>${git.commit.id.abbrev}</syncturtle.git.commit.short>
+                  <syncturtle.git.branch>${git.branch}</syncturtle.git.branch>
+                  <syncturtle.git.commit.time>${git.commit.time}</syncturtle.git.commit.time>
+                </additionalProperties>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+
+        <!-- generate git.properties + expose ${git.*} maven properties -->
+        <plugin>
+          <groupId>io.github.git-commit-id</groupId>
+          <artifactId>git-commit-id-maven-plugin</artifactId>
+          <version>${git-commit-id.version}</version>
+          <executions>
+            <execution>
+              <id>git-properties</id>
+              <goals>
+                <goal>revision</goal>
+              </goals>
+              <phase>initialize</phase>
+            </execution>
+          </executions>
+          <configuration>
+            <!-- point to repo root -->
+            <dotGitDirectory>${maven.multiModuleProjectDirectory}/../.git</dotGitDirectory>
+
+            <!-- write into each module's target/classes -->
+            <generateGitPropertiesFile>true</generateGitPropertiesFile>
+            <generateGitPropertiesFileName>
+              ${project.build.outputDirectory}/git.properties
+            </generateGitPropertiesFileName>
+
+            <!-- don't fail local builds where .git might not exists (source tarball) -->
+            <failOnUnableToExtractRepInfo>false</failOnUnableToExtractRepInfo>
+            <failOnNoGitDirectory>false</failOnNoGitDirectory>
+
+            <includeOnlyProperties>
+              <includeOnlyProperty>^git.branch$</includeOnlyProperty>
+              <includeOnlyProperty>^git.commit.id.abbrev$</includeOnlyProperty>
+              <includeOnlyProperty>^git.commit.id.full$</includeOnlyProperty>
+              <includeOnlyProperty>^git.commit.time$</includeOnlyProperty>
+              <includeOnlyProperty>^git.dirty$</includeOnlyProperty>
+            </includeOnlyProperties>
+          </configuration>
+        </plugin>
+      </plugins>
+
+    </pluginManagement>
+  </build>
+
+</project>
