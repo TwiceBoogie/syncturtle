@@ -1,0 +1,11 @@
+services:
+  discovery-server:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile.dev
+      args:
+        MODULE_PATH: platform/discovery-server
+        SYNCTURTLE_VERSION: ${SYNCTURTLE_VERSION}
+    image: syncturtle/discovery-server:${SYNCTURTLE_VERSION}
+    environment:
+      SYNCTURTLE_VERSION: ${SYNCTURTLE_VERSION}
