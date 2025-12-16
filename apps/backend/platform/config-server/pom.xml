@@ -12,6 +12,7 @@
   </parent>
 
   <artifactId>config-server</artifactId>
+  <name>config-server</name>
 
   <dependencies>
     <dependency>

@@ -37,18 +37,19 @@
     <!-- <module>services/password-service</module>
     <module>services/email-service</module> -->
 
-    <!-- cross-service tests -->
+    <!-- cross-service tests (E2E/system) -->
     <module>tests/system-tests</module>
   </modules>
 
   <properties>
     <java.version>21</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <revision>0.0.1-SNAPSHOT</revision>
+    <!-- Monorepo-controlled version. yarn sets -Drevision=.. at build time -->
+    <revision>0.0.1</revision>
 
-    <!-- default for local/dev builds -->
+    <!-- default for local/dev builds (overriden in CI) -->
     <release.tag>UNRELEASED</release.tag>
-    <git.branch>UNKOWN</git.branch>
+    <git.branch>UNKOWNN</git.branch>
     <git.commit.id.abbrev>UNKNOWN</git.commit.id.abbrev>
     <git.commit.id.full>UNKNOWN</git.commit.id.full>
     <git.commit.time>UNKNOWN</git.commit.time>
@@ -60,7 +61,10 @@
     <!-- git plugin version -->
     <git-commit-id.version>9.0.2</git-commit-id.version>
 
-    <!-- default: PR-friendly -->
+    <!-- 
+    Maven properties used by failsafe/system-tests to decide whether to run.
+    NOTE: These are maven properties, so they don't set spring profiles
+    -->
     <skipITs>true</skipITs>
     <skipSystemTests>true</skipSystemTests>
 
@@ -69,8 +73,16 @@
 
     <!-- Testcontainers BOM -->
     <testcontainers.version>1.20.3</testcontainers.version>
+
+    <spring.profile.unit>test</spring.profile.unit>
+    <spring.profile.it>it</spring.profile.it>
+    <spring.profile.system>system</spring.profile.system>
+
+    <!-- for unit + integration tests, default to Not talking to config-server / eureka -->
+    <cloud.enabled>false</cloud.enabled>
   </properties>
 
+  <!-- maven profiles -->
   <profiles>
     <profile>
       <id>it</id>
@@ -90,7 +102,7 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <!-- Spring Cloud BOM -->
+        <!-- Spring Cloud BOM: control version of spring-cloud-* artifacts -->
         <groupId>org.springframework.cloud</groupId>
         <artifactId>spring-cloud-dependencies</artifactId>
         <version>${spring-cloud.version}</version>
@@ -159,7 +171,7 @@
         </executions>
       </plugin>
 
-      <!-- Unit tests -->
+      <!-- Unit tests = Surefire -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -172,10 +184,22 @@
             <exclude>**/*IT.java</exclude>
             <exclude>**/*E2E.java</exclude>
           </excludes>
+
+          <!-- 
+            These are JVM system properties passed to the test JVM.
+          -->
+          <systemPropertyVariables>
+            <spring.profiles.active>${spring.profile.unit}</spring.profiles.active>
+
+            <spring.cloud.config.enabled>${cloud.enabled}</spring.cloud.config.enabled>
+            <spring.cloud.config.import-check.enabled>${cloud.enabled}</spring.cloud.config.import-check.enabled>
+            <spring.cloud.discovery.enabled>${cloud.enabled}</spring.cloud.discovery.enabled>
+            <eureka.client.enabled>${cloud.enabled}</eureka.client.enabled>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
 
-      <!-- Integration/System tests -->
+      <!-- Integration test = Failsafe -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
@@ -193,12 +217,22 @@
           <includes>
             <include>**/*IT.java</include>
           </includes>
+
+          <systemPropertyVariables>
+            <spring.profiles.active>${spring.profile.it}</spring.profiles.active>
+
+            <spring.cloud.config.enabled>${cloud.enabled}</spring.cloud.config.enabled>
+            <spring.cloud.config.import-check.enabled>${cloud.enabled}</spring.cloud.config.import-check.enabled>
+            <spring.cloud.discovery.enabled>${cloud.enabled}</spring.cloud.discovery.enabled>
+            <eureka.client.enabled>${cloud.enabled}</eureka.client.enabled>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
     </plugins>
 
     <pluginManagement>
       <plugins>
+        <!-- Spring boot maven plugin: build-info goal generates build metadata -->
         <plugin>
           <groupId>org.springframework.boot</groupId>
           <artifactId>spring-boot-maven-plugin</artifactId>
@@ -244,16 +278,16 @@
           </executions>
           <configuration>
             <!-- point to repo root -->
-            <dotGitDirectory>${maven.multiModuleProjectDirectory}/../.git</dotGitDirectory>
+            <dotGitDirectory>${maven.multiModuleProjectDirectory}/../../.git</dotGitDirectory>
 
             <!-- write into each module's target/classes -->
             <generateGitPropertiesFile>true</generateGitPropertiesFile>
-            <generateGitPropertiesFileName>
+            <generateGitPropertiesFilename>
               ${project.build.outputDirectory}/git.properties
-            </generateGitPropertiesFileName>
+            </generateGitPropertiesFilename>
 
             <!-- don't fail local builds where .git might not exists (source tarball) -->
-            <failOnUnableToExtractRepInfo>false</failOnUnableToExtractRepInfo>
+            <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
             <failOnNoGitDirectory>false</failOnNoGitDirectory>
 
             <includeOnlyProperties>

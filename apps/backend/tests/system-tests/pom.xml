@@ -46,6 +46,10 @@
                     <includes>
                         <include>**/*E2E.java</include>
                     </includes>
+
+                    <systemPropertyVariables>
+                        <spring.profiles.active>${spring.profile.system}</spring.profiles.active>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
         </plugins>
