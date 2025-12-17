@@ -1,0 +1,30 @@
+{
+  "name": "@syncturtle/types",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --sourcemap --clean --out-dir dist",
+    "dev": "tsup src/index.ts --format esm --dts --watch --sourcemap --out-dir dist",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@syncturtle/eslint-config": "workspace:*",
+    "@syncturtle/typescript-config": "workspace:*",
+    "eslint": "^9",
+    "tsup": "^8",
+    "typescript": "^5"
+  }
+}

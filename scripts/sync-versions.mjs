@@ -24,10 +24,7 @@ function listWorkspacePackageJson(dir) {
 }
 
 function syncWorkspacePackageJsonVersions(version) {
-  const targets = [
-    ...listWorkspacePackageJson("apps"),
-    ...listWorkspacePackageJson("packages"),
-  ];
+  const targets = [...listWorkspacePackageJson("apps"), ...listWorkspacePackageJson("packages")];
 
   let changed = 0;
 
@@ -43,8 +40,7 @@ function syncWorkspacePackageJsonVersions(version) {
     }
   }
 
-  if (!changed)
-    console.log("all workspace package.json versions already synced");
+  if (!changed) console.log("all workspace package.json versions already synced");
   return changed;
 }
 
@@ -98,8 +94,7 @@ function main() {
   // If you want to allow snapshots later, remove this guard.
   if (/-SNAPSHOT$/i.test(version)) {
     throw new Error(
-      `Root package.json version is "${version}". ` +
-        `For releases, set it to a non-SNAPSHOT version (e.g., 0.0.2).`
+      `Root package.json version is "${version}". ` + `For releases, set it to a non-SNAPSHOT version (e.g., 0.0.2).`
     );
   }
 

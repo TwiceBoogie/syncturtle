@@ -19,12 +19,13 @@
     "start": {
       "cache": false
     },
-    "check": {
-      "dependsOn": ["check:link", "check:types"],
-      "cache": false
+    "lint": {
+      "dependsOn": ["^lint"],
+      "outputs": []
     },
-    "check:types": {
-      "cache": false
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "outputs": []
     },
     "test": {
       "cache": false

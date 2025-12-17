@@ -1,0 +1,7 @@
+{
+  "extends": "@syncturtle/typescript-config/node-library.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["src"]
+}
