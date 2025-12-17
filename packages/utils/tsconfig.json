@@ -1,11 +1,5 @@
 {
-    "extends": "@syncturtle/typescript-config/node-library.json",
-    "include": [
-        "src/**/*.ts",
-        "src/**/*.tsx"
-    ],
-    "exclude": [
-        "dist",
-        "node_modules"
-    ]
+  "extends": "@syncturtle/typescript-config/node-library.json",
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["dist", "node_modules"]
 }
