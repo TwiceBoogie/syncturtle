@@ -1752,6 +1752,8 @@ __metadata:
   resolution: "admin@workspace:apps/admin"
   dependencies:
     "@syncturtle/eslint-config": "workspace:*"
+    "@syncturtle/tailwind-config": "workspace:*"
+    "@syncturtle/typescript-config": "workspace:*"
     "@tailwindcss/postcss": "npm:^4"
     "@types/node": "npm:^20"
     "@types/react": "npm:^19"
