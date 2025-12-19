@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [preview, master]
+  push:
+    branches: [preview]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable Corepack + activate yarn
+        run: |
+          corepack enable
+          corepack prepare yarn@4.12.0 --activate
+          yarn --version
+
+      - name: Cache Yarn
+        uses: actions/cache@v4
+        with:
+          path: |
+            .yarn/cache
+            .yarn/unplugged
+            .yarn/install-state.gz
+            .pnp.cjs
+          key: yarn-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            yarn-${{ runner.os }}
+
+      - name: Install
+        run: yarn install --immutable
+
+      - name: Version sync check (package.json + backend revision)
+        run: yarn check:versions
+
+      - name: Format check
+        run: yarn format:check
+
+      - name: Lint + typecheck + tests (excluding backend)
+        run: |
+          yarn turbo run lint typecheck test --continue --filter=!@syncturtle/backend
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Backend unit tests (skip IT/system by default)
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          ./apps/backend/mvnw -f apps/backend/pom.xml \
+            -Drevision=${VERSION} \
+            -DskipITs=true -DskipSystemTests=true \
+            test
