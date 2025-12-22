@@ -1,0 +1,39 @@
+server:
+  port: 8001
+spring:
+  application:
+    name: instance-service
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+        - health
+        - info
+        - metrics
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: ${OTLP_TRACES_ENDPOINT:http://localhost:14317}
+      transport: grpc
+    metrics:
+      export:
+        url: ${OTLP_METRICS_URL:http://localhost:14318/v1/metrics}
+        enabled: true
+        step: 10s
+    logging:
+      endpoint: ${OTEL_LOGS_ENDPOINT:http://localhost:14317}
+      transport: grpc
+  opentelemetry:
+    resource-attributes:
+      service:
+        namespace: syncturtle
+      deployment:
+        environment: ${DEPLOYMENT_ENV:local}

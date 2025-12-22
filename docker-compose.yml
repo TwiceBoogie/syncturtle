@@ -1,11 +1,29 @@
 services:
-  discovery-server:
-    build:
-      context: .
-      dockerfile: apps/backend/Dockerfile.dev
-      args:
-        MODULE_PATH: platform/discovery-server
-        SYNCTURTLE_VERSION: ${SYNCTURTLE_VERSION}
-    image: syncturtle/discovery-server:${SYNCTURTLE_VERSION}
+  otel-lgtm:
+    image: grafana/otel-lgtm:latest
+    ports:
+      - "3000:3000"
+      - "4317:4317"
+      - "4318:4318"
     environment:
-      SYNCTURTLE_VERSION: ${SYNCTURTLE_VERSION}
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./deployments/observability/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "14317:4317"
+      - "14318:4318"
+
+  # discovery-server:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/backend/Dockerfile.dev
+  #     args:
+  #       MODULE_PATH: platform/discovery-server
+  #       SYNCTURTLE_VERSION: ${SYNCTURTLE_VERSION}
+  #   image: syncturtle/discovery-server:${SYNCTURTLE_VERSION}
+  #   environment:
+  #     SYNCTURTLE_VERSION: ${SYNCTURTLE_VERSION}
