@@ -1,0 +1,42 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+        - health
+        - info
+        - metrics
+  tracing:
+    sampling:
+      probability: 0.1
+    baggage:
+      remote-fields:
+      - X-Correlation-Id
+      # Optional
+      # - X-Request-Id
+      correlation:
+        fields:
+        - X-Correlation-Id
+        # Optional
+        # - X-Request-Id
+  otlp:
+    tracing:
+      endpoint: ${OTLP_TRACES_ENDPOINT:http://localhost:14317}
+      transport: grpc
+    metrics:
+      export:
+        url: ${OTLP_METRICS_URL:http://localhost:14318/v1/metrics}
+        enabled: true
+        step: 10s
+    logging:
+      endpoint: ${OTLP_LOGS_ENDPOINT:http://localhost:14317}
+      transport: grpc
+  opentelemetry:
+    resource-attributes:
+      "[service.name]": ${spring.application.name}
+      "[service.namespace]": syncturtle
+      "[deployment.environment]": ${DEPLOYMENT_ENV:local}
+
+logging:
+  pattern:
+    correlation: "[trace=%X{traceId:-},span=%X{spanId:-},corr=%X{X-Correlation-Id:-},req=%X{X-Request-Id:-}] "

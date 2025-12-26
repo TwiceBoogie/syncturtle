@@ -1,0 +1,25 @@
+server:
+  port: 8000
+
+spring:
+  main:
+    web-application-type: reactive
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+    httpclient:
+      connect-timeout: 3000
+      response-timeout: 30s
+
+    routes:
+      - id: instance-service
+        uri: lb://instance-service
+        predicates:
+          - Path=/api/instances/**
+
+    loadbalancer:
+      cache:
+        enabled: false

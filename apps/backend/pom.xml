@@ -69,11 +69,13 @@
     <skipSystemTests>true</skipSystemTests>
 
     <!-- Spring Cloud BOM -->
-    <spring-cloud.version>2024.0.3</spring-cloud.version>
+    <spring-cloud.version>2025.0.1</spring-cloud.version>
     <otel.instrumentation.version>2.23.0-alpha</otel.instrumentation.version>
 
     <!-- Testcontainers BOM -->
     <testcontainers.version>1.21.4</testcontainers.version>
+
+    <modelmapper.version>3.2.6</modelmapper.version>
 
     <spring.profile.unit>test</spring.profile.unit>
     <spring.profile.it>it</spring.profile.it>
@@ -99,6 +101,15 @@
       </properties>
     </profile>
   </profiles>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+      <optional>true</optional>
+    </dependency>
+  </dependencies>
 
   <dependencyManagement>
     <dependencies>
@@ -129,6 +140,12 @@
         <scope>import</scope>
       </dependency>
 
+      <!-- ModelMapper BOM -->
+      <dependency>
+        <groupId>org.modelmapper</groupId>
+        <artifactId>modelmapper</artifactId>
+        <version>${modelmapper.version}</version>
+      </dependency>
       <!-- internal libs: so services can omit versions -->
       <dependency>
         <groupId>${project.groupId}</groupId>
