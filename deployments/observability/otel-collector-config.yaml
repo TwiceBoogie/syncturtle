@@ -2,7 +2,9 @@ receivers:
   otlp:
     protocols:
       grpc:
+        endpoint: 0.0.0.0:4317
       http:
+        endpoint: 0.0.0.0:4318
 
 processors:
   memory_limiter:
@@ -16,6 +18,13 @@ processors:
       # drop auth header if it sneaks in as an attribute
       - key: http.request.header.authorization
         action: delete
+  filter/drop_eureka:
+    spans:
+      exclude:
+        match_type: regexp
+        attributes:
+          - key: http.url
+            value: .*/eureka/.*
 
 exporters:
   otlp:
@@ -27,7 +36,7 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [memory_limiter, attributes/redact, batch]
+      processors: [memory_limiter, filter/drop_eureka, attributes/redact, batch]
       exporters: [otlp]
     metrics:
       receivers: [otlp]

@@ -1,0 +1,4 @@
+databaseChangeLog:
+  - include:
+      file: 9000_seed_dev.sql
+      relativeToChangelogFile: true
