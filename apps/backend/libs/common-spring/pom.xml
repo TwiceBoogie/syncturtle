@@ -13,12 +13,28 @@
 
   <artifactId>common-spring</artifactId>
   <packaging>jar</packaging>
-  <name>common-spring</name>
+  <name>syncturtle :: common-spring</name>
 
   <dependencies>
     <dependency>
+      <groupId>com.syncturtle</groupId>
+      <artifactId>common-web</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.syncturtle</groupId>
+      <artifactId>common-data-jpa</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-autoconfigure</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.data</groupId>
+      <artifactId>spring-data-jpa</artifactId>
+      <optional>true</optional>
     </dependency>
 
     <dependency>
@@ -46,6 +62,12 @@
     </dependency>
 
     <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
       <optional>true</optional>
@@ -55,7 +77,6 @@
       <groupId>jakarta.servlet</groupId>
       <artifactId>jakarta.servlet-api</artifactId>
       <scope>provided</scope>
-      <optional>true</optional>
     </dependency>
 
     <!-- Needed ONLY so common-spring compiles this class -->
@@ -67,12 +88,6 @@
     <dependency>
       <groupId>io.opentelemetry.instrumentation</groupId>
       <artifactId>opentelemetry-logback-appender-1.0</artifactId>
-      <optional>true</optional>
     </dependency>
-
-    <!-- <dependency>
-      <groupId>com.syncturtle</groupId>
-      <artifactId>common-core</artifactId>
-    </dependency> -->
   </dependencies>
 </project>

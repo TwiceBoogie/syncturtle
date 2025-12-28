@@ -1,14 +1,14 @@
 --liquibase formatted sql
 
---changeset syncturtle:0001-010-unique-instances-slug labels:instance
-ALTER TABLE instances
-    ADD CONSTRAINT uq_instances_slug UNIQUE (slug);
---rollback ALTER TABLE instances DROP CONSTRAINT IF EXISTS uq_instances_slug;
-
---changeset syncturtle:0001-011-unique-instances-instance-id labels:instance
+--changeset syncturtle:0001-010-unique-instances-instance-id labels:instance
 ALTER TABLE instances
     ADD CONSTRAINT uq_instances_instance_id UNIQUE (instance_id);
 --rollback ALTER TABLE instances DROP CONSTRAINT IF EXISTS uq_instances_instance_id;
+
+--changeset syncturtle:0001-011-unique-instance-admins-instance-id-user-id labels:instance
+ALTER TABLE instance_admins
+    ADD CONSTRAINT uq_instance_admins_instance_id_user_id UNIQUE (instance_id, user_id);
+--rollback ALTER TABLE instance_admins DROP CONSTRAINT IF EXISTS uq_instance_admins_instance_id_user_id;
 
 --changeset syncturtle:0001-012-unique-instance-config-key labels:instance
 ALTER TABLE instance_configurations
@@ -25,5 +25,5 @@ ALTER TABLE instance_admins
 ALTER TABLE instance_admins
     ADD CONSTRAINT fk_instance_admins_instance
     FOREIGN KEY (instance_id) REFERENCES instances(id)
-    ON DELETE CASCADE;
+    DEFERRABLE INITIALLY DEFERRED;
 --rollback ALTER TABLE instance_admins DROP CONSTRAINT IF EXISTS fk_instance_admins_instance;

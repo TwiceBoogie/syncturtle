@@ -120,6 +120,7 @@
     <jakarta-xml-soap.version>3.0.2</jakarta-xml-soap.version>
     <jakarta-xml-ws.version>4.0.2</jakarta-xml-ws.version>
     <janino.version>3.1.12</janino.version>
+    <jasypt.version>1.9.3</jasypt.version>
     <java.version>21</java.version>
     <javax-cache.version>1.1.1</javax-cache.version>
     <javax-money.version>1.1</javax-money.version>
@@ -171,6 +172,7 @@
     <micrometer-tracing.version>1.5.7</micrometer-tracing.version>
     <micrometer.version>1.15.7</micrometer.version>
     <mockito.version>5.17.0</mockito.version>
+    <modelmapper.version>3.2.6</modelmapper.version>
     <mongodb.version>5.5.2</mongodb.version>
     <mssql-jdbc.version>12.10.2.jre11</mssql-jdbc.version>
     <mysql.version>9.5.0</mysql.version>
@@ -261,6 +263,16 @@
   </properties>
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>org.modelmapper</groupId>
+        <artifactId>modelmapper</artifactId>
+        <version>3.2.6</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jasypt</groupId>
+        <artifactId>jasypt</artifactId>
+        <version>1.9.3</version>
+      </dependency>
       <dependency>
         <groupId>com.syncturtle</groupId>
         <artifactId>common-core</artifactId>
@@ -11770,6 +11782,15 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.42</version>
+      <scope>provided</scope>
+      <optional>true</optional>
+    </dependency>
+  </dependencies>
   <repositories>
     <repository>
       <snapshots>

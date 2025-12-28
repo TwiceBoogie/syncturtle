@@ -22,7 +22,6 @@ public class InstanceEvent {
     private Type type;
     private UUID id;
     private InstanceEdition edition;
-    private String slug;
     private long version;
     private String machineSignature;
     private String apiBaseUrl;
