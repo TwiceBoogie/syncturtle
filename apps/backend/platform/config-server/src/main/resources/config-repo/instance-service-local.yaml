@@ -8,7 +8,3 @@ spring:
     url: jdbc:postgresql://localhost:5432/syncturtle_instance
     username: instance_svc
     password: ${INSTANCE_DB_PASSWORD:instance_svc_dev}
-
-  liquibase:
-    default-schema: instance
-    liquibase-schema: instance_liquibase

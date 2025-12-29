@@ -24,6 +24,7 @@
     <module>libs/common-core</module>
     <module>libs/common-spring</module>
     <module>libs/common-web</module>
+    <module>libs/common-data-jpa</module>
     <module>libs/test-support</module>
 
     <!-- platform (infra apps) -->
@@ -76,6 +77,7 @@
     <testcontainers.version>1.21.4</testcontainers.version>
 
     <modelmapper.version>3.2.6</modelmapper.version>
+    <jasypt.version>1.9.3</jasypt.version>
 
     <spring.profile.unit>test</spring.profile.unit>
     <spring.profile.it>it</spring.profile.it>
@@ -146,10 +148,21 @@
         <artifactId>modelmapper</artifactId>
         <version>${modelmapper.version}</version>
       </dependency>
+      <!-- jasypt -->
+      <dependency>
+        <groupId>org.jasypt</groupId>
+        <artifactId>jasypt</artifactId>
+        <version>${jasypt.version}</version>
+      </dependency>
       <!-- internal libs: so services can omit versions -->
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>common-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>common-data-jpa</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

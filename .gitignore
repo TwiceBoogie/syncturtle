@@ -71,5 +71,4 @@ target/
 
 # testcontainers
 **/.testcontainers.properties
-data/
-**/data/
+/data/

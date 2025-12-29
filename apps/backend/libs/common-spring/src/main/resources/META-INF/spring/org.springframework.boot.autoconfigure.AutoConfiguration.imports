@@ -1,4 +1,6 @@
-com.syncturtle.common.spring.mapping.ModelMapperAutoConfiguration
-com.syncturtle.common.spring.observability.OtelLogbackAutoConfiguration
-com.syncturtle.common.spring.security.PasswordEncoderAutoConfiguration
+com.syncturtle.common.spring.web.RequestUserContextAutoConfiguration
 com.syncturtle.common.spring.web.FeignHeaderPropagationAutoConfiguration
+com.syncturtle.common.spring.mapping.ModelMapperAutoConfiguration
+com.syncturtle.common.spring.security.PasswordEncoderAutoConfiguration
+com.syncturtle.common.spring.observability.OtelLogbackAutoConfiguration
+com.syncturtle.common.spring.data.jpa.JpaAuditingAutoConfiguration
