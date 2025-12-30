@@ -8,6 +8,8 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import com.syncturtle.common.core.constants.GatewayHeaderNames;
+
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,10 +18,6 @@ import jakarta.servlet.http.HttpServletRequest;
 @ConditionalOnClass({ RequestInterceptor.class, RequestContextHolder.class, ServletRequestAttributes.class,
         HttpServletRequest.class })
 public class FeignHeaderPropagationAutoConfiguration {
-
-    private static final String HDR_USER_ID = "X-Auth-User-Id";
-    private static final String HDR_TENAT = "X-Tenant-Id";
-    private static final String HDR_REQ_ID = "X-Request-Id";
 
     @Bean
     @ConditionalOnMissingBean
@@ -32,9 +30,9 @@ public class FeignHeaderPropagationAutoConfiguration {
             }
 
             HttpServletRequest req = sra.getRequest();
-            copyIfPresent(req, template, HDR_USER_ID);
-            copyIfPresent(req, template, HDR_TENAT);
-            copyIfPresent(req, template, HDR_REQ_ID);
+            copyIfPresent(req, template, GatewayHeaderNames.HDR_AUTH_USER_ID);
+            copyIfPresent(req, template, GatewayHeaderNames.HDR_AUTH_WORKSPACE_ID);
+            copyIfPresent(req, template, GatewayHeaderNames.HDR_REQUEST_ID);
         };
     }
 

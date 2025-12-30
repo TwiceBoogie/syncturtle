@@ -43,6 +43,11 @@ services:
       - "19644:9644"
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
   # discovery-server:
   #   build:
   #     context: .

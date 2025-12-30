@@ -8,19 +8,17 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.MDC;
 
-public class MdcKafkaHeaderProducerInterceptor implements ProducerInterceptor<String, Object> {
+import com.syncturtle.common.core.constants.GatewayHeaderNames;
 
-    // Header names (on the kafka record)
-    public static final String HDR_CORRELATION_ID = "X-Correlation-Id";
-    public static final String HDR_REQUEST_ID = "X-Request-Id";
+public class MdcKafkaHeaderProducerInterceptor implements ProducerInterceptor<String, Object> {
 
     /**
      * MDC keys.
      * If you configure Micrometer "baggage correlation fields" using header names,
      * the MDC keys typically match the header names
      */
-    public static final String MDC_CORRELATION_ID = "X-Correlation-Id";
-    public static final String MDC_REQUEST_ID = "X-Request-Id";
+    public static final String MDC_CORRELATION_ID = GatewayHeaderNames.HDR_CORRELATION_ID;
+    public static final String MDC_REQUEST_ID = GatewayHeaderNames.HDR_REQUEST_ID;
 
     @Override
     public void configure(Map<String, ?> arg0) {
@@ -46,13 +44,13 @@ public class MdcKafkaHeaderProducerInterceptor implements ProducerInterceptor<St
         // correlation ID (end-to-end)
         String correlationId = safeMdcGet(MDC_CORRELATION_ID);
         if (correlationId != null) {
-            upsertHeader(record, HDR_CORRELATION_ID, correlationId);
+            upsertHeader(record, GatewayHeaderNames.HDR_CORRELATION_ID, correlationId);
         }
 
         // request id (per-hop/per-request)
         String requestId = safeMdcGet(MDC_REQUEST_ID);
         if (requestId != null) {
-            upsertHeader(record, HDR_REQUEST_ID, requestId);
+            upsertHeader(record, GatewayHeaderNames.HDR_REQUEST_ID, requestId);
         }
 
         return record;

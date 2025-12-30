@@ -280,6 +280,11 @@
       </dependency>
       <dependency>
         <groupId>com.syncturtle</groupId>
+        <artifactId>common-data-jpa</artifactId>
+        <version>0.0.1</version>
+      </dependency>
+      <dependency>
+        <groupId>com.syncturtle</groupId>
         <artifactId>common-spring</artifactId>
         <version>0.0.1</version>
       </dependency>

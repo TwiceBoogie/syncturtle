@@ -14,6 +14,10 @@ public final class RequestUserContext {
         return userId.get();
     }
 
+    public boolean isAuthenticated() {
+        return getUserId() != null;
+    }
+
     public void clear() {
         userId.remove();
     }
