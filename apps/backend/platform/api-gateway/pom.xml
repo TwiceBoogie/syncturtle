@@ -20,6 +20,20 @@
       <artifactId>spring-boot-starter-webflux</artifactId>
     </dependency>
 
+    <!-- CACHE -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-cache</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+    </dependency>
+
     <!-- CONFIG / DISCOVERY / CLOUD -->
     <dependency>
       <groupId>org.springframework.cloud</groupId>
@@ -31,7 +45,7 @@
     </dependency>
     <dependency>
       <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-starter-gateway</artifactId>
+      <artifactId>spring-cloud-gateway-server-webflux</artifactId>
     </dependency>
 
     <!-- OBSERVABILITY -->
@@ -45,6 +59,11 @@
       <artifactId>micrometer-tracing-bridge-otel</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>context-propagation</artifactId>
+    </dependency>
+    <!-- OTLP exporter (traces) -->
+    <dependency>
       <groupId>io.opentelemetry</groupId>
       <artifactId>opentelemetry-exporter-otlp</artifactId>
     </dependency>
@@ -53,6 +72,7 @@
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-registry-otlp</artifactId>
     </dependency>
+    <!-- Logback OTLP appender -->
     <dependency>
       <groupId>io.opentelemetry.instrumentation</groupId>
       <artifactId>opentelemetry-logback-appender-1.0</artifactId>
@@ -61,6 +81,11 @@
     <dependency>
       <groupId>io.opentelemetry</groupId>
       <artifactId>opentelemetry-sdk-logs</artifactId>
+    </dependency>
+    <!-- expose CB metrics via Micrometer -->
+    <dependency>
+      <groupId>io.github.resilience4j</groupId>
+      <artifactId>resilience4j-micrometer</artifactId>
     </dependency>
 
     <!-- COMMON MODULE -->
@@ -71,6 +96,12 @@
     <dependency>
       <groupId>com.syncturtle</groupId>
       <artifactId>common-spring</artifactId>
+    </dependency>
+
+    <!-- SUPPORT -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-circuitbreaker-reactor-resilience4j</artifactId>
     </dependency>
   </dependencies>
 

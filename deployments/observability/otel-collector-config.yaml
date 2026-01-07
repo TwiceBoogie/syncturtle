@@ -1,10 +1,16 @@
 receivers:
-  otlp:
+  # SYSTEM OBSERVEABILITY INGRESS
+  otlp/system:
     protocols:
       grpc:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
+  # PRODUCT OBSERVABILITY INGRESS
+  otlp/product:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:5317
 
 processors:
   memory_limiter:
@@ -25,24 +31,36 @@ processors:
         attributes:
           - key: http.url
             value: .*/eureka/.*
+  attributes/mark_product:
+    actions:
+      - key: telemetry.mode
+        action: upsert
+        value: product
 
 exporters:
-  otlp:
+  otlp/lgtm:
     endpoint: otel-lgtm:4317
     tls:
       insecure: true
 
 service:
   pipelines:
-    traces:
-      receivers: [otlp]
+    # SYSTEM
+    traces/system:
+      receivers: [otlp/system]
       processors: [memory_limiter, filter/drop_eureka, attributes/redact, batch]
-      exporters: [otlp]
-    metrics:
-      receivers: [otlp]
+      exporters: [otlp/lgtm]
+    metrics/system:
+      receivers: [otlp/system]
       processors: [memory_limiter, batch]
-      exporters: [otlp]
-    logs:
-      receivers: [otlp]
+      exporters: [otlp/lgtm]
+    logs/system:
+      receivers: [otlp/system]
       processors: [memory_limiter, attributes/redact, batch]
-      exporters: [otlp]
+      exporters: [otlp/lgtm]
+
+    # PRODUCT
+    traces/product:
+      receivers: [otlp/product]
+      processors: [memory_limiter, attributes/mark_product, attributes/redact, batch]
+      exporters: [otlp/lgtm]

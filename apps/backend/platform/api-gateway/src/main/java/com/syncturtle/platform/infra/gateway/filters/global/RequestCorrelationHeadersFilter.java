@@ -11,14 +11,12 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
+import com.syncturtle.common.core.constants.GatewayHeaderNames;
+
 import reactor.core.publisher.Mono;
 
 @Component
 public class RequestCorrelationHeadersFilter implements GlobalFilter, Ordered {
-
-    public static final String HDR_REQUEST_ID = "X-Request-Id";
-    public static final String HDR_CORRELATION_ID = "X-Correlation-Id";
-    public static final String HDR_AUTH_USER_ID = "X-Auth-User-Id";
 
     @Override
     public int getOrder() {
@@ -31,17 +29,17 @@ public class RequestCorrelationHeadersFilter implements GlobalFilter, Ordered {
         HttpHeaders in = request.getHeaders();
 
         // Do not trust inbound X-Auth-User-Id from clients
-        String requestId = firstNonBlank(in.getFirst(HDR_REQUEST_ID)).orElseGet(this::newId);
-        String correlationId = firstNonBlank(in.getFirst(HDR_CORRELATION_ID)).orElseGet(this::newId);
+        String requestId = firstNonBlank(in.getFirst(GatewayHeaderNames.HDR_REQUEST_ID)).orElseGet(this::newId);
+        String correlationId = firstNonBlank(in.getFirst(GatewayHeaderNames.HDR_CORRELATION_ID)).orElseGet(this::newId);
 
         ServerHttpRequest mutatedRequest = request.mutate()
                 .headers(h -> {
                     // remove any spoofed auth header
-                    h.remove(HDR_AUTH_USER_ID);
+                    h.remove(GatewayHeaderNames.HDR_AUTH_USER_ID);
 
                     // ensure ids exists
-                    h.set(HDR_REQUEST_ID, requestId);
-                    h.set(HDR_CORRELATION_ID, correlationId);
+                    h.set(GatewayHeaderNames.HDR_REQUEST_ID, requestId);
+                    h.set(GatewayHeaderNames.HDR_CORRELATION_ID, correlationId);
                 })
                 .build();
 
@@ -50,10 +48,10 @@ public class RequestCorrelationHeadersFilter implements GlobalFilter, Ordered {
         // Echo IDs back to caller on response
         mutatedExchange.getResponse().beforeCommit(() -> {
             HttpHeaders out = mutatedExchange.getResponse().getHeaders();
-            out.set(HDR_REQUEST_ID, requestId);
-            out.set(HDR_CORRELATION_ID, correlationId);
+            out.set(GatewayHeaderNames.HDR_REQUEST_ID, requestId);
+            out.set(GatewayHeaderNames.HDR_CORRELATION_ID, correlationId);
 
-            out.remove(HDR_AUTH_USER_ID);
+            out.remove(GatewayHeaderNames.HDR_AUTH_USER_ID);
 
             return Mono.empty();
         });

@@ -23,4 +23,9 @@ public class ModelMapperAutoConfiguration {
                 .setFieldAccessLevel(AccessLevel.PRIVATE);
         return mapper;
     }
+
+    @Bean
+    BasicMapper basicMapper(ModelMapper mapper) {
+        return new BasicMapper(mapper);
+    }
 }

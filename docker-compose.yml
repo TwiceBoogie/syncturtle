@@ -2,7 +2,7 @@ services:
   otel-lgtm:
     image: grafana/otel-lgtm:latest
     ports:
-      - "3000:3000"
+      - "3002:3000"
       - "4317:4317"
       - "4318:4318"
     environment:
@@ -16,6 +16,7 @@ services:
     ports:
       - "14317:4317"
       - "14318:4318"
+      - "15317:5317" # product telemetry
     depends_on:
       - otel-lgtm
     restart: unless-stopped
@@ -42,6 +43,11 @@ services:
       - "19092:19092"
       - "19644:9644"
     restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
 
   # discovery-server:
   #   build:

@@ -20,6 +20,7 @@ public final class PostgresContainerSingleton {
 
     // This db is just the default connection db; we create additional dbs
     // dynamically
+    @SuppressWarnings("resource")
     private static final PostgreSQLContainer<?> INSTANCE = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("postgres").withUsername("test").withPassword("test");
 
