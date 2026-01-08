@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.syncturtle.common.core.constants.RequestHeaderNames;
+import com.syncturtle.common.core.constants.GatewayHeaderNames;
 import com.syncturtle.common.web.context.RequestUserContext;
 
 import jakarta.servlet.FilterChain;
@@ -25,7 +25,7 @@ public final class GatewayUserHeaderFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
-            String raw = request.getHeader(RequestHeaderNames.AUTH_USER_ID);
+            String raw = request.getHeader(GatewayHeaderNames.HDR_AUTH_USER_ID);
             UUID userId = parseUuidOrNull(raw);
             if (userId != null) {
                 ctx.setUserId(userId);

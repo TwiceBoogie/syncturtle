@@ -20,6 +20,19 @@
       <artifactId>spring-boot-starter-webflux</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-cache</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+    </dependency>
+
     <!-- CONFIG / DISCOVERY / CLOUD -->
     <dependency>
       <groupId>org.springframework.cloud</groupId>
@@ -31,7 +44,7 @@
     </dependency>
     <dependency>
       <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-starter-gateway</artifactId>
+      <artifactId>spring-cloud-gateway-server-webflux</artifactId>
     </dependency>
 
     <!-- OBSERVABILITY -->
@@ -43,6 +56,10 @@
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-tracing-bridge-otel</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>context-propagation</artifactId>
     </dependency>
     <dependency>
       <groupId>io.opentelemetry</groupId>

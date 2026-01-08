@@ -45,6 +45,10 @@ app:
       secret-key: ${APP_SECURITY_ENCRYPTION_SECRET_KEY}
   kafka:
     enabled: true
+  response-cache:
+    enabled: true
+    key-prefix: "st:resp:"
+    hash-bytes: 16
 
 server:
   port: 8001

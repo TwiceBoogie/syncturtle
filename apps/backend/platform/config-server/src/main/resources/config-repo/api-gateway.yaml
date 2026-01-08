@@ -4,22 +4,70 @@ server:
 spring:
   main:
     web-application-type: reactive
+  reactor:
+    context-propagation: auto
+
+  cache:
+    type: caffeine
 
   cloud:
     gateway:
-      discovery:
-        locator:
-          enabled: false
-    httpclient:
-      connect-timeout: 3000
-      response-timeout: 30s
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: false
+              lower-case-service-id: true
+          httpclient:
+            connect-timeout: 2000
+            response-timeout: 10s
+            pool:
+              type: fixed
+              maxConnections: 200
+              acquireTimeout: 5000
+              maxIdleTime: 30000
+              maxLifeTime: 5m
+              metrics: true
 
-    routes:
-      - id: instance-service
-        uri: lb://instance-service
-        predicates:
-          - Path=/api/instances/**
+          routes:
+            - id: instance-public
+              uri: lb://instance-service
+              predicates:
+                - Path=/api/instances/**
+                - Method=GET,OPTIONS,HEAD
+              filters:
+                - AddResponseHeader=X-Gateway-Route,instance-public
+
+            - id: instance-admin-write
+              uri: lb://instance-service
+              predicates:
+                - Path=/api/instances/**
+                - Method=PATCH
+              filters:
+                - name: SessionValidate
+                  args:
+                    required: true
+                    cookieName: session
+                    sessionType: USER
 
     loadbalancer:
       cache:
-        enabled: false
+        enabled: true
+        clients:
+          - instance-service
+        caffeine:
+          spec: maximumSize=500,expireAfterWrite=5s
+
+app:
+  gateway:
+    session:
+      redisKeyPrefix: st
+      sessionTtl: 30m
+      absoluteTtl: 30d
+      renewWhenRemainingFraction: 0.25
+      cookie:
+        httpOnly: true
+        secure: false
+        sameSite: Lax
+        path: /
+        domain: ""
