@@ -48,20 +48,6 @@
     <!-- Monorepo-controlled version. yarn sets -Drevision=.. at build time -->
     <revision>0.0.1</revision>
 
-    <!-- default for local/dev builds (overriden in CI) -->
-    <release.tag>UNRELEASED</release.tag>
-    <git.branch>UNKOWNN</git.branch>
-    <git.commit.id.abbrev>UNKNOWN</git.commit.id.abbrev>
-    <git.commit.id.full>UNKNOWN</git.commit.id.full>
-    <git.commit.time>UNKNOWN</git.commit.time>
-
-    <!-- CI defaults -->
-    <build.id>local</build.id>
-    <build.ci>local</build.ci>
-    <build.platform>unkown</build.platform>
-    <!-- git plugin version -->
-    <git-commit-id.version>9.0.2</git-commit-id.version>
-
     <!-- 
     Maven properties used by failsafe/system-tests to decide whether to run.
     NOTE: These are maven properties, so they don't set spring profiles
@@ -284,60 +270,8 @@
               </goals>
               <!-- run early enough so it ends up in the jar -->
               <phase>process-resources</phase>
-              <configuration>
-                <additionalProperties>
-                  <syncturtle.release.tag>${release.tag}</syncturtle.release.tag>
-
-                  <syncturtle.build.id>${build.id}</syncturtle.build.id>
-                  <syncturtle.build.ci>${build.ci}</syncturtle.build.ci>
-                  <syncturtle.build.platform>${build.platform}</syncturtle.build.platform>
-
-                  <syncturtle.git.commit>${git.commit.id.full}</syncturtle.git.commit>
-                  <syncturtle.git.commit.short>${git.commit.id.abbrev}</syncturtle.git.commit.short>
-                  <syncturtle.git.branch>${git.branch}</syncturtle.git.branch>
-                  <syncturtle.git.commit.time>${git.commit.time}</syncturtle.git.commit.time>
-                </additionalProperties>
-              </configuration>
             </execution>
           </executions>
-        </plugin>
-
-        <!-- generate git.properties + expose ${git.*} maven properties -->
-        <plugin>
-          <groupId>io.github.git-commit-id</groupId>
-          <artifactId>git-commit-id-maven-plugin</artifactId>
-          <version>${git-commit-id.version}</version>
-          <executions>
-            <execution>
-              <id>git-properties</id>
-              <goals>
-                <goal>revision</goal>
-              </goals>
-              <phase>initialize</phase>
-            </execution>
-          </executions>
-          <configuration>
-            <!-- point to repo root -->
-            <dotGitDirectory>${maven.multiModuleProjectDirectory}/../../.git</dotGitDirectory>
-
-            <!-- write into each module's target/classes -->
-            <generateGitPropertiesFile>true</generateGitPropertiesFile>
-            <generateGitPropertiesFilename>
-              ${project.build.outputDirectory}/git.properties
-            </generateGitPropertiesFilename>
-
-            <!-- don't fail local builds where .git might not exists (source tarball) -->
-            <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
-            <failOnNoGitDirectory>false</failOnNoGitDirectory>
-
-            <includeOnlyProperties>
-              <includeOnlyProperty>^git.branch$</includeOnlyProperty>
-              <includeOnlyProperty>^git.commit.id.abbrev$</includeOnlyProperty>
-              <includeOnlyProperty>^git.commit.id.full$</includeOnlyProperty>
-              <includeOnlyProperty>^git.commit.time$</includeOnlyProperty>
-              <includeOnlyProperty>^git.dirty$</includeOnlyProperty>
-            </includeOnlyProperties>
-          </configuration>
         </plugin>
       </plugins>
 

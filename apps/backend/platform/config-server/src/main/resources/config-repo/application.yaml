@@ -37,6 +37,7 @@ management:
       "[service.name]": ${spring.application.name}
       "[service.namespace]": syncturtle
       "[deployment.environment]": ${DEPLOYMENT_ENV:local}
+      "[telemetry.mode]": "system"
 
 logging:
   pattern:

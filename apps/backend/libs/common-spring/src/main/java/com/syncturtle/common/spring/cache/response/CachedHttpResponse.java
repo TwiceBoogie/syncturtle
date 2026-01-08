@@ -5,7 +5,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class CachedHttpResponse {
+public final class CachedHttpResponse {
     private int status;
     private String body;
+    private String bodyType;
 }

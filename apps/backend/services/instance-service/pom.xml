@@ -89,6 +89,12 @@
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-tracing-bridge-otel</artifactId>
     </dependency>
+    <!-- Traces for DB -->
+    <dependency>
+      <groupId>net.ttddyy.observation</groupId>
+      <artifactId>datasource-micrometer-spring-boot</artifactId>
+      <version>1.2.1</version>
+    </dependency>
     <!-- OTLP exporter (traces) -->
     <dependency>
       <groupId>io.opentelemetry</groupId>
@@ -104,10 +110,9 @@
       <groupId>io.opentelemetry.instrumentation</groupId>
       <artifactId>opentelemetry-logback-appender-1.0</artifactId>
     </dependency>
-
     <dependency>
       <groupId>io.opentelemetry</groupId>
-      <artifactId>opentelemetry-sdk-logs</artifactId>
+      <artifactId>opentelemetry-sdk</artifactId>
     </dependency>
 
     <!-- SUPPORT / UTILITIES -->
@@ -138,11 +143,6 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
-      </plugin>
-
-      <plugin>
-        <groupId>io.github.git-commit-id</groupId>
-        <artifactId>git-commit-id-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>

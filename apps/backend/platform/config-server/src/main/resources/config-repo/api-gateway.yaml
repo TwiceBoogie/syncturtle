@@ -11,22 +11,36 @@ spring:
     type: caffeine
 
   cloud:
+    circuitbreaker:
+      resilience4j:
+        enabled: true
+        disable-time-limiter: true
+
     gateway:
       server:
         webflux:
+          metrics:
+            enabled: true
+          observability:
+            enabled: true
+
           discovery:
             locator:
               enabled: false
               lower-case-service-id: true
+
           httpclient:
-            connect-timeout: 2000
-            response-timeout: 10s
+            connect-timeout: 5000
+            response-timeout: 5s
+            compression: true
             pool:
               type: fixed
               maxConnections: 200
-              acquireTimeout: 5000
-              maxIdleTime: 30000
+              acquire-timeout: 2000
+              maxIdleTime: 5m
               maxLifeTime: 5m
+              eviction-interval: 2m
+              leasing-strategy: lifo
               metrics: true
 
           routes:
@@ -36,7 +50,14 @@ spring:
                 - Path=/api/instances/**
                 - Method=GET,OPTIONS,HEAD
               filters:
-                - AddResponseHeader=X-Gateway-Route,instance-public
+                - name: CircuitBreaker
+                  args:
+                    name: instanceServiceCB
+                    fallbackUri: forward:/__fallback/instance-service
+                    statusCodes:
+                      - 502
+                      - 503
+                      - 504
 
             - id: instance-admin-write
               uri: lb://instance-service
@@ -53,10 +74,25 @@ spring:
     loadbalancer:
       cache:
         enabled: true
-        clients:
-          - instance-service
+        eager-load:
+          clients: instance-service
         caffeine:
-          spec: maximumSize=500,expireAfterWrite=5s
+          spec: maximumSize=500,expireAfterWrite=30s
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 50
+        minimumNumberOfCalls: 20
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 10
+        waitDurationInOpenState: 10s
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+    instances:
+      instanceServiceCB:
+        baseConfig: default
 
 app:
   gateway:

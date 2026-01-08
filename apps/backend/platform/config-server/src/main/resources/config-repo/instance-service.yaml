@@ -6,7 +6,7 @@ app:
     enabled: ${APP_TELEMETRY_ENABLED:true}
     support-required: ${APP_TELEMETRY_SUPPORT_REQUIRED:false}
   skip-env-var: ${APP_SKIP_ENV_VAR:false}
-  web-url: ${APP_WEB_URL:http://${WEB_URL:localhost}}
+  web-url: ${APP_WEB_URL:http://localhost:3000}
   base-urls:
     admin: ${APP_BASE_URL_ADMIN:http://localhost:3001/god-mode/}
     app: ${APP_BASE_URL_APP:http://localhost:3000/}
@@ -45,6 +45,11 @@ app:
       secret-key: ${APP_SECURITY_ENCRYPTION_SECRET_KEY}
   kafka:
     enabled: true
+  product-telemetry:
+    enabled: true
+    endpoint: ${PRODUCT_TELEMETRY_ENDPOINT:http://localhost:15317}
+    api-key: ""
+    interval: 10m
   response-cache:
     enabled: true
     key-prefix: "st:resp:"
@@ -56,6 +61,14 @@ server:
 spring:
   application:
     name: instance-service
+
+  datasource:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-timeout: 2000
 
   jpa:
     hibernate:
@@ -93,3 +106,9 @@ spring:
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
         spring.json.trusted.packages: "com.syncturtle.*"
         spring.json.use.type.headers: false
+
+jdbc:
+  datasource-proxy:
+    enabled: true
+    include-parameter-values: false
+  includes: QUERY

@@ -1,5 +1,6 @@
 package com.syncturtle.common.spring.cache.response;
 
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.time.Duration;
@@ -93,8 +94,11 @@ public final class ResponseCacheAspect {
         if (cachedJson != null) {
             CachedHttpResponse cached = objectMapper.readValue(cachedJson, CachedHttpResponse.class);
 
-            JavaType bodyType = resolveResponseEntityBodyType(pjp);
-            Object body = (bodyType == null) ? cached.getBody() : objectMapper.readValue(cached.getBody(), bodyType);
+            JavaType declaredBodyType = resolveResponseEntityBodyType(pjp);
+            JavaType deserializesAs = chooseDeserializationType(declaredBodyType, cached.getBodyType());
+
+            Object body = (deserializesAs == null) ? cached.getBody()
+                    : objectMapper.readValue(cached.getBody(), deserializesAs);
 
             return ResponseEntity.status(cached.getStatus()).body(body);
         }
@@ -106,9 +110,18 @@ public final class ResponseCacheAspect {
             int status = re.getStatusCode().value();
 
             if (status == 200) {
+                Object bodyObj = re.getBody();
+
                 CachedHttpResponse toCache = new CachedHttpResponse();
                 toCache.setStatus(status);
-                toCache.setBody(objectMapper.writeValueAsString(re.getBody()));
+
+                if (bodyObj == null) {
+                    toCache.setBody("null");
+                    toCache.setBodyType(null);
+                } else {
+                    toCache.setBody(objectMapper.writeValueAsString(bodyObj));
+                    toCache.setBodyType(bodyObj.getClass().getName());
+                }
 
                 String toCacheJson = objectMapper.writeValueAsString(toCache);
 
@@ -165,5 +178,44 @@ public final class ResponseCacheAspect {
         }
         Type body = pt.getActualTypeArguments()[0];
         return objectMapper.getTypeFactory().constructType(body);
+    }
+
+    private JavaType chooseDeserializationType(JavaType declaredBodyType, String cachedBodyTypeName) {
+        if (declaredBodyType == null) {
+            return safeTypeFromCache(null, cachedBodyTypeName);
+        }
+
+        Class<?> declaredRaw = declaredBodyType.getRawClass();
+        boolean declaredIsInterfaceOrAbstract = declaredRaw.isInterface()
+                || Modifier.isAbstract(declaredRaw.getModifiers());
+
+        if (!declaredIsInterfaceOrAbstract) {
+            return declaredBodyType;
+        }
+
+        return safeTypeFromCache(declaredRaw, cachedBodyTypeName);
+    }
+
+    private JavaType safeTypeFromCache(Class<?> declaredBase, String cachedBodyTypeName) {
+        if (cachedBodyTypeName == null || cachedBodyTypeName.isBlank()) {
+            return null;
+        }
+
+        // allowlist
+        if (!cachedBodyTypeName.startsWith("com.syncturtle.")) {
+            return null;
+        }
+
+        try {
+            Class<?> concrete = Class.forName(cachedBodyTypeName);
+
+            if (declaredBase != null && !declaredBase.isAssignableFrom(concrete)) {
+                return null;
+            }
+
+            return objectMapper.getTypeFactory().constructType(concrete);
+        } catch (ClassNotFoundException ex) {
+            return null;
+        }
     }
 }

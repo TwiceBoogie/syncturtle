@@ -1,12 +1,14 @@
 package com.syncturtle.platform.infra.gateway.filters.global;
 
 import java.net.InetAddress;
+import java.net.URI;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.MDC;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -26,7 +28,7 @@ public class AccessLogFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return Ordered.LOWEST_PRECEDENCE;
+        return Ordered.HIGHEST_PRECEDENCE;
     }
 
     @Override
@@ -35,6 +37,12 @@ public class AccessLogFilter implements GlobalFilter, Ordered {
 
         return chain.filter(exchange)
                 .doFinally(signalType -> {
+                    URI target = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_REQUEST_URL_ATTR);
+                    Throwable cbEx = exchange
+                            .getAttribute(ServerWebExchangeUtils.CIRCUITBREAKER_EXECUTION_EXCEPTION_ATTR);
+                    log.info("target={} cbEx={} cbMsg={}", target, (cbEx != null ? cbEx.getClass().getName() : "-"),
+                            (cbEx != null ? cbEx.getMessage() : "-"));
+
                     long durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
 
                     ServerHttpRequest request = exchange.getRequest();

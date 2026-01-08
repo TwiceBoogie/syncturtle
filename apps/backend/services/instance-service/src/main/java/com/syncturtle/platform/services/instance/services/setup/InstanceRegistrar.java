@@ -16,6 +16,7 @@ import com.syncturtle.common.core.events.InstanceEvent;
 import com.syncturtle.common.core.events.InstanceEvent.Type;
 import com.syncturtle.common.core.utils.StringHelper;
 import com.syncturtle.platform.services.instance.configurations.properties.InstanceServiceProperties;
+import com.syncturtle.platform.services.instance.events.InstanceRegisteredEvent;
 import com.syncturtle.platform.services.instance.models.Instance;
 import com.syncturtle.platform.services.instance.payload.BinaryMetadata;
 import com.syncturtle.platform.services.instance.payload.InstanceEventToPublish;
@@ -103,6 +104,7 @@ public class InstanceRegistrar {
                     .build();
 
             events.publishEvent(new InstanceEventToPublish(evt));
+            events.publishEvent(new InstanceRegisteredEvent(instance.getId()));
         }
     }
 
