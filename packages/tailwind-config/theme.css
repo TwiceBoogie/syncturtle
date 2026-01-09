@@ -1,2 +1,14 @@
 @theme {
 }
+
+:root {
+  --color-background-100: 255, 255, 255; /* primary bg */
+}
+
+.dark {
+  --color-background-100: 25, 25, 25; /* primary bg */
+}
+
+@theme inline {
+  --color-custom-background-100: rgb(var(--color-background-100));
+}

@@ -1,0 +1,5 @@
+{
+  "extends": "@syncturtle/typescript-config/react-library.json",
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["dist", "node_modules"]
+}

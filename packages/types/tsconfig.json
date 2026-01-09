@@ -1,7 +1,8 @@
 {
-  "extends": "@syncturtle/typescript-config/node-library.json",
+  "extends": "@syncturtle/typescript-config/base.json",
   "compilerOptions": {
     "noEmit": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["dist", "node_modules"]
 }
