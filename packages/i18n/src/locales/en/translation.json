@@ -1,0 +1,8 @@
+{
+  "submit": "Submit",
+  "common": {
+    "continue": "Continue",
+    "continue_with": "Continue with {provider}",
+    "or": "or"
+  }
+}

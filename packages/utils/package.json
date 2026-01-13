@@ -23,8 +23,8 @@
   "dependencies": {
     "@syncturtle/constants": "workspace:*",
     "@syncturtle/types": "workspace:*",
-    "clsx": "2.1.1",
-    "tailwind-merge": "3.4.0"
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
     "@syncturtle/eslint-config": "workspace:*",

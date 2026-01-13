@@ -11,9 +11,18 @@
     "theme.css"
   ],
   "exports": {
-    ".": "./styles.css",
-    "./styles": "./styles.css",
-    "./theme": "./theme.css"
+    ".": {
+      "style": "./styles.css",
+      "default": "./styles.css"
+    },
+    "./styles": {
+      "style": "./styles.css",
+      "default": "./styles.css"
+    },
+    "./theme": {
+      "style": "./styles.css",
+      "default": "./styles.css"
+    }
   },
   "peerDependencies": {
     "tailwindcss": "^4"
