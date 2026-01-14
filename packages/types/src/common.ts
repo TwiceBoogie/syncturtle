@@ -12,3 +12,12 @@ export type Unsubscribe = () => void;
  * triggers React's internal "check snapshot + rerender if chaged".
  */
 export type Listener = () => void;
+
+export interface IApiErrorPayload {
+  type?: string;
+  status?: number;
+  message?: string;
+  fieldErrors?: Record<string, string[]>;
+  path?: string;
+  timestamp?: string;
+}

@@ -2,10 +2,13 @@ package com.syncturtle.common.core.utils;
 
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Random;
 
 import com.syncturtle.common.core.enums.InstanceEdition;
 
 public final class StringHelper {
+
+    private static final Random RANDOM = new Random();
 
     public static String nvl(String v, String d) {
         return (v == null || v.isBlank()) ? d : v;
@@ -44,5 +47,15 @@ public final class StringHelper {
 
     public static String orEmpty(String v) {
         return v == null ? "" : v;
+    }
+
+    public static String randomAsciLetters(String value) {
+        String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        StringBuilder sb = new StringBuilder();
+        sb.append(nvl(value, ""));
+        for (int i = 0; i < 6; i++) {
+            sb.append(alphabet.charAt(RANDOM.nextInt(alphabet.length())));
+        }
+        return sb.toString();
     }
 }

@@ -14,9 +14,16 @@ export interface IRouterStoreInternal {
   _subscribe(listener: Listener): Unsubscribe;
   _getSnapshot(): TRouterSnapshot;
   _getServerSnapshot(): TRouterSnapshot;
+  // observables
+  query: ParsedUrlQuery;
+  // computed
+  workspaceSlug: string | undefined;
+  userId: string | undefined;
+  // actions
+  setQuery: (query: ParsedUrlQuery) => void;
 }
 
-export type TRouterStore = Omit<RouterStore, keyof IRouterStoreInternal>;
+export type TRouterStore = Omit<IRouterStoreInternal, "_subscribe" | "_getSnapshot" | "_getServerSnapshot">;
 
 /**
  * External store for router

@@ -1,6 +1,6 @@
 import { useContext, useSyncExternalStore } from "react";
 import { StoreContext } from "@/lib/store-context";
-import { IThemeStoreInternal, TThemeStore } from "./theme.store";
+import { IThemeStoreInternal, TThemeStore } from "../../store/theme.store";
 
 export const useAppTheme = (): TThemeStore => {
   const context = useContext(StoreContext);
