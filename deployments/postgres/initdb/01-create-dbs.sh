@@ -12,7 +12,6 @@ GRANT ALL PRIVILEGES ON DATABASE syncturtle_instance TO instance_svc;
 -- Ensure the service user can use and create in public
 GRANT USAGE, CREATE ON SCHEMA public TO instance_svc;
 
--- (Optional, recommended) Make objects created by instance_svc accessible as desired:
 ALTER DEFAULT PRIVILEGES FOR USER instance_svc IN SCHEMA public
   GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO instance_svc;
 

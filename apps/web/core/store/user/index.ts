@@ -185,10 +185,13 @@ export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStor
     try {
       const user = await this.userService.changePassword(csrfToken, payload);
 
-      if (user) {
-        this.setState({ data: user, error: undefined });
-        return user;
-      }
+      this.setState((s) => ({
+        ...s,
+        data: s.data ? { ...s.data, isPasswordAutoset: false } : s.data,
+        error: undefined,
+      }));
+
+      return user;
     } catch (error) {
       this.setState({
         error: {

@@ -1,6 +1,6 @@
 import { InstanceService } from "@/services/instance.service";
-import { IInstance, IInstanceConfig, Listener, Unsubscribe } from "@syncturtle/types";
-import { Emitter } from "@syncturtle/utils";
+import { IInstance, IInstanceConfig } from "@syncturtle/types";
+import { ExternalStore } from "@syncturtle/utils";
 
 type TError = {
   status: string;
@@ -18,17 +18,17 @@ export type TInstanceSnapshot = {
   error: TError | undefined;
 };
 
-const initialSnapshot: TInstanceSnapshot = {
+const createInitialSnapshot = (): TInstanceSnapshot => ({
   isLoading: false,
   instance: undefined,
   config: undefined,
   error: undefined,
-};
+});
 
 export interface IInstanceStoreInternal {
-  _subscribe(listener: Listener): Unsubscribe;
-  _getSnapshot(): TInstanceSnapshot;
-  _getServerSnapshot(): TInstanceSnapshot;
+  _subscribe: ExternalStore<TInstanceSnapshot>["_subscribe"];
+  _getSnapshot: ExternalStore<TInstanceSnapshot>["_getSnapshot"];
+  _getServerSnapshot: ExternalStore<TInstanceSnapshot>["_getServerSnapshot"];
   // observables
   isLoading: boolean;
   instance: IInstance | undefined;
@@ -40,48 +40,44 @@ export interface IInstanceStoreInternal {
 
 export type TInstanceStore = Omit<IInstanceStoreInternal, "_subscribe" | "_getSnapshot" | "_getServerSnapshot">;
 
-export class InstanceStore implements IInstanceStoreInternal {
-  private emitter = new Emitter();
-  private _snap: TInstanceSnapshot = initialSnapshot;
-  private instanceService = new InstanceService();
+export class InstanceStore extends ExternalStore<TInstanceSnapshot> implements IInstanceStoreInternal {
+  private readonly instanceService: InstanceService;
 
-  // useSyncExternalStore integration
-  /** @internal */
-  public _subscribe = (listener: Listener): Unsubscribe => this.emitter.subscribe(listener);
-  /** @internal */
-  public _getSnapshot = (): TInstanceSnapshot => this._snap;
-  /** @internal */
-  public _getServerSnapshot = (): TInstanceSnapshot => this._snap;
+  constructor() {
+    super(createInitialSnapshot());
+
+    this.instanceService = new InstanceService();
+  }
 
   // raw getters for data
   get isLoading(): boolean {
-    return this._snap.isLoading;
+    return this.state.isLoading;
   }
 
   get instance(): IInstance | undefined {
-    return this._snap.instance;
+    return this.state.instance;
   }
 
   get config(): IInstanceConfig | undefined {
-    return this._snap.config;
+    return this.state.config;
   }
 
   get error(): TError | undefined {
-    return this._snap.error;
+    return this.state.error;
   }
 
   public fetchInstanceInfo = async (): Promise<void> => {
-    this.set({ isLoading: true, error: undefined });
+    this.setState({ isLoading: true, error: undefined });
 
     try {
       const instanceInfo = await this.instanceService.getInstanceInfo();
-      this.set({
+      this.setState({
         isLoading: false,
         instance: instanceInfo.instance,
         config: instanceInfo.config,
       });
     } catch (error) {
-      this.set({
+      this.setState({
         isLoading: false,
         error: {
           status: "error",
@@ -91,25 +87,4 @@ export class InstanceStore implements IInstanceStoreInternal {
       throw error;
     }
   };
-
-  private set(patch: Partial<TInstanceSnapshot>) {
-    const prev = this._snap;
-    const next = { ...prev, ...patch };
-
-    let changed = false;
-    for (const key in next) {
-      const k = key as keyof TInstanceSnapshot;
-      if (!Object.is(next[k], prev[k])) {
-        changed = true;
-        break;
-      }
-    }
-
-    if (!changed) {
-      return;
-    }
-
-    this._snap = next;
-    this.emitter.emit();
-  }
 }
