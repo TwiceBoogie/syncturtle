@@ -1,10 +1,14 @@
-import { useContext } from "react";
+import { useContext, useSyncExternalStore } from "react";
 // store
 import { StoreContext } from "@/lib/store-context";
-import type { TRouterStore } from "@/store/router.store";
+import type { IRouterStoreInternal, TRouterStore } from "@/store/router.store";
 
 export const useRouterParams = (): TRouterStore => {
   const context = useContext(StoreContext);
   if (!context) throw new Error("useRouterParams must be used within StoreProvider");
-  return context.router;
+
+  const store = context.router as IRouterStoreInternal;
+  useSyncExternalStore(store._subscribe, store._getSnapshot, store._getServerSnapshot);
+
+  return store;
 };
