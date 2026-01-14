@@ -7,7 +7,7 @@ export class UserService extends APIService {
     super(API_BASE_URL);
   }
 
-  async currentUser(): Promise<IUser> {
+  async me(): Promise<IUser> {
     try {
       const response = await this.get<IUser>("/api/users/me");
       return response.data;
@@ -17,7 +17,7 @@ export class UserService extends APIService {
     }
   }
 
-  async updateUser(data: Partial<IUser>): Promise<IUser> {
+  async update(data: Partial<IUser>): Promise<IUser> {
     try {
       const response = await this.patch<IUser>("/api/users/me", data);
       return response.data;
@@ -27,21 +27,7 @@ export class UserService extends APIService {
     }
   }
 
-  async changePassword(token: string, data: { oldPassword?: string; newPassword: string }): Promise<IUser> {
-    try {
-      const response = await this.post<IUser>("/auth/change-password", data, {
-        headers: {
-          "X-CSRF-TOKEN": token,
-        },
-      });
-      return response.data;
-    } catch (error) {
-      const err = error as HttpError<IApiErrorPayload>;
-      throw err.data ?? err;
-    }
-  }
-
-  async getCurrentUserProfile(): Promise<TUserProfile> {
+  async profile(): Promise<TUserProfile> {
     try {
       const response = await this.get<TUserProfile>("/api/users/me/profile");
       return response.data;
@@ -51,9 +37,19 @@ export class UserService extends APIService {
     }
   }
 
-  async updateCurrentUserProfile(data: Partial<TUserProfile>): Promise<TUserProfile> {
+  async updateProfile(data: Partial<TUserProfile>): Promise<TUserProfile> {
     try {
       const response = await this.patch<TUserProfile>("/api/users/me/profile", data);
+      return response.data;
+    } catch (error) {
+      const err = error as HttpError<IApiErrorPayload>;
+      throw err.data ?? err;
+    }
+  }
+
+  async adminDetails(): Promise<IUser> {
+    try {
+      const response = await this.get<IUser>("/api/instances/admins/me");
       return response.data;
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;

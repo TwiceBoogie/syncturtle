@@ -1,3 +1,8 @@
+import { IUserLite } from "../users";
+import { TInstanceAuthenticationKeys } from "./auth";
+import { TInstanceEmailConfigurationKeys } from "./email";
+import { TInstanceWorkspaceConfigurationKeys } from "./workspace";
+
 export interface IInstanceInfo {
   instance: IInstance;
   config: IInstanceConfig;
@@ -46,3 +51,37 @@ export interface IInstanceConfig {
   intercomAppId: string | undefined;
   instanceChangelogUrl: string | undefined;
 }
+
+export interface IInstanceAdmin {
+  id: string;
+  instance: string;
+  role: string;
+  user: string;
+  update_at: string;
+  updated_by: string;
+  user_detail: IUserLite;
+  created_at: string | null;
+  created_by: string | null;
+}
+
+export type TInstanceIntercomConfigurationKeys = "IS_INTERCOM_ENABLED" | "INTERCOM_APP_ID";
+
+export type TInstanceConfigurationKeys =
+  | TInstanceEmailConfigurationKeys
+  | TInstanceAuthenticationKeys
+  | TInstanceIntercomConfigurationKeys
+  | TInstanceWorkspaceConfigurationKeys;
+
+export interface IInstanceConfiguration {
+  id: string;
+  key: TInstanceConfigurationKeys;
+  value: string;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+  updated_by: string;
+}
+
+export type TFormattedInstanceConfiguration = {
+  [key in TInstanceConfigurationKeys]: string;
+};
