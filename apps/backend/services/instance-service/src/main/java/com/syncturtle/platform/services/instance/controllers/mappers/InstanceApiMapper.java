@@ -1,5 +1,6 @@
 package com.syncturtle.platform.services.instance.controllers.mappers;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Component;
@@ -7,10 +8,14 @@ import org.springframework.util.StringUtils;
 
 import com.syncturtle.common.core.enums.InstanceConfigurationKey;
 import com.syncturtle.common.spring.mapping.BasicMapper;
+import com.syncturtle.platform.services.instance.dto.response.InstanceAdminResponse;
 import com.syncturtle.platform.services.instance.dto.response.InstanceInfo;
 // import com.syncturtle.platform.services.instance.configurations.properties.InstanceServiceProperties;
 import com.syncturtle.platform.services.instance.dto.response.InstanceInfoResponse;
+import com.syncturtle.platform.services.instance.dto.response.UserMeResponse;
+import com.syncturtle.platform.services.instance.models.User;
 import com.syncturtle.platform.services.instance.repositories.InstanceInfoAggregate;
+import com.syncturtle.platform.services.instance.repositories.projections.InstanceAdminProjection;
 
 import lombok.RequiredArgsConstructor;
 
@@ -36,6 +41,14 @@ public final class InstanceApiMapper {
         response.setConfig(mapConfig(payload.getConfig()));
 
         return response;
+    }
+
+    public UserMeResponse toInstanceAdminUserMeResponse(User user) {
+        return basicMapper.convertToResponse(user, UserMeResponse.class);
+    }
+
+    public List<InstanceAdminResponse> toInstanceAdminResponseList(List<InstanceAdminProjection> payload) {
+        return basicMapper.convertToResponseList(payload, InstanceAdminResponse.class);
     }
 
     private InstanceInfoResponse.InstanceConfigResponse mapConfig(Map<InstanceConfigurationKey, String> config) {

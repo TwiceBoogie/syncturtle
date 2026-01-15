@@ -49,11 +49,19 @@ CREATE TABLE instance_configurations (
 --changeset syncturtle:0001-003-create-users-lite labels:instance
 CREATE TABLE users_lite (
     id                      UUID PRIMARY KEY,
-    email                   VARCHAR(255) NOT NULL,
-    first_name              VARCHAR(36) NOT NULL,
-    last_name               VARCHAR(36) NOT NULL,
+    username                VARCHAR(128) NOT NULL,
+    email                   VARCHAR(255),
     display_name            VARCHAR(255) NOT NULL,
+    first_name              VARCHAR(36),
+    last_name               VARCHAR(36),
     date_joined             TIMESTAMPTZ NOT NULL,
+    avatar_asset_id         UUID, -- logical fk to file-service:file_assets.id,
+    cover_image_asset_id    UUID, -- logical fk to file-service:file_assets.id,
+    is_active               BOOLEAN NOT NULL,
+    is_email_verified       BOOLEAN NOT NULL,
+    is_password_autoset     BOOLEAN NOT NULL,
+    user_timezone           VARCHAR(255) NOT NULL,
+    is_bot                  BOOLEAN NOT NULL,
     version                 BIGINT NOT NULL
 );
 --rollback DROP TABLE IF EXISTS users_lite;

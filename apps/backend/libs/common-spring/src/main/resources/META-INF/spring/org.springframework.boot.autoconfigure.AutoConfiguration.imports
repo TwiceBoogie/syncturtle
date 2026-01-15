@@ -1,5 +1,6 @@
 com.syncturtle.common.spring.web.AccessLogAutoConfiguration
 com.syncturtle.common.spring.web.RequestUserContextAutoConfiguration
+com.syncturtle.common.spring.web.GatewayUserHeaderFilterAutoConfiguration
 com.syncturtle.common.spring.web.FeignHeaderPropagationAutoConfiguration
 com.syncturtle.common.spring.mapping.ModelMapperAutoConfiguration
 com.syncturtle.common.spring.security.PasswordEncoderAutoConfiguration
