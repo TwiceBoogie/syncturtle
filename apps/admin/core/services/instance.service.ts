@@ -36,7 +36,9 @@ export class InstanceService extends APIService {
 
   async admins(): Promise<IInstanceAdmin[]> {
     try {
-      const response = await this.get<IInstanceAdmin[]>("/api/instances/admins");
+      const response = await this.get<IInstanceAdmin[]>("/api/instances/admins", {
+        validateStatus: (s) => s >= 200 && s < 500,
+      });
       return response.data;
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;

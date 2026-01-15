@@ -34,7 +34,7 @@ public final class InstanceInfoResponse implements InstanceInfo {
         private boolean setupDone;
         @JsonProperty("isSignupScreenVisited")
         private boolean signupScreenVisited;
-        private int userCount;
+        private long userCount;
         @JsonProperty("isVerified")
         private boolean verified;
         private Instant createdAt;

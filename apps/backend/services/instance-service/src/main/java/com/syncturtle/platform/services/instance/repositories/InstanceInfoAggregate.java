@@ -14,5 +14,5 @@ public class InstanceInfoAggregate {
     private final InstanceInfoRow instance;
     private final Map<InstanceConfigurationKey, String> config;
     private final boolean workspacesExist;
-    private final int userCount;
+    private final long userCount;
 }
