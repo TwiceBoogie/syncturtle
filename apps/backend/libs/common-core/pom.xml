@@ -13,7 +13,7 @@
 
   <artifactId>common-core</artifactId>
   <packaging>jar</packaging>
-  <name>common-core</name>
+  <name>syncturtle :: common-core</name>
 
   <dependencies>
     <!-- keep spring-free -->

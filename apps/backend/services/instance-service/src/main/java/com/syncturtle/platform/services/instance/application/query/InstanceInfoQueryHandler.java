@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import com.syncturtle.platform.services.instance.controllers.mappers.InstanceApiMapper;
+import com.syncturtle.platform.services.instance.dto.internal.InstanceAdminSignupResult;
+import com.syncturtle.platform.services.instance.dto.request.InstanceAdminSignupForm;
 import com.syncturtle.platform.services.instance.dto.response.InstanceAdminResponse;
 import com.syncturtle.platform.services.instance.dto.response.InstanceInfo;
 import com.syncturtle.platform.services.instance.dto.response.InstanceNotConfiguredResponse;
@@ -34,5 +36,9 @@ public class InstanceInfoQueryHandler {
 
     public List<InstanceAdminResponse> getInstanceAdmins() {
         return mapper.toInstanceAdminResponseList(instanceService.getInstanceAdmins());
+    }
+
+    public InstanceAdminSignupResult instanceAdminSignup(InstanceAdminSignupForm form) {
+        return instanceService.instanceAdminSignup(form);
     }
 }

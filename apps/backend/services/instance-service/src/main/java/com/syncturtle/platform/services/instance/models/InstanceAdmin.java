@@ -1,5 +1,6 @@
 package com.syncturtle.platform.services.instance.models;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import com.syncturtle.common.data.jpa.model.AuditedEntity;
@@ -9,6 +10,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,7 +22,7 @@ import lombok.Setter;
 public class InstanceAdmin extends AuditedEntity {
 
     @Column(name = "role", nullable = false)
-    private int role;
+    private Integer role;
 
     @Column(name = "is_verified", nullable = false)
     private boolean verified;
@@ -38,5 +40,21 @@ public class InstanceAdmin extends AuditedEntity {
 
     public UUID getInstanceId() {
         return instance.getId();
+    }
+
+    public static InstanceAdmin create(UUID userId, Instance instance) {
+        Objects.requireNonNull(userId, "User model");
+        Objects.requireNonNull(instance, "Instance model");
+        InstanceAdmin admin = new InstanceAdmin();
+        admin.userId = userId;
+        admin.instance = instance;
+        return admin;
+    }
+
+    @PrePersist
+    void prePersist() {
+        if (role == null) {
+            role = 20;
+        }
     }
 }

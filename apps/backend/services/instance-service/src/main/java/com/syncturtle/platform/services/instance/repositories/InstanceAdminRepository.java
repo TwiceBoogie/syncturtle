@@ -12,4 +12,13 @@ public interface InstanceAdminRepository extends JpaRepository<InstanceAdmin, UU
     boolean existsByUserIdAndRoleGreaterThanEqual(UUID userId, int role);
 
     List<InstanceAdminProjection> findAllByInstance_Id(UUID instanceId);
+
+    boolean existsByIdIsNotNull();
+
+    boolean existsByInstance_IdAndUserId(UUID instanceId, UUID userId);
+
+    boolean existsByUserId(UUID userId);
+
+    // return number of rows deleted
+    long deleteByInstance_IdAndId(UUID instanceId, UUID id);
 }

@@ -1,11 +1,18 @@
 databaseChangeLog:
-  - logicalFilePath: db/changelog/db.changelog-master.yaml
-  - preConditions:
-      - onFail: HALT
-      - onError: HALT
-      - dbms:
-          type: postgresql
+        - logicalFilePath: db/changelog/db.changelog-master.yaml
+        - preConditions:
+                  - onFail: HALT
+                  - onError: HALT
+                  - dbms:
+                            type: postgresql
 
-  - include:
-      file: releases/0001_init/db.changelog-0001.yaml
-      relativeToChangelogFile: true
+        - include:
+                  file: releases/0001_init/db.changelog-0001.yaml
+                  relativeToChangelogFile: true
+        - include:
+                  file: releases/0002_instance_admins_unique_index/db.changelog-0002.yaml
+                  relativeToChangelogFile: true
+
+        - include:
+                  file: env/test/db.changelog-test.yaml
+                  relativeToChangelogFile: true

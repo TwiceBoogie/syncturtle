@@ -30,9 +30,18 @@ public class FeignHeaderPropagationAutoConfiguration {
             }
 
             HttpServletRequest req = sra.getRequest();
+
+            // identity
             copyIfPresent(req, template, GatewayHeaderNames.HDR_AUTH_USER_ID);
             copyIfPresent(req, template, GatewayHeaderNames.HDR_AUTH_WORKSPACE_ID);
+
+            // tracing
             copyIfPresent(req, template, GatewayHeaderNames.HDR_REQUEST_ID);
+            copyIfPresent(req, template, GatewayHeaderNames.HDR_CORRELATION_ID);
+
+            // client metadata
+            copyIfPresent(req, template, GatewayHeaderNames.HDR_CLIENT_IP);
+            copyIfPresent(req, template, GatewayHeaderNames.HDR_CLIENT_UA);
         };
     }
 

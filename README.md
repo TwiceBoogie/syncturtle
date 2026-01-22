@@ -15,3 +15,5 @@ Monorepo:
 # unit + ITs + system-tests E2E (*E2E.java in system-tests module)
 ./mvnw -Pit -Psystem verify
 ```
+
+yes

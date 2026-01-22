@@ -9,8 +9,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.nulabinc.zxcvbn.Strength;
+import com.nulabinc.zxcvbn.Zxcvbn;
+import com.syncturtle.common.core.enums.AuthErrorCode;
 import com.syncturtle.common.core.enums.InstanceConfigurationKey;
+import com.syncturtle.common.core.exceptions.AuthenticationException;
+import com.syncturtle.common.spring.web.url.HostUrlBuilder;
 import com.syncturtle.common.web.context.RequestUserContext;
+import com.syncturtle.common.web.dto.request.AdminSignupInternalRequest;
+import com.syncturtle.common.web.dto.response.AdminSignupInternalResponse;
+import com.syncturtle.platform.services.instance.client.UserClient;
+import com.syncturtle.platform.services.instance.dto.internal.InstanceAdminSignupResult;
+import com.syncturtle.platform.services.instance.dto.request.InstanceAdminSignupForm;
+import com.syncturtle.platform.services.instance.models.Instance;
+import com.syncturtle.platform.services.instance.models.InstanceAdmin;
 import com.syncturtle.platform.services.instance.models.User;
 import com.syncturtle.platform.services.instance.models.readmodel.InstanceInfoRow;
 import com.syncturtle.platform.services.instance.repositories.InstanceAdminRepository;
@@ -32,8 +44,13 @@ public class InstanceServiceImpl implements InstanceService {
     private final InstanceRepository instanceRepository;
     private final InstanceAdminRepository instanceAdminRepository;
     private final UserRepository userRepository;
-    // instance configuration resolver
+    // openFeign clients
+    private final UserClient userClient;
+    // helpers
     private final InstanceConfigurationResolver resolver;
+    private final HostUrlBuilder hostResolver;
+    private final Zxcvbn zxcvbn = new Zxcvbn();
+    // context
     private final RequestUserContext userContext;
 
     @Override
@@ -82,6 +99,76 @@ public class InstanceServiceImpl implements InstanceService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Instance is not registered yet"));
 
         return instanceAdminRepository.findAllByInstance_Id(instance.getInstanceId());
+    }
+
+    @Override
+    @Transactional
+    public InstanceAdminSignupResult instanceAdminSignup(InstanceAdminSignupForm form) {
+        Instance instance = instanceRepository.findFirstByOrderByCreatedAtDesc().orElse(null);
+
+        if (instance == null) {
+            AuthenticationException exception = new AuthenticationException(AuthErrorCode.INSTANCE_NOT_CONFIGURED);
+            String url = hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap());
+            return new InstanceAdminSignupResult(null, url);
+        }
+
+        // check if instance already has admin registered
+        if (instanceAdminRepository.existsByIdIsNotNull()) {
+            AuthenticationException exception = new AuthenticationException(AuthErrorCode.ADMIN_ALREADY_EXIST);
+            String url = hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap());
+            return new InstanceAdminSignupResult(null, url);
+        }
+
+        String firstName = form.getFirstName();
+        String lastName = form.getLastName();
+        String email = form.getEmail().trim().toLowerCase();
+        String password = form.getPassword();
+        String companyName = form.getCompanyName();
+        boolean telemetryEnabled = Boolean.parseBoolean(form.getTelemetryEnabled());
+
+        // user-service already checks for user admin and password strength
+        if (userRepository.existsByEmailIgnoreCase(email)) {
+            AuthenticationException exception = AuthenticationException.of(AuthErrorCode.ADMIN_USER_ALREADY_EXIST)
+                    .with("firstName", firstName)
+                    .with("lastName", lastName)
+                    .with("email", email)
+                    .with("companyName", companyName)
+                    .with("isTelemetryEnabled", telemetryEnabled);
+            String url = hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap());
+            return new InstanceAdminSignupResult(null, url);
+        } else {
+            Strength strength = zxcvbn.measure(password);
+            int score = strength.getScore();
+            if (score < 3) {
+                AuthenticationException exception = AuthenticationException.of(AuthErrorCode.INVALID_ADMIN_PASSWORD)
+                        .with("email", email)
+                        .with("firstName", firstName)
+                        .with("lastName", lastName)
+                        .with("companyName", companyName)
+                        .with("isTelemetryEnabled", telemetryEnabled);
+                String url = hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap());
+                return new InstanceAdminSignupResult(null, url);
+            }
+
+            try {
+                AdminSignupInternalResponse response = userClient
+                        .adminSignupPost(new AdminSignupInternalRequest(firstName,
+                                lastName, email, companyName, telemetryEnabled, password));
+
+                InstanceAdmin instanceAdmin = instanceAdminRepository
+                        .save(InstanceAdmin.create(response.getUserId(), instance));
+
+                instance.setSetupDone(true);
+                instance.setInstanceName(companyName);
+                instance.setTelemetryEnabled(telemetryEnabled);
+                instanceRepository.save(instance);
+
+                return new InstanceAdminSignupResult(instanceAdmin.getUserId(), hostResolver.adminHost() + "/general");
+            } catch (AuthenticationException exception) {
+                return new InstanceAdminSignupResult(null,
+                        hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap()));
+            }
+        }
     }
 
 }

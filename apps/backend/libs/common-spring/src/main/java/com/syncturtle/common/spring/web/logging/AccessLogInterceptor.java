@@ -44,8 +44,9 @@ public class AccessLogInterceptor implements HandlerInterceptor {
         String method = request.getMethod();
         String path = request.getRequestURI();
 
-        String ua = nullToDash(request.getHeader("User-Agent"));
-        String ip = resolveClientIp(request);
+        String ua = firstNonBlank(request.getHeader(GatewayHeaderNames.HDR_CLIENT_UA),
+                nullToDash(request.getHeader("User-Agent")));
+        String ip = firstNonBlank(request.getHeader(GatewayHeaderNames.HDR_CLIENT_IP), resolveClientIp(request));
 
         String userId = header(request, GatewayHeaderNames.HDR_AUTH_USER_ID);
         String workspaceId = header(request, GatewayHeaderNames.HDR_AUTH_WORKSPACE_ID);
