@@ -3,6 +3,8 @@ package com.syncturtle.platform.services.instance.services;
 import java.util.List;
 import java.util.Optional;
 
+import com.syncturtle.platform.services.instance.dto.internal.InstanceAdminSignupResult;
+import com.syncturtle.platform.services.instance.dto.request.InstanceAdminSignupForm;
 import com.syncturtle.platform.services.instance.models.User;
 import com.syncturtle.platform.services.instance.repositories.InstanceInfoAggregate;
 import com.syncturtle.platform.services.instance.repositories.projections.InstanceAdminProjection;
@@ -13,4 +15,6 @@ public interface InstanceService {
     Optional<User> getInstanceAdminUserMe();
 
     List<InstanceAdminProjection> getInstanceAdmins();
+
+    InstanceAdminSignupResult instanceAdminSignup(InstanceAdminSignupForm form);
 }

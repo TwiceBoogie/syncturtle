@@ -6,10 +6,17 @@ eureka:
 spring:
   cloud:
     gateway:
-      globalcors:
-        cors-configurations:
-          "[/**]":
-            allowedOrigins: ${GATEWAY_CORS_ALLOWED_ORIGINS:http://localhost:3000}
-            allowedMethods: "*"
-            allowedHeaders: "*"
-            allowCredentials: true
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              "[/**]":
+                allowedOrigins: ${GATEWAY_CORS_ALLOWED_ORIGINS:http://localhost:3000}
+                allowedMethods: "*"
+                allowedHeaders: "*"
+                allowCredentials: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}

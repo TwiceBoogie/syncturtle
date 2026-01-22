@@ -1,8 +1,6 @@
 package com.syncturtle.platform.infra.gateway.filters.global;
 
-import java.net.InetAddress;
 import java.net.URI;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.MDC;
@@ -53,8 +51,8 @@ public class AccessLogFilter implements GlobalFilter, Ordered {
                     String path = request.getURI().getPath();
 
                     HttpHeaders reqHeaders = request.getHeaders();
-                    String ua = reqHeaders.getFirst("User-Agent");
-                    String ip = resolveClientIp(request);
+                    String ua = reqHeaders.getFirst(GatewayHeaderNames.HDR_CLIENT_UA);
+                    String ip = reqHeaders.getFirst(GatewayHeaderNames.HDR_CLIENT_IP);
 
                     String userId = reqHeaders.getFirst(GatewayHeaderNames.HDR_AUTH_USER_ID);
                     String workspaceId = reqHeaders.getFirst(GatewayHeaderNames.HDR_AUTH_WORKSPACE_ID);
@@ -101,24 +99,6 @@ public class AccessLogFilter implements GlobalFilter, Ordered {
         MDC.remove("spanId");
         MDC.remove("X-Correlation-Id");
         MDC.remove("X-Request-Id");
-    }
-
-    private static String resolveClientIp(ServerHttpRequest request) {
-        HttpHeaders headers = request.getHeaders();
-        String xff = headers.getFirst("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) {
-            int comma = xff.indexOf(',');
-            return (comma > 0 ? xff.substring(0, comma) : xff).trim();
-        }
-        String xReal = headers.getFirst("X-Real-Ip");
-        if (xReal != null && !xReal.isBlank()) {
-            return xReal.trim();
-        }
-
-        return Optional.ofNullable(request.getRemoteAddress())
-                .map(addr -> addr.getAddress())
-                .map(InetAddress::getHostAddress)
-                .orElse("unknown");
     }
 
     private static String firstNonBlank(String a, String b) {

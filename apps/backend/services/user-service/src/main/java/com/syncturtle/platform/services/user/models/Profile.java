@@ -1,26 +1,38 @@
 package com.syncturtle.platform.services.user.models;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.syncturtle.common.data.jpa.model.AuditedEntity;
+import com.syncturtle.common.data.jpa.model.TimeAuditEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 
+@Setter
 @Getter
 @Entity
 @Table(name = "profiles")
-public class Profile extends AuditedEntity {
+public class Profile extends TimeAuditEntity {
+
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @Column(name = "id", nullable = false, updatable = false)
+    private UUID id;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "theme", nullable = false)
@@ -71,5 +83,14 @@ public class Profile extends AuditedEntity {
 
     public boolean hasBillingAddress() {
         return hasBillingAddress;
+    }
+
+    public static Profile create(User user, String companyName) {
+        Objects.requireNonNull(user, "User model");
+        Profile profile = new Profile();
+        profile.user = user;
+        profile.companyName = companyName;
+
+        return profile;
     }
 }

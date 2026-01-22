@@ -1,7 +1,11 @@
 com.syncturtle.common.spring.web.AccessLogAutoConfiguration
+com.syncturtle.common.spring.web.WebErrorHandlingAutoConfiguration
+com.syncturtle.common.spring.web.GatewayClientHeaderFilterAutoConfiguration
+com.syncturtle.common.spring.web.RequestClientContextAutoConfiguration
 com.syncturtle.common.spring.web.RequestUserContextAutoConfiguration
 com.syncturtle.common.spring.web.GatewayUserHeaderFilterAutoConfiguration
-com.syncturtle.common.spring.web.FeignHeaderPropagationAutoConfiguration
+com.syncturtle.common.spring.web.FeignAutoConfiguration
+com.syncturtle.common.spring.web.url.HostUrlBuilderAutoConfiguration
 com.syncturtle.common.spring.mapping.ModelMapperAutoConfiguration
 com.syncturtle.common.spring.security.PasswordEncoderAutoConfiguration
 com.syncturtle.common.spring.observability.OtelLogbackAutoConfiguration

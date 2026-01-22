@@ -51,9 +51,6 @@
     <awaitility.version>4.2.2</awaitility.version>
     <brave.version>6.1.0</brave.version>
     <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
-    <build.ci>local</build.ci>
-    <build.id>local</build.id>
-    <build.platform>unkown</build.platform>
     <byte-buddy.version>1.17.8</byte-buddy.version>
     <cache2k.version>2.6.1.Final</cache2k.version>
     <caffeine.version>3.2.3</caffeine.version>
@@ -76,11 +73,6 @@
     <flyway.version>11.7.2</flyway.version>
     <freemarker.version>2.3.34</freemarker.version>
     <git-commit-id-maven-plugin.version>9.0.2</git-commit-id-maven-plugin.version>
-    <git-commit-id.version>9.0.2</git-commit-id.version>
-    <git.branch>UNKOWNN</git.branch>
-    <git.commit.id.abbrev>UNKNOWN</git.commit.id.abbrev>
-    <git.commit.id.full>UNKNOWN</git.commit.id.full>
-    <git.commit.time>UNKNOWN</git.commit.time>
     <glassfish-jaxb.version>4.0.6</glassfish-jaxb.version>
     <glassfish-jstl.version>3.0.1</glassfish-jstl.version>
     <graphql-java.version>24.3</graphql-java.version>
@@ -206,7 +198,6 @@
     <rabbit-stream-client.version>0.23.0</rabbit-stream-client.version>
     <reactive-streams.version>1.0.4</reactive-streams.version>
     <reactor-bom.version>2024.0.13</reactor-bom.version>
-    <release.tag>UNRELEASED</release.tag>
     <resource.delimiter>@</resource.delimiter>
     <rest-assured.version>5.5.6</rest-assured.version>
     <revision>0.0.1</revision>
@@ -11889,58 +11880,16 @@
                 <goal>revision</goal>
               </goals>
               <configuration>
-                <dotGitDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/../../.git</dotGitDirectory>
+                <verbose>true</verbose>
                 <generateGitPropertiesFile>true</generateGitPropertiesFile>
                 <generateGitPropertiesFilename>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target/classes/git.properties</generateGitPropertiesFilename>
-                <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
-                <failOnNoGitDirectory>false</failOnNoGitDirectory>
-                <includeOnlyProperties>
-                  <includeOnlyProperty>^git.branch$</includeOnlyProperty>
-                  <includeOnlyProperty>^git.commit.id.abbrev$</includeOnlyProperty>
-                  <includeOnlyProperty>^git.commit.id.full$</includeOnlyProperty>
-                  <includeOnlyProperty>^git.commit.time$</includeOnlyProperty>
-                  <includeOnlyProperty>^git.dirty$</includeOnlyProperty>
-                </includeOnlyProperties>
-                <verbose>true</verbose>
-              </configuration>
-            </execution>
-            <execution>
-              <id>git-properties</id>
-              <phase>initialize</phase>
-              <goals>
-                <goal>revision</goal>
-              </goals>
-              <configuration>
-                <dotGitDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/../../.git</dotGitDirectory>
-                <generateGitPropertiesFile>true</generateGitPropertiesFile>
-                <generateGitPropertiesFilename>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target/classes/git.properties</generateGitPropertiesFilename>
-                <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
-                <failOnNoGitDirectory>false</failOnNoGitDirectory>
-                <includeOnlyProperties>
-                  <includeOnlyProperty>^git.branch$</includeOnlyProperty>
-                  <includeOnlyProperty>^git.commit.id.abbrev$</includeOnlyProperty>
-                  <includeOnlyProperty>^git.commit.id.full$</includeOnlyProperty>
-                  <includeOnlyProperty>^git.commit.time$</includeOnlyProperty>
-                  <includeOnlyProperty>^git.dirty$</includeOnlyProperty>
-                </includeOnlyProperties>
-                <verbose>true</verbose>
               </configuration>
             </execution>
           </executions>
           <configuration>
-            <dotGitDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/../../.git</dotGitDirectory>
+            <verbose>true</verbose>
             <generateGitPropertiesFile>true</generateGitPropertiesFile>
             <generateGitPropertiesFilename>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target/classes/git.properties</generateGitPropertiesFilename>
-            <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
-            <failOnNoGitDirectory>false</failOnNoGitDirectory>
-            <includeOnlyProperties>
-              <includeOnlyProperty>^git.branch$</includeOnlyProperty>
-              <includeOnlyProperty>^git.commit.id.abbrev$</includeOnlyProperty>
-              <includeOnlyProperty>^git.commit.id.full$</includeOnlyProperty>
-              <includeOnlyProperty>^git.commit.time$</includeOnlyProperty>
-              <includeOnlyProperty>^git.dirty$</includeOnlyProperty>
-            </includeOnlyProperties>
-            <verbose>true</verbose>
           </configuration>
         </plugin>
         <plugin>
@@ -12196,16 +12145,6 @@
                 <goal>build-info</goal>
               </goals>
               <configuration>
-                <additionalProperties>
-                  <syncturtle.release.tag>UNRELEASED</syncturtle.release.tag>
-                  <syncturtle.build.id>local</syncturtle.build.id>
-                  <syncturtle.build.ci>local</syncturtle.build.ci>
-                  <syncturtle.build.platform>unkown</syncturtle.build.platform>
-                  <syncturtle.git.commit>UNKNOWN</syncturtle.git.commit>
-                  <syncturtle.git.commit.short>UNKNOWN</syncturtle.git.commit.short>
-                  <syncturtle.git.branch>UNKOWNN</syncturtle.git.branch>
-                  <syncturtle.git.commit.time>UNKNOWN</syncturtle.git.commit.time>
-                </additionalProperties>
                 <mainClass>${start-class}</mainClass>
               </configuration>
             </execution>

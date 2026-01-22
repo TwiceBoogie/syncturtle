@@ -3,20 +3,33 @@ package com.syncturtle.platform.services.user.models;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.hibernate.annotations.UuidGenerator;
+
 import com.syncturtle.common.core.utils.StringHelper;
-import com.syncturtle.common.data.jpa.model.AuditedEntity;
+import com.syncturtle.common.data.jpa.model.TimeAuditEntity;
 import com.syncturtle.platform.services.user.models.support.ValidTimeZone;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
+import lombok.Setter;
 
+@Setter
 @Getter
 @Entity
 @Table(name = "users")
-public class User extends AuditedEntity {
+public class User extends TimeAuditEntity {
+
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @Column(name = "id", nullable = false, updatable = false)
+    private UUID id;
 
     @Column(name = "username", nullable = false)
     private String username;
@@ -115,6 +128,23 @@ public class User extends AuditedEntity {
     @Column(name = "masked_at")
     private Instant maskedAt;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
+    public static User create(String email, String firstName, String lastName, String password, String username,
+            boolean isPasswordAutoset) {
+        User user = new User();
+        user.email = email;
+        user.firstName = firstName;
+        user.lastName = lastName;
+        user.password = password;
+        user.username = username;
+        user.passwordAutoset = isPasswordAutoset;
+
+        return user;
+    }
+
     @PrePersist
     void prePersist() {
         normalizeEmail();
@@ -135,6 +165,9 @@ public class User extends AuditedEntity {
         if (tokenUpdatedAt != null) {
             token = UUID.randomUUID().toString().replace("-", "") + UUID.randomUUID().toString().replace("-", "");
             tokenUpdatedAt = Instant.now();
+        }
+        if (version == null) {
+            version = 0L;
         }
     }
 }

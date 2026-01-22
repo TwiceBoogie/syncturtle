@@ -1,19 +1,23 @@
 package com.syncturtle.platform.services.user.models;
 
 import java.time.Instant;
+import java.util.UUID;
 
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.syncturtle.common.core.enums.Provider;
-import com.syncturtle.common.data.jpa.model.AuditedEntity;
+import com.syncturtle.common.data.jpa.model.TimeAuditEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -22,7 +26,13 @@ import lombok.Getter;
 @Getter
 @Entity
 @Table(name = "accounts")
-public class Account extends AuditedEntity {
+public class Account extends TimeAuditEntity {
+
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    @Column(name = "id", nullable = false, updatable = false)
+    private UUID id;
 
     @Column(name = "provider_account_id", nullable = false)
     private String providerAccountId;
@@ -56,4 +66,5 @@ public class Account extends AuditedEntity {
 
     @Column(name = "id_token", nullable = false, columnDefinition = "text")
     private String idToken;
+
 }

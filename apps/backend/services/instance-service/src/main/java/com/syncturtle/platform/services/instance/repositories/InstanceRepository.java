@@ -39,5 +39,13 @@ public interface InstanceRepository extends JpaRepository<Instance, UUID> {
 
     Optional<Instance> findFirstByDeletedAtIsNullOrderByCreatedAtAsc();
 
+    // very first entity
+    Optional<Instance> findFirstByOrderByCreatedAtAsc();
+
+    // latest entity
+    Optional<Instance> findFirstByOrderByCreatedAtDesc();
+
     <T> Optional<T> findTopByOrderByCreatedAtDesc(Class<T> clazz);
+
+    boolean existsByIdIsNotNull();
 }

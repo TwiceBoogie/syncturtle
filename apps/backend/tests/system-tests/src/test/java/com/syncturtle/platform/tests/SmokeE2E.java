@@ -1,10 +1,14 @@
 package com.syncturtle.platform.tests;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-class SmokeE2E {
+import com.syncturtle.platform.tests.env.SyncturtleEnvironment;
+
+@ExtendWith(SyncturtleEnvironment.class)
+public class SmokeE2E {
     @Test
-    void placeholder() {
-        // later: bring up docker-compose or Testcontainers and rn real HTTP checks
+    void systemStarts() {
+
     }
 }

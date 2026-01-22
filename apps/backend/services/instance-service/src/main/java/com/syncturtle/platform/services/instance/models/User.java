@@ -58,4 +58,7 @@ public class User {
     @ValidTimeZone
     @Column(name = "user_timezone")
     private String userTimezone;
+
+    @Column(name = "version", nullable = false)
+    private Long version;
 }
