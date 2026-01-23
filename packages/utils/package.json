@@ -14,11 +14,11 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --sourcemap --clean --out-dir dist",
-    "dev": "tsup src/index.ts --format esm --dts --watch --sourcemap --out-dir dist",
+    "build": "tsup && tsc -p tsconfig.build.json",
+    "dev": "tsup --watch",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf .turbo && rm -rf dist"
   },
   "dependencies": {
     "@syncturtle/constants": "workspace:*",
