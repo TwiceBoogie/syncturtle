@@ -19,7 +19,7 @@
     "build": "tsup",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf .turbo && rm -rf dist"
   },
   "peerDependencies": {
     "react": "^19",

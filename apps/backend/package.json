@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
+    "mvn": "./mvnw -f pom.xml",
     "build": "node -e \"const v=require('../../package.json').version; console.log('version', v); require('child_process').execSync(`./mvnw -f pom.xml -Drevision=${v} -DskipTests package`, { stdio: 'inherit' });\"",
     "test": "./mvnw -f pom.xml test",
     "clean": "./mvnw -f pom.xml clean"
