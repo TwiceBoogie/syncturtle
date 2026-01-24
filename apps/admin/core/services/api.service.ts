@@ -44,7 +44,7 @@ export abstract class APIService {
 
   private async getCsrfToken(): Promise<string> {
     if (!this.csrfPromise) {
-      this.csrfPromise = this.get<{ csrfToken: string }>("/api/csrf-token", {
+      this.csrfPromise = this.get<{ csrfToken: string }>("/api/get-csrf-token", {
         csrf: false,
       })
         .then((res) => res.data.csrfToken)

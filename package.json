@@ -15,7 +15,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "yarn format:check && turbo run lint typecheck test --continue",
-    "clean": "turbo run clean && rm -rf .turbo **/.next **/dist **/node_modules",
+    "clean": "turbo run clean && rm -rf .turbo && rm -rf node_modules",
     "sync:versions": "node scripts/sync-versions.mjs",
     "check:versions": "node scripts/sync-versions.mjs && git diff --exit-code"
   },

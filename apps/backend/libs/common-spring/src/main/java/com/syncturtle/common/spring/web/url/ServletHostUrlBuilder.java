@@ -18,6 +18,11 @@ public class ServletHostUrlBuilder {
         return core.baseHost(isAdmin, isSpace, isApp);
     }
 
+    public String buildRedirectUrlWithErrors(HttpServletRequest request, Map<String, ?> errors) {
+        String base = baseHost(request, false, false, false);
+        return core.buildRedirectUriWithQuery(base, errors);
+    }
+
     public String buildAdminRedirectUrlWithErrors(HttpServletRequest request, Map<String, ?> errors) {
         String base = baseHost(request, true, false, false);
         return core.buildRedirectUriWithQuery(base, errors);

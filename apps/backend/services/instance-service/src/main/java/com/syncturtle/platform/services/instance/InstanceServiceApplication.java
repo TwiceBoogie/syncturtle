@@ -7,6 +7,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import com.syncturtle.common.spring.properties.CsrfTransportProperties;
 import com.syncturtle.platform.services.instance.configurations.properties.InstanceServiceProperties;
 import com.syncturtle.platform.services.instance.configurations.properties.ProductTelemetryProperties;
 
@@ -14,7 +15,8 @@ import com.syncturtle.platform.services.instance.configurations.properties.Produ
 @EnableDiscoveryClient
 @EnableScheduling
 @SpringBootApplication
-@EnableConfigurationProperties({ InstanceServiceProperties.class, ProductTelemetryProperties.class })
+@EnableConfigurationProperties({ InstanceServiceProperties.class, ProductTelemetryProperties.class,
+        CsrfTransportProperties.class })
 public class InstanceServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(InstanceServiceApplication.class, args);

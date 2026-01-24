@@ -12,7 +12,7 @@ ALTER TABLE users
 
 --changeset syncturtle:0001-012-unique-profiles-user-id labels:users
 ALTER TABLE profiles
-    ADD CONSTRAINT uq_profiles_user_id UNIQUE (userId);
+    ADD CONSTRAINT uq_profiles_user_id UNIQUE (user_id);
 --rollback ALTER TABLE profiles DROP CONSTRAINT IF EXISTS uq_profiles_user_id;
 
 --changeset syncturtle:0001-013-fk-profiles-user-id labels:users

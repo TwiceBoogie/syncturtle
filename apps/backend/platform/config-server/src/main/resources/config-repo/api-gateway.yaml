@@ -58,8 +58,18 @@ spring:
                       - 502
                       - 503
                       - 504
+            - id: instance-admin-post
+              uri: lb://instance-service
+              predicates:
+                - Path=/api/instances/**
+                - Method=POST
+              filters:
+                - name: SessionIssue
+                  args:
+                    cookieName: session-admin
+                    sessionType: ADMIN
 
-            - id: instance-admin-write
+            - id: instance-admin-patch
               uri: lb://instance-service
               predicates:
                 - Path=/api/instances/**
@@ -107,3 +117,20 @@ app:
         sameSite: Lax
         path: /
         domain: ""
+  security:
+    encryption:
+      secret-key: ${APP_SECURITY_ENCRYPTION_SECRET_KEY}
+    csrf:
+      hmac-algorithm: ${APP_SECURITY_CSRF_HMAC_ALGORITHM:HmacSHA256}
+      signing-key: ${APP_SECURITY_CSRF_SIGNING_KEY}
+      transport:
+        cookie-name: csrf
+        header-name: X-CSRF-Token
+        form-field-name: csrfmiddlwaretoken
+      cookie-policy:
+        http-only: true
+        secure: false
+        same-site: Lax
+        path: /
+        domain: ""
+        max-age: 30m

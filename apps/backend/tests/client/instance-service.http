@@ -1,0 +1,32 @@
+@gateway = http://localhost:8000
+
+###
+
+GET {{gateway}}/actuator/health HTTP/1.1
+
+###
+
+GET {{gateway}}/api/instances/hello HTTP/1.1
+
+###
+
+# @name getCSRF
+GET {{gateway}}/api/get-csrf-token HTTP/1.1
+
+###
+
+@csrfToken = {{getCSRF.response.body.$.csrfToken}}
+
+POST {{gateway}}/api/instances/admins/sign-up HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Origin: http://localhost:3001
+Referer: http://localhost:3001/god-mode/
+Cookie: csrf={{csrfToken}}
+
+firstName=salvador
+&lastName=sebastian
+&email=test@example.com
+&companyName=Syncturtle
+&password=VeryStrongPassword!2026#OK
+&telemetryEnabled=true
+&csrfmiddlewaretoken={{csrfToken}}
