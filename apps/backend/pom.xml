@@ -57,7 +57,7 @@
 
     <!-- Spring Cloud BOM -->
     <spring-cloud.version>2025.1.0</spring-cloud.version>
-    <otel.instrumentation.version>2.23.0-alpha</otel.instrumentation.version>
+    <otel.instrumentation.version>2.24.0-alpha</otel.instrumentation.version>
 
     <!-- Testcontainers BOM -->
     <testcontainers.version>1.21.4</testcontainers.version>
