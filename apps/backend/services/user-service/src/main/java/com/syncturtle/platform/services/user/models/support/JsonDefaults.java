@@ -19,4 +19,8 @@ public final class JsonDefaults {
         return n;
     }
 
+    public static ObjectNode emptyObject() {
+        return MAPPER.createObjectNode();
+    }
+
 }

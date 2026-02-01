@@ -44,6 +44,18 @@ spring:
               metrics: true
 
           routes:
+            - id: instance-protected
+              uri: lb://instance-service
+              predicates:
+                - Path=/api/instances/admins/**
+                - Method=GET,OPTIONS,HEAD
+              filters:
+                - name: SessionValidate
+                  args:
+                    required: true
+                    cookieName: session-admin
+                    sessionType: ADMIN
+
             - id: instance-public
               uri: lb://instance-service
               predicates:
@@ -78,8 +90,8 @@ spring:
                 - name: SessionValidate
                   args:
                     required: true
-                    cookieName: session
-                    sessionType: USER
+                    cookieName: session-admin
+                    sessionType: ADMIN
 
     loadbalancer:
       cache:

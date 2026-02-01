@@ -22,13 +22,7 @@ export const AppProvider: FC<IAppProvider> = (props) => {
   return (
     <ProgressProvider height="4px" options={{ showSpinner: false }} shallowRouting>
       <StoreProvider>
-        <ThemeProvider
-          attribute={"class"}
-          defaultTheme="system"
-          enableSystem
-          enableColorScheme
-          themes={["dark", "light"]}
-        >
+        <ThemeProvider themes={["light", "dark"]} defaultTheme="system" enableSystem>
           <TranslationProvider>
             <StoreWrapper>
               <InstanceWrapper>

@@ -5,6 +5,7 @@ import java.lang.annotation.Annotation;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -44,6 +45,8 @@ public class AuthorizationInterceptor implements HandlerInterceptor {
         if (admin != null) {
             if (!ctx.isAuthenticated()) {
                 response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                response.getWriter().write("{\"details\":\"Authentication credentials were not provided\"}");
                 return false;
             }
             if (!instanceAuthz.isInstanceAdmin(ctx.getUserId(), admin.minRole())) {

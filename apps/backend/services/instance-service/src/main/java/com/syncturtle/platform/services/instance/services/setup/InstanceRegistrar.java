@@ -73,13 +73,13 @@ public class InstanceRegistrar {
             instance = repo.saveAndFlush(instance);
 
             InstanceEvent evt = InstanceEvent.builder()
+                    .eventId(UUID.randomUUID().toString())
+                    .occurredAt(now)
                     .type(Type.INSTANCE_CREATED)
                     .id(instance.getId())
+                    .setupDone(false)
                     .edition(edition)
                     .version(instance.getVersion())
-                    .machineSignature(instance.getInstanceId())
-                    .vmHost(vmHost)
-                    .occurredAt(now)
                     .test(isTest)
                     .build();
 
@@ -93,13 +93,13 @@ public class InstanceRegistrar {
             instance = repo.save(instance);
 
             InstanceEvent evt = InstanceEvent.builder()
+                    .eventId(UUID.randomUUID().toString())
+                    .occurredAt(now)
                     .type(Type.INSTANCE_UPDATED)
                     .id(instance.getId())
+                    .setupDone(instance.isSetupDone())
                     .edition(edition)
                     .version(instance.getVersion())
-                    .machineSignature(instance.getInstanceId())
-                    .vmHost(vmHost)
-                    .occurredAt(now)
                     .test(isTest)
                     .build();
 

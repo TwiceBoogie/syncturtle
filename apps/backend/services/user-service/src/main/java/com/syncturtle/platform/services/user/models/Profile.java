@@ -9,6 +9,7 @@ import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.syncturtle.common.data.jpa.model.TimeAuditEntity;
+import com.syncturtle.platform.services.user.models.support.JsonDefaults;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -88,9 +89,17 @@ public class Profile extends TimeAuditEntity {
     public static Profile create(User user, String companyName) {
         Objects.requireNonNull(user, "User model");
         Profile profile = new Profile();
-        profile.user = user;
+        profile.theme = JsonDefaults.emptyObject();
+        profile.tourCompleted = false;
+        profile.onboardingStep = JsonDefaults.profileOnboarding();
+        profile.onboarded = false;
+        profile.billingAddressCountry = "";
+        profile.billingAddress = JsonDefaults.emptyObject();
+        profile.hasBillingAddress = false;
         profile.companyName = companyName;
-
+        profile.user = user;
+        profile.language = "en";
+        profile.marketingEmailConsent = false;
         return profile;
     }
 }

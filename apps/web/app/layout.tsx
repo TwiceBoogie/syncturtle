@@ -34,8 +34,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="shortcut icon" href="/favicon/favicon.ico" />
       </head>
       <body>
-        <div id="context-menu-portal" />
-        <div id="editor-portal" />
         <AppProvider>
           <div className="h-screen w-full overflow-hidden bg-custom-background-100 relative flex flex-col">
             <main className="w-full h-full overflow-hidden relative">{children}</main>

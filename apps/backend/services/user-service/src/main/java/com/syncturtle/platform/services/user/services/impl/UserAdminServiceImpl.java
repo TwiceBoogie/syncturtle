@@ -74,45 +74,48 @@ public class UserAdminServiceImpl implements UserAdminService {
         }
 
         Instant now = Instant.now();
-        User user = userRepository.save(User.create(
+        log.info("user IP: {}", ctx.getClientIp());
+        User user = userRepository.saveAndFlush(User.create(
                 email,
                 firstName,
                 lastName,
                 passwordEncoder.encode(password),
                 UUID.randomUUID().toString().replace("-", ""),
-                false));
+                false,
+                ctx.getClientIp(),
+                ctx.getUserAgent()));
 
         profileRepository.save(Profile.create(user, companyName));
 
-        user.setActive(true);
-        user.setLastActive(now);
-        user.setLastLoginTime(now);
-        user.setLastLoginIp(ctx.getClientIp());
-        user.setLastLoginUagent(ctx.getUserAgent());
-        user.setTokenUpdatedAt(now);
+        // user.setActive(true);
+        // user.setLastActive(now);
+        // user.setLastLoginTime(now);
+        // user.setLastLoginIp(ctx.getClientIp());
+        // user.setLastLoginUagent(ctx.getUserAgent());
+        // user.setTokenUpdatedAt(now);
         // to guarantee the @Version field is updated before publishing the event
-        User updated = userRepository.saveAndFlush(user);
+        // User updated = userRepository.saveAndFlush(user);
 
         UserEvent evt = UserEvent.builder()
                 .eventId(UUID.randomUUID().toString())
                 .occurredAt(now)
                 .type(Type.USER_CREATED)
-                .id(updated.getId())
-                .username(updated.getUsername())
-                .email(updated.getEmail())
-                .firstName(updated.getFirstName())
-                .lastName(updated.getLastName())
-                .dateJoined(updated.getCreatedAt())
-                .active(updated.isActive())
-                .emailVerified(updated.isEmailVerified())
-                .passwordAutoset(updated.isPasswordAutoset())
-                .userTimezone(updated.getUserTimezone())
-                .version(updated.getVersion())
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .dateJoined(user.getCreatedAt())
+                .active(user.isActive())
+                .emailVerified(user.isEmailVerified())
+                .passwordAutoset(user.isPasswordAutoset())
+                .userTimezone(user.getUserTimezone())
+                .version(user.getVersion())
                 .build();
 
         events.publishEvent(new UserEventToPublish(evt));
 
-        return new AdminSignupInternalResponse(updated.getId());
+        return new AdminSignupInternalResponse(user.getId());
     }
 
 }

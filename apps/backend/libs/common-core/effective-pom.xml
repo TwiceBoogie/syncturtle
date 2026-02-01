@@ -21,7 +21,7 @@
   <groupId>com.syncturtle</groupId>
   <artifactId>common-core</artifactId>
   <version>0.0.1</version>
-  <name>common-core</name>
+  <name>syncturtle :: common-core</name>
   <description>Parent pom providing dependency and plugin management for applications built with Maven</description>
   <url>https://spring.io/projects/spring-boot/syncturtle-backend/libs/common-core</url>
   <licenses>
@@ -55,7 +55,7 @@
     <cache2k.version>2.6.1.Final</cache2k.version>
     <caffeine.version>3.2.3</caffeine.version>
     <cassandra-driver.version>4.19.2</cassandra-driver.version>
-    <classmate.version>1.7.1</classmate.version>
+    <classmate.version>1.7.3</classmate.version>
     <cloud.enabled>false</cloud.enabled>
     <commons-codec.version>1.18.0</commons-codec.version>
     <commons-dbcp2.version>2.13.0</commons-dbcp2.version>
@@ -65,6 +65,7 @@
     <couchbase-client.version>3.8.3</couchbase-client.version>
     <crac.version>1.5.0</crac.version>
     <cyclonedx-maven-plugin.version>2.9.1</cyclonedx-maven-plugin.version>
+    <datasource-micrometer.version>1.2.1</datasource-micrometer.version>
     <db2-jdbc.version>12.1.3.0</db2-jdbc.version>
     <dependency-management-plugin.version>1.1.7</dependency-management-plugin.version>
     <derby.version>10.16.1.1</derby.version>
@@ -82,12 +83,12 @@
     <hamcrest.version>3.0</hamcrest.version>
     <hazelcast.version>5.5.0</hazelcast.version>
     <hibernate-validator.version>8.0.3.Final</hibernate-validator.version>
-    <hibernate.version>6.6.39.Final</hibernate.version>
+    <hibernate.version>6.6.41.Final</hibernate.version>
     <hikaricp.version>6.3.3</hikaricp.version>
     <hsqldb.version>2.7.3</hsqldb.version>
     <htmlunit.version>4.11.1</htmlunit.version>
     <httpasyncclient.version>4.1.5</httpasyncclient.version>
-    <httpclient5.version>5.5.1</httpclient5.version>
+    <httpclient5.version>5.5.2</httpclient5.version>
     <httpcore.version>4.4.16</httpcore.version>
     <httpcore5.version>5.3.6</httpcore5.version>
     <infinispan.version>15.2.6.Final</infinispan.version>
@@ -139,7 +140,7 @@
     <lettuce.version>6.6.0.RELEASE</lettuce.version>
     <liquibase.version>4.31.1</liquibase.version>
     <log4j2.version>2.24.3</log4j2.version>
-    <logback.version>1.5.22</logback.version>
+    <logback.version>1.5.25</logback.version>
     <lombok.version>1.18.42</lombok.version>
     <mariadb.version>3.5.7</mariadb.version>
     <maven-antrun-plugin.version>3.1.0</maven-antrun-plugin.version>
@@ -161,8 +162,8 @@
     <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
     <maven-war-plugin.version>3.4.0</maven-war-plugin.version>
     <maven.compiler.release>21</maven.compiler.release>
-    <micrometer-tracing.version>1.5.7</micrometer-tracing.version>
-    <micrometer.version>1.15.7</micrometer.version>
+    <micrometer-tracing.version>1.5.8</micrometer-tracing.version>
+    <micrometer.version>1.15.8</micrometer.version>
     <mockito.version>5.17.0</mockito.version>
     <modelmapper.version>3.2.6</modelmapper.version>
     <mongodb.version>5.5.2</mongodb.version>
@@ -175,9 +176,9 @@
     <opentelemetry.version>1.49.0</opentelemetry.version>
     <oracle-database.version>23.7.0.25.01</oracle-database.version>
     <oracle-r2dbc.version>1.3.0</oracle-r2dbc.version>
-    <otel.instrumentation.version>2.23.0-alpha</otel.instrumentation.version>
-    <pooled-jms.version>3.1.8</pooled-jms.version>
-    <postgresql.version>42.7.8</postgresql.version>
+    <otel.instrumentation.version>2.24.0-alpha</otel.instrumentation.version>
+    <pooled-jms.version>3.1.9</pooled-jms.version>
+    <postgresql.version>42.7.9</postgresql.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <prometheus-client.version>1.3.10</prometheus-client.version>
@@ -188,7 +189,7 @@
     <querydsl.version>5.1.0</querydsl.version>
     <r2dbc-h2.version>1.0.1.RELEASE</r2dbc-h2.version>
     <r2dbc-mariadb.version>1.3.0</r2dbc-mariadb.version>
-    <r2dbc-mssql.version>1.0.3.RELEASE</r2dbc-mssql.version>
+    <r2dbc-mssql.version>1.0.4.RELEASE</r2dbc-mssql.version>
     <r2dbc-mysql.version>1.4.1</r2dbc-mysql.version>
     <r2dbc-pool.version>1.0.2.RELEASE</r2dbc-pool.version>
     <r2dbc-postgresql.version>1.0.9.RELEASE</r2dbc-postgresql.version>
@@ -197,9 +198,9 @@
     <rabbit-amqp-client.version>5.25.0</rabbit-amqp-client.version>
     <rabbit-stream-client.version>0.23.0</rabbit-stream-client.version>
     <reactive-streams.version>1.0.4</reactive-streams.version>
-    <reactor-bom.version>2024.0.13</reactor-bom.version>
+    <reactor-bom.version>2024.0.14</reactor-bom.version>
     <resource.delimiter>@</resource.delimiter>
-    <rest-assured.version>5.5.6</rest-assured.version>
+    <rest-assured.version>5.5.7</rest-assured.version>
     <revision>0.0.1</revision>
     <rsocket.version>1.1.5</rsocket.version>
     <rxjava3.version>3.1.12</rxjava3.version>
@@ -211,19 +212,19 @@
     <skipSystemTests>true</skipSystemTests>
     <slf4j.version>2.0.17</slf4j.version>
     <snakeyaml.version>2.4</snakeyaml.version>
-    <spring-amqp.version>3.2.8</spring-amqp.version>
+    <spring-amqp.version>3.2.9</spring-amqp.version>
     <spring-authorization-server.version>1.5.5</spring-authorization-server.version>
     <spring-batch.version>5.2.4</spring-batch.version>
     <spring-boot.run.main-class>${start-class}</spring-boot.run.main-class>
     <spring-cloud.version>2025.0.1</spring-cloud.version>
-    <spring-data-bom.version>2025.0.7</spring-data-bom.version>
+    <spring-data-bom.version>2025.0.8</spring-data-bom.version>
     <spring-framework.version>6.2.15</spring-framework.version>
     <spring-graphql.version>1.4.4</spring-graphql.version>
     <spring-hateoas.version>2.5.1</spring-hateoas.version>
-    <spring-integration.version>6.5.5</spring-integration.version>
-    <spring-kafka.version>3.3.11</spring-kafka.version>
+    <spring-integration.version>6.5.6</spring-integration.version>
+    <spring-kafka.version>3.3.12</spring-kafka.version>
     <spring-ldap.version>3.3.5</spring-ldap.version>
-    <spring-pulsar.version>1.2.13</spring-pulsar.version>
+    <spring-pulsar.version>1.2.14</spring-pulsar.version>
     <spring-restdocs.version>3.0.5</spring-restdocs.version>
     <spring-retry.version>2.0.12</spring-retry.version>
     <spring-security.version>6.5.7</spring-security.version>
@@ -241,19 +242,25 @@
     <thymeleaf.version>3.1.3.RELEASE</thymeleaf.version>
     <tomcat.version>10.1.50</tomcat.version>
     <unboundid-ldapsdk.version>7.0.4</unboundid-ldapsdk.version>
-    <undertow.version>2.3.20.Final</undertow.version>
+    <undertow.version>2.3.22.Final</undertow.version>
     <versions-maven-plugin.version>2.18.0</versions-maven-plugin.version>
     <vibur.version>26.0</vibur.version>
     <webjars-locator-core.version>0.59</webjars-locator-core.version>
-    <webjars-locator-lite.version>1.1.2</webjars-locator-lite.version>
+    <webjars-locator-lite.version>1.1.3</webjars-locator-lite.version>
     <wsdl4j.version>1.6.3</wsdl4j.version>
     <xml-maven-plugin.version>1.1.0</xml-maven-plugin.version>
     <xmlunit2.version>2.10.4</xmlunit2.version>
     <yasson.version>3.0.4</yasson.version>
     <zipkin-reporter.version>3.5.1</zipkin-reporter.version>
+    <zxcvbn.version>1.9.0</zxcvbn.version>
   </properties>
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>net.ttddyy.observation</groupId>
+        <artifactId>datasource-micrometer-spring-boot</artifactId>
+        <version>1.2.1</version>
+      </dependency>
       <dependency>
         <groupId>org.modelmapper</groupId>
         <artifactId>modelmapper</artifactId>
@@ -263,6 +270,11 @@
         <groupId>org.jasypt</groupId>
         <artifactId>jasypt</artifactId>
         <version>1.9.3</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nulab-inc</groupId>
+        <artifactId>zxcvbn</artifactId>
+        <version>1.9.0</version>
       </dependency>
       <dependency>
         <groupId>com.syncturtle</groupId>
@@ -459,7 +471,7 @@
       <dependency>
         <groupId>com.fasterxml</groupId>
         <artifactId>classmate</artifactId>
-        <version>1.7.1</version>
+        <version>1.7.3</version>
       </dependency>
       <dependency>
         <groupId>commons-codec</groupId>
@@ -749,77 +761,77 @@
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-agroal</artifactId>
-        <version>6.6.39.Final</version>
+        <version>6.6.41.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-ant</artifactId>
-        <version>6.6.39.Final</version>
+        <version>6.6.41.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-c3p0</artifactId>
-        <version>6.6.39.Final</version>
+        <version>6.6.41.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-community-dialects</artifactId>
-        <version>6.6.39.Final</version>
+        <version>6.6.41.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-core</artifactId>
-        <version>6.6.39.Final</version>
+        <version>6.6.41.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-envers</artifactId>
-        <version>6.6.39.Final</version>
+        <version>6.6.41.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-graalvm</artifactId>
-        <version>6.6.39.Final</version>
+        <version>6.6.41.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-hikaricp</artifactId>
-        <version>6.6.39.Final</version>
+        <version>6.6.41.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-jcache</artifactId>
-        <version>6.6.39.Final</version>
+        <version>6.6.41.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-jpamodelgen</artifactId>
-        <version>6.6.39.Final</version>
+        <version>6.6.41.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-micrometer</artifactId>
-        <version>6.6.39.Final</version>
+        <version>6.6.41.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-proxool</artifactId>
-        <version>6.6.39.Final</version>
+        <version>6.6.41.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-spatial</artifactId>
-        <version>6.6.39.Final</version>
+        <version>6.6.41.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-testing</artifactId>
-        <version>6.6.39.Final</version>
+        <version>6.6.41.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-vibur</artifactId>
-        <version>6.6.39.Final</version>
+        <version>6.6.41.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.validator</groupId>
@@ -866,17 +878,17 @@
       <dependency>
         <groupId>org.apache.httpcomponents.client5</groupId>
         <artifactId>httpclient5</artifactId>
-        <version>5.5.1</version>
+        <version>5.5.2</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents.client5</groupId>
         <artifactId>httpclient5-cache</artifactId>
-        <version>5.5.1</version>
+        <version>5.5.2</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents.client5</groupId>
         <artifactId>httpclient5-fluent</artifactId>
-        <version>5.5.1</version>
+        <version>5.5.2</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
@@ -1290,12 +1302,12 @@
       <dependency>
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
-        <version>1.5.22</version>
+        <version>1.5.25</version>
       </dependency>
       <dependency>
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-core</artifactId>
-        <version>1.5.22</version>
+        <version>1.5.25</version>
       </dependency>
       <dependency>
         <groupId>org.projectlombok</groupId>
@@ -1310,7 +1322,7 @@
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-stackdriver</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
         <exclusions>
           <exclusion>
             <groupId>javax.annotation</groupId>
@@ -1432,12 +1444,12 @@
       <dependency>
         <groupId>org.messaginghub</groupId>
         <artifactId>pooled-jms</artifactId>
-        <version>3.1.8</version>
+        <version>3.1.9</version>
       </dependency>
       <dependency>
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
-        <version>42.7.8</version>
+        <version>42.7.9</version>
       </dependency>
       <dependency>
         <groupId>org.quartz-scheduler</groupId>
@@ -1462,7 +1474,7 @@
       <dependency>
         <groupId>io.r2dbc</groupId>
         <artifactId>r2dbc-mssql</artifactId>
-        <version>1.0.3.RELEASE</version>
+        <version>1.0.4.RELEASE</version>
       </dependency>
       <dependency>
         <groupId>io.asyncer</groupId>
@@ -1512,367 +1524,367 @@
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-actuator</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-actuator-autoconfigure</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-autoconfigure</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-autoconfigure-processor</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-buildpack-platform</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-configuration-metadata</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-configuration-processor</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-devtools</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-docker-compose</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-jarmode-tools</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-loader</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-loader-classic</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-loader-tools</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-properties-migrator</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-activemq</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-actuator</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-amqp</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-aop</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-artemis</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-batch</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-cache</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-cassandra</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-cassandra-reactive</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-couchbase</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-couchbase-reactive</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-jdbc</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-jpa</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-ldap</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-mongodb</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-mongodb-reactive</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-neo4j</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-r2dbc</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-redis</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-data-rest</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-freemarker</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-graphql</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-groovy-templates</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-hateoas</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-integration</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-jdbc</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-jersey</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-jetty</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-jooq</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-json</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-log4j2</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-logging</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-mail</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-mustache</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-oauth2-authorization-server</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-oauth2-client</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-pulsar</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-pulsar-reactive</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-quartz</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-reactor-netty</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-rsocket</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-security</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-test</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-thymeleaf</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-tomcat</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-undertow</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-validation</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-web</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-web-services</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-webflux</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-websocket</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-test</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-test-autoconfigure</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-testcontainers</artifactId>
-        <version>3.5.9</version>
+        <version>3.5.10</version>
       </dependency>
       <dependency>
         <groupId>com.sun.xml.messaging.saaj</groupId>
@@ -1972,12 +1984,12 @@
       <dependency>
         <groupId>org.springframework.kafka</groupId>
         <artifactId>spring-kafka</artifactId>
-        <version>3.3.11</version>
+        <version>3.3.12</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.kafka</groupId>
         <artifactId>spring-kafka-test</artifactId>
-        <version>3.3.11</version>
+        <version>3.3.12</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.ldap</groupId>
@@ -2082,17 +2094,17 @@
       <dependency>
         <groupId>io.undertow</groupId>
         <artifactId>undertow-core</artifactId>
-        <version>2.3.20.Final</version>
+        <version>2.3.22.Final</version>
       </dependency>
       <dependency>
         <groupId>io.undertow</groupId>
         <artifactId>undertow-servlet</artifactId>
-        <version>2.3.20.Final</version>
+        <version>2.3.22.Final</version>
       </dependency>
       <dependency>
         <groupId>io.undertow</groupId>
         <artifactId>undertow-websockets-jsr</artifactId>
-        <version>2.3.20.Final</version>
+        <version>2.3.22.Final</version>
       </dependency>
       <dependency>
         <groupId>org.vibur</groupId>
@@ -2112,7 +2124,7 @@
       <dependency>
         <groupId>org.webjars</groupId>
         <artifactId>webjars-locator-lite</artifactId>
-        <version>1.1.2</version>
+        <version>1.1.3</version>
       </dependency>
       <dependency>
         <groupId>wsdl4j</groupId>
@@ -4219,1987 +4231,1987 @@
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-declarative-config-bridge</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-instrumentation-annotations-support</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-instrumentation-api-incubator</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent</groupId>
         <artifactId>opentelemetry-javaagent-bootstrap</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent</groupId>
         <artifactId>opentelemetry-javaagent-extension-api</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent</groupId>
         <artifactId>opentelemetry-javaagent-internal-logging-application</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent</groupId>
         <artifactId>opentelemetry-javaagent-internal-logging-simple</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent</groupId>
         <artifactId>opentelemetry-javaagent-tooling</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent</groupId>
         <artifactId>opentelemetry-muzzle</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-sdk-autoconfigure-support</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent</groupId>
         <artifactId>opentelemetry-testing-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent</groupId>
         <artifactId>opentelemetry-javaagent-tooling-java9</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent</groupId>
         <artifactId>opentelemetry-agent-for-testing</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-activej-http-6.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-alibaba-druid-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-alibaba-druid-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-apache-dbcp-2.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-apache-dbcp-2.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-apache-dubbo-2.7</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-apache-dubbo-2.7</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-apache-elasticjob-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-apache-httpasyncclient-4.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-apache-shenyu-2.4</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-avaje-jex-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-c3p0-0.9</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-c3p0-0.9</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-camel-2.20</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-executors-bootstrap</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-executors</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-external-annotations</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-failsafe-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-finagle-http-23.11</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-finatra-2.9</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-geode-1.4</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-google-http-client-1.19</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-grails-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-grizzly-2.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-grpc-1.6</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-grpc-1.6</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-guava-10.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-guava-10.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-gwt-2.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-helidon-4.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-helidon-4.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-hikaricp-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-hikaricp-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-http-url-connection</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-hystrix-1.4</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-iceberg-1.8</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-influxdb-2.4</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-java-http-client</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-java-http-client</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-java-http-server</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-java-http-server</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-java-util-logging</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-javalin-5.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jaxrs-client</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jdbc-bootstrap</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jdbc</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-jdbc</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jfinal-3.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jmx-metrics</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-jmx-metrics</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jodd-http-4.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jsp-2.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-kubernetes-client-7.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-methods</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-mybatis-3.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-extension-annotations-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-extension-kotlin-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-instrumentation-annotations-1.16</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-instrumentation-api</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-oracle-ucp-11.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-oracle-ucp-11.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-oshi</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-oshi</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-payara</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-powerjob-4.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-quarkus-resteasy-reactive</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-quartz-2.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-quartz-2.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-r2dbc-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-r2dbc-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-rabbitmq-2.7</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-rediscala-1.8</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-resources</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-rmi-bootstrap</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-rmi</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-scala-fork-join-2.8</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-spark-2.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-spymemcached-2.12</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-tapestry-5.4</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-twilio-6.6</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-undertow-1.4-bootstrap</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-undertow-1.4</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-vaadin-14.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-vibur-dbcp-11.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-vibur-dbcp-11.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-wicket-8.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-akka-actor-2.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-akka-actor-fork-join-2.5</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-akka-http-10.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-apache-httpclient-2.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-apache-httpclient-4.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-apache-httpclient-4.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-apache-httpclient-5.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-apache-httpclient-5.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-armeria-1.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-armeria-1.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-armeria-grpc-1.14</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-async-http-client-1-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-async-http-client-1.8</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-async-http-client-1.9</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-async-http-client-2.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-aws-lambda-core-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-aws-lambda-core-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-aws-lambda-events-2.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-aws-lambda-events-2.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-aws-lambda-events-3.11</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-aws-lambda-events-common-2.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-aws-sdk-1.11</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-aws-sdk-1.11</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-aws-sdk-1.11-autoconfigure</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-aws-sdk-2.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-aws-sdk-2.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-aws-sdk-2.2-autoconfigure</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-azure-core-1.14</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-azure-core-1.19</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-azure-core-1.36</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-azure-core-1.53</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-cassandra-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-cassandra-4.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-cassandra-4.4</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-cassandra-4.4</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-clickhouse-client-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-clickhouse-client-v1-0.5</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-clickhouse-client-v2-0.8</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-couchbase-2-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-couchbase-2.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-couchbase-2.6</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-couchbase-3.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-couchbase-3.1.6</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-couchbase-3.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-couchbase-3.4</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-dropwizard-metrics-4.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-dropwizard-views-0.7</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-elasticsearch-api-client-7.16</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-elasticsearch-rest-5.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-elasticsearch-rest-6.4</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-elasticsearch-rest-7.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-elasticsearch-rest-7.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-elasticsearch-rest-common-5.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-elasticsearch-rest-common-5.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-elasticsearch-transport-5.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-elasticsearch-transport-5.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-elasticsearch-transport-6.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-elasticsearch-transport-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-graphql-java-12.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-graphql-java-12.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-graphql-java-20.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-graphql-java-20.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-graphql-java-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-hibernate-3.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-hibernate-4.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-hibernate-6.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-hibernate-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-hibernate-procedure-call-4.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-hibernate-reactive-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-internal-application-logger-bootstrap</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-internal-application-logger</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-internal-class-loader</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-internal-eclipse-osgi-3.6</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-internal-lambda</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-internal-reflection</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-internal-url-class-loader</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jaxrs-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jaxrs-common-bootstrap</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jaxrs-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jaxws-2.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jaxws-2.0-axis2-1.6</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jaxws-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jaxws-cxf-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jaxws-jws-api-1.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jaxws-metro-2.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jboss-logmanager-appender-1.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jboss-logmanager-mdc-1.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jedis-1.4</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jedis-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jedis-4.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jedis-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jetty-11.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jetty-12.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jetty-8.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jetty-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jetty-httpclient-12.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-jetty-httpclient-12.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jetty-httpclient-9.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-jetty-httpclient-9.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jms-1.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jms-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jms-common-bootstrap</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jms-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jsf-jakarta-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jsf-javax-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jsf-mojarra-1.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jsf-mojarra-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jsf-myfaces-1.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-jsf-myfaces-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-kafka-connect-2.6</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-kafka-streams-0.11</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-kotlinx-coroutines-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-kotlinx-coroutines-flow-1.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-ktor-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-ktor-2-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-ktor-2.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-ktor-2.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-ktor-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-ktor-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-ktor-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-lettuce-4.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-lettuce-5.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-lettuce-5.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-lettuce-5.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-lettuce-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-liberty-20.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-liberty-dispatcher-20.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-log4j-appender-1.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-log4j-appender-2.17</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-log4j-appender-2.17</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-log4j-mdc-1.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-logback-appender-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-logback-appender-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-logback-mdc-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-logback-mdc-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-micrometer-1.5</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-micrometer-1.5</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-mongo-3.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-mongo-3.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-mongo-3.7</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-mongo-4.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-mongo-async-3.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-nats-2.17</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-nats-2.17</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-netty-3.8</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-netty-4.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-netty-4.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-netty-4.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-netty-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-netty-common-4.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-netty-common-4.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-okhttp-2.2</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-okhttp-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-okhttp-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-openai-java-1.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-openai-java-1.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opensearch-java-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opensearch-rest-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opensearch-rest-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opensearch-rest-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-api-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-api-1.10</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-api-1.15</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-api-1.27</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-api-1.31</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-api-1.32</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-api-1.37</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-api-1.38</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-api-1.4</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-api-1.40</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-api-1.42</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-api-1.47</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-api-1.50</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-api-1.52</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-api-1.56</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-opentelemetry-api-1.57</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-pekko-actor-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-pekko-http-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-pulsar-2.8</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-ratpack-1.4</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-ratpack-1.7</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-ratpack-1.7</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-reactor-3.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-reactor-3.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-reactor-3.4</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-reactor-kafka-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-redisson-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-redisson-3.17</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-redisson-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-restlet-1.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-restlet-1.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-restlet-2.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-restlet-2.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-runtime-telemetry-java17</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-runtime-telemetry-java17</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-runtime-telemetry-java8</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-runtime-telemetry-java8</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-rxjava-1.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-rxjava-2.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-rxjava-2.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-rxjava-3-common</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-rxjava-3.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-rxjava-3.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-rxjava-3.1.1</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-rxjava-3.1.1</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-servlet-2.2</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-servlet-3.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-servlet-3.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-servlet-5.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-servlet-common-bootstrap</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-servlet-common</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-servlet-common</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-servlet-javax-common</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-spring-batch-3.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-spring-boot-actuator-autoconfigure-2.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-spring-boot-resources</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-spring-cloud-aws-3.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-spring-core-2.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-spring-integration-4.1</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-spring-integration-4.1</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-spring-kafka-2.7</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-spring-kafka-2.7</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-spring-pulsar-1.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-spring-rabbit-1.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-spring-rmi-4.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-spring-scheduling-3.1-bootstrap</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-spring-scheduling-3.1</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-spring-security-config-6.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-spring-security-config-6.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-spring-ws-2.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-zipkin-spring-boot-starter</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-struts-2.3</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-struts-7.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-tomcat-10.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-tomcat-7.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-tomcat-common</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-tomcat-jdbc</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-vertx-kafka-client-3.6</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-vertx-redis-client-4.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-vertx-rx-java-3.5</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-vertx-web-3.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-xxl-job-1.9.2</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-xxl-job-2.1.2</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-xxl-job-2.3.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-xxl-job-common</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-zio-2.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-jaxrs-2.0-annotations</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-jaxrs-2.0-common</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-jaxrs-2.0-cxf-3.2</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-jaxrs-2.0-jersey-2.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-jaxrs-2.0-resteasy-3.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-jaxrs-2.0-resteasy-3.1</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-jaxrs-2.0-resteasy-common</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-jaxrs-3.0-annotations</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-jaxrs-3.0-common</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-jaxrs-3.0-jersey-3.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-jaxrs-3.0-resteasy-6.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-kafka-clients-0.11-bootstrap</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-kafka-clients-0.11</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-kafka-clients-2.6</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-kafka-clients-common-0.11</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-log4j-context-data-2.17</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.instrumentation</groupId>
-        <artifactId>opentelemetry-log4j-context-data-2.17-autoconfigure</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-log4j-context-data-2.7</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-play-mvc-2.4</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-play-mvc-2.6</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-play-ws-1.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-play-ws-2.0</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-play-ws-2.1</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-play-ws-common</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-reactor-netty-0.9</artifactId>
-        <version>2.23.0-alpha</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
-        <artifactId>opentelemetry-javaagent-reactor-netty-1.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-rocketmq-client-4.8</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-rocketmq-client-4.8</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-rocketmq-client-5.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-runtime-telemetry-java17</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-runtime-telemetry-java17</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-runtime-telemetry-java8</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-runtime-telemetry-java8</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-rxjava-1.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-rxjava-2.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-rxjava-2.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-rxjava-3-common</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-rxjava-3.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-rxjava-3.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-rxjava-3.1.1</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-rxjava-3.1.1</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-servlet-2.2</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-servlet-3.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-servlet-3.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-servlet-5.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-servlet-common-bootstrap</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-servlet-common</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-servlet-common</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-servlet-javax-common</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-spring-batch-3.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-spring-boot-actuator-autoconfigure-2.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-spring-boot-resources</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-spring-cloud-aws-3.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-spring-core-2.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-spring-integration-4.1</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-spring-integration-4.1</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-spring-kafka-2.7</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-spring-kafka-2.7</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-spring-pulsar-1.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-spring-rabbit-1.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-spring-rmi-4.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-spring-scheduling-3.1-bootstrap</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-spring-scheduling-3.1</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-spring-security-config-6.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-spring-security-config-6.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-spring-ws-2.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-zipkin-spring-boot-starter</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-struts-2.3</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-struts-7.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-tomcat-10.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-tomcat-7.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-tomcat-common</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-tomcat-jdbc</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-vertx-kafka-client-3.6</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-vertx-redis-client-4.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-vertx-rx-java-3.5</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-vertx-web-3.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-xxl-job-1.9.2</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-xxl-job-2.1.2</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-xxl-job-2.3.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-xxl-job-common</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-zio-2.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-jaxrs-2.0-annotations</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-jaxrs-2.0-common</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-jaxrs-2.0-cxf-3.2</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-jaxrs-2.0-jersey-2.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-jaxrs-2.0-resteasy-3.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-jaxrs-2.0-resteasy-3.1</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-jaxrs-2.0-resteasy-common</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-jaxrs-3.0-annotations</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-jaxrs-3.0-common</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-jaxrs-3.0-jersey-3.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-jaxrs-3.0-resteasy-6.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-kafka-clients-0.11-bootstrap</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-kafka-clients-0.11</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-kafka-clients-2.6</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-kafka-clients-common-0.11</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-log4j-context-data-2.17</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-log4j-context-data-2.17-autoconfigure</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-log4j-context-data-2.7</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-play-mvc-2.4</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-play-mvc-2.6</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-play-ws-1.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-play-ws-2.0</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-play-ws-2.1</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-play-ws-common</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-reactor-netty-0.9</artifactId>
+        <version>2.24.0-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
+        <artifactId>opentelemetry-javaagent-reactor-netty-1.0</artifactId>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-spring-cloud-gateway-2.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-spring-cloud-gateway-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-spring-cloud-gateway-webmvc-4.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-spring-data-1.8</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-spring-jms-2.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-spring-jms-6.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-spring-web-3.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-spring-web-3.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-spring-web-6.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-spring-webflux-5.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-spring-webflux-5.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-spring-webmvc-3.1</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-spring-webmvc-5.3</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-spring-webmvc-6.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-spring-webmvc-6.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-spring-webmvc-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-vertx-http-client-3.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-vertx-http-client-4.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-vertx-http-client-5.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-vertx-http-client-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-vertx-sql-client-4.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-vertx-sql-client-5.0</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent.instrumentation</groupId>
         <artifactId>opentelemetry-javaagent-vertx-sql-client-common</artifactId>
-        <version>2.23.0-alpha</version>
+        <version>2.24.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.semconv</groupId>
@@ -6209,167 +6221,167 @@
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-common</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-context</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-opentracing-shim</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-api</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-exporter-common</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-exporter-logging</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-exporter-logging-otlp</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-exporter-zipkin</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-extension-kotlin</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-extension-trace-propagators</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-sdk</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-sdk-common</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-sdk-logs</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-sdk-metrics</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-sdk-testing</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-sdk-trace</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-sdk-extension-autoconfigure</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-sdk-extension-autoconfigure-spi</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-sdk-extension-jaeger-remote-sampler</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-exporter-otlp</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-exporter-otlp-common</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-exporter-sender-grpc-managed-channel</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-exporter-sender-jdk</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-exporter-sender-okhttp</artifactId>
-        <version>1.57.0</version>
+        <version>1.58.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-opencensus-shim</artifactId>
-        <version>1.57.0-alpha</version>
+        <version>1.58.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-api-incubator</artifactId>
-        <version>1.57.0-alpha</version>
+        <version>1.58.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-exporter-prometheus</artifactId>
-        <version>1.57.0-alpha</version>
+        <version>1.58.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-sdk-extension-incubator</artifactId>
-        <version>1.57.0-alpha</version>
+        <version>1.58.0-alpha</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-instrumentation-annotations</artifactId>
-        <version>2.23.0</version>
+        <version>2.24.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-instrumentation-api</artifactId>
-        <version>2.23.0</version>
+        <version>2.24.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.javaagent</groupId>
         <artifactId>opentelemetry-javaagent</artifactId>
-        <version>2.23.0</version>
+        <version>2.24.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-spring-boot-autoconfigure</artifactId>
-        <version>2.23.0</version>
+        <version>2.24.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-spring-boot-starter</artifactId>
-        <version>2.23.0</version>
+        <version>2.24.0</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry.semconv</groupId>
@@ -9338,162 +9350,162 @@
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-commons</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-core</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-jakarta9</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-java11</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-java21</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-jetty11</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-jetty12</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-observation</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-observation-test</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-appoptics</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-atlas</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-azure-monitor</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-cloudwatch2</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-datadog</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-dynatrace</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-elastic</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-ganglia</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-graphite</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-health</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-humio</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-influx</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-jmx</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-kairos</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-new-relic</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-opentsdb</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-otlp</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-prometheus</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-prometheus-simpleclient</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-signalfx</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-statsd</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-wavefront</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-test</artifactId>
-        <version>1.15.7</version>
+        <version>1.15.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
@@ -9503,37 +9515,37 @@
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>docs</artifactId>
-        <version>1.5.7</version>
+        <version>1.5.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-tracing</artifactId>
-        <version>1.5.7</version>
+        <version>1.5.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-tracing-bridge-brave</artifactId>
-        <version>1.5.7</version>
+        <version>1.5.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-tracing-bridge-otel</artifactId>
-        <version>1.5.7</version>
+        <version>1.5.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-tracing-integration-test</artifactId>
-        <version>1.5.7</version>
+        <version>1.5.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-tracing-reporter-wavefront</artifactId>
-        <version>1.5.7</version>
+        <version>1.5.8</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-tracing-test</artifactId>
-        <version>1.5.7</version>
+        <version>1.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
@@ -10874,22 +10886,22 @@
       <dependency>
         <groupId>io.projectreactor</groupId>
         <artifactId>reactor-core</artifactId>
-        <version>3.7.14</version>
+        <version>3.7.15</version>
       </dependency>
       <dependency>
         <groupId>io.projectreactor</groupId>
         <artifactId>reactor-test</artifactId>
-        <version>3.7.14</version>
+        <version>3.7.15</version>
       </dependency>
       <dependency>
         <groupId>io.projectreactor</groupId>
         <artifactId>reactor-tools</artifactId>
-        <version>3.7.14</version>
+        <version>3.7.15</version>
       </dependency>
       <dependency>
         <groupId>io.projectreactor</groupId>
         <artifactId>reactor-core-micrometer</artifactId>
-        <version>1.2.14</version>
+        <version>1.2.15</version>
       </dependency>
       <dependency>
         <groupId>io.projectreactor.addons</groupId>
@@ -10904,22 +10916,22 @@
       <dependency>
         <groupId>io.projectreactor.netty</groupId>
         <artifactId>reactor-netty</artifactId>
-        <version>1.2.13</version>
+        <version>1.2.14</version>
       </dependency>
       <dependency>
         <groupId>io.projectreactor.netty</groupId>
         <artifactId>reactor-netty-core</artifactId>
-        <version>1.2.13</version>
+        <version>1.2.14</version>
       </dependency>
       <dependency>
         <groupId>io.projectreactor.netty</groupId>
         <artifactId>reactor-netty-http</artifactId>
-        <version>1.2.13</version>
+        <version>1.2.14</version>
       </dependency>
       <dependency>
         <groupId>io.projectreactor.netty</groupId>
         <artifactId>reactor-netty-http-brave</artifactId>
-        <version>1.2.13</version>
+        <version>1.2.14</version>
       </dependency>
       <dependency>
         <groupId>io.projectreactor.addons</groupId>
@@ -10944,72 +10956,72 @@
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>json-schema-validator</artifactId>
-        <version>5.5.6</version>
+        <version>5.5.7</version>
       </dependency>
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>rest-assured-common</artifactId>
-        <version>5.5.6</version>
+        <version>5.5.7</version>
       </dependency>
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>json-path</artifactId>
-        <version>5.5.6</version>
+        <version>5.5.7</version>
       </dependency>
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>xml-path</artifactId>
-        <version>5.5.6</version>
+        <version>5.5.7</version>
       </dependency>
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>rest-assured</artifactId>
-        <version>5.5.6</version>
+        <version>5.5.7</version>
       </dependency>
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>spring-commons</artifactId>
-        <version>5.5.6</version>
+        <version>5.5.7</version>
       </dependency>
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>spring-mock-mvc</artifactId>
-        <version>5.5.6</version>
+        <version>5.5.7</version>
       </dependency>
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>scala-support</artifactId>
-        <version>5.5.6</version>
+        <version>5.5.7</version>
       </dependency>
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>scala-extensions</artifactId>
-        <version>5.5.6</version>
+        <version>5.5.7</version>
       </dependency>
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>spring-web-test-client</artifactId>
-        <version>5.5.6</version>
+        <version>5.5.7</version>
       </dependency>
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>kotlin-extensions</artifactId>
-        <version>5.5.6</version>
+        <version>5.5.7</version>
       </dependency>
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>spring-mock-mvc-kotlin-extensions</artifactId>
-        <version>5.5.6</version>
+        <version>5.5.7</version>
       </dependency>
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>spring-web-test-client-kotlin-extensions</artifactId>
-        <version>5.5.6</version>
+        <version>5.5.7</version>
       </dependency>
       <dependency>
         <groupId>io.rest-assured</groupId>
         <artifactId>rest-assured-all</artifactId>
-        <version>5.5.6</version>
+        <version>5.5.7</version>
       </dependency>
       <dependency>
         <groupId>io.rsocket</groupId>
@@ -11139,27 +11151,27 @@
       <dependency>
         <groupId>org.springframework.amqp</groupId>
         <artifactId>spring-amqp</artifactId>
-        <version>3.2.8</version>
+        <version>3.2.9</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.amqp</groupId>
         <artifactId>spring-rabbit</artifactId>
-        <version>3.2.8</version>
+        <version>3.2.9</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.amqp</groupId>
         <artifactId>spring-rabbit-junit</artifactId>
-        <version>3.2.8</version>
+        <version>3.2.9</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.amqp</groupId>
         <artifactId>spring-rabbit-stream</artifactId>
-        <version>3.2.8</version>
+        <version>3.2.9</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.amqp</groupId>
         <artifactId>spring-rabbit-test</artifactId>
-        <version>3.2.8</version>
+        <version>3.2.9</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.batch</groupId>
@@ -11184,87 +11196,87 @@
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-cassandra</artifactId>
-        <version>4.5.7</version>
+        <version>4.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-commons</artifactId>
-        <version>3.5.7</version>
+        <version>3.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-couchbase</artifactId>
-        <version>5.5.7</version>
+        <version>5.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-elasticsearch</artifactId>
-        <version>5.5.7</version>
+        <version>5.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-jdbc</artifactId>
-        <version>3.5.7</version>
+        <version>3.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-r2dbc</artifactId>
-        <version>3.5.7</version>
+        <version>3.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-relational</artifactId>
-        <version>3.5.7</version>
+        <version>3.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-jpa</artifactId>
-        <version>3.5.7</version>
+        <version>3.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-envers</artifactId>
-        <version>3.5.7</version>
+        <version>3.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-mongodb</artifactId>
-        <version>4.5.7</version>
+        <version>4.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-neo4j</artifactId>
-        <version>7.5.7</version>
+        <version>7.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-redis</artifactId>
-        <version>3.5.7</version>
+        <version>3.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-rest-webmvc</artifactId>
-        <version>4.5.7</version>
+        <version>4.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-rest-core</artifactId>
-        <version>4.5.7</version>
+        <version>4.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-rest-hal-explorer</artifactId>
-        <version>4.5.7</version>
+        <version>4.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-keyvalue</artifactId>
-        <version>3.5.7</version>
+        <version>3.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-ldap</artifactId>
-        <version>3.5.7</version>
+        <version>3.5.8</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
@@ -11384,232 +11396,232 @@
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-amqp</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-camel</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-cassandra</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-core</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-debezium</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-event</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-feed</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-file</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-ftp</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-graphql</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-groovy</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-hazelcast</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-http</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-ip</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-jdbc</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-jms</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-jmx</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-jpa</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-kafka</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-mail</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-mongodb</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-mqtt</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-r2dbc</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-redis</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-rsocket</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-scripting</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-sftp</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-smb</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-stomp</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-stream</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-syslog</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-test</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-test-support</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-webflux</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-websocket</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-ws</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-xml</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-xmpp</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-zeromq</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-zip</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.integration</groupId>
         <artifactId>spring-integration-zookeeper</artifactId>
-        <version>6.5.5</version>
+        <version>6.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.pulsar</groupId>
         <artifactId>spring-pulsar</artifactId>
-        <version>1.2.13</version>
+        <version>1.2.14</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.pulsar</groupId>
         <artifactId>spring-pulsar-cache-provider</artifactId>
-        <version>1.2.13</version>
+        <version>1.2.14</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.pulsar</groupId>
         <artifactId>spring-pulsar-cache-provider-caffeine</artifactId>
-        <version>1.2.13</version>
+        <version>1.2.14</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.pulsar</groupId>
         <artifactId>spring-pulsar-reactive</artifactId>
-        <version>1.2.13</version>
+        <version>1.2.14</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.pulsar</groupId>
         <artifactId>spring-pulsar-test</artifactId>
-        <version>1.2.13</version>
+        <version>1.2.14</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.restdocs</groupId>
@@ -12080,7 +12092,7 @@
             <dependency>
               <groupId>org.springframework.boot</groupId>
               <artifactId>spring-boot-maven-plugin</artifactId>
-              <version>3.5.9</version>
+              <version>3.5.10</version>
             </dependency>
           </dependencies>
           <configuration>
@@ -12127,7 +12139,7 @@
         <plugin>
           <groupId>org.springframework.boot</groupId>
           <artifactId>spring-boot-maven-plugin</artifactId>
-          <version>3.5.9</version>
+          <version>3.5.10</version>
           <executions>
             <execution>
               <id>repackage</id>
@@ -12247,6 +12259,9 @@
               <includes>
                 <include>**/*IT.java</include>
               </includes>
+              <excludes>
+                <exclude>**/*$*</exclude>
+              </excludes>
               <systemPropertyVariables>
                 <spring.profiles.active>it</spring.profiles.active>
                 <spring.cloud.config.enabled>false</spring.cloud.config.enabled>
@@ -12263,6 +12278,9 @@
           <includes>
             <include>**/*IT.java</include>
           </includes>
+          <excludes>
+            <exclude>**/*$*</exclude>
+          </excludes>
           <systemPropertyVariables>
             <spring.profiles.active>it</spring.profiles.active>
             <spring.cloud.config.enabled>false</spring.cloud.config.enabled>
