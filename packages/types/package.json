@@ -18,7 +18,7 @@
     "dev": "tsup src/index.ts --format esm --dts --watch --sourcemap --out-dir dist",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf .turbo && rm -rf dist"
   },
   "devDependencies": {
     "@syncturtle/eslint-config": "workspace:*",
