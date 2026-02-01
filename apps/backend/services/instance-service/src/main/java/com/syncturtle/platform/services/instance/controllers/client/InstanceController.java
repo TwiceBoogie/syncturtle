@@ -18,6 +18,7 @@ import com.syncturtle.common.core.constants.GatewayHeaderNames;
 import com.syncturtle.common.core.enums.AuthFlow;
 import com.syncturtle.common.spring.cache.response.ResponseCache;
 import com.syncturtle.common.spring.cache.response.ResponseCacheEvict;
+import com.syncturtle.common.spring.properties.CsrfProperties;
 import com.syncturtle.common.spring.security.authz.AllowAnonymous;
 import com.syncturtle.common.spring.security.authz.RequireInstanceAdmin;
 import com.syncturtle.platform.services.instance.application.query.InstanceInfoQueryHandler;
@@ -39,6 +40,7 @@ public class InstanceController {
 
     private final InstanceInfoQueryHandler query;
     private final AuthFormValidator authValidator;
+    private final CsrfProperties props;
 
     @GetMapping
     @AllowAnonymous
@@ -67,13 +69,15 @@ public class InstanceController {
     @AllowAnonymous
     @ResponseCacheEvict(group = "instance.info.get")
     @PostMapping(value = "/admins/sign-up", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public ResponseEntity<Void> instanceAdminSignup(@Valid @ModelAttribute InstanceAdminSignupForm form,
+    public ResponseEntity<String> instanceAdminSignup(@Valid @ModelAttribute InstanceAdminSignupForm form,
             BindingResult bindingResult) {
-        authValidator.throwIfInvalid(AuthFlow.INSTANCE_ADMIN_SIGNUP, bindingResult, form);
+        authValidator.throwIfInvalid(AuthFlow.INSTANCE_ADMIN_SIGNUP, bindingResult,
+                form);
 
         InstanceAdminSignupResult result = query.instanceAdminSignup(form);
         return ResponseEntity.status(HttpStatus.SEE_OTHER)
-                .header(GatewayHeaderNames.HDR_INTERNAL_USER_ID, result.getUserId().toString())
+                .header(GatewayHeaderNames.HDR_INTERNAL_USER_ID,
+                        result.getUserId().toString())
                 .header(GatewayHeaderNames.HDR_AUTH_SESSION_TYPE, "ADMIN")
                 .location(URI.create(result.getRedirectLocation()))
                 .build();
@@ -82,6 +86,7 @@ public class InstanceController {
     @AllowAnonymous
     @GetMapping("/hello")
     public ResponseEntity<String> hello() {
+        System.out.println(props.getSigningKey());
         return ResponseEntity.ok("hello");
     }
 }

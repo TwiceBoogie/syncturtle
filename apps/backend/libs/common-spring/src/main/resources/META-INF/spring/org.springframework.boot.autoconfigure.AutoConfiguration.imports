@@ -4,6 +4,7 @@ com.syncturtle.common.spring.web.GatewayClientHeaderFilterAutoConfiguration
 com.syncturtle.common.spring.web.RequestClientContextAutoConfiguration
 com.syncturtle.common.spring.web.RequestUserContextAutoConfiguration
 com.syncturtle.common.spring.web.GatewayUserHeaderFilterAutoConfiguration
+com.syncturtle.common.spring.web.HmacCsrfTokenAutoConfiguration
 com.syncturtle.common.spring.web.FeignAutoConfiguration
 com.syncturtle.common.spring.web.url.HostUrlBuilderAutoConfiguration
 com.syncturtle.common.spring.mapping.ModelMapperAutoConfiguration

@@ -1,9 +1,20 @@
 import { API_BASE_URL } from "@syncturtle/constants";
-import { APIService } from "./api.service";
+import { APIService, HttpError } from "./api.service";
+import { IApiErrorPayload, ICsrfTokenData } from "@syncturtle/types";
 
 export class AuthService extends APIService {
   constructor() {
     super(API_BASE_URL);
+  }
+
+  async requestCSRFToken(): Promise<ICsrfTokenData> {
+    try {
+      const response = await this.get<ICsrfTokenData>("/api/get-csrf-token");
+      return response.data;
+    } catch (error) {
+      const err = error as HttpError<IApiErrorPayload>;
+      throw err.data ?? err;
+    }
   }
 
   async signOut(): Promise<void> {

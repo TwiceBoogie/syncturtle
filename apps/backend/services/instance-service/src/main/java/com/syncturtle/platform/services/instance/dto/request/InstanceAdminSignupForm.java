@@ -23,4 +23,5 @@ public final class InstanceAdminSignupForm {
     @Size(min = 8, max = 128)
     private String password;
     private String telemetryEnabled;
+    private String nextPath;
 }

@@ -1,9 +1,10 @@
-import { FC, useMemo, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import { FormHeader } from "./form-header";
 import { AuthHeader } from "./auth-header";
 import { getPasswordStrength } from "@syncturtle/utils";
 import { E_PASSWORD_STRENGTH } from "@syncturtle/constants";
 import { Eye, EyeOff } from "lucide-react";
+import { AuthService } from "@/services/auth.service";
 
 type TFormData = {
   firstName: string;
@@ -24,6 +25,8 @@ const defaultFormData: TFormData = {
   isTelemetryEnabled: true,
 };
 
+const authService = new AuthService();
+
 export const InstanceSetupFrom: FC = (props) => {
   const {} = props;
   // state
@@ -42,6 +45,12 @@ export const InstanceSetupFrom: FC = (props) => {
 
   const handleFormChange = (key: keyof TFormData, value: string | boolean) =>
     setFormData((prev) => ({ ...prev, [key]: value }));
+
+  useEffect(() => {
+    if (csrfToken === undefined) {
+      authService.requestCSRFToken().then((data) => data?.csrfToken && setCsrfToken(data.csrfToken));
+    }
+  });
 
   const isButtonDisabled = useMemo(
     () =>
@@ -63,7 +72,7 @@ export const InstanceSetupFrom: FC = (props) => {
 
   return (
     <>
-      {isPasswordInputFocused} {setCsrfToken}
+      {isPasswordInputFocused}
       <AuthHeader />
       <div className="mt-10 flex w-full grow flex-col items-center justify-center py-6">
         <div className="relative flex w-full max-w-90 flex-col gap-6">

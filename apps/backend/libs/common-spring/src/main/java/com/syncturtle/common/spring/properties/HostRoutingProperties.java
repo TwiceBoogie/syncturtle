@@ -7,12 +7,12 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-@ConfigurationProperties(prefix = "app.frontend")
+@ConfigurationProperties(prefix = "app.base-urls")
 public class HostRoutingProperties {
-    private String webUrl;
-    private String appBaseUrl;
-    private String adminBaseUrl;
-    private String spaceBaseUrl;
-    private String adminBasePath = "/god-mode/";
-    private String spaceBasePath = "/spaces/";
+    private final String webUrl;
+    private final String appBaseUrl;
+    private final String adminBaseUrl;
+    private final String spaceBaseUrl;
+    private final String adminBasePath = "/god-mode/";
+    private final String spaceBasePath = "/spaces/";
 }

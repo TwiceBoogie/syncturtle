@@ -90,7 +90,7 @@ public class User extends TimeAuditEntity {
 
     @ValidTimeZone
     @Column(name = "user_timezone", nullable = false)
-    private String userTimezone;
+    private String userTimezone = "America/Chicago";
 
     @Column(name = "last_active")
     private Instant lastActive;

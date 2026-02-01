@@ -1,3 +1,13 @@
+app:
+  security:
+    csrf:
+      hmac-algorithm: ${APP_SECURITY_CSRF_HMAC_ALGORITHM:HmacSHA256}
+      signing-key: ${APP_SECURITY_CSRF_SIGNING_KEY}
+      transport:
+        cookie-name: csrf
+        header-name: X-CSRF-Token
+        form-field-name: csrfmiddlewaretoken
+
 server:
   port: 8002
 
