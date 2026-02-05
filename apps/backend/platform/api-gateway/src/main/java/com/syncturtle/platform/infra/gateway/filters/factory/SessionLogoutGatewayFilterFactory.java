@@ -1,11 +1,11 @@
 package com.syncturtle.platform.infra.gateway.filters.factory;
 
+import java.time.Duration;
 import java.util.List;
 
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpCookie;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 
@@ -15,11 +15,15 @@ import com.syncturtle.platform.infra.gateway.support.SessionStore;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Component
 public class SessionLogoutGatewayFilterFactory
         extends AbstractGatewayFilterFactory<SessionLogoutGatewayFilterFactory.Config> {
+
+    private static final Duration DELETE_TIMEOUT = Duration.ofMillis(500);
 
     private final SessionStore sessions;
     private final SessionCookieProperties cookieProps;
@@ -32,26 +36,37 @@ public class SessionLogoutGatewayFilterFactory
 
     @Override
     public GatewayFilter apply(Config config) {
-        return (exchange, chain) -> chain.filter(exchange).then(Mono.defer(() -> {
+        return (exchange, chain) -> {
             ServerHttpResponse response = exchange.getResponse();
-            if (!is2xx(response)) {
-                return Mono.empty();
-            }
 
+            // read cookie from incoming request
             String sessionId = readCookie(exchange.getRequest().getCookies().get(config.getCookieName()));
-            if (sessionId == null) {
-                return Mono.empty();
+
+            // always clear cookie if present
+            if (sessionId != null) {
+                response.beforeCommit(() -> {
+                    response.addCookie(SessionCookies.clear(cookieProps, config.getCookieName()));
+                    return Mono.empty();
+                });
             }
 
-            return sessions.delete(config.getSessionType(), sessionId)
-                    .then(Mono.fromRunnable(
-                            () -> response.addCookie(SessionCookies.clear(cookieProps, config.getCookieName()))));
-        }));
-    }
+            // never fail logout if redis is down, timeout, etc
+            Mono<Void> deleteSessionMono = (sessionId == null)
+                    ? Mono.empty()
+                    : sessions.delete(config.getSessionType(), sessionId)
+                            .timeout(DELETE_TIMEOUT)
+                            .doOnSuccess(v -> log.debug("Deleted session: type={}, cookie={}", config.getSessionType(),
+                                    config.getCookieName()))
+                            .onErrorResume(ex -> {
+                                log.warn("Failed to delete session (continuing logout): type={}, cookie={}, err={}",
+                                        config.getSessionType(), config.getCookieName(), ex.toString());
+                                return Mono.empty();
+                            });
 
-    private static boolean is2xx(ServerHttpResponse response) {
-        HttpStatusCode status = response.getStatusCode();
-        return status != null && status.is2xxSuccessful();
+            return chain.filter(exchange)
+                    .then(deleteSessionMono)
+                    .onErrorResume(ex -> deleteSessionMono.then(Mono.error(ex)));
+        };
     }
 
     private static String readCookie(List<HttpCookie> cookies) {

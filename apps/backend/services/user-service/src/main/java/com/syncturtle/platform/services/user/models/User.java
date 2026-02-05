@@ -14,6 +14,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import lombok.Getter;
@@ -133,7 +134,8 @@ public class User extends TimeAuditEntity {
     private Long version;
 
     public static User create(String email, String firstName, String lastName, String password, String username,
-            boolean isPasswordAutoset) {
+            boolean isPasswordAutoset, String lastLoginIp, String lastLoginUagent) {
+        Instant now = Instant.now();
         User user = new User();
         user.email = email;
         user.firstName = firstName;
@@ -142,6 +144,14 @@ public class User extends TimeAuditEntity {
         user.username = username;
         user.passwordAutoset = isPasswordAutoset;
 
+        user.active = true;
+        user.lastActive = now;
+        user.lastLoginTime = now;
+        user.lastLoginIp = lastLoginIp;
+        user.lastLogoutIp = "";
+        user.lastLoginUagent = lastLoginUagent;
+        user.tokenUpdatedAt = now;
+
         return user;
     }
 
@@ -149,6 +159,13 @@ public class User extends TimeAuditEntity {
     void prePersist() {
         normalizeEmail();
         applyDefaults();
+        maybeRotateToken();
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        normalizeEmail();
+        maybeRotateToken();
     }
 
     private void normalizeEmail() {
@@ -162,12 +179,30 @@ public class User extends TimeAuditEntity {
             displayName = (email != null && email.contains("@")) ? email.substring(0, email.indexOf('@'))
                     : StringHelper.randomAsciLetters("user");
         }
+        if (token == null || token.isBlank()) {
+            token = "";
+        }
+        if (avatar == null || avatar.isBlank()) {
+            avatar = "";
+        }
+        if (lastLocation == null || lastLocation.isBlank()) {
+            lastLocation = "";
+        }
+        if (lastLoginIp == null || lastLoginIp.isBlank()) {
+            lastLoginIp = "";
+        }
+        if (createdLocation == null || createdLocation.isBlank()) {
+            createdLocation = "";
+        }
+        if (lastLoginMedium == null || lastLoginMedium.isBlank()) {
+            lastLoginMedium = "email";
+        }
+    }
+
+    private void maybeRotateToken() {
         if (tokenUpdatedAt != null) {
             token = UUID.randomUUID().toString().replace("-", "") + UUID.randomUUID().toString().replace("-", "");
             tokenUpdatedAt = Instant.now();
-        }
-        if (version == null) {
-            version = 0L;
         }
     }
 }

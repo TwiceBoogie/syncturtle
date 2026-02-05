@@ -12,7 +12,11 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@heroui/react": "^3.0.0-beta.5",
+    "@heroui/styles": "^3.0.0-beta.5",
     "@syncturtle/constants": "workspace:*",
+    "@syncturtle/hooks": "workspace:*",
+    "@syncturtle/ui": "workspace:*",
     "@syncturtle/utils": "workspace:*",
     "lucide-react": "^0.562.0",
     "next": "16.1.4",

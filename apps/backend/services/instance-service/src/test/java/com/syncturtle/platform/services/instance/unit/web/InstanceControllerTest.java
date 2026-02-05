@@ -17,7 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.syncturtle.platform.services.instance.application.query.InstanceInfoQueryHandler;
+import com.syncturtle.platform.services.instance.application.query.InstanceQueryHandler;
 import com.syncturtle.platform.services.instance.controllers.client.InstanceController;
 import com.syncturtle.platform.services.instance.dto.internal.InstanceAdminSignupResult;
 import com.syncturtle.platform.services.instance.utils.validation.AuthFormValidator;
@@ -26,7 +26,7 @@ import com.syncturtle.platform.services.instance.utils.validation.AuthFormValida
 public class InstanceControllerTest {
 
     @Mock
-    InstanceInfoQueryHandler query;
+    InstanceQueryHandler query;
     @Mock
     AuthFormValidator authValidator;
 

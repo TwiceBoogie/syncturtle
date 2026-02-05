@@ -35,6 +35,7 @@
     <!-- services -->
     <module>services/instance-service</module>
     <module>services/user-service</module>
+    <module>services/workspace-service</module>
     <!-- <module>services/password-service</module>
     <module>services/email-service</module> -->
 
@@ -64,6 +65,8 @@
 
     <modelmapper.version>3.2.6</modelmapper.version>
     <jasypt.version>1.9.3</jasypt.version>
+    <datasource-micrometer.version>1.2.1</datasource-micrometer.version>
+    <zxcvbn.version>1.9.0</zxcvbn.version>
 
     <spring.profile.unit>test</spring.profile.unit>
     <spring.profile.it>it</spring.profile.it>
@@ -101,8 +104,8 @@
 
   <dependencyManagement>
     <dependencies>
+      <!-- Spring Cloud BOM: control version of spring-cloud-* artifacts -->
       <dependency>
-        <!-- Spring Cloud BOM: control version of spring-cloud-* artifacts -->
         <groupId>org.springframework.cloud</groupId>
         <artifactId>spring-cloud-dependencies</artifactId>
         <version>${spring-cloud.version}</version>
@@ -128,6 +131,13 @@
         <scope>import</scope>
       </dependency>
 
+      <!-- Otel db BOM -->
+      <dependency>
+        <groupId>net.ttddyy.observation</groupId>
+        <artifactId>datasource-micrometer-spring-boot</artifactId>
+        <version>${datasource-micrometer.version}</version>
+      </dependency>
+
       <!-- ModelMapper BOM -->
       <dependency>
         <groupId>org.modelmapper</groupId>
@@ -140,6 +150,13 @@
         <artifactId>jasypt</artifactId>
         <version>${jasypt.version}</version>
       </dependency>
+      <!-- zxcvbn BOM -->
+      <dependency>
+        <groupId>com.nulab-inc</groupId>
+        <artifactId>zxcvbn</artifactId>
+        <version>${zxcvbn.version}</version>
+      </dependency>
+
       <!-- internal libs: so services can omit versions -->
       <dependency>
         <groupId>${project.groupId}</groupId>

@@ -39,7 +39,7 @@ processors:
 
 exporters:
   otlp/lgtm:
-    endpoint: otel-lgtm:4317
+    endpoint: syncturtle-obs:4317
     tls:
       insecure: true
 

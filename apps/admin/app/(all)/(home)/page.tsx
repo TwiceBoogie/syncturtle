@@ -1,7 +1,9 @@
 "use client";
 
+// components
 import { InstanceSignInForm } from "@/components/authentication";
 import { InstanceFailureView, InstanceSetupFrom } from "@/components/instance";
+// hooks
 import { useInstance } from "@/hooks/store/use-instance";
 
 export default function Home() {

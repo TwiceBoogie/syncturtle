@@ -25,10 +25,10 @@ import com.syncturtle.common.spring.web.url.HostUrlBuilder;
 import com.syncturtle.platform.services.instance.client.UserClient;
 import com.syncturtle.platform.services.instance.models.Instance;
 import com.syncturtle.platform.services.instance.payload.BinaryMetadata;
+import com.syncturtle.platform.services.instance.payload.InstanceSummaryWithConfig;
 import com.syncturtle.platform.services.instance.payload.RegistrationSpec;
 import com.syncturtle.platform.services.instance.payload.RuntimeMetadata;
 import com.syncturtle.platform.services.instance.repositories.InstanceAdminRepository;
-import com.syncturtle.platform.services.instance.repositories.InstanceInfoAggregate;
 import com.syncturtle.platform.services.instance.repositories.InstanceRepository;
 import com.syncturtle.platform.services.instance.repositories.UserRepository;
 import com.syncturtle.platform.services.instance.services.InstanceService;
@@ -83,7 +83,7 @@ public class InstanceServiceIT {
                     "1", InstanceConfigurationKey.POSTHOG_HOST, "https://posthog.local"));
 
             // Act
-            Optional<InstanceInfoAggregate> result = instanceService.instanceInfoAndConfig();
+            Optional<InstanceSummaryWithConfig> result = instanceService.instanceInfoAndConfig();
             // Assert
             assertThat(result).isPresent();
             assertThat(result.get().getUserCount()).isEqualTo(0);

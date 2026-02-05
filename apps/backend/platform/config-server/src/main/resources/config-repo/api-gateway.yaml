@@ -44,6 +44,18 @@ spring:
               metrics: true
 
           routes:
+            - id: instance-protected
+              uri: lb://instance-service
+              predicates:
+                - Path=/api/instances/admins/**, /api/instances/configurations/**
+                - Method=GET,OPTIONS,HEAD
+              filters:
+                - name: SessionValidate
+                  args:
+                    required: true
+                    cookieName: session-admin
+                    sessionType: ADMIN
+
             - id: instance-public
               uri: lb://instance-service
               predicates:
@@ -58,6 +70,25 @@ spring:
                       - 502
                       - 503
                       - 504
+
+            - id: instance-admin-sign-out-rewrite
+              uri: lb://user-service
+              predicates:
+                - Path=/api/instances/admins/sign-out/**
+                - Method=POST
+              filters:
+                - RewritePath=/api/instances/admins/sign-out, /auth/sign-out
+                - AddRequestHeader=X-ST-Internal-Logout-CTX, ADMIN
+                - name: SessionValidate
+                  args:
+                    required: false
+                    cookie-name: session-admin
+                    session-type: ADMIN
+                - name: SessionLogout
+                  args:
+                    cookie-name: session-admin
+                    session-type: ADMIN
+
             - id: instance-admin-post
               uri: lb://instance-service
               predicates:
@@ -78,8 +109,8 @@ spring:
                 - name: SessionValidate
                   args:
                     required: true
-                    cookieName: session
-                    sessionType: USER
+                    cookieName: session-admin
+                    sessionType: ADMIN
 
     loadbalancer:
       cache:
