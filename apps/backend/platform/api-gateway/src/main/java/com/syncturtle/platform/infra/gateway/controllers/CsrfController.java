@@ -44,7 +44,7 @@ public class CsrfController {
         response.addCookie(cookie.build());
 
         return ResponseEntity.ok(
-                Map.of("ok", true, "csrfToken", signed, "cookieName", csrfTransportProps.getCookieName(), "headerName",
+                Map.of("ok", true, "csrfToken", raw, "cookieName", csrfTransportProps.getCookieName(), "headerName",
                         csrfTransportProps.getHeaderName()));
     }
 

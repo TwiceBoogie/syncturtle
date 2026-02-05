@@ -39,9 +39,8 @@ import com.syncturtle.platform.services.instance.dto.request.InstanceAdminSignup
 import com.syncturtle.platform.services.instance.models.Instance;
 import com.syncturtle.platform.services.instance.models.InstanceAdmin;
 import com.syncturtle.platform.services.instance.models.User;
-import com.syncturtle.platform.services.instance.models.readmodel.InstanceInfoRow;
+import com.syncturtle.platform.services.instance.payload.InstanceSummaryWithConfig;
 import com.syncturtle.platform.services.instance.repositories.InstanceAdminRepository;
-import com.syncturtle.platform.services.instance.repositories.InstanceInfoAggregate;
 import com.syncturtle.platform.services.instance.repositories.InstanceRepository;
 import com.syncturtle.platform.services.instance.repositories.UserRepository;
 import com.syncturtle.platform.services.instance.repositories.projections.InstanceOnlyIdProjection;
@@ -75,13 +74,13 @@ public class InstanceServiceTest {
         @Test
         void whenInstanceNotConfigured_returnEmpty_andDontHitResolver() {
             // condition
-            when(instanceRepository.findLatestInfoRow()).thenReturn(Optional.empty());
+            when(instanceRepository.findTopByOrderByCreatedAtDesc(Instance.class)).thenReturn(Optional.empty());
             // result
-            Optional<InstanceInfoAggregate> result = service.instanceInfoAndConfig();
+            Optional<InstanceSummaryWithConfig> result = service.instanceInfoAndConfig();
             // assertions
             assertThat(result).isEmpty();
             // verify
-            verify(instanceRepository).findLatestInfoRow();
+            verify(instanceRepository).findTopByOrderByCreatedAtDesc(Instance.class);
             verifyNoInteractions(resolver, userRepository);
             verifyNoMoreInteractions(instanceRepository);
         }
@@ -89,19 +88,19 @@ public class InstanceServiceTest {
         @Test
         void whenInstanceExists_returnsAggregate() {
             // arrange
-            InstanceInfoRow row = mock(InstanceInfoRow.class);
+            Instance instance = mock(Instance.class);
             // condition
-            when(instanceRepository.findLatestInfoRow()).thenReturn(Optional.of(row));
+            when(instanceRepository.findTopByOrderByCreatedAtDesc(Instance.class)).thenReturn(Optional.of(instance));
             when(resolver.resolveRequested(anyList())).thenReturn(Map.of());
             when(userRepository.count()).thenReturn(42L);
             // act
-            Optional<InstanceInfoAggregate> result = service.instanceInfoAndConfig();
+            Optional<InstanceSummaryWithConfig> result = service.instanceInfoAndConfig();
             // assertions
             assertThat(result).isPresent();
-            assertThat(result.get().getInstance()).isEqualTo(row);
+            assertThat(result.get().getInstance()).isEqualTo(instance);
             assertThat(result.get().getUserCount()).isEqualTo(42L);
             // verify
-            verify(instanceRepository).findLatestInfoRow();
+            verify(instanceRepository).findTopByOrderByCreatedAtDesc(Instance.class);
             verify(resolver).resolveRequested(anyList());
             verify(userRepository).count();
         }
@@ -109,9 +108,9 @@ public class InstanceServiceTest {
         @Test
         void requestsCorrectConfigKeys() {
             // arrange
-            InstanceInfoRow row = mock(InstanceInfoRow.class);
+            Instance instance = mock(Instance.class);
             // conditions
-            when(instanceRepository.findLatestInfoRow()).thenReturn(Optional.of(row));
+            when(instanceRepository.findTopByOrderByCreatedAtDesc(Instance.class)).thenReturn(Optional.of(instance));
             when(userRepository.count()).thenReturn(1L);
 
             @SuppressWarnings("unchecked")

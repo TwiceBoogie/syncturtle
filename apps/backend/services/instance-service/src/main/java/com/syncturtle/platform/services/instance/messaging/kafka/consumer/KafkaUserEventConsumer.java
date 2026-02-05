@@ -20,7 +20,9 @@ public class KafkaUserEventConsumer {
     private final UserRepository userRepository;
 
     @Transactional
-    @KafkaListener(topics = KafkaTopicConstants.USER_EVENTS_V1, groupId = "instance-svc-user-event-v1")
+    @KafkaListener(topics = KafkaTopicConstants.USER_EVENTS_V1, groupId = "instance-svc-user-event-v1", properties = {
+            "spring.json.value.default.type=com.syncturtle.common.core.events.UserEvent"
+    })
     public void onUser(UserEvent event) {
         UUID userId = event.getId();
 
@@ -35,6 +37,7 @@ public class KafkaUserEventConsumer {
 
             existing.setUsername(event.getUsername());
             existing.setEmail(event.getEmail());
+            existing.setDisplayName(event.getDisplayName());
             existing.setFirstName(event.getFirstName());
             existing.setLastName(event.getLastName());
             existing.setAvatarAssetId(event.getAvatarAssetId());
@@ -48,6 +51,7 @@ public class KafkaUserEventConsumer {
             user.setId(userId);
             user.setUsername(event.getUsername());
             user.setEmail(event.getEmail());
+            user.setDisplayName(event.getDisplayName());
             user.setFirstName(event.getFirstName());
             user.setLastName(event.getLastName());
             user.setDateJoined(event.getDateJoined());
@@ -56,6 +60,7 @@ public class KafkaUserEventConsumer {
             user.setActive(event.isActive());
             user.setPasswordAutoset(event.isPasswordAutoset());
             user.setUserTimezone(event.getUserTimezone());
+            user.setBot(event.isBot());
             user.setVersion(event.getVersion());
 
             userRepository.save(user);

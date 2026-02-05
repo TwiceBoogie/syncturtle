@@ -50,14 +50,163 @@
   --size-header: 3.25rem;
 }
 
-:root {
-  --color-background-100: 255, 255, 255; /* primary bg */
-}
+@layer base {
+  :root {
+    color-scheme: light !important;
 
-.dark {
-  --color-background-100: 25, 25, 25; /* primary bg */
+    --color-background-100: 255, 255, 255; /* primary bg */
+
+    --color-border-100: 245, 245, 245; /* subtle border= 1 */
+    --color-border-200: 229, 229, 229; /* subtle border- 2 */
+    --color-border-300: 212, 212, 212; /* strong border- 1 */
+    --color-border-400: 185, 185, 185; /* strong border- 2 */
+
+    --color-sidebar-background-100: var(--color-background-100); /* primary sidebar bg */
+    --color-sidebar-background-90: var(--color-background-90); /* secondary sidebar bg */
+    --color-sidebar-background-80: var(--color-background-80); /* tertiary sidebar bg */
+
+    --color-sidebar-border-100: var(--color-border-100); /* subtle sidebar border= 1 */
+    --color-sidebar-border-200: var(--color-border-100); /* subtle sidebar border- 2 */
+    --color-sidebar-border-300: var(--color-border-100); /* strong sidebar border- 1 */
+    --color-sidebar-border-400: var(--color-border-100); /* strong sidebar border- 2 */
+  }
+  /*
+ * HeroUI Theme Customization
+ * Add this to your global.css after importing @heroui/styles
+ * Only includes base variables from variables.css
+ * @see https://v3.heroui.com/docs/react/getting-started/theming
+ */
+
+  :root,
+  .light,
+  .default,
+  [data-theme="light"],
+  [data-theme="default"] {
+    /* Theme Colors (Light Mode) */
+    --accent: oklch(83% 0.21 168);
+    --accent-foreground: oklch(15% 0.03 168);
+    --background: oklch(97.02% 0.018 168);
+    --border: oklch(90% 0.018 168);
+    --danger: oklch(65.32% 0.2412 15.44);
+    --danger-foreground: oklch(99.11% 0 0);
+    --default: oklch(94% 0.018 168);
+    --default-foreground: oklch(21.03% 0.0059 168);
+    --field-background: oklch(100% 0.009 168);
+    --field-foreground: oklch(21.03% 0.0059 168);
+    --field-placeholder: oklch(55.17% 0.036 168);
+    --focus: oklch(83% 0.21 168);
+    --foreground: oklch(21.03% 0.0059 168);
+    --muted: oklch(55.17% 0.036 168);
+    --overlay: oklch(100% 0.0054 168);
+    --overlay-foreground: oklch(21.03% 0.0059 168);
+    --scrollbar: oklch(87.1% 0.018 168);
+    --segment: oklch(100% 0.018 168);
+    --segment-foreground: oklch(21.03% 0.0059 168);
+    --separator: oklch(92% 0.018 168);
+    --success: oklch(73.29% 0.2005 140.51);
+    --success-foreground: oklch(21.03% 0.0059 140.51);
+    --surface: oklch(100% 0.009 168);
+    --surface-foreground: oklch(21.03% 0.0059 168);
+    --warning: oklch(78.19% 0.1642 62.03);
+    --warning-foreground: oklch(21.03% 0.0059 62.03);
+
+    /* Border Radius */
+    --radius: 0.25rem;
+    --field-radius: 0.125rem;
+
+    /* Font Family */
+    /* Make sure to load Bricolage Grotesque font in your app */
+    --font-sans: var(--font-bricolage-grotesque);
+  }
+
+  .dark,
+  [data-theme="dark"] {
+    color-scheme: dark;
+    /* Theme Colors (Dark Mode) */
+    --accent: oklch(83% 0.21 168);
+    --accent-foreground: oklch(15% 0.03 168);
+    --background: oklch(12% 0.018 168);
+    --border: oklch(28% 0.018 168);
+    --danger: oklch(59.4% 0.2038 14.33);
+    --danger-foreground: oklch(99.11% 0 0);
+    --default: oklch(27.4% 0.018 168);
+    --default-foreground: oklch(99.11% 0 0);
+    --field-background: oklch(21.03% 0.036 168);
+    --field-foreground: oklch(99.11% 0 0);
+    --field-placeholder: oklch(70.5% 0.036 168);
+    --focus: oklch(83% 0.21 168);
+    --foreground: oklch(99.11% 0 0);
+    --muted: oklch(70.5% 0.036 168);
+    --overlay: oklch(21.03% 0.036 168);
+    --overlay-foreground: oklch(99.11% 0 0);
+    --scrollbar: oklch(70.5% 0.018 168);
+    --segment: oklch(39.64% 0.018 168);
+    --segment-foreground: oklch(99.11% 0 0);
+    --separator: oklch(25% 0.018 168);
+    --success: oklch(73.29% 0.2005 140.51);
+    --success-foreground: oklch(21.03% 0.0059 140.51);
+    --surface: oklch(21.03% 0.036 168);
+    --surface-foreground: oklch(99.11% 0 0);
+    --warning: oklch(82.03% 0.1438 66.04);
+    --warning-foreground: oklch(21.03% 0.0059 66.04);
+  }
+
+  [data-theme="dark"] {
+    color-scheme: dark !important;
+
+    /* primary color */
+    --color-primary-10: 8, 31, 43;
+    --color-primary-20: 10, 37, 51;
+    --color-primary-30: 13, 49, 69;
+    --color-primary-40: 16, 58, 81;
+    --color-primary-50: 18, 68, 94;
+    --color-primary-60: 23, 86, 120;
+    --color-primary-70: 28, 104, 146;
+    --color-primary-80: 31, 116, 163;
+    --color-primary-90: 34, 129, 180;
+    --color-primary-100: 40, 146, 204;
+    --color-primary-200: 41, 154, 214;
+    --color-primary-300: 75, 170, 221;
+    --color-primary-400: 109, 186, 227;
+    --color-primary-500: 144, 202, 234;
+    --color-primary-600: 169, 214, 239;
+    --color-primary-700: 199, 229, 244;
+    --color-primary-800: 216, 237, 248;
+    --color-primary-900: 229, 243, 250;
+
+    --color-background-100: 25, 25, 25; /* primary bg */
+    --color-background-90: 32, 32, 32; /* secondary bg */
+    --color-background-80: 44, 44, 44; /* tertiary bg */
+
+    --color-border-100: 34, 34, 34; /* subtle border= 1 */
+    --color-border-200: 38, 38, 38; /* subtle border- 2 */
+    --color-border-300: 46, 46, 46; /* strong border- 1 */
+    --color-border-400: 58, 58, 58; /* strong border- 2 */
+
+    --color-sidebar-border-100: var(--color-border-100); /* subtle sidebar border= 1 */
+    --color-sidebar-border-200: var(--color-border-200); /* subtle sidebar border- 2 */
+    --color-sidebar-border-300: var(--color-border-300); /* strong sidebar border- 1 */
+    --color-sidebar-border-400: var(--color-border-400); /* strong sidebar border- 2 */
+
+    --color-sidebar-background-80: var(--color-background-80); /* tertiary sidebar bg */
+  }
+
+  body {
+    color: rgba(var(--color-text-100));
+  }
 }
 
 @theme inline {
+  --color-custom-primary-100: rgb(var(--color-primary-100));
   --color-custom-background-100: rgb(var(--color-background-100));
+
+  /* sidebar */
+  --color-custom-sidebar-background-80: rgb(var(--color-sidebar-background-80));
+
+  /* border */
+  --color-custom-border-100: rgb(var(--color-border-100));
+  --color-custom-border-200: rgb(var(--color-border-200));
+  /* sidebar border */
+  --color-custom-sidebar-border-200: rgb(var(--color-sidebar-border-200));
+  --color-custom-sidebar-background-100: rgb(var(--color-sidebar-background-100));
 }

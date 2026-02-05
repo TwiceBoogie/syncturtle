@@ -13,3 +13,7 @@ databaseChangeLog:
   - include:
       file: releases/0002_add_version_to_users/db.changelog-0002.yaml
       relativeToChangelogFile: true
+
+  - include:
+      file: releases/0003_add_instance_table/db.changelog-0003.yaml
+      relativeToChangelogFile: true
