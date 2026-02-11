@@ -1,6 +1,8 @@
 package com.syncturtle.common.spring.web;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,10 +13,12 @@ import com.syncturtle.common.web.security.csrf.HmacCsrfTokenSigner;
 
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(CsrfProperties.class)
+@ConditionalOnClass(CsrfTokenSigner.class)
+@ConditionalOnProperty(prefix = "app.security.csrf", name = "enabled", havingValue = "true")
 public class HmacCsrfTokenAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(CsrfTokenSigner.class)
     CsrfTokenSigner csrfTokenSigner(CsrfProperties props) {
         byte[] key = HmacCsrfTokenSigner.decodeSigningKeyBase64Url(props.getSigningKey());
         return new HmacCsrfTokenSigner(props.getHmacAlgorithm(), key);

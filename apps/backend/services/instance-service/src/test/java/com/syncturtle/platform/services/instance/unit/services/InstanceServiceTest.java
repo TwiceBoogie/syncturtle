@@ -6,12 +6,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,13 +23,18 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.syncturtle.common.core.enums.AuthErrorCode;
 import com.syncturtle.common.core.enums.InstanceConfigurationKey;
+import com.syncturtle.common.core.enums.InstanceEdition;
+import com.syncturtle.common.core.events.InstanceEvent;
+import com.syncturtle.common.core.events.InstanceEvent.Type;
 import com.syncturtle.common.core.exceptions.AuthenticationException;
 import com.syncturtle.common.spring.web.url.HostUrlBuilder;
 import com.syncturtle.common.web.context.RequestUserContext;
@@ -36,12 +43,14 @@ import com.syncturtle.common.web.dto.response.AdminSignupInternalResponse;
 import com.syncturtle.platform.services.instance.client.UserClient;
 import com.syncturtle.platform.services.instance.dto.internal.InstanceAdminSignupResult;
 import com.syncturtle.platform.services.instance.dto.request.InstanceAdminSignupForm;
+import com.syncturtle.platform.services.instance.dto.request.InstanceRequest;
 import com.syncturtle.platform.services.instance.models.Instance;
 import com.syncturtle.platform.services.instance.models.InstanceAdmin;
 import com.syncturtle.platform.services.instance.models.User;
-import com.syncturtle.platform.services.instance.models.readmodel.InstanceInfoRow;
+import com.syncturtle.platform.services.instance.payload.InstanceEventToPublish;
+import com.syncturtle.platform.services.instance.payload.InstanceSummary;
+import com.syncturtle.platform.services.instance.payload.InstanceSummaryWithConfig;
 import com.syncturtle.platform.services.instance.repositories.InstanceAdminRepository;
-import com.syncturtle.platform.services.instance.repositories.InstanceInfoAggregate;
 import com.syncturtle.platform.services.instance.repositories.InstanceRepository;
 import com.syncturtle.platform.services.instance.repositories.UserRepository;
 import com.syncturtle.platform.services.instance.repositories.projections.InstanceOnlyIdProjection;
@@ -65,6 +74,8 @@ public class InstanceServiceTest {
     HostUrlBuilder hostResolver;
     @Mock
     RequestUserContext userContext;
+    @Mock
+    ApplicationEventPublisher events;
 
     @InjectMocks
     InstanceServiceImpl service;
@@ -75,13 +86,13 @@ public class InstanceServiceTest {
         @Test
         void whenInstanceNotConfigured_returnEmpty_andDontHitResolver() {
             // condition
-            when(instanceRepository.findLatestInfoRow()).thenReturn(Optional.empty());
+            when(instanceRepository.findTopByOrderByCreatedAtDesc(Instance.class)).thenReturn(Optional.empty());
             // result
-            Optional<InstanceInfoAggregate> result = service.instanceInfoAndConfig();
+            Optional<InstanceSummaryWithConfig> result = service.instanceInfoAndConfig();
             // assertions
             assertThat(result).isEmpty();
             // verify
-            verify(instanceRepository).findLatestInfoRow();
+            verify(instanceRepository).findTopByOrderByCreatedAtDesc(Instance.class);
             verifyNoInteractions(resolver, userRepository);
             verifyNoMoreInteractions(instanceRepository);
         }
@@ -89,19 +100,19 @@ public class InstanceServiceTest {
         @Test
         void whenInstanceExists_returnsAggregate() {
             // arrange
-            InstanceInfoRow row = mock(InstanceInfoRow.class);
+            Instance instance = mock(Instance.class);
             // condition
-            when(instanceRepository.findLatestInfoRow()).thenReturn(Optional.of(row));
+            when(instanceRepository.findTopByOrderByCreatedAtDesc(Instance.class)).thenReturn(Optional.of(instance));
             when(resolver.resolveRequested(anyList())).thenReturn(Map.of());
             when(userRepository.count()).thenReturn(42L);
             // act
-            Optional<InstanceInfoAggregate> result = service.instanceInfoAndConfig();
+            Optional<InstanceSummaryWithConfig> result = service.instanceInfoAndConfig();
             // assertions
             assertThat(result).isPresent();
-            assertThat(result.get().getInstance()).isEqualTo(row);
+            assertThat(result.get().getInstance()).isEqualTo(instance);
             assertThat(result.get().getUserCount()).isEqualTo(42L);
             // verify
-            verify(instanceRepository).findLatestInfoRow();
+            verify(instanceRepository).findTopByOrderByCreatedAtDesc(Instance.class);
             verify(resolver).resolveRequested(anyList());
             verify(userRepository).count();
         }
@@ -109,9 +120,9 @@ public class InstanceServiceTest {
         @Test
         void requestsCorrectConfigKeys() {
             // arrange
-            InstanceInfoRow row = mock(InstanceInfoRow.class);
+            Instance instance = mock(Instance.class);
             // conditions
-            when(instanceRepository.findLatestInfoRow()).thenReturn(Optional.of(row));
+            when(instanceRepository.findTopByOrderByCreatedAtDesc(Instance.class)).thenReturn(Optional.of(instance));
             when(userRepository.count()).thenReturn(1L);
 
             @SuppressWarnings("unchecked")
@@ -128,6 +139,98 @@ public class InstanceServiceTest {
             assertThat(requested)
                     .anyMatch(k -> k.key() == InstanceConfigurationKey.ENABLE_SIGNUP)
                     .anyMatch(k -> k.key() == InstanceConfigurationKey.POSTHOG_HOST);
+        }
+
+    }
+
+    @Nested
+    class instanceUpdateTests {
+
+        @Test
+        void whenInstanceMissing_throwBadRequest_andDontPublishEvent() {
+            // arrange
+            // conditions
+            when(instanceRepository.findFirstByOrderByCreatedAtDesc()).thenReturn(Optional.empty());
+            // act + assert
+            assertThatThrownBy(() -> service.instanceUpdate(new InstanceRequest()))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Instance is not registered yet.");
+
+            // verify
+            verify(instanceRepository).findFirstByOrderByCreatedAtDesc();
+            verifyNoMoreInteractions(instanceRepository);
+            verifyNoInteractions(userRepository);
+            verifyNoInteractions(events);
+        }
+
+        @Test
+        void instanceUpdate_updatesOnlyProvidedFields_publishesEvent_andReturnsSummary() {
+            // arrange
+            Instance instance = validInstanceEntity();
+
+            InstanceRequest request = new InstanceRequest();
+            request.setInstanceName("New Name");
+            request.setTelemetryEnabled(null);
+
+            // conditions
+            when(instanceRepository.findFirstByOrderByCreatedAtDesc()).thenReturn(Optional.of(instance));
+            // service assigns instance = instanceRepository.saveAndFlush(instance)
+            when(instanceRepository.saveAndFlush(any(Instance.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(userRepository.count()).thenReturn(99L);
+            // act
+            InstanceSummary result = service.instanceUpdate(request);
+            // assert - returned summary
+            assertThat(result.getInstance().getInstanceName()).isEqualTo("New Name");
+            assertThat(result.getInstance().isTelemetryEnabled()).isFalse();
+            assertThat(result.getUserCount()).isEqualTo(99L);
+
+            // assert - saved instance
+            ArgumentCaptor<Instance> savedCaptor = ArgumentCaptor.forClass(Instance.class);
+            ArgumentCaptor<InstanceEventToPublish> publishedCaptor = ArgumentCaptor
+                    .forClass(InstanceEventToPublish.class);
+
+            InOrder order = inOrder(instanceRepository, events, userRepository);
+            order.verify(instanceRepository).findFirstByOrderByCreatedAtDesc();
+            order.verify(instanceRepository).saveAndFlush(savedCaptor.capture());
+            order.verify(events).publishEvent(publishedCaptor.capture());
+            order.verify(userRepository).count();
+
+            // assert saved instance
+            Instance saved = savedCaptor.getValue();
+            assertThat(saved.getInstanceName()).isEqualTo("New Name");
+            assertThat(saved.isTelemetryEnabled()).isFalse();
+
+        }
+
+        @Test
+        void instanceUpdate_publishesInstanceUpdatedEvent() {
+            // arrange
+            Instance instance = validInstanceEntity();
+            UUID instanceId = instance.getId();
+            // conditions
+            when(instanceRepository.findFirstByOrderByCreatedAtDesc()).thenReturn(Optional.of(instance));
+            when(instanceRepository.saveAndFlush(any(Instance.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(userRepository.count()).thenReturn(1L);
+            // capture
+            ArgumentCaptor<InstanceEventToPublish> publishedCaptor = ArgumentCaptor
+                    .forClass(InstanceEventToPublish.class);
+            // act
+            Instant before = Instant.now();
+            service.instanceUpdate(new InstanceRequest());
+            Instant after = Instant.now();
+            // verify
+            verify(events).publishEvent(publishedCaptor.capture());
+            // assert event payload
+            InstanceEventToPublish wrapper = publishedCaptor.getValue();
+            InstanceEvent event = wrapper.event();
+            // assert event payload
+            assertThat(event.getType()).isEqualTo(Type.INSTANCE_UPDATED);
+            assertThat(event.getId()).isEqualTo(instanceId);
+            assertThat(event.isSetupDone()).isTrue();
+            assertThat(event.isTest()).isTrue();
+            assertThat(event.getEdition()).isEqualTo(InstanceEdition.COMMUNITY);
+            assertThat(event.getVersion()).isEqualTo(7L);
+            assertThat(event.getOccurredAt()).isBetween(before, after);
         }
 
     }
@@ -297,6 +400,19 @@ public class InstanceServiceTest {
         form.setTelemetryEnabled("true");
         form.setPassword("1234");
         return form;
+    }
+
+    private static Instance validInstanceEntity() {
+        Instance instance = new Instance();
+        UUID instanceId = UUID.randomUUID();
+        instance.setId(instanceId);
+        instance.setInstanceName("Old");
+        instance.setTelemetryEnabled(false);
+        instance.setSetupDone(true);
+        instance.setTest(true);
+        instance.setEdition(InstanceEdition.COMMUNITY);
+        instance.setVersion(7L);
+        return instance;
     }
 
 }

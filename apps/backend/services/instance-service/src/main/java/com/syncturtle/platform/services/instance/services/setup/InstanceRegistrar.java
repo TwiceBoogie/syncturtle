@@ -81,6 +81,8 @@ public class InstanceRegistrar {
                     .edition(edition)
                     .version(instance.getVersion())
                     .test(isTest)
+                    .createdAt(instance.getCreatedAt())
+                    .updatedAt(instance.getUpdatedAt())
                     .build();
 
             events.publishEvent(new InstanceEventToPublish(evt));
@@ -101,6 +103,8 @@ public class InstanceRegistrar {
                     .edition(edition)
                     .version(instance.getVersion())
                     .test(isTest)
+                    .createdAt(instance.getCreatedAt())
+                    .updatedAt(instance.getUpdatedAt())
                     .build();
 
             events.publishEvent(new InstanceEventToPublish(evt));

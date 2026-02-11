@@ -8,17 +8,21 @@ import { InstanceWrapper } from "@/lib/wrappers/instance-wrapper";
 import { UserWrapper } from "@/lib/wrappers/user-wrapper";
 // constants
 import { DEFAULT_SWR_CONFIG } from "@syncturtle/constants";
+import { Toast } from "@heroui/react";
 
 export default function InstanceLayout({ children }: { children: React.ReactNode }) {
   return (
-    <StoreProvider>
-      <ThemeProvider themes={["light", "dark"]} defaultTheme="system" enableSystem>
-        <InstanceWrapper>
-          <UserWrapper>
-            <SWRConfig value={DEFAULT_SWR_CONFIG}>{children}</SWRConfig>
-          </UserWrapper>
-        </InstanceWrapper>
-      </ThemeProvider>
-    </StoreProvider>
+    <>
+      <Toast.Container />
+      <StoreProvider>
+        <ThemeProvider themes={["light", "dark"]} defaultTheme="system" enableSystem>
+          <SWRConfig value={DEFAULT_SWR_CONFIG}>
+            <InstanceWrapper>
+              <UserWrapper>{children}</UserWrapper>
+            </InstanceWrapper>
+          </SWRConfig>
+        </ThemeProvider>
+      </StoreProvider>
+    </>
   );
 }

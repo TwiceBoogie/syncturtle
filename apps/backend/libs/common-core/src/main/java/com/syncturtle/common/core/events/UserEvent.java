@@ -35,5 +35,6 @@ public class UserEvent {
     private boolean emailVerified;
     private boolean passwordAutoset;
     private String userTimezone;
+    private boolean bot;
     private Long version;
 }

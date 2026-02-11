@@ -1,8 +1,11 @@
 package com.syncturtle.platform.services.instance.configurations.web.filters;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -23,9 +26,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Profile("!setup")
 @Component
 @RequiredArgsConstructor
 public final class FormCsrfOncePerRequestFilter extends OncePerRequestFilter {
+
+    private static final List<String> ENDPOINTS = List.of("/api/instances/admins/sign-up",
+            "/api/instances/admins/sign-in");
 
     private final CsrfTokenSigner csrfTokenSigner;
     private final CsrfTransportProperties csrfTransportProps;
@@ -34,20 +41,24 @@ public final class FormCsrfOncePerRequestFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String formToken = request.getParameter(csrfTransportProps.getFormFieldName());
-        String cookieToken = readCookie(request, csrfTransportProps.getCookieName());
+        String rawFormToken = request.getParameter(csrfTransportProps.getFormFieldName());
+        String signedCookie = readCookie(request, csrfTransportProps.getCookieName());
 
-        if (!StringUtils.hasText(formToken) || !StringUtils.hasText(cookieToken)) {
-            AuthenticationException exception = AuthenticationException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
-            String location = hostResolver.buildAdminRedirectUrlWithErrors(request, exception.getErrorMap());
-            deny(response, location);
+        if (!StringUtils.hasText(rawFormToken) || !StringUtils.hasText(signedCookie)) {
+            denyWithCsrfError(request, response);
             return;
         }
 
-        if (!csrfTokenSigner.verify(formToken) || !csrfTokenSigner.verify(cookieToken)) {
-            AuthenticationException exception = AuthenticationException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
-            String location = hostResolver.buildAdminRedirectUrlWithErrors(request, exception.getErrorMap());
-            deny(response, location);
+        // 1: cookie must be a valid signed token
+        if (!csrfTokenSigner.verify(signedCookie)) {
+            denyWithCsrfError(request, response);
+            return;
+        }
+
+        // 2: compare raw form token to raw token inside cookie
+        String rawCookieToken = csrfTokenSigner.extractToken(signedCookie);
+        if (!StringUtils.hasText(rawCookieToken) || !constantTimeEquals(rawCookieToken, rawFormToken.trim())) {
+            denyWithCsrfError(request, response);
             return;
         }
 
@@ -60,7 +71,7 @@ public final class FormCsrfOncePerRequestFilter extends OncePerRequestFilter {
             return true;
         }
 
-        if (!"/api/instances/admins/sign-up".equals(request.getRequestURI())) {
+        if (!ENDPOINTS.contains(request.getRequestURI())) {
             return true;
         }
 
@@ -83,9 +94,30 @@ public final class FormCsrfOncePerRequestFilter extends OncePerRequestFilter {
                 .orElse(null);
     }
 
+    private void denyWithCsrfError(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        AuthenticationException exception = AuthenticationException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
+        String location = hostResolver.buildAdminRedirectUrlWithErrors(request, exception.getErrorMap());
+        deny(response, location);
+    }
+
     private void deny(HttpServletResponse response, String location) throws IOException {
         response.setStatus(303);
         response.setHeader("Location", location);
+    }
+
+    private static boolean constantTimeEquals(String a, String b) {
+        if (a == null || b == null) {
+            return false;
+        }
+
+        byte[] x = a.getBytes(StandardCharsets.UTF_8);
+        byte[] y = b.getBytes(StandardCharsets.UTF_8);
+
+        int diff = x.length ^ y.length;
+        for (int i = 0; i < Math.min(x.length, y.length); i++) {
+            diff |= x[i] ^ y[i];
+        }
+        return diff == 0;
     }
 
 }

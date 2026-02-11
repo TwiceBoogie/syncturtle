@@ -1,9 +1,12 @@
 package com.syncturtle.platform.services.instance.services.impl;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,20 +16,30 @@ import com.nulabinc.zxcvbn.Strength;
 import com.nulabinc.zxcvbn.Zxcvbn;
 import com.syncturtle.common.core.enums.AuthErrorCode;
 import com.syncturtle.common.core.enums.InstanceConfigurationKey;
+import com.syncturtle.common.core.events.InstanceEvent;
+import com.syncturtle.common.core.events.InstanceEvent.Type;
 import com.syncturtle.common.core.exceptions.AuthenticationException;
 import com.syncturtle.common.spring.web.url.HostUrlBuilder;
 import com.syncturtle.common.web.context.RequestUserContext;
+import com.syncturtle.common.web.dto.request.AdminSigninInternalRequest;
 import com.syncturtle.common.web.dto.request.AdminSignupInternalRequest;
+import com.syncturtle.common.web.dto.response.AdminSigninInternalResponse;
 import com.syncturtle.common.web.dto.response.AdminSignupInternalResponse;
 import com.syncturtle.platform.services.instance.client.UserClient;
+import com.syncturtle.platform.services.instance.dto.internal.InstanceAdminSigninResult;
 import com.syncturtle.platform.services.instance.dto.internal.InstanceAdminSignupResult;
+import com.syncturtle.platform.services.instance.dto.request.InstanceAdminSigninForm;
 import com.syncturtle.platform.services.instance.dto.request.InstanceAdminSignupForm;
+import com.syncturtle.platform.services.instance.dto.request.InstanceRequest;
 import com.syncturtle.platform.services.instance.models.Instance;
 import com.syncturtle.platform.services.instance.models.InstanceAdmin;
 import com.syncturtle.platform.services.instance.models.User;
-import com.syncturtle.platform.services.instance.models.readmodel.InstanceInfoRow;
+import com.syncturtle.platform.services.instance.payload.InstanceEventToPublish;
+import com.syncturtle.platform.services.instance.payload.InstanceSummary;
+import com.syncturtle.platform.services.instance.payload.InstanceSummaryResult;
+import com.syncturtle.platform.services.instance.payload.InstanceSummaryWithConfig;
+import com.syncturtle.platform.services.instance.payload.InstanceSummaryWithConfigResult;
 import com.syncturtle.platform.services.instance.repositories.InstanceAdminRepository;
-import com.syncturtle.platform.services.instance.repositories.InstanceInfoAggregate;
 import com.syncturtle.platform.services.instance.repositories.InstanceRepository;
 import com.syncturtle.platform.services.instance.repositories.UserRepository;
 import com.syncturtle.platform.services.instance.repositories.projections.InstanceAdminProjection;
@@ -46,6 +59,8 @@ public class InstanceServiceImpl implements InstanceService {
     private final UserRepository userRepository;
     // openFeign clients
     private final UserClient userClient;
+    // messenger
+    private final ApplicationEventPublisher events;
     // helpers
     private final InstanceConfigurationResolver resolver;
     private final HostUrlBuilder hostResolver;
@@ -55,9 +70,9 @@ public class InstanceServiceImpl implements InstanceService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<InstanceInfoAggregate> instanceInfoAndConfig() {
+    public Optional<InstanceSummaryWithConfig> instanceInfoAndConfig() {
         // 1: grab instance info
-        InstanceInfoRow instance = instanceRepository.findLatestInfoRow().orElse(null);
+        Instance instance = instanceRepository.findTopByOrderByCreatedAtDesc(Instance.class).orElse(null);
 
         if (instance == null) {
             return Optional.empty();
@@ -82,7 +97,42 @@ public class InstanceServiceImpl implements InstanceService {
         boolean workspacesExist = false;
         long userCount = userRepository.count();
 
-        return Optional.of(new InstanceInfoAggregate(instance, config, workspacesExist, userCount));
+        return Optional.of(new InstanceSummaryWithConfigResult(instance, config, workspacesExist, userCount));
+    }
+
+    @Override
+    @Transactional
+    public InstanceSummary instanceUpdate(InstanceRequest request) {
+        Instance instance = instanceRepository.findFirstByOrderByCreatedAtDesc().orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Instance is not registered yet."));
+
+        if (request.getInstanceName() != null) {
+            instance.setInstanceName(request.getInstanceName());
+        }
+        if (request.getTelemetryEnabled() != null) {
+            instance.setTelemetryEnabled(request.getTelemetryEnabled());
+        }
+        instance = instanceRepository.saveAndFlush(instance);
+
+        InstanceEvent event = InstanceEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .occurredAt(Instant.now())
+                .type(Type.INSTANCE_UPDATED)
+                .id(instance.getId())
+                .setupDone(instance.isSetupDone())
+                .edition(instance.getEdition())
+                .version(instance.getVersion())
+                .test(instance.isTest())
+                .createdAt(instance.getCreatedAt())
+                .updatedAt(instance.getUpdatedAt())
+                .build();
+
+        events.publishEvent(new InstanceEventToPublish(event));
+
+        boolean workspacesExist = false;
+        long userCount = userRepository.count();
+
+        return new InstanceSummaryResult(instance, workspacesExist, userCount);
     }
 
     @Override
@@ -98,7 +148,7 @@ public class InstanceServiceImpl implements InstanceService {
                 .findTopByOrderByCreatedAtDesc(InstanceOnlyIdProjection.class)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Instance is not registered yet"));
 
-        return instanceAdminRepository.findAllByInstance_Id(instance.getInstanceId());
+        return instanceAdminRepository.findAllByInstance_Id(instance.getId());
     }
 
     @Override
@@ -168,6 +218,45 @@ public class InstanceServiceImpl implements InstanceService {
                 return new InstanceAdminSignupResult(null,
                         hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap()));
             }
+        }
+    }
+
+    @Override
+    @Transactional
+    public InstanceAdminSigninResult instanceAdminSignin(InstanceAdminSigninForm form) {
+        Instance instance = instanceRepository.findFirstByOrderByCreatedAtDesc().orElse(null);
+
+        if (instance == null) {
+            AuthenticationException exception = new AuthenticationException(AuthErrorCode.INSTANCE_NOT_CONFIGURED);
+            String url = hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap());
+            return new InstanceAdminSigninResult(null, url);
+        }
+
+        String email = form.getEmail().trim().toLowerCase();
+        String password = form.getPassword();
+
+        if (!userRepository.existsByEmailIgnoreCase(email)) {
+            AuthenticationException exception = AuthenticationException.of(AuthErrorCode.ADMIN_USER_DOES_NOT_EXIST)
+                    .with("email", email);
+            String url = hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap());
+            return new InstanceAdminSigninResult(null, url);
+        }
+
+        try {
+            AdminSigninInternalResponse response = userClient
+                    .adminSigninPost(new AdminSigninInternalRequest(email, password));
+            if (!instanceAdminRepository.existsByInstance_IdAndUserId(instance.getId(), response.getUserId())) {
+                AuthenticationException exception = AuthenticationException
+                        .of(AuthErrorCode.ADMIN_AUTHENTICATION_FAILED)
+                        .with("email", email);
+                String url = hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap());
+                return new InstanceAdminSigninResult(null, url);
+            }
+
+            return new InstanceAdminSigninResult(response.getUserId(), hostResolver.adminHost() + "/general");
+        } catch (AuthenticationException exception) {
+            return new InstanceAdminSigninResult(null,
+                    hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap()));
         }
     }
 

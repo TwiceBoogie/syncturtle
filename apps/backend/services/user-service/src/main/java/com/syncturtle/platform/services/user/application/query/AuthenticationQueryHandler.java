@@ -17,4 +17,8 @@ public class AuthenticationQueryHandler {
         return authenticationService.emailCheck(email);
     }
 
+    public String signout(String logoutContext) {
+        return authenticationService.signOut(logoutContext);
+    }
+
 }

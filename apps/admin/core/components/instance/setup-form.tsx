@@ -1,9 +1,6 @@
 import { FC, useEffect, useMemo, useState } from "react";
-import { AuthHeader } from "./auth-header";
-import { getPasswordStrength } from "@syncturtle/utils";
-import { API_BASE_URL, E_PASSWORD_STRENGTH } from "@syncturtle/constants";
-import { Eye, EyeOff, Mail } from "lucide-react";
-import { AuthService } from "@/services/auth.service";
+import { useSearchParams } from "next/navigation";
+// heroui
 import {
   Button,
   Checkbox,
@@ -18,8 +15,16 @@ import {
   Spinner,
   TextField,
 } from "@heroui/react";
-import { useSearchParams } from "next/navigation";
+import { Eye, EyeOff, Mail } from "lucide-react";
+// components
+import { AuthHeader } from "../common/auth-header";
 import { Banner } from "../common/banner";
+// constants
+import { API_BASE_URL, E_PASSWORD_STRENGTH } from "@syncturtle/constants";
+// services
+import { AuthService } from "@/services/auth.service";
+// utils
+import { getPasswordStrength } from "@syncturtle/utils";
 
 type TFormData = {
   firstName: string;

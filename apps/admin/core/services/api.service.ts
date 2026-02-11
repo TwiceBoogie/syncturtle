@@ -68,7 +68,7 @@ export abstract class APIService {
       ...config,
       headers: {
         ...(config.headers || {}),
-        "X-CSRF-TOKEN": token,
+        "X-CSRF-Token": token,
       },
     };
   }

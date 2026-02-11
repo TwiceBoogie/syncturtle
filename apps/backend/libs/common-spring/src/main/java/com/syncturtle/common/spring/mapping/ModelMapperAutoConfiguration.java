@@ -8,6 +8,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(ModelMapper.class)
 public class ModelMapperAutoConfiguration {
@@ -25,7 +27,13 @@ public class ModelMapperAutoConfiguration {
     }
 
     @Bean
-    BasicMapper basicMapper(ModelMapper mapper) {
-        return new BasicMapper(mapper);
+    CursorCodec cursorCodec(ObjectMapper objectMapper) {
+        return new CursorCodec(objectMapper);
     }
+
+    @Bean
+    BasicMapper basicMapper(ModelMapper mapper, CursorCodec cursorCodec) {
+        return new BasicMapper(mapper, cursorCodec);
+    }
+
 }

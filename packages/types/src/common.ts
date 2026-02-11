@@ -21,3 +21,15 @@ export interface IApiErrorPayload {
   path?: string;
   timestamp?: string;
 }
+
+export type TPaginationInfo = {
+  count: number;
+  extraStats: string | null;
+  nextCursor: string;
+  nextPageResults: boolean;
+  prevCursor: string;
+  prevPageResults: boolean;
+  totalPages: number;
+  perPage?: number;
+  totalResults: number;
+};
