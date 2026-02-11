@@ -34,3 +34,9 @@ firstName=salvador
 ###
 
 GET {{gateway}}/api/instances/admins/me HTTP/1.1
+
+###
+
+GET {{gateway}}/api/instances/hello HTTP/1.1
+Cookie: csrf={{csrfToken}}
+X-CSRF-Token: {{csrfToken}}

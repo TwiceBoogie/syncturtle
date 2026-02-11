@@ -11,5 +11,5 @@ import com.syncturtle.platform.services.user.repositories.projections.UserPasswo
 public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmailIgnoreCase(String email);
 
-    Optional<UserPasswordAutosetProjection> findByEmailIgnoreCase(String email);
+    <T> Optional<T> findByEmailIgnoreCase(String email, Class<T> clazz);
 }

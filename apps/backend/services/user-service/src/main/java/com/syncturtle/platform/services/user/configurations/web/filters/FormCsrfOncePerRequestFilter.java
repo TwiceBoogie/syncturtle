@@ -1,10 +1,10 @@
-package com.syncturtle.platform.services.instance.configurations.web.filters;
+package com.syncturtle.platform.services.user.configurations.web.filters;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -25,43 +25,40 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Profile("!setup")
 @Component
 @RequiredArgsConstructor
 public final class FormCsrfOncePerRequestFilter extends OncePerRequestFilter {
 
-    private static final List<String> ENDPOINTS = List.of("/api/instances/admins/sign-up",
-            "/api/instances/admins/sign-in");
+    private static final List<String> ENDPOINTS = List.of("/auth/sign-out");
 
-    private final CsrfTokenSigner csrfTokenSigner;
-    private final CsrfTransportProperties csrfTransportProps;
+    private final CsrfTokenSigner signer;
+    private final CsrfTransportProperties props;
     private final ServletHostUrlBuilder hostResolver;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String rawFormToken = request.getParameter(csrfTransportProps.getFormFieldName());
-        String signedCookie = readCookie(request, csrfTransportProps.getCookieName());
+        String rawFormToken = request.getParameter(props.getFormFieldName());
+        String signedCookie = readCookie(request, props.getCookieName());
 
         if (!StringUtils.hasText(rawFormToken) || !StringUtils.hasText(signedCookie)) {
             denyWithCsrfError(request, response);
             return;
         }
 
-        // 1: cookie must be a valid signed token
-        if (!csrfTokenSigner.verify(signedCookie)) {
+        if (!signer.verify(signedCookie)) {
             denyWithCsrfError(request, response);
             return;
         }
 
-        // 2: compare raw form token to raw token inside cookie
-        String rawCookieToken = csrfTokenSigner.extractToken(signedCookie);
+        String rawCookieToken = signer.extractToken(signedCookie);
         if (!StringUtils.hasText(rawCookieToken) || !constantTimeEquals(rawCookieToken, rawFormToken.trim())) {
             denyWithCsrfError(request, response);
             return;
         }
 
         filterChain.doFilter(request, response);
+        ;
     }
 
     @Override

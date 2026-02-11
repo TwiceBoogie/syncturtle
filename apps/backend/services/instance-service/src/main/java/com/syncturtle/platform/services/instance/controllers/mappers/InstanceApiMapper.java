@@ -12,9 +12,11 @@ import com.syncturtle.platform.services.instance.dto.response.InstanceAdminRespo
 import com.syncturtle.platform.services.instance.dto.response.InstanceInfo;
 // import com.syncturtle.platform.services.instance.configurations.properties.InstanceServiceProperties;
 import com.syncturtle.platform.services.instance.dto.response.InstanceInfoResponse;
+import com.syncturtle.platform.services.instance.dto.response.InstanceResponse;
 import com.syncturtle.platform.services.instance.dto.response.UserMeResponse;
 import com.syncturtle.platform.services.instance.models.User;
-import com.syncturtle.platform.services.instance.repositories.InstanceInfoAggregate;
+import com.syncturtle.platform.services.instance.payload.InstanceSummary;
+import com.syncturtle.platform.services.instance.payload.InstanceSummaryWithConfig;
 import com.syncturtle.platform.services.instance.repositories.projections.InstanceAdminProjection;
 
 import lombok.RequiredArgsConstructor;
@@ -26,21 +28,31 @@ public final class InstanceApiMapper {
     // private final InstanceServiceProperties props;
     private final BasicMapper basicMapper;
 
-    public InstanceInfo toInstanceInfoResponse(InstanceInfoAggregate payload) {
+    public InstanceInfo toInstanceInfoResponse(InstanceSummaryWithConfig payload) {
         InstanceInfoResponse response = new InstanceInfoResponse();
 
-        InstanceInfoResponse.InstanceResponse instance = basicMapper.convertToResponse(payload.getInstance(),
-                InstanceInfoResponse.InstanceResponse.class);
+        InstanceResponse instance = toInstanceResponse(payload);
+
+        response.setInstance(instance);
+        response.setConfig(mapConfig(payload.getConfigurations()));
+
+        return response;
+    }
+
+    public InstanceResponse toInstanceResponse(InstanceSummary payload) {
+        InstanceResponse instance = basicMapper.convertToResponse(payload.getInstance(), InstanceResponse.class);
+        // fields that are embeded therefore BasicMapper would miss
+        instance.setCurrentVersion(payload.getInstance().getUpdateCheck().getCurrentVersion());
+        instance.setLatestVersion(payload.getInstance().getUpdateCheck().getLatestVersion());
+        instance.setLastCheckedAt(payload.getInstance().getUpdateCheck().getLastCheckedAt());
+        instance.setNamespace(payload.getInstance().getRuntime().getNamespace());
 
         // computed
         instance.setActivated(true);
-        instance.setWorkspaceExist(payload.isWorkspacesExist());
         instance.setUserCount(payload.getUserCount());
+        instance.setWorkspaceExist(payload.isWorkspaceExist());
 
-        response.setInstance(instance);
-        response.setConfig(mapConfig(payload.getConfig()));
-
-        return response;
+        return instance;
     }
 
     public UserMeResponse toInstanceAdminUserMeResponse(User user) {

@@ -59,7 +59,7 @@ export interface IInstanceAdmin {
   user: string;
   update_at: string;
   updated_by: string;
-  user_detail: IUserLite;
+  userDetail: IUserLite;
   created_at: string | null;
   created_by: string | null;
 }

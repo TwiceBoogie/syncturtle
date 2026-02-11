@@ -1,5 +1,6 @@
 package com.syncturtle.common.spring.cache.response;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -132,23 +133,32 @@ public final class ResponseCacheAspect {
         return result;
     }
 
-    @Around("@annotation(evictAnn)")
-    public Object aroundEvict(ProceedingJoinPoint pjp, ResponseCacheEvict evictAnn) throws Throwable {
+    @Around("@annotation(com.syncturtle.common.spring.cache.response.ResponseCacheEvict) || " +
+            "@annotation(com.syncturtle.common.spring.cache.response.ResponseCacheEvicts)")
+    public Object aroundEvict(ProceedingJoinPoint pjp) throws Throwable {
         if (!props.isEnabled()) {
             return pjp.proceed();
         }
 
-        String group = evictAnn.group();
-        String verKey = keyBuilder.versionKey(props.getKeyPrefix(), serviceName, group);
+        Method method = ((MethodSignature) pjp.getSignature()).getMethod();
+        ResponseCacheEvict[] evicts = method.getAnnotationsByType(ResponseCacheEvict.class);
 
-        if (evictAnn.beforeInvocation()) {
-            redis.opsForValue().increment(verKey);
+        // bump all that want "before"
+        for (ResponseCacheEvict evict : evicts) {
+            if (evict.beforeInvocation()) {
+                String versionKey = keyBuilder.versionKey(props.getKeyPrefix(), serviceName, evict.group());
+                redis.opsForValue().increment(versionKey);
+            }
         }
 
         Object result = pjp.proceed();
 
-        if (!evictAnn.beforeInvocation()) {
-            redis.opsForValue().increment(verKey);
+        // bump all that want "after"
+        for (ResponseCacheEvict evict : evicts) {
+            if (!evict.beforeInvocation()) {
+                String versionKey = keyBuilder.versionKey(props.getKeyPrefix(), serviceName, evict.group());
+                redis.opsForValue().increment(versionKey);
+            }
         }
 
         return result;

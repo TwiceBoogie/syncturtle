@@ -59,6 +59,9 @@ public class User {
     @Column(name = "user_timezone")
     private String userTimezone;
 
+    @Column(name = "is_bot", nullable = false)
+    private boolean bot;
+
     @Column(name = "version", nullable = false)
     private Long version;
 }
