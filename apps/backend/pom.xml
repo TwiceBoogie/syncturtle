@@ -35,6 +35,7 @@
     <!-- services -->
     <module>services/instance-service</module>
     <module>services/user-service</module>
+    <module>services/workspace-service</module>
     <!-- <module>services/password-service</module>
     <module>services/email-service</module> -->
 
