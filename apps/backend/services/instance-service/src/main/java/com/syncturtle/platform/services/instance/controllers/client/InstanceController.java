@@ -69,7 +69,7 @@ public class InstanceController {
     @AllowAnonymous
     @ResponseCacheEvict(group = "instance.info.get")
     @PostMapping(value = "/admins/sign-up", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public ResponseEntity<String> instanceAdminSignup(@Valid @ModelAttribute InstanceAdminSignupForm form,
+    public ResponseEntity<Void> instanceAdminSignup(@Valid @ModelAttribute InstanceAdminSignupForm form,
             BindingResult bindingResult) {
         authValidator.throwIfInvalid(AuthFlow.INSTANCE_ADMIN_SIGNUP, bindingResult,
                 form);

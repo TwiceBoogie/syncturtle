@@ -1,6 +1,8 @@
 services:
-  otel-lgtm:
+  syncturtle-obs:
     image: grafana/otel-lgtm:latest
+    networks:
+      - dev_env
     ports:
       - "3002:3000"
       - "4317:4317"
@@ -8,44 +10,58 @@ services:
     environment:
       - GF_SERVER_ROOT_URL=http://localhost:3000
 
-  otel-collector:
+  syncturtle-otel:
     image: otel/opentelemetry-collector-contrib:latest
     command: ["--config=/etc/otelcol-contrib/config.yaml"]
     volumes:
       - ./deployments/observability/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    networks:
+      - dev_env
     ports:
       - "14317:4317"
       - "14318:4318"
       - "15317:5317" # product telemetry
     depends_on:
-      - otel-lgtm
+      - syncturtle-obs
     restart: unless-stopped
 
-  postgres:
-    image: postgres:16
+  syncturtle-db:
+    image: postgres:16-alpine
     environment:
       - POSTGRES_PASSWORD=postgres
+    networks:
+      - dev_env
     ports:
       - "5432:5432"
     volumes:
       - ./deployments/postgres/initdb:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data
 
-  redpanda:
+  syncturtle-kafka:
     image: redpandadata/redpanda:v24.2.10
     command:
       - redpanda start
       - --kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092
-      - --advertise-kafka-addr=internal://redpanda:9092,external://localhost:19092
+      - --advertise-kafka-addr=internal://syncturtle-kafka:9092,external://localhost:19092
       - --mode=dev-container
       - --smp=1
       - --default-log-level=info
+    networks:
+      - dev_env
+    volumes:
+      - redpandadata:/var/lib/redpanda/data
     ports:
       - "19092:19092"
       - "19644:9644"
     restart: unless-stopped
 
-  redis:
+  syncturtle-redis:
     image: redis:7-alpine
+    restart: unless-stopped
+    networks:
+      - dev_env
+    volumes:
+      - redisdata:/data
     ports:
       - "6379:6379"
 
@@ -59,3 +75,12 @@ services:
   #   image: syncturtle/discovery-server:${SYNCTURTLE_VERSION}
   #   environment:
   #     SYNCTURTLE_VERSION: ${SYNCTURTLE_VERSION}
+
+volumes:
+  pgdata:
+  redisdata:
+  redpandadata:
+
+networks:
+  dev_env:
+    driver: bridge

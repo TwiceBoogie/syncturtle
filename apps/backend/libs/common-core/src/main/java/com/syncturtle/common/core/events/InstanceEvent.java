@@ -19,13 +19,17 @@ public class InstanceEvent {
         INSTANCE_CREATED, INSTANCE_UPDATED, INSTANCE_SOFT_DELETED
     }
 
+    private String eventId;
+    private Instant occurredAt;
+
     private Type type;
+
     private UUID id;
     private InstanceEdition edition;
-    private long version;
-    private String machineSignature;
+    private boolean setupDone;
+    private Long version;
     private String apiBaseUrl;
-    private String vmHost;
-    private Instant occurredAt;
     private boolean test;
+    private Instant updatedAt;
+    private Instant createdAt;
 }

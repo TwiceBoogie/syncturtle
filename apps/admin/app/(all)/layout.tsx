@@ -12,13 +12,7 @@ import { DEFAULT_SWR_CONFIG } from "@syncturtle/constants";
 export default function InstanceLayout({ children }: { children: React.ReactNode }) {
   return (
     <StoreProvider>
-      <ThemeProvider
-        attribute={"class"}
-        defaultTheme="system"
-        enableSystem
-        enableColorScheme
-        themes={["dark", "light"]}
-      >
+      <ThemeProvider themes={["light", "dark"]} defaultTheme="system" enableSystem>
         <InstanceWrapper>
           <UserWrapper>
             <SWRConfig value={DEFAULT_SWR_CONFIG}>{children}</SWRConfig>

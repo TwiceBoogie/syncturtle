@@ -4,6 +4,7 @@ import useSWR from "swr";
 import { InstanceNotReady, MaintenanceView } from "@/components/instance";
 // hooks
 import { useInstance } from "@/hooks/store/use-instance";
+import { Spinner } from "@heroui/react";
 
 interface IInstanceWrapper {
   children: ReactNode;
@@ -21,7 +22,11 @@ export const InstanceWrapper: FC<IInstanceWrapper> = (props) => {
   );
 
   if ((isLoading || isInstanceSWRLoading) && !instance) {
-    return <div className="relative flex h-screen w-full items-center justify-center">Spinner</div>;
+    return (
+      <div className="relative flex h-screen w-full items-center justify-center">
+        <Spinner />
+      </div>
+    );
   }
 
   if (instanceSWRError) return <MaintenanceView />;

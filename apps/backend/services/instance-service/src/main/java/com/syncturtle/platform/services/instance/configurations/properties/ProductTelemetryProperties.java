@@ -14,5 +14,5 @@ public class ProductTelemetryProperties {
     private final boolean enabled;
     private final String endpoint;
     private final String apiKey;
-    private final Duration interval = Duration.ofMinutes(10);
+    private final Duration interval;
 }

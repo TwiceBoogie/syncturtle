@@ -17,7 +17,7 @@ public final class InstanceServiceProperties {
     private final boolean skipEnvVar;
 
     private final ConfigKeys configKeys;
-    private final BaseUrls baseurls;
+    private final BaseUrls baseUrls;
     private final Kafka kafka;
 
     private final Security security;

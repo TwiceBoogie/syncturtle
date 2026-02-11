@@ -1,7 +1,6 @@
 package com.syncturtle.platform.services.instance.configurations.web.filters;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import org.springframework.http.MediaType;
@@ -9,7 +8,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.syncturtle.common.core.enums.AuthErrorCode;
+import com.syncturtle.common.core.exceptions.AuthenticationException;
 import com.syncturtle.common.spring.properties.CsrfTransportProperties;
+import com.syncturtle.common.spring.web.url.ServletHostUrlBuilder;
 import com.syncturtle.common.web.security.csrf.CsrfTokenSigner;
 
 import jakarta.servlet.FilterChain;
@@ -27,6 +29,7 @@ public final class FormCsrfOncePerRequestFilter extends OncePerRequestFilter {
 
     private final CsrfTokenSigner csrfTokenSigner;
     private final CsrfTransportProperties csrfTransportProps;
+    private final ServletHostUrlBuilder hostResolver;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -35,12 +38,16 @@ public final class FormCsrfOncePerRequestFilter extends OncePerRequestFilter {
         String cookieToken = readCookie(request, csrfTransportProps.getCookieName());
 
         if (!StringUtils.hasText(formToken) || !StringUtils.hasText(cookieToken)) {
-            deny(response, "CSRF_MISSING");
+            AuthenticationException exception = AuthenticationException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
+            String location = hostResolver.buildAdminRedirectUrlWithErrors(request, exception.getErrorMap());
+            deny(response, location);
             return;
         }
 
         if (!csrfTokenSigner.verify(formToken) || !csrfTokenSigner.verify(cookieToken)) {
-            deny(response, "CSRF_INVALID_SIGNATURE");
+            AuthenticationException exception = AuthenticationException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
+            String location = hostResolver.buildAdminRedirectUrlWithErrors(request, exception.getErrorMap());
+            deny(response, location);
             return;
         }
 
@@ -76,11 +83,9 @@ public final class FormCsrfOncePerRequestFilter extends OncePerRequestFilter {
                 .orElse(null);
     }
 
-    private void deny(HttpServletResponse response, String code) throws IOException {
-        response.setStatus(403);
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        response.getWriter().write("{\"ok\": false, \"error\": \"" + code + "\"}");
+    private void deny(HttpServletResponse response, String location) throws IOException {
+        response.setStatus(303);
+        response.setHeader("Location", location);
     }
 
 }

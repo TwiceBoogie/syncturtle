@@ -12,8 +12,11 @@
   },
   "dependencies": {
     "@bprogress/next": "^3.2.12",
+    "@heroui/react": "^3.0.0-beta.5",
+    "@heroui/styles": "^3.0.0-beta.5",
     "@syncturtle/constants": "workspace:*",
     "@syncturtle/i18n": "workspace:*",
+    "@syncturtle/ui": "workspace:*",
     "lodash": "^4.17.23",
     "lucide-react": "^0.562.0",
     "next": "16.1.4",
