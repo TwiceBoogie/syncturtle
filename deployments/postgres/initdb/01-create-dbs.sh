@@ -33,4 +33,20 @@ ALTER DEFAULT PRIVILEGES FOR USER user_svc IN SCHEMA public
 
 ALTER DEFAULT PRIVILEGES FOR USER user_svc IN SCHEMA public
   GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO user_svc;
+
+-- WORKSPACE DB
+\connect postgres
+
+CREATE DATABASE syncturtle_workspace;
+CREATE USER workspace_svc WITH ENCRYPTED PASSWORD 'workspace_svc_dev';
+GRANT ALL PRIVILEGES ON DATABASE syncturtle_workspace TO workspace_svc;
+
+\connect syncturtle_workspace
+GRANT USAGE, CREATE ON SCHEMA public TO workspace_svc;
+
+ALTER DEFAULT PRIVILEGES FOR USER workspace_svc IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO workspace_svc;
+
+ALTER DEFAULT PRIVILEGES FOR USER workspace_svc IN SCHEMA public
+  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO workspace_svc;
 SQL

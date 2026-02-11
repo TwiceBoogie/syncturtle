@@ -1,6 +1,7 @@
 package com.syncturtle.platform.services.instance.configurations.web.filters;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 

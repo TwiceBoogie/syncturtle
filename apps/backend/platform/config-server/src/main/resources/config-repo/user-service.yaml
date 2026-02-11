@@ -1,6 +1,7 @@
 app:
   security:
     csrf:
+      enabled: true
       hmac-algorithm: ${APP_SECURITY_CSRF_HMAC_ALGORITHM:HmacSHA256}
       signing-key: ${APP_SECURITY_CSRF_SIGNING_KEY}
       transport:

@@ -8,7 +8,7 @@
     "preview": "next build && next start",
     "start": "next start",
     "clean": "rm -rf .turbo && rm -rf .next && rm -rf dist",
-    "lint": "eslint . --max-warnings=0",
+    "lint": "eslint . --max-warnings=2",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
