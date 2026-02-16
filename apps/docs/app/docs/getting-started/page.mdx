@@ -1,0 +1,40 @@
+---
+title: Deploy Syncturtle on your infrastructure
+asIndexPage: true
+sidebarTitle: Getting Started
+---
+
+import { DocsCards } from "@/components/common";
+import { deploymentCards } from "@/content/_data/deployment-cards";
+import { configurationCards } from "@/content/_data/configuration-cards.ts";
+import { CardLayout } from "@/layouts/card-layout";
+
+# Getting Started
+
+Welcome to the Syncturtle documentation!
+
+This **Getting Started** section will help you setup your first _Sync<span className="text-green-400">turtle</span>_ instance.
+
+## Why self-host Syncturtle
+
+## Deployment methods
+
+Choose the deployment method that best fits your infrastructure
+
+<CardLayout>
+  <DocsCards items={deploymentCards} />
+</CardLayout>
+
+## System requirements
+
+- **CPU:** 2 cores
+- **RAM:** 4GB (8GB recommended for production)
+- **OS:** Linux (Ubuntu 20.04+, Debian 10+, CentOS 8+), macOS, or Windows with WSL2
+
+## Configuration and governance
+
+Once deployed, configure your Sync<span className="text-green-400">turtle</span> instance to match your needs:
+
+<CardLayout className="sm:grid-cols-2">
+  <DocsCards items={configurationCards} />
+</CardLayout>
