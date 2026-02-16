@@ -1,3 +1,10 @@
+/* packages/tailwind-config/theme.css */
+
+/* 1: dark mode strategy:
+  - Primary: data-theme="dark"
+  - Optional compatiblity: .dark (nextra/next-themes) */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, .dark, .dark *));
+
 @theme {
   --breakpoint-3xl: 112rem;
   /* scale down to 90% of defaults */
@@ -48,11 +55,20 @@
   --spacing-page-x: 1.25rem;
   /* --spacing-page-y: 1.35rem; */
   --size-header: 3.25rem;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-muted: hsl(var(--muted));
 }
 
 @layer base {
-  :root {
+  :root,
+  [data-theme="light"] {
     color-scheme: light !important;
+
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+    --muted: 0 0% 40%;
 
     --color-background-100: 255, 255, 255; /* primary bg */
 
@@ -77,8 +93,13 @@
  * @see https://v3.heroui.com/docs/react/getting-started/theming
  */
 
+  .dark,
   [data-theme="dark"] {
     color-scheme: dark !important;
+
+    --background: 0 0% 4%;
+    --foreground: 0 0% 93%;
+    --muted: 0 0% 65%;
 
     /* primary color */
     --color-primary-10: 8, 31, 43;
@@ -117,8 +138,17 @@
     --color-sidebar-background-80: var(--color-background-80); /* tertiary sidebar bg */
   }
 
+  /* Fallback: if NO theme class is ever set, still follow OS preference */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: 0 0% 4%;
+      --foreground: 0 0% 93%;
+      --muted: 0 0% 65%;
+    }
+  }
+
   body {
-    color: rgba(var(--color-text-100));
+    @apply bg-background text-foreground;
   }
 }
 

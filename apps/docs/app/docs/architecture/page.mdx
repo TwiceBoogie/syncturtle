@@ -1,0 +1,175 @@
+---
+title: How Syncturtle works
+description: A high-level map of Syncturtle's runtime components, dependencies, and data flows.
+asIndexPage: true
+sidebarTitle: Architecture
+---
+
+import { Cards } from "nextra/components";
+
+# Architecture
+
+This page explains the **runtime architecture** of a self-hosted Sync<span className="text-green-400">turtle</span> instance: what runs, what talks to what, and where state lives.
+
+> Goal: help a new contributor (or reviewer) quickly build a mental model of the system.
+
+---
+
+## System map
+
+Below is the "big picture" view. The exact deployment varis (Docker Compose vs Kubernetes), but the responsibilities stay the same:
+
+```text
+Browser (Web/Admin)
+   |
+   v
+API Gateway (routing + sessions + CSRF + CORS + edge policies)
+   |
+   +-----------------------+
+   |                       |
+   v                       v
+Instance Service       User Service        Workspace Service
+(config + instance)    (auth/users)        (workspaces/members)
+   |                       |                    |
+   v                       v                    v
+Postgres (per-service DBs) + Redis (sessions/cache) + Kafka (events)
+   |
+   v
+Observability (OTel Collector -> Grafana LGTM stack)
+```
+
+---
+
+## Frontend apps
+
+### Web (end-user app)
+
+The primary UI where users interact with the product. Think: "daily driver" for personal management modules.
+
+### Admin (instance administration)
+
+Used to manage instance-level configuration and governance (setup, feature flags, operational controls).
+
+### Docs (this site)
+
+Not part of runtime traffic, but crucial to the developer experience: docs explain the boundaries, runbooks, and extension patterns.
+
+---
+
+## Platform services
+
+### Api Gateway
+
+The edge entry point that standardizes cross-cutting concerns:
+
+- routing to backend services
+- session issuance/validation
+- CSRF protection for browser flows
+- CORS + client metadata + correlation headers
+
+### Config Server
+
+Central configuration source for services. It enables:
+
+- environment-based overrides (local/dev/prod)
+- consistent defaults across services
+- a single place to document config keys
+
+### Discovery Server (optional by environment)
+
+Service discovery for multi-service networking in more "cloud-like" deployments.
+
+---
+
+## Domain services
+
+### Instance Service
+
+Owns instance-level state and configuration:
+
+- instance metadata
+- config keys/feature flags
+- setup lifecycle and governance
+
+### User Service
+
+Source of truth for authentication and user identity:
+
+- login flows
+- user/profile/account/data
+- auth-related policies
+
+### Workspace Service
+
+Owns workspace domain data:
+
+- workspace creation
+- membership + roles
+- workspace-level settings and query patterns (pagination/cursors)
+
+---
+
+## Supporting infrastructure
+
+### PostgreSQL
+
+Persistent storage. Your local bootstrap creates separate databases/users per service (instance/user/workspace), which keeps boundaries clear.
+
+### Redis
+
+Used for:
+
+- gateway sessions
+- caching where appropriate
+- response caching (when enabled)
+
+### Kafka (redpanda in local dev)
+
+Event backbone for corss-service communication:
+
+- services publish domain events
+- other services consume to build local read models or react asynchronously
+
+### Observability (OpenTelemetry + Grafana LGTM)
+
+All services emit telemetry (traces/metrics/logs) into the OTel collector, then into the LGTM stack for debugging and operations.
+
+---
+
+## Request and event flows
+
+### 1) Typical API request (sync path)
+
+1. Browser call the **API Gateway**
+2. Gateway validates session/CSRF, adds correlation headers
+3. Gateway routes to the target service (instance/user/workspace)
+4. Service reads/writes its own DB, optionally caches, returns response
+
+### 2) Cross-service updates (async path)
+
+1. A service writes its local transaction
+2. It publishes a **domain event** to Kafka
+3. Consumers react independently (e.g. update a local read model, trigger side effects)
+
+This is how you keep services decoupled while still staying consistent over time.
+
+---
+
+## Engineering highlights
+
+This repo intentionally leans "enterprise-grade":
+
+- clear service boundaries and domain ownership
+- structured validation + consistent error payloads
+- test pyramid: unit -> integration -> system flows
+- telemetry-first debugging (trace IDs, correlation IDs, structured logs)
+
+---
+
+## Dive deeper
+
+<Cards>
+  <Cards.Card title="Frontend Architecture" href="/docs/architecture/frontend" />
+  <Cards.Card title="Backend Architecture" href="/docs/architecture/backend" />
+  <Cards.Card title="Getting Started" href="/docs/getting-started" />
+</Cards>
