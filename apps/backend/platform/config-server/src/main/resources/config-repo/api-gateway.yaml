@@ -44,6 +44,11 @@ spring:
               metrics: true
 
           routes:
+            - id: auth-endpoints
+              uri: lb://user-service
+              predicates:
+                - Path=/auth/**
+
             - id: instance-workspace-protected
               uri: lb://workspace-service
               predicates:
