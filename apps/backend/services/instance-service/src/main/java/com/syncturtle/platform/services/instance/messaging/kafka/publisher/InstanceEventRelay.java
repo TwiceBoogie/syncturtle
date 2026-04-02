@@ -1,22 +1,24 @@
-package com.syncturtle.platform.services.instance.messaging.kafka.publisher;
+// package com.syncturtle.platform.services.instance.messaging.kafka.publisher;
 
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
+// import org.springframework.stereotype.Component;
+// import org.springframework.transaction.event.TransactionPhase;
+// import org.springframework.transaction.event.TransactionalEventListener;
 
-import com.syncturtle.platform.services.instance.messaging.InstanceEventPublisher;
-import com.syncturtle.platform.services.instance.payload.InstanceEventToPublish;
+// import
+// com.syncturtle.platform.services.instance.messaging.InstanceEventPublisher;
+// import
+// com.syncturtle.platform.services.instance.payload.InstanceEventToPublish;
 
-import lombok.RequiredArgsConstructor;
+// import lombok.RequiredArgsConstructor;
 
-@Component
-@RequiredArgsConstructor
-public final class InstanceEventRelay {
+// @Component
+// @RequiredArgsConstructor
+// public final class InstanceEventRelay {
 
-    private final InstanceEventPublisher publisher;
+// private final InstanceEventPublisher publisher;
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void on(InstanceEventToPublish e) {
-        publisher.publishInstanceEvent(e.event());
-    }
-}
+// @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+// public void on(InstanceEventToPublish e) {
+// publisher.publishInstanceEvent(e.event());
+// }
+// }

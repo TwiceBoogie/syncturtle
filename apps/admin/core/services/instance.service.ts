@@ -66,9 +66,20 @@ export class InstanceService extends APIService {
     }
   }
 
+  async sendTesetEmail(receiverEmail: string): Promise<void> {
+    try {
+      await this.post<void>("/api/instances/email-credentials-check", {
+        receiverEmail: receiverEmail,
+      });
+    } catch (error) {
+      const err = error as HttpError<IApiErrorPayload>;
+      throw err.data ?? err;
+    }
+  }
+
   async disableEmail(): Promise<void> {
     try {
-      this.delete("/api/instances/configurations/disable-email-feature");
+      await this.delete("/api/instances/configurations/disable-email-feature");
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;
       throw err.data ?? err;

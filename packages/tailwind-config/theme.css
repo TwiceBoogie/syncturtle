@@ -58,7 +58,6 @@
 
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
-  --color-muted: hsl(var(--muted));
 }
 
 @layer base {
@@ -71,6 +70,8 @@
     --muted: 0 0% 40%;
 
     --color-background-100: 255, 255, 255; /* primary bg */
+    --color-background-90: 247, 247, 247; /* secondary bg */
+    --color-background-80: 232, 232, 232; /* tertiary bg */
 
     --color-border-100: 245, 245, 245; /* subtle border= 1 */
     --color-border-200: 229, 229, 229; /* subtle border- 2 */
@@ -85,6 +86,11 @@
     --color-sidebar-border-200: var(--color-border-100); /* subtle sidebar border- 2 */
     --color-sidebar-border-300: var(--color-border-100); /* strong sidebar border- 1 */
     --color-sidebar-border-400: var(--color-border-100); /* strong sidebar border- 2 */
+
+    --color-onboarding-text-100: 23, 23, 23;
+    --color-onboarding-text-200: 58, 58, 58;
+    --color-onboarding-text-300: 82, 82, 82;
+    --color-onboarding-text-400: 163, 163, 163;
   }
   /*
  * HeroUI Theme Customization
@@ -136,6 +142,11 @@
     --color-sidebar-border-400: var(--color-border-400); /* strong sidebar border- 2 */
 
     --color-sidebar-background-80: var(--color-background-80); /* tertiary sidebar bg */
+
+    --color-onboarding-text-100: 237, 238, 240;
+    --color-onboarding-text-200: 176, 180, 187;
+    --color-onboarding-text-300: 118, 123, 132;
+    --color-onboarding-text-400: 105, 110, 119;
   }
 
   /* Fallback: if NO theme class is ever set, still follow OS preference */
@@ -148,13 +159,15 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    /* @apply bg-background text-foreground; */
   }
 }
 
 @theme inline {
   --color-custom-primary-100: rgb(var(--color-primary-100));
   --color-custom-background-100: rgb(var(--color-background-100));
+  --color-custom-background-90: rgb(var(--color-background-90));
+  --color-custom-background-80: rgb(var(--color-background-80));
 
   /* sidebar */
   --color-custom-sidebar-background-80: rgb(var(--color-sidebar-background-80));
@@ -165,4 +178,10 @@
   /* sidebar border */
   --color-custom-sidebar-border-200: rgb(var(--color-sidebar-border-200));
   --color-custom-sidebar-background-100: rgb(var(--color-sidebar-background-100));
+
+  /* onboarding text color */
+  --color-onboarding-text-100: rgb(var(--color-onboarding-text-100));
+  --color-onboarding-text-200: rgb(var(--color-onboarding-text-200));
+  --color-onboarding-text-300: rgb(var(--color-onboarding-text-300));
+  --color-onboarding-text-400: rgb(var(--color-onboarding-text-400));
 }

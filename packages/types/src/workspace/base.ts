@@ -1,4 +1,5 @@
 import { TPaginationInfo } from "../common";
+import { TUserPermissions } from "../enums";
 import { IUser } from "../users";
 
 export type TLoader = "init-loader" | "mutation" | "pagination" | "loaded" | undefined;
@@ -29,3 +30,20 @@ export type TSlugCheckResult = {
 };
 
 export type TSlugStatus = "idle" | "checking" | "available" | "unavailable";
+
+export interface IWorkspaceMemberInvitation {
+  id: string;
+  accepted: boolean;
+  email: string;
+  message: string;
+  respondedAt: Date;
+  role: TUserPermissions;
+  token: string;
+  inviteLink: string;
+  workspace: {
+    id: string;
+    logoUrl: string;
+    name: string;
+    slug: string;
+  };
+}

@@ -28,7 +28,7 @@ public interface UserProjection {
 
     boolean isPasswordAutoset();
 
-    String getTimezone();
+    String getUserTimezone();
 
     boolean isBot();
 }

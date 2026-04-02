@@ -3,6 +3,7 @@ package com.syncturtle.platform.services.instance.services.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,14 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class InstanceConfigurationServiceImpl implements InstanceConfigurationService {
+
+    private static final Set<InstanceConfigurationKey> EMAIL_KEYS = Set.of(
+            InstanceConfigurationKey.EMAIL_HOST,
+            InstanceConfigurationKey.EMAIL_HOST_USER,
+            InstanceConfigurationKey.EMAIL_HOST_PASSWORD,
+            InstanceConfigurationKey.ENABLE_SMTP,
+            InstanceConfigurationKey.EMAIL_PORT,
+            InstanceConfigurationKey.EMAIL_FROM);
 
     // repositories
     private final InstanceConfigurationRepository iConfigurationRepository;
@@ -75,6 +84,20 @@ public class InstanceConfigurationServiceImpl implements InstanceConfigurationSe
                     .build());
         }
         return result;
+    }
+
+    @Override
+    @Transactional
+    public void disableEmail() {
+        List<InstanceConfiguration> configurations = iConfigurationRepository.findByKeyIn(EMAIL_KEYS);
+
+        for (InstanceConfiguration configuration : configurations) {
+            String nextValue = configuration.getKey() == InstanceConfigurationKey.ENABLE_SMTP ? "0" : "";
+
+            configuration.setValue(crypto.encryptIfNeeded(configuration.isEncrypted(), nextValue));
+        }
+
+        iConfigurationRepository.saveAll(configurations);
     }
 
 }

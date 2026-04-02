@@ -1,6 +1,12 @@
 import { FC, useState } from "react";
 // helpers
-import { EAuthModes, EAuthSteps } from "@/helpers/authentication.helper";
+import {
+  authErrorHandler,
+  EAuthModes,
+  EAuthSteps,
+  EErrorAlertType,
+  TAuthErrorInfo,
+} from "@/helpers/authentication.helper";
 import { useRouter } from "@bprogress/next";
 import { useSearchParams } from "next/navigation";
 import { AuthHeader } from "./auth-header";
@@ -9,6 +15,9 @@ import { AuthEmailForm } from "./email";
 import { IEmailCheckData } from "@syncturtle/types";
 import { AuthService } from "@/services/auth.service";
 import { AuthUniqueCodeForm } from "./unique-code";
+import { AuthBanner } from "./auth-banner";
+import { OAuthOptions } from "../oauth";
+import { TermsAndConditions } from "../terms-and-conditions";
 
 interface IAuthRoot {
   authMode: EAuthModes;
@@ -30,6 +39,7 @@ export const AuthRoot: FC<IAuthRoot> = (props) => {
   // states
   const [authMode, setAuthMode] = useState<EAuthModes>(() => currentAuthMode);
   const [authStep, setAuthStep] = useState<EAuthSteps>(EAuthSteps.EMAIL);
+  const [errorInfo, setErrorInfo] = useState<TAuthErrorInfo | undefined>(undefined);
   const [email, setEmail] = useState(emailParam ? emailParam.toString() : "");
   const [isExistingEmail, setIsExistingEmail] = useState(false);
   // hooks
@@ -40,26 +50,32 @@ export const AuthRoot: FC<IAuthRoot> = (props) => {
 
   const handleEmailVerification = async (data: IEmailCheckData) => {
     setEmail(data.email);
-    await authService.emailCheck(data).then(async (response) => {
-      if (response.existing) {
-        if (currentAuthMode === EAuthModes.SIGN_UP) setAuthMode(EAuthModes.SIGN_IN);
-        if (response.status === "MAGIC_CODE") {
-          setAuthStep(EAuthSteps.UNIQUE_CODE);
-          generateEmailUniqueCode(data.email);
-        } else if (response.status === "CREDENTIAL") {
-          setAuthStep(EAuthSteps.PASSWORD);
+    await authService
+      .emailCheck(data)
+      .then(async (response) => {
+        if (response.existing) {
+          if (currentAuthMode === EAuthModes.SIGN_UP) setAuthMode(EAuthModes.SIGN_IN);
+          if (response.status === "MAGIC_CODE") {
+            setAuthStep(EAuthSteps.UNIQUE_CODE);
+            generateEmailUniqueCode(data.email);
+          } else if (response.status === "CREDENTIAL") {
+            setAuthStep(EAuthSteps.PASSWORD);
+          }
+        } else {
+          if (currentAuthMode === EAuthModes.SIGN_IN) setAuthMode(EAuthModes.SIGN_UP);
+          if (response.status === "MAGIC_CODE") {
+            setAuthStep(EAuthSteps.UNIQUE_CODE);
+            generateEmailUniqueCode(data.email);
+          } else if (response.status === "CREDENTIAL") {
+            setAuthStep(EAuthSteps.PASSWORD);
+          }
         }
-      } else {
-        if (currentAuthMode === EAuthModes.SIGN_IN) setAuthMode(EAuthModes.SIGN_UP);
-        if (response.status === "MAGIC_CODE") {
-          setAuthStep(EAuthSteps.UNIQUE_CODE);
-          generateEmailUniqueCode(data.email);
-        } else if (response.status === "CREDENTIAL") {
-          setAuthStep(EAuthSteps.PASSWORD);
-        }
-      }
-      setIsExistingEmail(response.existing);
-    });
+        setIsExistingEmail(response.existing);
+      })
+      .catch((error) => {
+        const errorHandler = authErrorHandler(error?.errorCode?.toString(), data?.email || undefined);
+        if (errorHandler?.type) setErrorInfo(errorHandler);
+      });
   };
 
   const handleEmailClear = () => {
@@ -77,6 +93,7 @@ export const AuthRoot: FC<IAuthRoot> = (props) => {
 
   return (
     <div className="relative flex flex-col space-y-6">
+      {errorCode}
       <AuthHeader
         workspaceSlug={workspaceSlug?.toString() || undefined}
         invitationId={invitationId?.toString() || undefined}
@@ -84,7 +101,9 @@ export const AuthRoot: FC<IAuthRoot> = (props) => {
         authMode={authMode}
         currentAuthStep={authStep}
       >
-        {errorCode}
+        {errorInfo && errorInfo?.type === EErrorAlertType.BANNER_ALERT && (
+          <AuthBanner bannerData={errorInfo} handleBannerData={(value) => setErrorInfo(value)} />
+        )}
         {authStep === EAuthSteps.EMAIL && <AuthEmailForm defaultEmail={email} onSubmit={handleEmailVerification} />}
         {authStep === EAuthSteps.UNIQUE_CODE && (
           <AuthUniqueCodeForm
@@ -96,6 +115,8 @@ export const AuthRoot: FC<IAuthRoot> = (props) => {
             nextPath={nextPath || undefined}
           />
         )}
+        <OAuthOptions isSignUp={authMode === EAuthModes.SIGN_UP} />
+        <TermsAndConditions authType={authMode} />
       </AuthHeader>
     </div>
   );
