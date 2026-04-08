@@ -336,7 +336,7 @@ public class InstanceServiceTest {
         @Test
         void whenFeignSuccess_persistsAdmin_andReturnsGeneralRedirect() {
             // arrange
-            Instance instance = mock(Instance.class);
+            Instance instance = validInstanceEntity();
             UUID createdUserId = UUID.randomUUID();
             InstanceAdmin instanceAdmin = new InstanceAdmin();
             instanceAdmin.setUserId(createdUserId);
@@ -347,6 +347,7 @@ public class InstanceServiceTest {
             when(userClient.adminSignupPost(any(AdminSignupInternalRequest.class)))
                     .thenReturn(new AdminSignupInternalResponse(createdUserId));
             when(instanceAdminRepository.save(any(InstanceAdmin.class))).thenReturn(instanceAdmin);
+            when(instanceRepository.saveAndFlush(any(Instance.class))).thenAnswer(inv -> inv.getArgument(0));
             when(hostResolver.adminHost()).thenReturn("https://admin.syncturtle.com/god-mode");
             // act
             InstanceAdminSignupResult result = service.instanceAdminSignup(validFormStrongPassword());
@@ -355,7 +356,7 @@ public class InstanceServiceTest {
             // verify
             verify(userClient).adminSignupPost(any(AdminSignupInternalRequest.class));
             verify(instanceAdminRepository).save(any(InstanceAdmin.class));
-            verify(instanceRepository).save(instance);
+            verify(instanceRepository).saveAndFlush(instance);
         }
 
         @Test

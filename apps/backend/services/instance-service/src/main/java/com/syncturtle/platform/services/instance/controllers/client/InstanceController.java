@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -118,6 +119,14 @@ public class InstanceController {
                 .header(GatewayHeaderNames.HDR_AUTH_SESSION_TYPE, "ADMIN")
                 .location(URI.create(result.getRedirectionLocation()))
                 .build();
+    }
+
+    @DeleteMapping(EndpointConstants.CONFIGURATIONS_DISABLE_EMAIL_FEATURE)
+    @ResponseCacheEvict(group = "instance.info.get")
+    @ResponseCacheEvict(group = "instance.config.get")
+    public ResponseEntity<Void> disableEmail() {
+        query.disableEmail();
+        return ResponseEntity.noContent().build();
     }
 
     @AllowAnonymous

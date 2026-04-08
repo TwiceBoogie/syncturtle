@@ -46,6 +46,8 @@ public class KafkaUserEventConsumer {
             existing.setPasswordAutoset(event.isPasswordAutoset());
             existing.setUserTimezone(event.getUserTimezone());
             existing.setVersion(incoming);
+
+            userRepository.save(existing);
         }, () -> {
             User user = new User();
             user.setId(userId);

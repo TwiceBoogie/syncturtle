@@ -5,5 +5,3 @@
 @source "../types/src/**/*.{ts,tsx}";
 @source "../constants/src/**/*.{ts,tsx}";
 @source "../i18n/src/**/*.{ts,tsx}";
-
-@import "./theme.css";

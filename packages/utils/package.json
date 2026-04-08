@@ -24,13 +24,13 @@
     "@syncturtle/constants": "workspace:*",
     "@syncturtle/types": "workspace:*",
     "clsx": "^2.1.1",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
     "@syncturtle/eslint-config": "workspace:*",
     "@syncturtle/typescript-config": "workspace:*",
-    "eslint": "^9",
-    "tsup": "^8",
-    "typescript": "^5"
+    "eslint": "^9.39.4",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
   }
 }

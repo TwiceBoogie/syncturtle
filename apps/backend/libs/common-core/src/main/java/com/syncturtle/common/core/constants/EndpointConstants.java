@@ -14,6 +14,7 @@ public final class EndpointConstants {
     // instance-service
     public static final String API_INSTANCES = "/api/instances";
     public static final String CONFIGURATIONS = "/configurations";
+    public static final String CONFIGURATIONS_DISABLE_EMAIL_FEATURE = CONFIGURATIONS + "/disable-email-feature";
     public static final String ADMINS = "/admins";
     public static final String ADMINS_ME = ADMINS + "/me";
 

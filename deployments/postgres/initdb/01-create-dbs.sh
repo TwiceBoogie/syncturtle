@@ -49,4 +49,20 @@ ALTER DEFAULT PRIVILEGES FOR USER workspace_svc IN SCHEMA public
 
 ALTER DEFAULT PRIVILEGES FOR USER workspace_svc IN SCHEMA public
   GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO workspace_svc;
+
+-- EMAIL DB
+\connect postgres
+
+CREATE DATABASE syncturtle_email;
+CREATE USER email_svc WITH ENCRYPTED PASSWORD 'email_svc_dev';
+GRANT ALL PRIVILEGES ON DATABASE syncturtle_email TO email_svc;
+
+\connect syncturtle_email
+GRANT USAGE, CREATE ON SCHEMA public TO email_svc;
+
+ALTER DEFAULT PRIVILEGES FOR USER email_svc IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO email_svc;
+
+ALTER DEFAULT PRIVILEGES FOR USER email_svc IN SCHEMA public
+  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO email_svc;
 SQL

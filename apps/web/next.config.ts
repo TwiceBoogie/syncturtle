@@ -3,7 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   trailingSlash: true,
   /* config options here */
-  transpilePackages: ["@syncturtle/i18n"],
+  transpilePackages: ["@t3-oss/env-core", "@t3-oss/env-nextjs", "@syncturtle/i18n"],
+  serverExternalPackages: ["esbuild"],
   async rewrites() {
     const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com";
     const rewrites = [

@@ -1,10 +1,10 @@
-package com.syncturtle.platform.services.instance.messaging.kafka.publisher;
+package com.syncturtle.platform.services.instance.messaging.db;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import com.syncturtle.platform.services.instance.messaging.InstanceEventPublisher;
+import com.syncturtle.platform.services.instance.messaging.kafka.publisher.KafkaInstanceEventPublisher;
 import com.syncturtle.platform.services.instance.payload.InstanceEventToPublish;
 
 import lombok.RequiredArgsConstructor;
@@ -13,10 +13,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public final class InstanceEventRelay {
 
-    private final InstanceEventPublisher publisher;
+    private final KafkaInstanceEventPublisher publisher;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(InstanceEventToPublish e) {
         publisher.publishInstanceEvent(e.event());
     }
+
 }
