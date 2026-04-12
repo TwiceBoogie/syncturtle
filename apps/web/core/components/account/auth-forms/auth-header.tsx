@@ -1,5 +1,9 @@
 import { EAuthModes, EAuthSteps } from "@/helpers/authentication.helper";
+import { WorkspaceService } from "@/services/workspace.service";
+import { Spinner } from "@heroui/react";
+import { useTranslation } from "@syncturtle/i18n";
 import { FC, ReactNode } from "react";
+import useSWR from "swr";
 
 interface IAuthHeader {
   workspaceSlug: string | undefined;
@@ -10,14 +14,71 @@ interface IAuthHeader {
   children: ReactNode;
 }
 
+const Titles = {
+  [EAuthModes.SIGN_IN]: {
+    [EAuthSteps.EMAIL]: {
+      header: "auth.sign_in.header.step.email.header",
+      subHeader: "",
+    },
+    [EAuthSteps.PASSWORD]: {
+      header: "auth.sign_in.header.step.password.header",
+      subHeader: "auth.sign_in.header.step.password.sub_header",
+    },
+    [EAuthSteps.UNIQUE_CODE]: {
+      header: "auth.sign_in.header.step.unique_code.header",
+      subHeader: "auth.sign_in.header.step.unique_code.sub_header",
+    },
+  },
+  [EAuthModes.SIGN_UP]: {
+    [EAuthSteps.EMAIL]: {
+      header: "auth.sign_up.header.step.email.header",
+      subHeader: "",
+    },
+    [EAuthSteps.PASSWORD]: {
+      header: "auth.sign_up.header.step.password.header",
+      subHeader: "auth.sign_up.header.step.password.sub_header",
+    },
+    [EAuthSteps.UNIQUE_CODE]: {
+      header: "auth.sign_up.header.step.unique_code.header",
+      subHeader: "auth.sign_up.header.step.unique_code.sub_header",
+    },
+  },
+};
+
+const workspaceService = new WorkspaceService();
+
 export const AuthHeader: FC<IAuthHeader> = (props) => {
-  const { children } = props;
+  const { workspaceSlug, invitationId, invitationEmail, authMode, currentAuthStep, children } = props;
+  // i18n
+  const { t } = useTranslation();
+
+  const { data: invitation, isLoading } = useSWR(
+    workspaceSlug && invitationId ? `WORKSPACE_INVITATION_${workspaceSlug}_${invitationId}` : null,
+    async () => workspaceSlug && invitationId && workspaceService.getWorkspaceInvitation(workspaceSlug, invitationId),
+    {
+      revalidateOnFocus: false,
+      shouldRetryOnError: false,
+    }
+  );
+
+  const getHeaderSubHeader = (step: EAuthSteps, mode: EAuthModes) => Titles[mode][step];
+
+  const { header, subHeader } = getHeaderSubHeader(currentAuthStep, authMode);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <>
-      <div>
-        <h1>header</h1>
-        <p>sub-header</p>
+      {invitation} {invitationEmail}
+      <div className="space-y-1 text-center">
+        <h1 className="text-3xl font-bold text-onboarding-text-100">{t(header)}</h1>
+        <p className="font-medium text-onboarding-text-400">{t(subHeader)}</p>
       </div>
       {children}
     </>

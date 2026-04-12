@@ -1,20 +1,30 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import useSWR from "swr";
+// heroui
+import { Button, ScrollShadow, Spinner, Switch, toast } from "@heroui/react";
 // hooks
 import { useInstance } from "@/hooks/store/use-instance";
 import { useWorkspace } from "@/hooks/store/use-workspace";
-import useSWR from "swr";
-import { Button, Spinner, Switch, toast } from "@heroui/react";
-import { TInstanceConfigurationKeys } from "@syncturtle/types";
-import Link from "next/link";
+// components
+import { WorkspaceListItem } from "@/components/workspace/list-item";
+// types
+import type { TInstanceConfigurationKeys } from "@syncturtle/types";
 
 export default function WorkspaceMangagementPage() {
   // states
   const [isSubmitting, setIsSubmitting] = useState(false);
   // store hooks
   const { formattedConfig, fetchInstanceConfigurations, updateInstanceConfigurations } = useInstance();
-  const { workspaceIds, loader: workspaceLoader, paginationInfo, fetchWorkspaces } = useWorkspace();
+  const {
+    workspaceIds,
+    loader: workspaceLoader,
+    paginationInfo,
+    fetchWorkspaces,
+    fetchNextWorkspaces,
+  } = useWorkspace();
   // derived values
   const disableWorkspaceCreation = formattedConfig?.DISABLE_WORKSPACE_CREATION ?? "";
   const hasNextPage = paginationInfo?.nextPageResults && paginationInfo.nextCursor != undefined;
@@ -31,15 +41,11 @@ export default function WorkspaceMangagementPage() {
     };
 
     try {
-      const updateConfigPromise = updateInstanceConfigurations(payload);
-
-      toast.promise(updateConfigPromise, {
+      toast.promise(updateInstanceConfigurations(payload), {
         loading: "Saving configurations...",
         success: () => "Configuration saved successfully",
         error: () => "Failed to save configuration",
       });
-
-      await updateConfigPromise;
     } finally {
       setIsSubmitting(false);
     }
@@ -52,7 +58,7 @@ export default function WorkspaceMangagementPage() {
           <div className="text-sm font-normal">See all workspaces and control who can create them.</div>
         </div>
       </div>
-      <div className="grow overflow-hidden overflow-y-scroll px-4">
+      <ScrollShadow orientation="vertical" size={40} className="min-h-0 flex-1 px-4">
         <div className="space-y-3">
           {formattedConfig ? (
             <div className="w-full flex items-center gap-14 rounded">
@@ -105,10 +111,16 @@ export default function WorkspaceMangagementPage() {
                   </Link>
                 </div>
               </div>
-              <div className="">workspace list here</div>
+              <div className="flex flex-col gap-4 py-2">
+                {workspaceIds.map((workspaceId) => (
+                  <WorkspaceListItem key={workspaceId} workspaceId={workspaceId} />
+                ))}
+              </div>
               {hasNextPage && (
                 <div className="">
-                  <Button isDisabled={workspaceLoader === "pagination"}>Load more</Button>
+                  <Button isDisabled={workspaceLoader === "pagination"} onPress={() => fetchNextWorkspaces()}>
+                    Load more
+                  </Button>
                 </div>
               )}
             </>
@@ -116,7 +128,7 @@ export default function WorkspaceMangagementPage() {
             <Spinner />
           )}
         </div>
-      </div>
+      </ScrollShadow>
     </div>
   );
 }

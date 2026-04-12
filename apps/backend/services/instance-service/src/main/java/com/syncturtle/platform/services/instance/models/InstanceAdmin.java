@@ -38,8 +38,15 @@ public class InstanceAdmin extends AuditedEntity {
     @JoinColumn(name = "instance_id", nullable = false)
     private Instance instance;
 
+    @Column(name = "session_version", nullable = false)
+    private Long sessionVersion = 1L;
+
     public UUID getInstanceId() {
         return instance.getId();
+    }
+
+    public void bumpSessionVersion() {
+        sessionVersion = (sessionVersion == null ? 1L : sessionVersion + 1L);
     }
 
     public static InstanceAdmin create(UUID userId, Instance instance) {

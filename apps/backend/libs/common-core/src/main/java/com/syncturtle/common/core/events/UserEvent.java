@@ -37,4 +37,6 @@ public class UserEvent {
     private String userTimezone;
     private boolean bot;
     private Long version;
+
+    private Long authVersion;
 }

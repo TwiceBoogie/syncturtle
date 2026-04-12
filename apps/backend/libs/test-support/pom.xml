@@ -27,6 +27,11 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka-test</artifactId>
+            <scope>compile</scope>
+        </dependency>
         <!-- Testcontainers core + JUnit Jupiter integration -->
         <dependency>
             <groupId>org.testcontainers</groupId>
@@ -40,7 +45,24 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
+            <artifactId>kafka</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
             <artifactId>rabbitmq</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <!-- Redis via GenericContainer -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>4.3.0</version>
             <scope>compile</scope>
         </dependency>
         <!-- Useful for testing HTTP calls (system tests or contract tests) -->

@@ -16,15 +16,13 @@ public final class UsePostgresDbContextCustomizerFactory implements ContextCusto
     @Override
     public ContextCustomizer createContextCustomizer(Class<?> testClass,
             List<ContextConfigurationAttributes> configurationAttributes) {
-        UsePostgresDb ann = AnnotatedElementUtils.findMergedAnnotation(testClass, UsePostgresDb.class);
-        if (ann == null && testClass.getEnclosingClass() != null) {
-            ann = AnnotatedElementUtils.findMergedAnnotation(testClass.getEnclosingClass(), UsePostgresDb.class);
-        }
-
-        if (ann == null) {
+        UsePostgresDb annotation = findAnnotation(testClass);
+        if (annotation == null) {
             return null;
         }
-        String dbName = ann.value();
+
+        String dbName = annotation.value();
+
         return (context, mergedConfig) -> {
             PostgresContainerSingleton.getInstance();
             PostgresContainerSingleton.ensureDatabase(dbName);
@@ -37,6 +35,16 @@ public final class UsePostgresDbContextCustomizerFactory implements ContextCusto
                     "spring.cloud.config.enabled=false",
                     "eureka.client.enabled=false").applyTo(context.getEnvironment());
         };
+    }
+
+    private UsePostgresDb findAnnotation(Class<?> testClass) {
+        UsePostgresDb annotation = AnnotatedElementUtils.findMergedAnnotation(testClass, UsePostgresDb.class);
+
+        if (annotation == null && testClass.getEnclosingClass() != null) {
+            annotation = AnnotatedElementUtils.findMergedAnnotation(testClass.getEnclosingClass(), UsePostgresDb.class);
+        }
+
+        return annotation;
     }
 
 }

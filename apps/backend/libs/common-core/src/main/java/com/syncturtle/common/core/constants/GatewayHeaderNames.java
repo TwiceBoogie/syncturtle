@@ -26,6 +26,9 @@ public final class GatewayHeaderNames {
     public static final String HDR_INTERNAL_LOGIN_CONTEXT = "X-ST-Internal-Login-CTX";
     public static final String HDR_INTERNAL_LOGOUT_CONTEXT = "X-ST-Internal-Logout-CTX";
     public static final String HDR_INTERNAL_AUTH_STATUS = "X-ST-Internal-Auth-Status";
+    public static final String HDR_INTERNAL_AUTH_VERSION = "X-ST-Internal-Auth-Version";
+    public static final String HDR_INTERNAL_ADMIN_SESSION_VERSION = "X-ST-Internal-Admin-Session-Version";
+    public static final String HDR_INTERNAL_INSTANCE_ID = "X-ST-Internal-Instance-Id";
 
     private GatewayHeaderNames() {
     }

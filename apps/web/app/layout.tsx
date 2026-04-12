@@ -5,6 +5,7 @@ import Script from "next/script";
 import "@/styles/globals.css";
 import { AppProvider } from "./provider";
 import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_TITLE } from "@syncturtle/constants";
+import { env, getDatasetMap } from "@/env";
 
 export const metadata: Metadata = {
   title: SITE_TITLE,
@@ -23,9 +24,10 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const isSessionRecorderEnabled = parseInt(process.env.NEXT_PUBLIC_ENABLE_SESSION_RECORDER || "0");
+  const isSessionRecorderEnabled = env.NEXT_PUBLIC_ENABLE_SESSION_RECORDER;
+  const datasetMap = getDatasetMap();
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#fff" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
@@ -33,23 +35,23 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="manifest" href="/site.webmanifest.json" />
         <link rel="shortcut icon" href="/favicon/favicon.ico" />
       </head>
-      <body>
+      <body {...datasetMap}>
         <AppProvider>
           <div className="h-screen w-full overflow-hidden bg-custom-background-100 relative flex flex-col">
             <main className="w-full h-full overflow-hidden relative">{children}</main>
           </div>
         </AppProvider>
       </body>
-      {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
-        <Script defer data-domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN} src="https://plausible.io/js/script.js" />
+      {env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
+        <Script defer data-domain={env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN} src="https://plausible.io/js/script.js" />
       )}
-      {!!isSessionRecorderEnabled && process.env.NEXT_PUBLIC_CLARITY_ID && (
+      {!!isSessionRecorderEnabled && env.NEXT_PUBLIC_CLARITY_ID && (
         <Script id="clarity-tracking" type="text/javascript">
           {`(function(c,l,a,r,i,t,y){
             c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
             t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
             y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-          })(window, document, "clarity", "script", "${process.env.NEXT_PUBLIC_CLARITY_ID}");`}
+          })(window, document, "clarity", "script", "${env.NEXT_PUBLIC_CLARITY_ID}");`}
         </Script>
       )}
     </html>

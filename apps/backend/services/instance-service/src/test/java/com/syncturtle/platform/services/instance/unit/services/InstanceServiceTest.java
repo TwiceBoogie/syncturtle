@@ -336,7 +336,7 @@ public class InstanceServiceTest {
         @Test
         void whenFeignSuccess_persistsAdmin_andReturnsGeneralRedirect() {
             // arrange
-            Instance instance = mock(Instance.class);
+            Instance instance = validInstanceEntity();
             UUID createdUserId = UUID.randomUUID();
             InstanceAdmin instanceAdmin = new InstanceAdmin();
             instanceAdmin.setUserId(createdUserId);
@@ -345,8 +345,9 @@ public class InstanceServiceTest {
             when(instanceAdminRepository.existsByIdIsNotNull()).thenReturn(false);
             when(userRepository.existsByEmailIgnoreCase(anyString())).thenReturn(false);
             when(userClient.adminSignupPost(any(AdminSignupInternalRequest.class)))
-                    .thenReturn(new AdminSignupInternalResponse(createdUserId));
-            when(instanceAdminRepository.save(any(InstanceAdmin.class))).thenReturn(instanceAdmin);
+                    .thenReturn(new AdminSignupInternalResponse(createdUserId, 1L));
+            when(instanceAdminRepository.saveAndFlush(any(InstanceAdmin.class))).thenReturn(instanceAdmin);
+            when(instanceRepository.saveAndFlush(any(Instance.class))).thenAnswer(inv -> inv.getArgument(0));
             when(hostResolver.adminHost()).thenReturn("https://admin.syncturtle.com/god-mode");
             // act
             InstanceAdminSignupResult result = service.instanceAdminSignup(validFormStrongPassword());
@@ -354,8 +355,8 @@ public class InstanceServiceTest {
             assertThat(result.getRedirectLocation()).isEqualTo("https://admin.syncturtle.com/god-mode/general");
             // verify
             verify(userClient).adminSignupPost(any(AdminSignupInternalRequest.class));
-            verify(instanceAdminRepository).save(any(InstanceAdmin.class));
-            verify(instanceRepository).save(instance);
+            verify(instanceAdminRepository).saveAndFlush(any(InstanceAdmin.class));
+            verify(instanceRepository).saveAndFlush(instance);
         }
 
         @Test

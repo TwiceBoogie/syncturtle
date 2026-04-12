@@ -1,12 +1,12 @@
 package com.syncturtle.platform.services.user.services.impl;
 
-import java.util.Map;
-
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import com.syncturtle.common.core.enums.InstanceConfigurationKey;
+import com.syncturtle.common.core.dto.response.UserAuthRuntimeConfigResponse;
 import com.syncturtle.platform.services.user.client.InstanceClient;
+import com.syncturtle.platform.services.user.dto.internal.UserAuthRuntimeConfig;
 import com.syncturtle.platform.services.user.services.FeatureFlagService;
 
 import lombok.RequiredArgsConstructor;
@@ -18,14 +18,26 @@ public class FeatureFlagServiceImpl implements FeatureFlagService {
     private final InstanceClient instanceClient;
 
     @Override
-    @Cacheable(cacheNames = "s2s:instance:configuration", key = "'latest'", unless = "#result == null || #result.isEmpty()", sync = true)
-    public Map<InstanceConfigurationKey, String> getInstanceConfigurations() {
-        return instanceClient.getInstanceConfig();
+    @Cacheable(cacheNames = "s2s:instance:user-auth-runtime", key = "'current'", unless = "#result == null", sync = true)
+    public UserAuthRuntimeConfig getInstanceConfigurations() {
+        UserAuthRuntimeConfigResponse response = instanceClient.getUserAuthRuntimeConfig();
+
+        return UserAuthRuntimeConfig.builder()
+                .signupEnabled(response.isSignupEnabled())
+                .magicLinkEnabled(response.isMagicLinkEnabled())
+                .emailPasswordEnabled(response.isEmailPasswordEnabled())
+                .smtpEnabled(response.isSmtpEnabled())
+                .googleEnabled(response.isGoogleEnabled())
+                .githubEnabled(response.isGithubEnabled())
+                .gitlabEnabled(response.isGitlabEnabled())
+                .version(response.getVersion())
+                .build();
     }
 
     @Override
-    public String get(InstanceConfigurationKey key) {
-        return getInstanceConfigurations().getOrDefault(key, "0");
+    @CacheEvict(cacheNames = "s2s:instance:user-auth-runtime", key = "'current'")
+    public void evict() {
+        // annotation does the eviction for us
     }
 
 }

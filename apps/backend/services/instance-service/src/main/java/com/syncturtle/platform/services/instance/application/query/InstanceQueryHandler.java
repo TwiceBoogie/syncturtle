@@ -70,4 +70,8 @@ public class InstanceQueryHandler {
         return instanceConfigurationService.configurationsUpdate(configurations);
     }
 
+    public void disableEmail() {
+        instanceConfigurationService.disableEmail();
+    }
+
 }

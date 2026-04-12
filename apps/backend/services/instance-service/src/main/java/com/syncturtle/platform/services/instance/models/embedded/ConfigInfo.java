@@ -32,4 +32,9 @@ public class ConfigInfo {
         ConfigInfo cInfo = new ConfigInfo();
         return cInfo;
     }
+
+    public void updateVersion() {
+        version = version + 1;
+        lastCheckedAt = Instant.now();
+    }
 }

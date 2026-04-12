@@ -4,9 +4,13 @@ import java.util.Map;
 
 import com.syncturtle.common.core.enums.InstanceConfigurationKey;
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-@Data
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public final class InstanceConfigResponse {
     private Map<InstanceConfigurationKey, String> values;
     private long version;
