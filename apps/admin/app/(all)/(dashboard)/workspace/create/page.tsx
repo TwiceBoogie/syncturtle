@@ -1,3 +1,6 @@
+"use client";
+
+import { ScrollShadow } from "@heroui/react";
 import { WorkspaceCreateForm } from "./form";
 
 export default function WorkspaceManagementCreatePage() {
@@ -9,9 +12,9 @@ export default function WorkspaceManagementCreatePage() {
           You will need to invite users from Workspace Settings after you create this instance
         </div>
       </div>
-      <div className="grow overflow-hidden overflow-y-scroll px-4">
+      <ScrollShadow orientation="vertical" size={40} className="min-h-0 flex-1 px-4">
         <WorkspaceCreateForm />
-      </div>
+      </ScrollShadow>
     </div>
   );
 }

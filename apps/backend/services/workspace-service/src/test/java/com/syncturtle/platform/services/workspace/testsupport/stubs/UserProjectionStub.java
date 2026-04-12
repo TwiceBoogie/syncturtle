@@ -23,6 +23,6 @@ public final class UserProjectionStub implements UserProjection {
     private final boolean active;
     private final boolean emailVerified;
     private final boolean passwordAutoset;
-    private final String timezone;
+    private final String userTimezone;
     private final boolean bot;
 }

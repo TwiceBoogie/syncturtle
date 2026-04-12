@@ -44,7 +44,7 @@ export abstract class APIService {
 
   private async getCsrfToken(): Promise<string> {
     if (!this.csrfPromise) {
-      this.csrfPromise = this.get<{ csrfToken: string }>("/api/csrf-token", {
+      this.csrfPromise = this.get<{ csrfToken: string }>("/api/get-csrf-token", {
         csrf: false,
       })
         .then((res) => res.data.csrfToken)
@@ -153,6 +153,6 @@ export abstract class APIService {
   }
 
   protected post<T>(url: string, body?: unknown, config: Omit<IRequestConfig, "body"> = {}): Promise<IHttpResponse<T>> {
-    return this.request<T>("PUT", url, { ...config, body });
+    return this.request<T>("POST", url, { ...config, body });
   }
 }

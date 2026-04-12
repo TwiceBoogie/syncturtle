@@ -4,6 +4,8 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
+      "@/env": ["env.ts"],
+      "@/config": ["config/index.ts"],
       "@/*": ["core/*"],
       "@/helpers/*": ["helpers/*"],
       "@/public/*": ["public/*"],

@@ -1,5 +1,6 @@
 "use client";
 
+import { ScrollShadow } from "@heroui/react";
 // components
 import { GeneralConfigurationForm } from "./form";
 // hooks
@@ -16,9 +17,9 @@ export default function GeneralPage() {
           instance.
         </div>
       </div>
-      <div className="grow overflow-hidden overflow-y-scroll px-4">
+      <ScrollShadow orientation="vertical" size={40} className="min-h-0 flex-1 px-4">
         {instance && instanceAdmins && <GeneralConfigurationForm instance={instance} instanceAdmins={instanceAdmins} />}
-      </div>
+      </ScrollShadow>
     </div>
   );
 }

@@ -1,3 +1,12 @@
+export type TInstanceAuthenticationModes = {
+  key: string;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  config: React.ReactNode;
+  unavailable?: boolean;
+};
+
 export type TInstanceAuthenticationMethodKeys =
   | "ENABLE_SIGNUP"
   | "ENABLE_MAGIC_LINK_LOGIN"
@@ -24,3 +33,9 @@ export type TInstanceAuthenticationConfigurationKeys =
   | TInstanceGitlabAuthenticationConfigurationKeys;
 
 export type TInstanceAuthenticationKeys = TInstanceAuthenticationMethodKeys | TInstanceAuthenticationConfigurationKeys;
+
+export type TGetBaseAuthenticationModeProps = {
+  disabled: boolean;
+  updateConfig: (key: TInstanceAuthenticationKeys, value: string) => void;
+  resolvedTheme: string | undefined;
+};

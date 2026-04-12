@@ -7,11 +7,13 @@ databaseChangeLog:
           type: postgresql
 
   - include:
-      file: releases/0001_init/db.changelog-0001.yaml
+      file: releases/0001_init/db.changelog.yaml
       relativeToChangelogFile: true
   - include:
-      file: releases/0002_instance_admins_unique_index/db.changelog-0002.yaml
+      file: releases/0002_add_uq_index_to_instance_admins.sql
       relativeToChangelogFile: true
+  - include:
+      file: releases/0003_add_admin_session_version_to_instance_admins.sql
 
   - include:
       file: env/test/db.changelog-test.yaml

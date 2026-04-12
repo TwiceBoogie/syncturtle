@@ -21,6 +21,14 @@ public class KafkaTopicConfig {
     }
 
     @Bean
+    NewTopic instanceConfigEventsTopic() {
+        return TopicBuilder.name(KafkaTopicConstants.INSTANCE_CONFIG_EVENTS_V1)
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
     NewTopic userEventsTopic() {
         return TopicBuilder.name(KafkaTopicConstants.USER_EVENTS_V1)
                 .partitions(1)
@@ -44,10 +52,26 @@ public class KafkaTopicConfig {
                 .build();
     }
 
+    @Bean
+    NewTopic emailEventsTopic() {
+        return TopicBuilder.name(KafkaTopicConstants.EMAIL_EVENTS_V1)
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
+
     // DLT topics
     @Bean
     NewTopic instanceEventsDltTopic() {
         return TopicBuilder.name(KafkaTopicConstants.INSTANCE_EVENTS_V1 + ".DLT")
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    NewTopic instanceConfigEventsDltTopic() {
+        return TopicBuilder.name(KafkaTopicConstants.INSTANCE_CONFIG_EVENTS_V1 + ".DLT")
                 .partitions(1)
                 .replicas(1)
                 .build();
@@ -76,4 +100,13 @@ public class KafkaTopicConfig {
                 .replicas(1)
                 .build();
     }
+
+    @Bean
+    NewTopic emailEventsDltTopic() {
+        return TopicBuilder.name(KafkaTopicConstants.EMAIL_EVENTS_V1 + ".DLT")
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
+
 }

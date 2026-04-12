@@ -44,6 +44,11 @@ spring:
               metrics: true
 
           routes:
+            - id: auth-endpoints
+              uri: lb://user-service
+              predicates:
+                - Path=/auth/**
+
             - id: instance-workspace-protected
               uri: lb://workspace-service
               predicates:
@@ -55,11 +60,23 @@ spring:
                     cookie-name: session-admin
                     session-type: ADMIN
 
+            - id: instance-email-credentials-check
+              uri: lb://email-service
+              predicates:
+                - Path=/api/instances/email-credentials-check/**
+                - Method=POST
+              filters:
+                - name: SessionValidate
+                  args:
+                    required: true
+                    cookieName: session-admin
+                    sessionType: ADMIN
+
             - id: instance-protected
               uri: lb://instance-service
               predicates:
                 - Path=/api/instances/admins/**, /api/instances/configurations/**
-                - Method=GET,OPTIONS,HEAD
+                - Method=GET,OPTIONS,HEAD,DELETE
               filters:
                 - name: SessionValidate
                   args:
