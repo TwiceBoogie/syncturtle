@@ -68,7 +68,6 @@ export default function EmailManagementPage() {
       setShowSetupForm(false);
     }
   };
-
   return (
     <div className="relative container mx-auto w-full h-full p-4 py-4 space-y-6 flex flex-col">
       <div className="flex items-center justify-between gap-4 border-b border-custom-border-100 mx-4 py-4 space-y-1 shrink-0">
