@@ -1,8 +1,13 @@
 "use client";
 
-import { Button, Description, Input, Label, Spinner, TextField } from "@heroui/react";
-import { TFormattedInstanceConfiguration, TInstanceGithubAuthenticationConfigurationKeys } from "@syncturtle/types";
 import { FC, useState } from "react";
+// heroui
+import { Button, Description, Input, Label, Spinner, TextField } from "@heroui/react";
+// types
+import type {
+  TFormattedInstanceConfiguration,
+  TInstanceGithubAuthenticationConfigurationKeys,
+} from "@syncturtle/types";
 
 interface IInstanceGithubConfigFormProps {
   config: TFormattedInstanceConfiguration;
@@ -18,7 +23,6 @@ export const InstanceGithubConfigForm: FC<IInstanceGithubConfigFormProps> = (pro
     GITHUB_CLIENT_SECRET: config["GITHUB_CLIENT_SECRET"] ?? "",
     GITHUB_ORGANIZATION_ID: config["GITHUB_ORGANIZATION_ID"] ?? "",
   });
-  // const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFormChange = (key: keyof TGithubConfigFormValues, value: string) =>
     setFormData((prev) => ({ ...prev, [key]: value }));

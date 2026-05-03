@@ -123,6 +123,7 @@ public class InstanceController {
 
     @DeleteMapping(EndpointConstants.CONFIGURATIONS_DISABLE_EMAIL_FEATURE)
     @ResponseCacheEvict(group = "instance.info.get")
+    @ResponseCacheEvict(group = "instance.config.get")
     public ResponseEntity<Void> disableEmail() {
         query.disableEmail();
         return ResponseEntity.noContent().build();

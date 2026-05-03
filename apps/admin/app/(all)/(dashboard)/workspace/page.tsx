@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import useSWR from "swr";
+// heroui
+import { Button, ScrollShadow, Spinner, Switch, toast } from "@heroui/react";
 // hooks
 import { useInstance } from "@/hooks/store/use-instance";
 import { useWorkspace } from "@/hooks/store/use-workspace";
-import useSWR from "swr";
-import { Button, Spinner, Switch, toast } from "@heroui/react";
-import { TInstanceConfigurationKeys } from "@syncturtle/types";
-import Link from "next/link";
+// components
 import { WorkspaceListItem } from "@/components/workspace/list-item";
+// types
+import type { TInstanceConfigurationKeys } from "@syncturtle/types";
 
 export default function WorkspaceMangagementPage() {
   // states
@@ -55,7 +58,7 @@ export default function WorkspaceMangagementPage() {
           <div className="text-sm font-normal">See all workspaces and control who can create them.</div>
         </div>
       </div>
-      <div className="grow overflow-hidden overflow-y-scroll px-4">
+      <ScrollShadow orientation="vertical" size={40} className="min-h-0 flex-1 px-4">
         <div className="space-y-3">
           {formattedConfig ? (
             <div className="w-full flex items-center gap-14 rounded">
@@ -125,7 +128,7 @@ export default function WorkspaceMangagementPage() {
             <Spinner />
           )}
         </div>
-      </div>
+      </ScrollShadow>
     </div>
   );
 }

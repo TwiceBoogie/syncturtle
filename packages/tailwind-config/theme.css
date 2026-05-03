@@ -67,7 +67,6 @@
 
     --background: 0 0% 100%;
     --foreground: 0 0% 10%;
-    --muted: 0 0% 40%;
 
     --color-background-100: 255, 255, 255; /* primary bg */
     --color-background-90: 247, 247, 247; /* secondary bg */
@@ -105,7 +104,6 @@
 
     --background: 0 0% 4%;
     --foreground: 0 0% 93%;
-    --muted: 0 0% 65%;
 
     /* primary color */
     --color-primary-10: 8, 31, 43;
@@ -147,19 +145,6 @@
     --color-onboarding-text-200: 176, 180, 187;
     --color-onboarding-text-300: 118, 123, 132;
     --color-onboarding-text-400: 105, 110, 119;
-  }
-
-  /* Fallback: if NO theme class is ever set, still follow OS preference */
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --background: 0 0% 4%;
-      --foreground: 0 0% 93%;
-      --muted: 0 0% 65%;
-    }
-  }
-
-  body {
-    /* @apply bg-background text-foreground; */
   }
 }
 

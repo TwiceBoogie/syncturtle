@@ -1,0 +1,95 @@
+{
+  "properties": [
+    {
+      "name": "app.kafka.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Enables Kafka-driven email event consumption. When false, Kafka listeners should remain disabled for this service."
+    },
+    {
+      "name": "app.kafka.consumer-group",
+      "type": "java.lang.String",
+      "description": "Kafka consumer group id used by the email service when consuming application events"
+    },
+    {
+      "name": "app.email.cache-name",
+      "type": "java.lang.String",
+      "description": "Name of the Java class to be cached"
+    },
+    {
+      "name": "app.email.cache-ttl",
+      "type": "java.time.Duration",
+      "description": "Time-to-live for cached email runtime configuration entries."
+    },
+    {
+      "name": "app.email.retry.batch-size",
+      "type": "java.lang.Integer",
+      "description": "Maximum number of retryable email records to pick up in a single entry batch."
+    },
+    {
+      "name": "app.email.retry.max-attempts",
+      "type": "java.lang.Integer",
+      "description": "Maximum number of delivery attempts before an email is considered exhausted and moved to final failure handling."
+    },
+    {
+      "name": "app.email.retry.initial-delay-ms",
+      "type": "java.lang.Long",
+      "description": "Initial retry backoff in milliseconds before the first resent attempt."
+    },
+    {
+      "name": "app.email.retry.max-delay-ms",
+      "type": "java.lang.Long",
+      "description": "Upper bound for retry backoff in milliseconds."
+    },
+    {
+      "name": "app.email.retry.scheduler.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enables the background scheduler that scans for retryable email work."
+    },
+    {
+      "name": "app.email.retry.scheduler.poll-delay-ms",
+      "type": "java.lang.Long",
+      "description": "Polling interval in milliseconds for the retry scheduler."
+    },
+    {
+      "name": "app.email.topics.email-to-send",
+      "type": "java.lang.String",
+      "description": "Kafka topic that carries outbound email send events."
+    },
+    {
+      "name": "app.email.topics.email-config-changed",
+      "type": "java.lang.String",
+      "description": "Kafka topic that notifies the email service that instance configuration has changed"
+    },
+    {
+      "name": "app.email.sender.connection-timeout-ms",
+      "type": "java.lang.Integer",
+      "description": "SMTP connection timeout in milliseconds."
+    },
+    {
+      "name": "app.email.sender.timeout-ms",
+      "type": "java.lang.Integer",
+      "description": "SMTP read timeout in milliseconds."
+    },
+    {
+      "name": "app.email.sender.write-timeout-ms",
+      "type": "java.lang.Integer",
+      "description": "SMTP write timeout in milliseconds."
+    },
+    {
+      "name": "app.clients.instance-service.base-url",
+      "type": "java.lang.String",
+      "description": "Base URL of the instance-service used by the email service to resolve instance-scoped runtime configuration."
+    },
+    {
+      "name": "app.clients.instance-service.connect-timeout",
+      "type": "java.time.Duration",
+      "description": "Connection timeout for HTTP calls to instance-service."
+    },
+    {
+      "name": "app.clients.instance-service.read-timeout",
+      "type": "java.time.Duration",
+      "description": "Read timeout for HTTP calls to instance-service."
+    }
+  ]
+}

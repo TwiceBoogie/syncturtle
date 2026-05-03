@@ -19,7 +19,7 @@ interface IItemProps {
 }
 
 const Item = ({ height = "auto", width = "auto", className = "" }: IItemProps) => (
-  <div className={cn("rounded-md bg-custom-background-80", className)} style={{ height: height, width: width }} />
+  <div className={cn("bg-custom-background-80 rounded-md", className)} style={{ height: height, width: width }} />
 );
 
 Loader.Item = Item;

@@ -42,7 +42,7 @@ export const AdminSidebar = () => {
         lg:ml-0 ${isSidebarCollapsed ? "w-17.5" : "w-72.5"}
         `}
     >
-      <div ref={ref} className="flex h-full w-full flex-1 flex-col">
+      <div ref={ref} className="flex h-full min-h-0 w-full flex-1 flex-col">
         <AdminSidebarDropdown />
         <AdminSidebarMenu />
         <AdminSidebarHelpSection />

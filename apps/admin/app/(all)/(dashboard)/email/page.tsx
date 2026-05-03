@@ -1,9 +1,12 @@
 "use client";
 
-import { useInstance } from "@/hooks/store/use-instance";
-import { Spinner, Switch, toast } from "@heroui/react";
 import { useState } from "react";
 import useSWR from "swr";
+// heroui
+import { ScrollShadow, Spinner, Switch, toast } from "@heroui/react";
+// store hooks
+import { useInstance } from "@/hooks/store/use-instance";
+// components
 import { InstanceEmailForm } from "./email-config-form";
 
 export default function EmailManagementPage() {
@@ -24,22 +27,29 @@ export default function EmailManagementPage() {
 
     if (persistedSMTPEnabled && !nextSelected) {
       setIsSubmitting(true);
+      setShowSetupForm(false);
 
       try {
-        await disableEmail();
-        setShowSetupForm(false);
+        const promise = disableEmail();
 
-        toast("Email feature disabled", {
-          description: "Email feature has been disabled",
-          variant: "success",
-        });
-      } catch (error) {
-        console.log(error);
+        toast.promise(promise, {
+          loading: "Disabling email feature",
+          success: "Email feature has been disabled",
+          error: (err) => {
+            if (err instanceof Error) return err.message;
 
-        toast("Error disabling email", {
-          description: "Failed to disable email feature. Please try again.",
-          variant: "danger",
+            if (typeof err === "object" && err !== null && "message" in err) {
+              const message = (err as { message?: unknown }).message;
+              if (typeof message === "string" && message.trim()) {
+                return message;
+              }
+            }
+            return "Failed to disable email feature. Please try agian.";
+          },
         });
+
+        await promise;
+      } catch {
       } finally {
         setIsSubmitting(false);
       }
@@ -81,6 +91,7 @@ export default function EmailManagementPage() {
             name="disableEmailFeature"
             isSelected={isSMTPEnabled}
             onChange={(isSelected: boolean) => {
+              console.log(isSelected);
               handleToggle(isSelected);
             }}
             isDisabled={isSubmitting}
@@ -94,7 +105,9 @@ export default function EmailManagementPage() {
         )}
       </div>
       {isSMTPEnabled && !isLoading && (
-        <div className="">{formattedConfig ? <InstanceEmailForm config={formattedConfig} /> : <Spinner />}</div>
+        <ScrollShadow orientation="vertical" size={40} className="min-h-0 flex-1 px-4">
+          {formattedConfig ? <InstanceEmailForm config={formattedConfig} /> : <Spinner />}
+        </ScrollShadow>
       )}
     </div>
   );

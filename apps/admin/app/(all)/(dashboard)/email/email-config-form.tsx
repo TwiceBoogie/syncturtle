@@ -92,7 +92,9 @@ export const InstanceEmailForm: FC<IInstanceEmailForm> = (props) => {
     setIsSubmitting(true);
 
     try {
-      toast.promise(updateInstanceConfigurations(payload), {
+      const promise = updateInstanceConfigurations(payload);
+
+      toast.promise(promise, {
         loading: "Saving email settings...",
         success: "Email settings updated successfully",
         error: (err) => {
@@ -107,6 +109,8 @@ export const InstanceEmailForm: FC<IInstanceEmailForm> = (props) => {
           return "Failed to update email settings";
         },
       });
+
+      await promise;
     } finally {
       setIsSubmitting(false);
     }

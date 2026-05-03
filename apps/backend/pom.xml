@@ -36,8 +36,8 @@
     <module>services/instance-service</module>
     <module>services/user-service</module>
     <module>services/workspace-service</module>
-    <!-- <module>services/password-service</module>
-    <module>services/email-service</module> -->
+    <!-- <module>services/password-service</module> -->
+    <module>services/email-service</module>
 
     <!-- cross-service tests (E2E/system) -->
     <module>tests/system-tests</module>
@@ -71,6 +71,8 @@
     <spring.profile.unit>test</spring.profile.unit>
     <spring.profile.it>it</spring.profile.it>
     <spring.profile.system>system</spring.profile.system>
+
+    <argLine></argLine>
 
     <!-- for unit + integration tests, default to Not talking to config-server / eureka -->
     <cloud.enabled>false</cloud.enabled>
@@ -189,6 +191,18 @@
   <build>
     <!-- Inherited by all children -->
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>properties</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
       <!-- Enforce java/maven version -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -220,6 +234,8 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.5.4</version>
         <configuration>
+          <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+
           <includes>
             <include>**/*Test.java</include>
           </includes>
@@ -256,6 +272,8 @@
           </execution>
         </executions>
         <configuration>
+          <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+
           <skipITs>${skipITs}</skipITs>
           <includes>
             <include>**/*IT.java</include>
