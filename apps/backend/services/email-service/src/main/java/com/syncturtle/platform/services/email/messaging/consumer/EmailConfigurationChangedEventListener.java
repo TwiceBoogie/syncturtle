@@ -18,7 +18,7 @@ public class EmailConfigurationChangedEventListener {
 
     private final EmailRuntimeConfigService emailRuntimeConfigService;
 
-    @KafkaListener(topics = KafkaTopicConstants.INSTANCE_CONFIG_EVENTS_V1, groupId = "${app.kafka.config-broadcast-group}")
+    @KafkaListener(topics = KafkaTopicConstants.INSTANCE_CONFIG_EVENTS_V1, groupId = "${app.kafka.config-broadcast-group}", containerFactory = "instanceConfigurationKafkaListenerFactory")
     public void onEmailConfigurationChanged(InstanceConfigurationEvent event) {
         if (event.getScope() != InstanceConfigScope.EMAIL) {
             log.debug("Ignoring instance config event for non-email scope. scope={}, eventId={}", event.getScope(),

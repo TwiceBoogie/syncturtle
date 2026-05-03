@@ -20,7 +20,7 @@ public class EmailToSendEventListener {
     private final EmailEventInboxService emailEventInboxService;
     private final EmailInboxProcessor emailInboxProcessor;
 
-    @KafkaListener(topics = KafkaTopicConstants.EMAIL_EVENTS_V1, groupId = "${app.kafka.consumer-group}")
+    @KafkaListener(topics = KafkaTopicConstants.EMAIL_EVENTS_V1, groupId = "${app.kafka.consumer-group}", containerFactory = "emailToSendKafkaListenerFactory")
     public void onEmailToSend(EmailToSendEvent event) {
         AcquireResult acquire = emailEventInboxService.tryAcquire(event);
 

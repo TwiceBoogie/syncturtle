@@ -8,6 +8,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.listener.ListenerExecutionFailedException;
+import org.springframework.kafka.support.serializer.DeserializationException;
+import org.springframework.messaging.converter.MessageConversionException;
 import org.springframework.util.backoff.ExponentialBackOff;
 
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +31,14 @@ public class KafkaErrorHandlingConfiguration {
                     return new TopicPartition(rec.topic() + ".DLT", rec.partition());
                 });
 
-        return new DefaultErrorHandler(recoverer, backOff);
+        DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, backOff);
+
+        handler.addNotRetryableExceptions(
+                DeserializationException.class,
+                MessageConversionException.class,
+                ListenerExecutionFailedException.class);
+
+        return handler;
     }
 
 }

@@ -7,5 +7,5 @@ databaseChangeLog:
           type: postgresql
 
   - include:
-      file: releases/0001_init/db.changelog-0001.yaml
+      file: releases/0001_init/db.changelog.yaml
       relativeToChangelogFile: true

@@ -17,3 +17,7 @@ databaseChangeLog:
   - include:
       file: releases/0003_create_instances_lite.sql
       relativeToChangelogFile: true
+
+  - include:
+      file: releases/0004_add_auth_version_to_users.sql
+      relativeToChangelogFile: true

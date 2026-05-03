@@ -45,9 +45,9 @@ class EmailTemplateServiceTest {
                         "magicLink", "https://app.syncturtle.com/magic?token=abc"))
                 .correlationId("corr-123")
                 .build();
-        when(templateEngine.process(eq("email/magic-link"), any(Context.class)))
+        when(templateEngine.process(eq("email/html/magic-link"), any(Context.class)))
                 .thenReturn("<html><body>Hello Luna</body></html>");
-        when(templateEngine.process(eq("email/magic-link.txt"), any(Context.class))).thenReturn("Hello Luna");
+        when(templateEngine.process(eq("email/text/magic-link"), any(Context.class))).thenReturn("Hello Luna");
         // act
         RenderedEmail rendered = service.render(envelope);
         // assert
@@ -58,8 +58,8 @@ class EmailTemplateServiceTest {
         ArgumentCaptor<Context> htmlCaptor = ArgumentCaptor.forClass(Context.class);
         ArgumentCaptor<Context> textCaptor = ArgumentCaptor.forClass(Context.class);
 
-        verify(templateEngine).process(eq("email/magic-link"), htmlCaptor.capture());
-        verify(templateEngine).process(eq("email/magic-link.txt"), textCaptor.capture());
+        verify(templateEngine).process(eq("email/html/magic-link"), htmlCaptor.capture());
+        verify(templateEngine).process(eq("email/text/magic-link"), textCaptor.capture());
 
         assertThat(htmlCaptor.getValue().getVariable("firstName")).isEqualTo("Luna");
         assertThat(htmlCaptor.getValue().getVariable("magicLink"))
