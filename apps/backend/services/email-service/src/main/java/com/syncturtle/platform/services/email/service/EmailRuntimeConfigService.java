@@ -3,7 +3,7 @@ package com.syncturtle.platform.services.email.service;
 import org.springframework.stereotype.Service;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import com.syncturtle.common.core.dto.response.EmailRuntimeConfigResponse;
+import com.syncturtle.common.core.dto.response.EmailRuntimeSecretConfigResponse;
 import com.syncturtle.platform.services.email.clients.InstanceClient;
 import com.syncturtle.platform.services.email.dto.EmailRuntimeConfig;
 
@@ -66,7 +66,7 @@ public class EmailRuntimeConfigService {
     }
 
     private EmailRuntimeConfig fetchFresh() {
-        EmailRuntimeConfigResponse response = instanceClient.getRuntimeEmailConfig();
+        EmailRuntimeSecretConfigResponse response = instanceClient.getRuntimeEmailConfig();
 
         return EmailRuntimeConfig.builder()
                 .enabled(response.isEnabled())

@@ -1,6 +1,7 @@
 package com.syncturtle.platform.services.instance.repositories;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,4 +22,6 @@ public interface InstanceAdminRepository extends JpaRepository<InstanceAdmin, UU
 
     // return number of rows deleted
     long deleteByInstance_IdAndId(UUID instanceId, UUID id);
+
+    Optional<InstanceAdmin> findByInstance_IdAndUserId(UUID instanceId, UUID userId);
 }

@@ -12,6 +12,11 @@
       "description": "Kafka consumer group id used by the email service when consuming application events"
     },
     {
+      "name": "app.kafka.config-broadcast-group",
+      "type": "java.lang.String",
+      "description": "Kafka consumer group id used to invalidate local caffeine cache"
+    },
+    {
       "name": "app.email.cache-name",
       "type": "java.lang.String",
       "description": "Name of the Java class to be cached"

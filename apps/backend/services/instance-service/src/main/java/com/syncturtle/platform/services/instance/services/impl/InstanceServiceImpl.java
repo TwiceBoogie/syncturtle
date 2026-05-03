@@ -16,6 +16,7 @@ import com.nulabinc.zxcvbn.Strength;
 import com.nulabinc.zxcvbn.Zxcvbn;
 import com.syncturtle.common.core.enums.AuthErrorCode;
 import com.syncturtle.common.core.enums.InstanceConfigurationKey;
+import com.syncturtle.common.core.events.InstanceAdminSecurityEvent;
 import com.syncturtle.common.core.events.InstanceEvent;
 import com.syncturtle.common.core.events.InstanceEvent.Type;
 import com.syncturtle.common.core.exceptions.AuthenticationException;
@@ -34,6 +35,7 @@ import com.syncturtle.platform.services.instance.dto.request.InstanceRequest;
 import com.syncturtle.platform.services.instance.models.Instance;
 import com.syncturtle.platform.services.instance.models.InstanceAdmin;
 import com.syncturtle.platform.services.instance.models.User;
+import com.syncturtle.platform.services.instance.payload.InstanceAdminSecurityEventToPublish;
 import com.syncturtle.platform.services.instance.payload.InstanceEventToPublish;
 import com.syncturtle.platform.services.instance.payload.InstanceSummary;
 import com.syncturtle.platform.services.instance.payload.InstanceSummaryResult;
@@ -52,6 +54,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class InstanceServiceImpl implements InstanceService {
+
+    private static final String ADMIN_ROLES = "INSTANCE_ADMIN";
 
     // repositories
     private final InstanceRepository instanceRepository;
@@ -159,14 +163,14 @@ public class InstanceServiceImpl implements InstanceService {
         if (instance == null) {
             AuthenticationException exception = new AuthenticationException(AuthErrorCode.INSTANCE_NOT_CONFIGURED);
             String url = hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap());
-            return new InstanceAdminSignupResult(null, url);
+            return new InstanceAdminSignupResult(null, null, null, null, null, url);
         }
 
         // check if instance already has admin registered
         if (instanceAdminRepository.existsByIdIsNotNull()) {
             AuthenticationException exception = new AuthenticationException(AuthErrorCode.ADMIN_ALREADY_EXIST);
             String url = hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap());
-            return new InstanceAdminSignupResult(null, url);
+            return new InstanceAdminSignupResult(null, null, null, null, null, url);
         }
 
         String firstName = form.getFirstName();
@@ -185,7 +189,7 @@ public class InstanceServiceImpl implements InstanceService {
                     .with("companyName", companyName)
                     .with("isTelemetryEnabled", telemetryEnabled);
             String url = hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap());
-            return new InstanceAdminSignupResult(null, url);
+            return new InstanceAdminSignupResult(null, null, null, null, null, url);
         } else {
             Strength strength = zxcvbn.measure(password);
             int score = strength.getScore();
@@ -197,7 +201,7 @@ public class InstanceServiceImpl implements InstanceService {
                         .with("companyName", companyName)
                         .with("isTelemetryEnabled", telemetryEnabled);
                 String url = hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap());
-                return new InstanceAdminSignupResult(null, url);
+                return new InstanceAdminSignupResult(null, null, null, null, null, url);
             }
 
             try {
@@ -205,8 +209,9 @@ public class InstanceServiceImpl implements InstanceService {
                         .adminSignupPost(new AdminSignupInternalRequest(firstName,
                                 lastName, email, companyName, telemetryEnabled, password));
 
-                InstanceAdmin instanceAdmin = instanceAdminRepository
-                        .save(InstanceAdmin.create(response.getUserId(), instance));
+                InstanceAdmin instanceAdmin = InstanceAdmin.create(response.getUserId(), instance);
+                instanceAdmin.setSessionVersion(1L);
+                instanceAdmin = instanceAdminRepository.saveAndFlush(instanceAdmin);
 
                 instance.setSetupDone(true);
                 instance.setInstanceName(companyName);
@@ -214,24 +219,20 @@ public class InstanceServiceImpl implements InstanceService {
 
                 instance = instanceRepository.saveAndFlush(instance);
 
-                InstanceEvent event = InstanceEvent.builder()
-                        .eventId(UUID.randomUUID().toString())
-                        .occurredAt(Instant.now())
-                        .type(Type.INSTANCE_UPDATED)
-                        .id(instance.getId())
-                        .setupDone(instance.isSetupDone())
-                        .edition(instance.getEdition())
-                        .version(instance.getVersion())
-                        .test(instance.isTest())
-                        .createdAt(instance.getCreatedAt())
-                        .updatedAt(instance.getUpdatedAt())
-                        .build();
+                publishInstanceUpdate(instance);
+                publishInstanceAdminSecurity(instance.getId(), instanceAdmin.getUserId(),
+                        instanceAdmin.getSessionVersion(), true, ADMIN_ROLES,
+                        InstanceAdminSecurityEvent.Type.ADMIN_GRANTED);
 
-                events.publishEvent(new InstanceEventToPublish(event));
-
-                return new InstanceAdminSignupResult(instanceAdmin.getUserId(), hostResolver.adminHost() + "/general");
+                return new InstanceAdminSignupResult(
+                        instanceAdmin.getUserId(),
+                        response.getAuthVersion(),
+                        instanceAdmin.getSessionVersion(),
+                        instance.getId(),
+                        ADMIN_ROLES,
+                        hostResolver.adminHost() + "/general");
             } catch (AuthenticationException exception) {
-                return new InstanceAdminSignupResult(null,
+                return new InstanceAdminSignupResult(null, null, null, null, null,
                         hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap()));
             }
         }
@@ -245,7 +246,7 @@ public class InstanceServiceImpl implements InstanceService {
         if (instance == null) {
             AuthenticationException exception = new AuthenticationException(AuthErrorCode.INSTANCE_NOT_CONFIGURED);
             String url = hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap());
-            return new InstanceAdminSigninResult(null, url);
+            return new InstanceAdminSigninResult(null, null, null, null, null, url);
         }
 
         String email = form.getEmail().trim().toLowerCase();
@@ -255,25 +256,67 @@ public class InstanceServiceImpl implements InstanceService {
             AuthenticationException exception = AuthenticationException.of(AuthErrorCode.ADMIN_USER_DOES_NOT_EXIST)
                     .with("email", email);
             String url = hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap());
-            return new InstanceAdminSigninResult(null, url);
+            return new InstanceAdminSigninResult(null, null, null, null, null, url);
         }
 
         try {
             AdminSigninInternalResponse response = userClient
                     .adminSigninPost(new AdminSigninInternalRequest(email, password));
-            if (!instanceAdminRepository.existsByInstance_IdAndUserId(instance.getId(), response.getUserId())) {
+
+            InstanceAdmin instanceAdmin = instanceAdminRepository
+                    .findByInstance_IdAndUserId(instance.getId(), response.getUserId()).orElse(null);
+            if (instanceAdmin == null) {
                 AuthenticationException exception = AuthenticationException
                         .of(AuthErrorCode.ADMIN_AUTHENTICATION_FAILED)
                         .with("email", email);
                 String url = hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap());
-                return new InstanceAdminSigninResult(null, url);
+                return new InstanceAdminSigninResult(null, null, null, null, null, url);
             }
 
-            return new InstanceAdminSigninResult(response.getUserId(), hostResolver.adminHost() + "/general");
+            return new InstanceAdminSigninResult(
+                    response.getUserId(),
+                    response.getAuthVersion(),
+                    instanceAdmin.getSessionVersion(),
+                    instance.getId(),
+                    ADMIN_ROLES,
+                    hostResolver.adminHost() + "/general");
         } catch (AuthenticationException exception) {
-            return new InstanceAdminSigninResult(null,
+            return new InstanceAdminSigninResult(null, null, null, null, null,
                     hostResolver.buildAdminRedirectUriWithErrors(exception.getErrorMap()));
         }
+    }
+
+    private void publishInstanceUpdate(Instance instance) {
+        InstanceEvent event = InstanceEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .occurredAt(Instant.now())
+                .type(Type.INSTANCE_UPDATED)
+                .id(instance.getId())
+                .setupDone(instance.isSetupDone())
+                .edition(instance.getEdition())
+                .version(instance.getVersion())
+                .test(instance.isTest())
+                .createdAt(instance.getCreatedAt())
+                .updatedAt(instance.getUpdatedAt())
+                .build();
+
+        events.publishEvent(new InstanceEventToPublish(event));
+    }
+
+    private void publishInstanceAdminSecurity(UUID instanceId, UUID userId, Long sessionVersion, boolean active,
+            String rolesCsv, InstanceAdminSecurityEvent.Type type) {
+        InstanceAdminSecurityEvent event = InstanceAdminSecurityEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .occurredAt(Instant.now())
+                .type(type)
+                .instanceId(instanceId)
+                .userId(userId)
+                .sessionVersion(sessionVersion)
+                .active(active)
+                .roles(List.of(rolesCsv.split(",")))
+                .build();
+
+        events.publishEvent(new InstanceAdminSecurityEventToPublish(event));
     }
 
 }

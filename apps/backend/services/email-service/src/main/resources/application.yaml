@@ -103,6 +103,7 @@ app:
   kafka:
     enabled: true
     consumer-group: email-service
+    config-broadcast-group: email-service-${HOSTNAME}
 
   email:
     cache-name: emailRuntimeConfig

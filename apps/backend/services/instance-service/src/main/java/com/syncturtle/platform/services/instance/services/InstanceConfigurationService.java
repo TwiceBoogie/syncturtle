@@ -11,8 +11,6 @@ import com.syncturtle.platform.services.instance.dto.response.InstanceConfigurat
 public interface InstanceConfigurationService {
     InstanceConfigResponse configurations();
 
-    EmailRuntimeConfigResponse getEmailConfigurations();
-
     List<InstanceConfigurationResponse> configurationsAll();
 
     List<InstanceConfigurationResponse> configurationsUpdate(Map<InstanceConfigurationKey, String> request);

@@ -15,7 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.syncturtle.common.core.dto.response.EmailRuntimeConfigResponse;
+import com.syncturtle.common.core.dto.response.EmailRuntimeSecretConfigResponse;
 import com.syncturtle.platform.services.email.clients.InstanceClient;
 import com.syncturtle.platform.services.email.dto.EmailRuntimeConfig;
 import com.syncturtle.platform.services.email.service.EmailRuntimeConfigService;
@@ -114,8 +114,8 @@ class EmailRuntimeConfigServiceTest {
         verifyNoMoreInteractions(instanceClient);
     }
 
-    private static EmailRuntimeConfigResponse response(long version) {
-        return EmailRuntimeConfigResponse.builder()
+    private static EmailRuntimeSecretConfigResponse response(long version) {
+        return EmailRuntimeSecretConfigResponse.builder()
                 .enabled(true)
                 .host("smtp.example.com")
                 .port(587)

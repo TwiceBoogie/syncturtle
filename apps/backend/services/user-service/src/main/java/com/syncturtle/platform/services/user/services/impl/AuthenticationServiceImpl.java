@@ -1,18 +1,17 @@
 package com.syncturtle.platform.services.user.services.impl;
 
 import java.time.Instant;
-import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.syncturtle.common.core.enums.AuthErrorCode;
-import com.syncturtle.common.core.enums.InstanceConfigurationKey;
 import com.syncturtle.common.core.exceptions.AuthenticationException;
 import com.syncturtle.common.spring.web.url.HostUrlBuilder;
 import com.syncturtle.common.web.context.RequestClientContext;
 import com.syncturtle.common.web.context.RequestUserContext;
+import com.syncturtle.platform.services.user.dto.internal.UserAuthRuntimeConfig;
 import com.syncturtle.platform.services.user.dto.response.EmailCheckResponse;
 import com.syncturtle.platform.services.user.models.Instance;
 import com.syncturtle.platform.services.user.models.User;
@@ -49,10 +48,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new AuthenticationException(AuthErrorCode.INSTANCE_NOT_CONFIGURED);
         }
 
-        Map<InstanceConfigurationKey, String> configurations = featureFlagService.getInstanceConfigurations();
+        UserAuthRuntimeConfig configurations = featureFlagService.getInstanceConfigurations();
 
-        boolean smtpConfigured = bool(configurations.get(InstanceConfigurationKey.EMAIL_HOST));
-        boolean isMagicLoginEnabled = bool(configurations.get(InstanceConfigurationKey.ENABLE_MAGIC_LINK_LOGIN));
+        boolean smtpConfigured = configurations.isSmtpEnabled();
+        boolean isMagicLoginEnabled = configurations.isMagicLinkEnabled();
 
         email = email.trim().toLowerCase();
 
@@ -88,17 +87,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         return redirectionUrl;
-    }
-
-    private static boolean bool(String s) {
-        if (s == null || s.isEmpty()) {
-            return false;
-        }
-        if ("0".equals(s)) {
-            return false;
-        }
-
-        return true;
     }
 
 }

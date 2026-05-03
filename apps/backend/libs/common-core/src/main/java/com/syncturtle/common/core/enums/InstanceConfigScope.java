@@ -4,6 +4,6 @@ public enum InstanceConfigScope {
     AUTH,
     EMAIL,
     SOCIAL_LOGIN,
-    TELEMETRY,
+    ANALYTICS,
     WORKSPACE
 }

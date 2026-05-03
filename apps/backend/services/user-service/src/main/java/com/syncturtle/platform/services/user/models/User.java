@@ -129,6 +129,9 @@ public class User extends TimeAuditEntity {
     @Column(name = "masked_at")
     private Instant maskedAt;
 
+    @Column(name = "auth_version", nullable = false)
+    private Long authVersion = 1L;
+
     @Version
     @Column(name = "version", nullable = false)
     private Long version;
@@ -153,6 +156,10 @@ public class User extends TimeAuditEntity {
         user.tokenUpdatedAt = now;
 
         return user;
+    }
+
+    public void bumpAuthVersion() {
+        authVersion = (authVersion == null ? 1L : authVersion + 1L);
     }
 
     @PrePersist

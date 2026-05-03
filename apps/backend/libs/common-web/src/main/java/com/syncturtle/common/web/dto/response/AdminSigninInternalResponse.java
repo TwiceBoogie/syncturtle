@@ -9,4 +9,5 @@ import lombok.Getter;
 @AllArgsConstructor
 public class AdminSigninInternalResponse {
     private final UUID userId;
+    private final Long authVersion;
 }

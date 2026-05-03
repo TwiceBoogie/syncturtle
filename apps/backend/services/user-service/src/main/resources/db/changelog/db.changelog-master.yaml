@@ -7,13 +7,13 @@ databaseChangeLog:
           type: postgresql
 
   - include:
-      file: releases/0001_init/db.changelog-0001.yaml
+      file: releases/0001_init/db.changelog.yaml
       relativeToChangelogFile: true
 
   - include:
-      file: releases/0002_add_version_to_users/db.changelog-0002.yaml
+      file: releases/0002_add_version_to_users.sql
       relativeToChangelogFile: true
 
   - include:
-      file: releases/0003_add_instance_table/db.changelog-0003.yaml
+      file: releases/0003_create_instances_lite.sql
       relativeToChangelogFile: true

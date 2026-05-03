@@ -8,14 +8,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.syncturtle.common.core.dto.response.EmailRuntimeConfigResponse;
 import com.syncturtle.common.core.enums.InstanceConfigScope;
 import com.syncturtle.common.core.enums.InstanceConfigurationKey;
+import com.syncturtle.common.core.enums.InstanceConfigurationScopes;
 import com.syncturtle.common.core.events.InstanceConfigurationEvent;
 import com.syncturtle.common.web.dto.response.InstanceConfigResponse;
 import com.syncturtle.platform.services.instance.controllers.mappers.InstanceConfigurationApiMapper;
@@ -35,13 +36,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class InstanceConfigurationServiceImpl implements InstanceConfigurationService {
 
-    private static final Set<InstanceConfigurationKey> EMAIL_KEYS = Set.of(
+    private static final Set<InstanceConfigurationKey> EMAIL_DISABLE_KEYS = Set.of(
             InstanceConfigurationKey.EMAIL_HOST,
             InstanceConfigurationKey.EMAIL_HOST_USER,
             InstanceConfigurationKey.EMAIL_HOST_PASSWORD,
             InstanceConfigurationKey.ENABLE_SMTP,
             InstanceConfigurationKey.EMAIL_PORT,
-            InstanceConfigurationKey.EMAIL_FROM);
+            InstanceConfigurationKey.EMAIL_FROM,
+            InstanceConfigurationKey.EMAIL_USE_TLS,
+            InstanceConfigurationKey.EMAIL_USE_SSL);
 
     // repositories
     private final InstanceConfigurationRepository iConfigurationRepository;
@@ -69,34 +72,6 @@ public class InstanceConfigurationServiceImpl implements InstanceConfigurationSe
                 InstanceConfigurationResolver.RequestedKey.of(InstanceConfigurationKey.IS_INTERCOM_ENABLED)));
 
         return mapper.toInstanceConfigResponse(configs, instance.getConfig().getVersion());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public EmailRuntimeConfigResponse getEmailConfigurations() {
-        Instance instance = instanceRepository.findTopByOrderByCreatedAtDesc(Instance.class).orElseThrow();
-
-        Map<InstanceConfigurationKey, String> emailConfigs = instanceConfigurationResolver.resolveRequested(List.of(
-                InstanceConfigurationResolver.RequestedKey.of(InstanceConfigurationKey.EMAIL_HOST),
-                InstanceConfigurationResolver.RequestedKey.of(InstanceConfigurationKey.EMAIL_HOST_USER),
-                InstanceConfigurationResolver.RequestedKey.of(InstanceConfigurationKey.EMAIL_HOST_PASSWORD),
-                InstanceConfigurationResolver.RequestedKey.of(InstanceConfigurationKey.ENABLE_SMTP),
-                InstanceConfigurationResolver.RequestedKey.of(InstanceConfigurationKey.EMAIL_PORT),
-                InstanceConfigurationResolver.RequestedKey.of(InstanceConfigurationKey.EMAIL_FROM),
-                InstanceConfigurationResolver.RequestedKey.of(InstanceConfigurationKey.EMAIL_USE_SSL),
-                InstanceConfigurationResolver.RequestedKey.of(InstanceConfigurationKey.EMAIL_USE_TLS)));
-
-        return EmailRuntimeConfigResponse.builder()
-                .enabled("1".equals(emailConfigs.get(InstanceConfigurationKey.ENABLE_SMTP)))
-                .host(emailConfigs.get(InstanceConfigurationKey.EMAIL_HOST))
-                .port(Integer.parseInt(emailConfigs.get(InstanceConfigurationKey.EMAIL_PORT)))
-                .username(emailConfigs.get(InstanceConfigurationKey.EMAIL_HOST_USER))
-                .password(emailConfigs.get(InstanceConfigurationKey.EMAIL_HOST_PASSWORD))
-                .from(emailConfigs.get(InstanceConfigurationKey.EMAIL_FROM))
-                .useTls("1".equals(emailConfigs.get(InstanceConfigurationKey.EMAIL_USE_TLS)))
-                .useSsl("1".equals(emailConfigs.get(InstanceConfigurationKey.EMAIL_USE_SSL)))
-                .version(instance.getConfig().getVersion())
-                .build();
     }
 
     @Override
@@ -151,39 +126,77 @@ public class InstanceConfigurationServiceImpl implements InstanceConfigurationSe
         instance = instanceRepository.saveAndFlush(instance);
         configurations = iConfigurationRepository.saveAll(configurations);
 
-        // check if any changed keys are email configurations
-        boolean isEmailConfigs = false;
-        for (InstanceConfiguration configuration : configurations) {
-            if (EMAIL_KEYS.contains(configuration.getKey())) {
-                isEmailConfigs = true;
-            }
-        }
+        List<InstanceConfigurationResponse> result = configurations.stream()
+                .map(row -> InstanceConfigurationResponse.builder()
+                        .id(row.getId())
+                        .key(row.getKey())
+                        .value(crypto.decryptIfNeeded(row))
+                        .createdAt(row.getCreatedAt())
+                        .updatedAt(row.getUpdatedAt())
+                        .createdById(row.getCreatedById())
+                        .updatedById(row.getUpdatedById())
+                        .build())
+                .toList();
 
-        List<InstanceConfigurationResponse> result = new ArrayList<>();
-        for (InstanceConfiguration configuration : configurations) {
-            result.add(InstanceConfigurationResponse.builder()
-                    .id(configuration.getId())
-                    .key(configuration.getKey())
-                    .value(crypto.decryptIfNeeded(configuration))
-                    .createdAt(configuration.getCreatedAt())
-                    .updatedAt(configuration.getUpdatedAt())
-                    .createdById(configuration.getCreatedById())
-                    .updatedById(configuration.getUpdatedById())
-                    .build());
-        }
-
-        // publish event
-        InstanceConfigurationEvent event = InstanceConfigurationEvent.builder()
-                .eventId(UUID.randomUUID().toString())
-                .occurredAt(Instant.now())
-                .correlationId(UUID.randomUUID().toString())
-                .scope(isEmailConfigs ? InstanceConfigScope.EMAIL : InstanceConfigScope.AUTH)
-                .globalVersion(instance.getConfig().getVersion())
-                .build();
-
-        publisher.publishEvent(new InstanceConfigurationEventToPublish(event));
+        publishEvents(instance, changedKeys);
 
         return result;
+    }
+
+    @Override
+    @Transactional
+    public void disableEmail() {
+        Instance instance = instanceRepository.findTopByOrderByCreatedAtDesc(Instance.class).orElseThrow();
+        List<InstanceConfiguration> configurations = iConfigurationRepository.findByKeyIn(EMAIL_DISABLE_KEYS);
+
+        Set<InstanceConfigurationKey> changedKeys = EnumSet.noneOf(InstanceConfigurationKey.class);
+
+        for (InstanceConfiguration configuration : configurations) {
+            String nextValue = configuration.getKey() == InstanceConfigurationKey.ENABLE_SMTP ? "0" : "";
+            String oldPlainValue = crypto.decryptIfNeeded(configuration);
+
+            if (Objects.equals(oldPlainValue, nextValue)) {
+                continue;
+            }
+
+            configuration.setValue(crypto.encryptIfNeeded(configuration.isEncrypted(), nextValue));
+            changedKeys.add(configuration.getKey());
+        }
+
+        if (changedKeys.isEmpty()) {
+            return;
+        }
+
+        instance.getConfig().updateVersion();
+        instance = instanceRepository.saveAndFlush(instance);
+        iConfigurationRepository.saveAll(configurations);
+
+        publishEvents(instance, changedKeys);
+    }
+
+    private void publishEvents(Instance instance, Set<InstanceConfigurationKey> changedKeys) {
+        Instant now = Instant.now();
+        String correlationId = UUID.randomUUID().toString();
+
+        EnumSet<InstanceConfigScope> changedScopes = InstanceConfigurationScopes.scopesOf(changedKeys);
+
+        for (InstanceConfigScope scope : changedScopes) {
+            Set<InstanceConfigurationKey> scopedKeys = changedKeys.stream()
+                    .filter(key -> InstanceConfigurationScopes.scopeOf(key) == scope)
+                    .collect(Collectors.toSet());
+
+            InstanceConfigurationEvent event = InstanceConfigurationEvent.builder()
+                    .eventId(UUID.randomUUID().toString())
+                    .correlationId(correlationId)
+                    .occurredAt(now)
+                    .instanceId(instance.getId())
+                    .scope(scope)
+                    .changedKeys(scopedKeys)
+                    .globalVersion(instance.getConfig().getVersion())
+                    .build();
+
+            publisher.publishEvent(new InstanceConfigurationEventToPublish(event));
+        }
     }
 
     @Override

@@ -40,7 +40,13 @@ public class InstanceControllerTest {
         MockMvc mvc = MockMvcBuilders.standaloneSetup(controller).build();
         // conditions
         when(query.instanceAdminSignup(any()))
-                .thenReturn(new InstanceAdminSignupResult(userId, "https://admin.syncturtle.com/god-mode/general/"));
+                .thenReturn(new InstanceAdminSignupResult(
+                        userId,
+                        1L,
+                        1L,
+                        UUID.randomUUID(),
+                        "INSTANCE_ADMIN",
+                        "https://admin.syncturtle.com/god-mode/general/"));
         // act
         mvc.perform(post("/api/instances/admins/sign-up")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)

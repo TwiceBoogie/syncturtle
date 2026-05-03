@@ -1,11 +1,9 @@
 package com.syncturtle.platform.services.user.services;
 
-import java.util.Map;
-
-import com.syncturtle.common.core.enums.InstanceConfigurationKey;
+import com.syncturtle.platform.services.user.dto.internal.UserAuthRuntimeConfig;
 
 public interface FeatureFlagService {
-    Map<InstanceConfigurationKey, String> getInstanceConfigurations();
+    UserAuthRuntimeConfig getInstanceConfigurations();
 
-    String get(InstanceConfigurationKey key);
+    void evict();
 }
