@@ -211,7 +211,23 @@ public class InstanceServiceImpl implements InstanceService {
                 instance.setSetupDone(true);
                 instance.setInstanceName(companyName);
                 instance.setTelemetryEnabled(telemetryEnabled);
-                instanceRepository.save(instance);
+
+                instance = instanceRepository.saveAndFlush(instance);
+
+                InstanceEvent event = InstanceEvent.builder()
+                        .eventId(UUID.randomUUID().toString())
+                        .occurredAt(Instant.now())
+                        .type(Type.INSTANCE_UPDATED)
+                        .id(instance.getId())
+                        .setupDone(instance.isSetupDone())
+                        .edition(instance.getEdition())
+                        .version(instance.getVersion())
+                        .test(instance.isTest())
+                        .createdAt(instance.getCreatedAt())
+                        .updatedAt(instance.getUpdatedAt())
+                        .build();
+
+                events.publishEvent(new InstanceEventToPublish(event));
 
                 return new InstanceAdminSignupResult(instanceAdmin.getUserId(), hostResolver.adminHost() + "/general");
             } catch (AuthenticationException exception) {
