@@ -3,6 +3,7 @@ package com.syncturtle.platform.services.instance.services;
 import java.util.List;
 import java.util.Map;
 
+import com.syncturtle.common.core.dto.response.EmailRuntimeConfigResponse;
 import com.syncturtle.common.core.enums.InstanceConfigurationKey;
 import com.syncturtle.common.web.dto.response.InstanceConfigResponse;
 import com.syncturtle.platform.services.instance.dto.response.InstanceConfigurationResponse;
