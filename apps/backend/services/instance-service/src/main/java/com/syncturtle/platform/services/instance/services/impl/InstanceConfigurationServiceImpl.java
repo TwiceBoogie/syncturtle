@@ -199,4 +199,21 @@ public class InstanceConfigurationServiceImpl implements InstanceConfigurationSe
         }
     }
 
+    @Override
+    @Transactional
+    public void disableEmail() {
+        Instance instance = instanceRepository.findTopByOrderByCreatedAtDesc(Instance.class).orElseThrow();
+        List<InstanceConfiguration> configurations = iConfigurationRepository.findByKeyIn(EMAIL_KEYS);
+
+        for (InstanceConfiguration configuration : configurations) {
+            String nextValue = configuration.getKey() == InstanceConfigurationKey.ENABLE_SMTP ? "0" : "";
+
+            configuration.setValue(crypto.encryptIfNeeded(configuration.isEncrypted(), nextValue));
+        }
+
+        instance.getConfig().updateVersion();
+        instanceRepository.save(instance);
+        iConfigurationRepository.saveAll(configurations);
+    }
+
 }
