@@ -8,13 +8,20 @@ import useSWR from "swr";
 import { Button, Spinner, Switch, toast } from "@heroui/react";
 import { TInstanceConfigurationKeys } from "@syncturtle/types";
 import Link from "next/link";
+import { WorkspaceListItem } from "@/components/workspace/list-item";
 
 export default function WorkspaceMangagementPage() {
   // states
   const [isSubmitting, setIsSubmitting] = useState(false);
   // store hooks
   const { formattedConfig, fetchInstanceConfigurations, updateInstanceConfigurations } = useInstance();
-  const { workspaceIds, loader: workspaceLoader, paginationInfo, fetchWorkspaces } = useWorkspace();
+  const {
+    workspaceIds,
+    loader: workspaceLoader,
+    paginationInfo,
+    fetchWorkspaces,
+    fetchNextWorkspaces,
+  } = useWorkspace();
   // derived values
   const disableWorkspaceCreation = formattedConfig?.DISABLE_WORKSPACE_CREATION ?? "";
   const hasNextPage = paginationInfo?.nextPageResults && paginationInfo.nextCursor != undefined;
@@ -31,15 +38,11 @@ export default function WorkspaceMangagementPage() {
     };
 
     try {
-      const updateConfigPromise = updateInstanceConfigurations(payload);
-
-      toast.promise(updateConfigPromise, {
+      toast.promise(updateInstanceConfigurations(payload), {
         loading: "Saving configurations...",
         success: () => "Configuration saved successfully",
         error: () => "Failed to save configuration",
       });
-
-      await updateConfigPromise;
     } finally {
       setIsSubmitting(false);
     }
@@ -105,10 +108,16 @@ export default function WorkspaceMangagementPage() {
                   </Link>
                 </div>
               </div>
-              <div className="">workspace list here</div>
+              <div className="flex flex-col gap-4 py-2">
+                {workspaceIds.map((workspaceId) => (
+                  <WorkspaceListItem key={workspaceId} workspaceId={workspaceId} />
+                ))}
+              </div>
               {hasNextPage && (
                 <div className="">
-                  <Button isDisabled={workspaceLoader === "pagination"}>Load more</Button>
+                  <Button isDisabled={workspaceLoader === "pagination"} onPress={() => fetchNextWorkspaces()}>
+                    Load more
+                  </Button>
                 </div>
               )}
             </>

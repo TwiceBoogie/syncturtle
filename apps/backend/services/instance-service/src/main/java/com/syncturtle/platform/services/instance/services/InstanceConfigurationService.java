@@ -12,4 +12,6 @@ public interface InstanceConfigurationService {
     List<InstanceConfigurationResponse> configurationsAll();
 
     List<InstanceConfigurationResponse> configurationsUpdate(Map<InstanceConfigurationKey, String> request);
+
+    void disableEmail();
 }

@@ -13,7 +13,7 @@ import { Toast } from "@heroui/react";
 export default function InstanceLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Toast.Container />
+      <Toast.Provider />
       <StoreProvider>
         <ThemeProvider themes={["light", "dark"]} defaultTheme="system" enableSystem>
           <SWRConfig value={DEFAULT_SWR_CONFIG}>

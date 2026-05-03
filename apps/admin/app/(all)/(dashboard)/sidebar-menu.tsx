@@ -37,7 +37,7 @@ const INSTANCE_ADMIN_LINKS = [
   },
   {
     Icon: Image,
-    name: "Images in Plane",
+    name: "Images in Syncturtle",
     description: "Allow third-party image libraries.",
     href: `/image/`,
   },
