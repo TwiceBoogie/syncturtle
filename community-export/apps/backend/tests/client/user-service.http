@@ -1,0 +1,9 @@
+@gateway = http://localhost:8000
+@direct = http://localhost:8002
+
+###
+
+GET {{direct}}/actuator/health HTTP/1.1
+
+###
+

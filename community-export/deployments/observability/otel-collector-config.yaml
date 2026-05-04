@@ -1,0 +1,66 @@
+receivers:
+  # SYSTEM OBSERVEABILITY INGRESS
+  otlp/system:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  # PRODUCT OBSERVABILITY INGRESS
+  otlp/product:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:5317
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+  batch:
+    timeout: 2s
+    send_batch_size: 2048
+  attributes/redact:
+    actions:
+      # drop auth header if it sneaks in as an attribute
+      - key: http.request.header.authorization
+        action: delete
+  filter/drop_eureka:
+    spans:
+      exclude:
+        match_type: regexp
+        attributes:
+          - key: http.url
+            value: .*/eureka/.*
+  attributes/mark_product:
+    actions:
+      - key: telemetry.mode
+        action: upsert
+        value: product
+
+exporters:
+  otlp/lgtm:
+    endpoint: syncturtle-obs:4317
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    # SYSTEM
+    traces/system:
+      receivers: [otlp/system]
+      processors: [memory_limiter, filter/drop_eureka, attributes/redact, batch]
+      exporters: [otlp/lgtm]
+    metrics/system:
+      receivers: [otlp/system]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/lgtm]
+    logs/system:
+      receivers: [otlp/system]
+      processors: [memory_limiter, attributes/redact, batch]
+      exporters: [otlp/lgtm]
+
+    # PRODUCT
+    traces/product:
+      receivers: [otlp/product]
+      processors: [memory_limiter, attributes/mark_product, attributes/redact, batch]
+      exporters: [otlp/lgtm]

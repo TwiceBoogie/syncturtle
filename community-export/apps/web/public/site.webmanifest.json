@@ -1,0 +1,13 @@
+{
+  "name": "Syncturtle",
+  "short_name": "Syncturtle",
+  "description": "Syncturtle - Open-source, extensible personal management",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#3f76ff",
+  "icons": [
+    { "src": "/favicon/apple-touch-icon.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/favicon/apple-touch-icon.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

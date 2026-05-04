@@ -1,0 +1,10 @@
+management:
+  otlp:
+    tracing:
+      endpoint: ${OTLP_TRACES_ENDPOINT:http://otel-collector:4317}
+      transport: grpc
+    metrics:
+      export:
+        url: ${OTLP_METRICS_URL:http://otel-collector:4318/v1/metrics}
+    logging:
+      endpoint: ${OTLP_LOGS_ENDPOINT:http://otel-collector:4318/v1/logs}

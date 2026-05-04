@@ -1,0 +1,21 @@
+{
+  "name": "@syncturtle/tailwind-config",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "files": [
+    "styles.css",
+    "theme.css"
+  ],
+  "exports": {
+    "./styles": "./styles.css",
+    "./theme": "./theme.css",
+    ".": "./styles.css"
+  },
+  "peerDependencies": {
+    "tailwindcss": "^4"
+  }
+}

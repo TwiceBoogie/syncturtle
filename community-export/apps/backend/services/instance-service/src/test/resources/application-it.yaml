@@ -1,0 +1,96 @@
+app:
+  name: ${APP_NAME:syncturtle}
+  edition: ${APP_EDITION:COMMUNITY}
+  test: ${APP_TEST:false}
+  telemetry:
+    enabled: ${APP_TELEMETRY_ENABLED:true}
+    support-required: ${APP_TELEMETRY_SUPPORT_REQUIRED:false}
+  skip-env-var: ${APP_SKIP_ENV_VAR:false}
+  base-urls:
+    admin: ${APP_BASE_URL_ADMIN:http://localhost:3001/god-mode/}
+    app: ${APP_BASE_URL_APP:http://localhost:3000/}
+  config-keys:
+    enable-signup: ${APP_ENABLE_SIGNUP:1}
+    enable-email-password: ${APP_ENABLE_EMAIL_PASSWORD:1}
+    disable-workspace-creation: ${APP_DISABLE_WORKSPACE_CREATION:0}
+
+    enable-smtp: ${APP_ENABLE_SMTP:0}
+    email-host: ${APP_EMAIL_HOST:}
+    email-host-user: ${APP_EMAIL_HOST_USER:}
+    email-host-password: ${APP_EMAIL_HOST_PASSWORD:}
+    email-port: ${APP_EMAIL_PORT:587}
+    email-from: ${APP_EMAIL_FROM:}
+    email-use-tls: ${APP_EMAIL_USE_TLS:1}
+    email-use-ssl: ${APP_EMAIL_USE_SSL:0}
+
+    enable-magic-link-login: ${APP_ENABLE_MAGIC_LINK_LOGIN:0}
+
+    google-client-id: ${APP_GOOGLE_CLIENT_ID:}
+    google-client-secret: ${APP_GOOGLE_CLIENT_SECRET:}
+
+    github-client-id: ${APP_GITHUB_CLIENT_ID:}
+    github-client-secret: ${APP_GITHUB_CLIENT_SECRET:}
+
+    gitlab-host: ${APP_GITLAB_HOST:}
+    gitlab-client-id: ${APP_GITLAB_CLIENT_ID:}
+    gitlab-client-secret: ${APP_GITLAB_CLIENT_SECRET:}
+
+    intercom-app-id: ${APP_INTERCOM_APP_ID:}
+
+    posthog-api-key: ${APP_POSTHOG_API_KEY:}
+    posthog-host: ${APP_POSTHOG_HOST:}
+  security:
+    encryption:
+      secret-key: ${APP_SECURITY_ENCRYPTION_SECRET_KEY}
+  kafka:
+    enabled: false
+  product-telemetry:
+    enabled: true
+    endpoint: ${PRODUCT_TELEMETRY_ENDPOINT:http://localhost:15317}
+    api-key: ""
+    interval: 10m
+  response-cache:
+    enabled: true
+    key-prefix: "st:resp:"
+    hash-bytes: 16
+
+spring:
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+    contexts: test
+
+  autoconfigure:
+    exclude:
+    - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+    - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+    - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+server:
+  port: 0
+
+eureka:
+  client:
+    enabled: false
+
+management:
+  observations:
+    enable:
+      all: false
+  tracing:
+    enabled: false
+  otlp:
+    metrics:
+      export:
+        enabled: false

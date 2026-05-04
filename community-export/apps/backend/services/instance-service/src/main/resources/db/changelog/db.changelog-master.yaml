@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - logicalFilePath: db/changelog/db.changelog-master.yaml
+  - preConditions:
+      - onFail: HALT
+      - onError: HALT
+      - dbms:
+          type: postgresql
+
+  - include:
+      file: releases/0001_init/db.changelog.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: releases/0002_add_uq_index_to_instance_admins.sql
+      relativeToChangelogFile: true
+  - include:
+      file: releases/0003_add_admin_session_version_to_instance_admins.sql
+      relativeToChangelogFile: true
+
+  - include:
+      file: env/test/db.changelog-test.yaml
+      relativeToChangelogFile: true

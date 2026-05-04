@@ -1,0 +1,76 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# IntelliJ / VSCode
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Logs
+*.log
+logs/
+**/logs/
+
+# Node / Next / Turbo
+node_modules/
+**/node_modules
+
+.next/
+**/.next/
+out/
+**/out/
+
+dist/
+**/dist/
+
+.turbo/
+**/.turbo/
+
+coverage/
+**/coverage/
+
+# Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+.yarnrc.yml.local
+.pnp.*
+.pnp.cjs
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# allow examples
+!.env.example
+!.env.*.example
+
+# ignore env files inside workspaces
+apps/**/.env
+apps/**/.env.local
+apps/**/.env.*.local
+packages/**/.env
+packages/**/.env.local
+packages/**/.env.*.local
+apps/**/.envrc
+
+# Java / Maven / Gradle
+target/
+**/target/
+*.class
+
+**/hs_err_pid*
+
+# testcontainers
+**/.testcontainers.properties
+/data/
+
+tmp-keys/
