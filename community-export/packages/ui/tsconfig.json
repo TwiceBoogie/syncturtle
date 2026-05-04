@@ -1,7 +1,0 @@
-{
-  "extends": "@syncturtle/typescript-config/react-library.json",
-  "include": ["src"],
-  "compilerOptions": {
-    "rootDir": "src"
-  }
-}

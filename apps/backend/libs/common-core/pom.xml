@@ -13,15 +13,9 @@
 
   <artifactId>common-core</artifactId>
   <packaging>jar</packaging>
-  <name>syncturtle :: common-core</name>
+  <name>common-core</name>
 
   <dependencies>
     <!-- keep spring-free -->
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>2.15.2</version> <!-- Use the latest stable version -->
-    </dependency>
-
   </dependencies>
 </project>

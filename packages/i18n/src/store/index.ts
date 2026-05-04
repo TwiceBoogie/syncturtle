@@ -76,7 +76,6 @@ export class TranslationStore implements ITranslationStoreInternal {
   }
 
   // Lifecycle
-
   public async init(): Promise<void> {
     await this.bootstrap();
   }
@@ -84,7 +83,6 @@ export class TranslationStore implements ITranslationStoreInternal {
   public dispose(): void {}
 
   // Actions
-
   public changeLanguage = async (lng: TLanguage): Promise<void> => {
     if (!this.isValidLanguage(lng)) {
       console.warn("[i18n] ignoring invalid language: ", lng);

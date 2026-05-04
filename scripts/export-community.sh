@@ -1,10 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUT="${1:-dist/community}"
+OUT="${1:-${RUNNER_TEMP:-/tmp}/syncturtle-community-export}"
 
-rm -rf "$OUT"
-mkdir -p "$OUT"
+# build temp folder outside repo so rsync never copies the output into itself
+BUILD_DIR="$(mktemp -d "${RUNNER_TEMP:-/tmp}/syncturtle-community-build.XXXXXX")"
+
+cleanup() {
+    rm -rf "$BUILD_DIR"
+}
+trap cleanup EXIT
+
+echo "Exporting community build..."
+echo "Build dir: $BUILD_DIR"
+echo "Output:    $OUT"
 
 #1: copy everything
 rsync -a --delete \
@@ -19,27 +28,47 @@ rsync -a --delete \
     --exclude "apps/backend/.env" \
     --exclude "apps/backend/.env.local" \
     --exclude "apps/backend/.env.*.local" \
+    --exclude "apps/backend/.env.*.*local" \
     --exclude "apps/**/ee/**" \
     --exclude ".github/workflows/**" \
     --exclude ".github/dependabot.yml" \
-    ./ "$OUT/"
+    --exclude "/dist/" \
+    --exclude "/public/" \
+    ./ "$BUILD_DIR/"
 
-#2: replace EE with public safe stubs
-if [ -d "apps/web/ee-community" ]; then
-    mkdir -p "$OUT/apps/web/ee"
-    rsync -a --delete "apps/web/ee-community/" "$OUT/apps/web/ee/"
+#2: replace admin EE with public safe stubs
+if [ -d "apps/admin/ee-community" ]; then
+    rm -rf "$BUILD_DIR/apps/admin/ee"
+    mkdir -p "$BUILD_DIR/apps/admin/ee"
+    rsync -a --delete "apps/admin/ee-community/" "$BUILD_DIR/apps/admin/ee/"
 else
-    rm -rf "$OUT/apps/web/ee"
-    mkdir -p "$OUT/apps/web/ee"
-    printf "Community build: EE stubs live here.\n" > "$OUT/apps/web/ee/README.md"
+    rm -rf "$BUILD_DIR/apps/admin/ee"
+    mkdir -p "$BUILD_DIR/apps/admin/ee"
+    cat > "$BUILD_DIR/apps/admin/ee/README.md" <<'EOF'
+Community build: enterprise implementation files are replaced with public-safe stubs.
+EOF
 fi
 
-if [ -d "apps/admin/ee-community" ]; then
-    mkdir -p "$OUT/apps/admin/ee"
-    rsync -a --delete "apps/admin/ee-community/" "$OUT/apps/admin/ee/"
+#3: replace web EE with public safe stubs
+if [ -d "apps/web/ee-community" ]; then
+    rm -rf "$BUILD_DIR/apps/web/ee"
+    mkdir -p "$BUILD_DIR/apps/web/ee"
+    rsync -a --delete "apps/web/ee-community/" "$BUILD_DIR/apps/web/ee/"
 else
-    rm -rf "$OUT/apps/admin/ee"
-    mkdir -p "$OUT/apps/admin/ee"
-    printf "Community build: EE stubs live here.\n" > "$OUT/apps/admin/ee/README.md"
-fi  
+    rm -rf "$BUILD_DIR/apps/web/ee"
+    mkdir -p "$BUILD_DIR/apps/web/ee"
+    cat > "$BUILD_DIR/apps/web/ee/README.md" <<'EOF'
+Community build: enterprise implementation files are replaced with public-safe stubs.
+EOF
+fi
+
+#4: move final export to requested OUT path.
+rm -rf "$OUT"
+mkdir -p "$(dirname "$OUT")"
+mv "$BUILD_DIR" "$OUT"
+
+# BUILD_DIR was moved, so don't delete OUT during cleanup.
+trap - EXIT
+
+echo "Community export complete: $OUT"
     

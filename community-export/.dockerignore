@@ -1,8 +1,0 @@
-**/node_modules
-**/.next
-**/.turbo
-**/dist
-**/target
-.git
-.DS_Store
-.env

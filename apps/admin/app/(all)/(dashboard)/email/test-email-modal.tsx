@@ -1,6 +1,10 @@
-// import { InstanceService } from "@/services/instance.service";
-import { Button, Description, FieldError, Input, Label, Modal, Spinner, TextField } from "@heroui/react";
 import { FC, useEffect, useMemo, useState } from "react";
+// heroui
+import { Button, Description, FieldError, Input, Label, Modal, Spinner, TextField } from "@heroui/react";
+// services
+import { InstanceService } from "@/services/instance.service";
+// types
+import type { IApiErrorPayload } from "@syncturtle/types";
 
 interface ISendTestEmailModalProps {
   isOpen: boolean;
@@ -15,7 +19,7 @@ enum ESendEmailSteps {
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// const instanceService = new InstanceService();
+const instanceService = new InstanceService();
 
 export const SendTestEmailModal: FC<ISendTestEmailModalProps> = (props) => {
   const { isOpen, handleClose } = props;
@@ -60,9 +64,12 @@ export const SendTestEmailModal: FC<ISendTestEmailModalProps> = (props) => {
     setError("");
 
     try {
-      console.log(error);
+      await instanceService.sendTestEmail(receiverEmail);
+      setSendEmailStep(ESendEmailSteps.SUCCESS);
     } catch (error: unknown) {
       console.log(error);
+      const err = error as IApiErrorPayload;
+      setError(err.message ?? "Failed to send test email.");
       setSendEmailStep(ESendEmailSteps.FAILED);
     } finally {
       setIsSubmitting(false);
@@ -110,6 +117,7 @@ export const SendTestEmailModal: FC<ISendTestEmailModalProps> = (props) => {
                     <p>If you still cannot find it, recheck your SMTP configuration and trigger a new test email</p>
                   </div>
                 )}
+                {sendEmailStep === ESendEmailSteps.FAILED && <div className="text-sm">{error}</div>}
               </Modal.Body>
               <Modal.Footer>
                 <Button variant="outline" slot="close">

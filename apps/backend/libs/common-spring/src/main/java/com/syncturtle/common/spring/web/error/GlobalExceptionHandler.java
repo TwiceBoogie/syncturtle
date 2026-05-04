@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.syncturtle.common.core.exceptions.AuthenticationException;
+import com.syncturtle.common.contracts.auth.exception.AuthException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +17,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<?> handleAuthenticatationException(AuthenticationException exception,
+    @ExceptionHandler(AuthException.class)
+    public ResponseEntity<?> handleAuthenticatationException(AuthException exception,
             HttpServletRequest request) {
         if (!shouldRedirect(request)) {
             // return a ApiErrorResponse.java

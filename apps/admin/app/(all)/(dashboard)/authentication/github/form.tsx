@@ -8,6 +8,11 @@ import type {
   TFormattedInstanceConfiguration,
   TInstanceGithubAuthenticationConfigurationKeys,
 } from "@syncturtle/types";
+// import { useInstance } from "@/hooks/store/use-instance";
+import { CopyField, ICopyField } from "@/components/common/copy-field";
+import { API_BASE_URL } from "@syncturtle/constants";
+import { isEmpty } from "lodash";
+import { CodeBlock } from "@/components/common/code-block";
 
 interface IInstanceGithubConfigFormProps {
   config: TFormattedInstanceConfiguration;
@@ -17,7 +22,10 @@ type TGithubConfigFormValues = Record<TInstanceGithubAuthenticationConfiguration
 
 export const InstanceGithubConfigForm: FC<IInstanceGithubConfigFormProps> = (props) => {
   const { config } = props;
+  // store hooks
+  // const { updateInstanceConfigurations } = useInstance();
   // states
+  // const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<TGithubConfigFormValues>({
     GITHUB_CLIENT_ID: config["GITHUB_CLIENT_ID"] ?? "",
     GITHUB_CLIENT_SECRET: config["GITHUB_CLIENT_SECRET"] ?? "",
@@ -27,6 +35,49 @@ export const InstanceGithubConfigForm: FC<IInstanceGithubConfigFormProps> = (pro
   const handleFormChange = (key: keyof TGithubConfigFormValues, value: string) =>
     setFormData((prev) => ({ ...prev, [key]: value }));
 
+  const originURL = !isEmpty(API_BASE_URL) ? API_BASE_URL : typeof window !== "undefined" ? window.location.origin : "";
+
+  const GITHUB_SERVICE_FIELD: ICopyField[] = [
+    {
+      key: "origin_URL",
+      label: "Origin URL",
+      url: originURL,
+      description: (
+        <>
+          We will auto-generate this. Paste this into the <CodeBlock darkerShade>Authorized origin URL</CodeBlock> field{" "}
+          <a
+            tabIndex={-1}
+            href="#"
+            target="_blank"
+            className="text-custom-primary-100 hover:underline"
+            rel="noreferrer"
+          >
+            here.
+          </a>
+        </>
+      ),
+    },
+    {
+      key: "callback_URI",
+      label: "Callback URI",
+      url: `${originURL}/auth/github/callback`,
+      description: (
+        <>
+          We will auto-generate this. Paste this into your <CodeBlock darkerShade>Authorized Callback URI</CodeBlock>{" "}
+          field{" "}
+          <a
+            tabIndex={-1}
+            href="#"
+            target="_blank"
+            className="text-custom-primary-100 hover:underline"
+            rel="noreferrer"
+          >
+            here.
+          </a>
+        </>
+      ),
+    },
+  ];
   return (
     <>
       <div className="flex flex-col gap-8">
@@ -107,6 +158,9 @@ export const InstanceGithubConfigForm: FC<IInstanceGithubConfigFormProps> = (pro
           <div className="col-span-2 md:col-span-1">
             <div className="flex flex-col gap-y-4 px-6 pt-1.5 pb-4 bg-custom-background-80/60 rounded-lg">
               <div className="pt-2 text-xl font-medium">Syncturtle-provided details for GitHub</div>
+              {GITHUB_SERVICE_FIELD.map((field) => (
+                <CopyField key={field.key} label={field.label} url={field.url} description={field.description} />
+              ))}
             </div>
           </div>
         </div>

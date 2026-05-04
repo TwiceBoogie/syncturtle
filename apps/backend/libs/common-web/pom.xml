@@ -19,7 +19,7 @@
     <!-- INTERNAL LIBS -->
     <dependency>
       <groupId>com.syncturtle</groupId>
-      <artifactId>common-core</artifactId>
+      <artifactId>common-contracts</artifactId>
     </dependency>
 
     <!-- SPRING WEB (non-boot) -->
@@ -36,12 +36,6 @@
     <dependency>
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-openfeign-core</artifactId>
-      <optional>true</optional>
-    </dependency>
-
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
       <optional>true</optional>
     </dependency>
 

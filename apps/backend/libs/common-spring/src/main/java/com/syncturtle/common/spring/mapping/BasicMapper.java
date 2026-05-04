@@ -5,8 +5,8 @@ import java.util.Objects;
 
 import org.modelmapper.ModelMapper;
 
-import com.syncturtle.common.web.dto.response.CursorIdentifiable;
-import com.syncturtle.common.web.dto.response.CursorPageResponse;
+import com.syncturtle.common.web.pagination.CursorIdentifiable;
+import com.syncturtle.common.web.pagination.CursorPageResponse;
 
 import lombok.extern.slf4j.Slf4j;
 

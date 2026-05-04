@@ -92,6 +92,7 @@ export const InstanceEmailForm: FC<IInstanceEmailForm> = (props) => {
     setIsSubmitting(true);
 
     try {
+      console.log(payload);
       const promise = updateInstanceConfigurations(payload);
 
       toast.promise(promise, {

@@ -4,7 +4,7 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import com.syncturtle.common.core.constants.GatewayHeaderNames;
+import com.syncturtle.common.core.header.GatewayHeaders;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
@@ -23,16 +23,16 @@ public class FeignHeaderPropagation {
             HttpServletRequest req = sra.getRequest();
 
             // identity
-            copyIfPresent(req, template, GatewayHeaderNames.HDR_AUTH_USER_ID);
-            copyIfPresent(req, template, GatewayHeaderNames.HDR_AUTH_WORKSPACE_ID);
+            copyIfPresent(req, template, GatewayHeaders.HDR_AUTH_USER_ID);
+            copyIfPresent(req, template, GatewayHeaders.HDR_AUTH_WORKSPACE_ID);
 
             // tracing
-            copyIfPresent(req, template, GatewayHeaderNames.HDR_REQUEST_ID);
-            copyIfPresent(req, template, GatewayHeaderNames.HDR_CORRELATION_ID);
+            copyIfPresent(req, template, GatewayHeaders.HDR_REQUEST_ID);
+            copyIfPresent(req, template, GatewayHeaders.HDR_CORRELATION_ID);
 
             // client metadata
-            copyIfPresent(req, template, GatewayHeaderNames.HDR_CLIENT_IP);
-            copyIfPresent(req, template, GatewayHeaderNames.HDR_CLIENT_UA);
+            copyIfPresent(req, template, GatewayHeaders.HDR_CLIENT_IP);
+            copyIfPresent(req, template, GatewayHeaders.HDR_CLIENT_UA);
         };
     }
 
