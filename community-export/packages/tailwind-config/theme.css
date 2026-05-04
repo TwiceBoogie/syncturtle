@@ -1,0 +1,172 @@
+/* packages/tailwind-config/theme.css */
+
+/* 1: dark mode strategy:
+  - Primary: data-theme="dark"
+  - Optional compatiblity: .dark (nextra/next-themes) */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, .dark, .dark *));
+
+@theme {
+  --breakpoint-3xl: 112rem;
+  /* scale down to 90% of defaults */
+  --text-2xs: 0.5625rem;
+  --text-xs: 0.675rem;
+  --text-sm: 0.7875rem;
+  --text-base: 0.9rem;
+  --text-lg: 1.0125rem;
+  --text-xl: 1.125rem;
+  --text-2xl: 1.35rem;
+  --text-3xl: 1.6875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 2.7rem;
+  --text-6xl: 3.375rem;
+  --text-7xl: 4.05rem;
+  --text-8xl: 5.4rem;
+  --text-9xl: 7.2rem;
+
+  --spacing-0: 0rem;
+  --spacing-0\.5: 0.1125rem;
+  --spacing-1: 0.225rem;
+  --spacing-1\.5: 0.3375rem;
+  --spacing-2: 0.45rem;
+  --spacing-2\.5: 0.5625rem;
+  --spacing-3: 0.675rem;
+  --spacing-3\.5: 0.7875rem;
+  --spacing-4: 0.9rem;
+  --spacing-5: 1.125rem;
+  --spacing-6: 1.35rem;
+  --spacing-7: 1.575rem;
+  --spacing-8: 1.8rem;
+  --spacing-9: 2.025rem;
+  --spacing-10: 2.25rem;
+  --spacing-11: 2.475rem;
+  --spacing-12: 2.7rem;
+  --spacing-16: 3.6rem;
+  --spacing-20: 4.5rem;
+  --spacing-24: 5.4rem;
+  --spacing-32: 7.2rem;
+  --spacing-40: 9rem;
+  --spacing-48: 10.8rem;
+  --spacing-56: 12.6rem;
+  --spacing-64: 14.4rem;
+  --spacing-72: 16.2rem;
+  --spacing-80: 18rem;
+  --spacing-96: 21.6rem;
+
+  --spacing-page-x: 1.25rem;
+  /* --spacing-page-y: 1.35rem; */
+  --size-header: 3.25rem;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+}
+
+@layer base {
+  :root,
+  [data-theme="light"] {
+    color-scheme: light !important;
+
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+
+    --color-background-100: 255, 255, 255; /* primary bg */
+    --color-background-90: 247, 247, 247; /* secondary bg */
+    --color-background-80: 232, 232, 232; /* tertiary bg */
+
+    --color-border-100: 245, 245, 245; /* subtle border= 1 */
+    --color-border-200: 229, 229, 229; /* subtle border- 2 */
+    --color-border-300: 212, 212, 212; /* strong border- 1 */
+    --color-border-400: 185, 185, 185; /* strong border- 2 */
+
+    --color-sidebar-background-100: var(--color-background-100); /* primary sidebar bg */
+    --color-sidebar-background-90: var(--color-background-90); /* secondary sidebar bg */
+    --color-sidebar-background-80: var(--color-background-80); /* tertiary sidebar bg */
+
+    --color-sidebar-border-100: var(--color-border-100); /* subtle sidebar border= 1 */
+    --color-sidebar-border-200: var(--color-border-100); /* subtle sidebar border- 2 */
+    --color-sidebar-border-300: var(--color-border-100); /* strong sidebar border- 1 */
+    --color-sidebar-border-400: var(--color-border-100); /* strong sidebar border- 2 */
+
+    --color-onboarding-text-100: 23, 23, 23;
+    --color-onboarding-text-200: 58, 58, 58;
+    --color-onboarding-text-300: 82, 82, 82;
+    --color-onboarding-text-400: 163, 163, 163;
+  }
+  /*
+ * HeroUI Theme Customization
+ * Add this to your global.css after importing @heroui/styles
+ * Only includes base variables from variables.css
+ * @see https://v3.heroui.com/docs/react/getting-started/theming
+ */
+
+  .dark,
+  [data-theme="dark"] {
+    color-scheme: dark !important;
+
+    --background: 0 0% 4%;
+    --foreground: 0 0% 93%;
+
+    /* primary color */
+    --color-primary-10: 8, 31, 43;
+    --color-primary-20: 10, 37, 51;
+    --color-primary-30: 13, 49, 69;
+    --color-primary-40: 16, 58, 81;
+    --color-primary-50: 18, 68, 94;
+    --color-primary-60: 23, 86, 120;
+    --color-primary-70: 28, 104, 146;
+    --color-primary-80: 31, 116, 163;
+    --color-primary-90: 34, 129, 180;
+    --color-primary-100: 40, 146, 204;
+    --color-primary-200: 41, 154, 214;
+    --color-primary-300: 75, 170, 221;
+    --color-primary-400: 109, 186, 227;
+    --color-primary-500: 144, 202, 234;
+    --color-primary-600: 169, 214, 239;
+    --color-primary-700: 199, 229, 244;
+    --color-primary-800: 216, 237, 248;
+    --color-primary-900: 229, 243, 250;
+
+    --color-background-100: 25, 25, 25; /* primary bg */
+    --color-background-90: 32, 32, 32; /* secondary bg */
+    --color-background-80: 44, 44, 44; /* tertiary bg */
+
+    --color-border-100: 34, 34, 34; /* subtle border= 1 */
+    --color-border-200: 38, 38, 38; /* subtle border- 2 */
+    --color-border-300: 46, 46, 46; /* strong border- 1 */
+    --color-border-400: 58, 58, 58; /* strong border- 2 */
+
+    --color-sidebar-border-100: var(--color-border-100); /* subtle sidebar border= 1 */
+    --color-sidebar-border-200: var(--color-border-200); /* subtle sidebar border- 2 */
+    --color-sidebar-border-300: var(--color-border-300); /* strong sidebar border- 1 */
+    --color-sidebar-border-400: var(--color-border-400); /* strong sidebar border- 2 */
+
+    --color-sidebar-background-80: var(--color-background-80); /* tertiary sidebar bg */
+
+    --color-onboarding-text-100: 237, 238, 240;
+    --color-onboarding-text-200: 176, 180, 187;
+    --color-onboarding-text-300: 118, 123, 132;
+    --color-onboarding-text-400: 105, 110, 119;
+  }
+}
+
+@theme inline {
+  --color-custom-primary-100: rgb(var(--color-primary-100));
+  --color-custom-background-100: rgb(var(--color-background-100));
+  --color-custom-background-90: rgb(var(--color-background-90));
+  --color-custom-background-80: rgb(var(--color-background-80));
+
+  /* sidebar */
+  --color-custom-sidebar-background-80: rgb(var(--color-sidebar-background-80));
+
+  /* border */
+  --color-custom-border-100: rgb(var(--color-border-100));
+  --color-custom-border-200: rgb(var(--color-border-200));
+  /* sidebar border */
+  --color-custom-sidebar-border-200: rgb(var(--color-sidebar-border-200));
+  --color-custom-sidebar-background-100: rgb(var(--color-sidebar-background-100));
+
+  /* onboarding text color */
+  --color-onboarding-text-100: rgb(var(--color-onboarding-text-100));
+  --color-onboarding-text-200: rgb(var(--color-onboarding-text-200));
+  --color-onboarding-text-300: rgb(var(--color-onboarding-text-300));
+  --color-onboarding-text-400: rgb(var(--color-onboarding-text-400));
+}

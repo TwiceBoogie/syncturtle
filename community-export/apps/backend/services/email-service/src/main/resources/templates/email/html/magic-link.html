@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body style="font-family: Arial, sans-serif; color: #111827; line-height: 1.6;">
+    <p>Hello <span th:text="${firstName != null and !#strings.isEmpty(firstName) ? firstName : 'there'}">there</span>,</p>
+
+    <p>Use the secure link below to sign in to Syncturtle:</p>
+
+    <p>
+        <a th:href="${magicLink}" th:text="${magicLink}">
+            Sign in to Syncturtle
+        </a>
+    </p>
+    
+    <p>
+        This link expires in
+        <span th:text="${expiresInMinutes != null ? expiresInMinutes : 15}">15</span>
+        minutes and can only be used once.
+    </p>
+
+    <p>If you did not request this email, you can safely ignore it.</p>
+</body>
+
+</html>

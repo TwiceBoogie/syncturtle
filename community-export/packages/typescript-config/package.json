@@ -1,0 +1,11 @@
+{
+  "name": "@syncturtle/typescript-config",
+  "private": true,
+  "version": "0.0.1",
+  "files": [
+    "base.json",
+    "nextjs.json",
+    "react-library.json",
+    "node-library.json"
+  ]
+}

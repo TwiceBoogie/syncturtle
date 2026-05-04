@@ -1,0 +1,18 @@
+spring:
+  cloud:
+    discovery:
+      enabled: false
+  kafka:
+    listener:
+      auto-startup: false
+
+server:
+  port: 0
+
+eureka:
+  client:
+    enabled: false
+
+app:
+  kafka:
+    enabled: false

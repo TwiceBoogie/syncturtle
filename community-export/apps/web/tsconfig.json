@@ -1,0 +1,18 @@
+{
+  "extends": "@syncturtle/typescript-config/nextjs.json",
+  "compilerOptions": {
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/env": ["env.ts"],
+      "@/config": ["config/index.ts"],
+      "@/*": ["core/*"],
+      "@/helpers/*": ["helpers/*"],
+      "@/public/*": ["public/*"],
+      "@/styles/*": ["styles/*"],
+      "@/syncturtle-web/*": ["ce/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts", "**/*.mts"],
+  "exclude": ["node_modules"]
+}

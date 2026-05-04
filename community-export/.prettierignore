@@ -1,0 +1,10 @@
+**/node_modules/**
+**/.next/**
+**/dist/**
+**/out/**
+**/build/**
+**/.turbo/**
+**/target/**
+
+apps/backend/**
+backend/**

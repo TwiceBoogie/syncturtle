@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.5.14</version>
+    <relativePath />
+  </parent>
+
+  <groupId>com.syncturtle</groupId>
+  <artifactId>syncturtle-backend</artifactId>
+  <version>${revision}</version>
+  <packaging>pom</packaging>
+
+  <name>syncturtle</name>
+
+  <modules>
+    <!-- libs -->
+    <module>libs/common-core</module>
+    <module>libs/common-contracts</module>
+    <module>libs/common-spring</module>
+    <module>libs/common-web</module>
+    <module>libs/common-data-jpa</module>
+    <module>libs/test-support</module>
+
+    <!-- platform (infra apps) -->
+    <module>platform/config-server</module>
+    <module>platform/discovery-server</module>
+    <module>platform/api-gateway</module>
+
+    <!-- services -->
+    <module>services/instance-service</module>
+    <module>services/user-service</module>
+    <module>services/workspace-service</module>
+    <!-- <module>services/password-service</module> -->
+    <module>services/email-service</module>
+
+    <!-- cross-service tests (E2E/system) -->
+    <module>tests/system-tests</module>
+  </modules>
+
+  <properties>
+    <java.version>21</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Monorepo-controlled version. yarn sets -Drevision=.. at build time -->
+    <revision>0.0.1</revision>
+
+    <!-- 
+    Maven properties used by failsafe/system-tests to decide whether to run.
+    NOTE: These are maven properties, so they don't set spring profiles
+    -->
+    <skipITs>true</skipITs>
+    <skipSystemTests>true</skipSystemTests>
+
+    <!-- Spring Cloud BOM -->
+    <spring-cloud.version>2025.0.1</spring-cloud.version>
+    <otel.instrumentation.version>2.24.0-alpha</otel.instrumentation.version>
+
+    <!-- Testcontainers BOM -->
+    <testcontainers.version>1.21.4</testcontainers.version>
+
+    <modelmapper.version>3.2.6</modelmapper.version>
+    <jasypt.version>1.9.3</jasypt.version>
+    <datasource-micrometer.version>1.2.1</datasource-micrometer.version>
+    <zxcvbn.version>1.9.0</zxcvbn.version>
+
+    <spring.profile.unit>test</spring.profile.unit>
+    <spring.profile.it>it</spring.profile.it>
+    <spring.profile.system>system</spring.profile.system>
+
+    <argLine></argLine>
+
+    <!-- for unit + integration tests, default to Not talking to config-server / eureka -->
+    <cloud.enabled>false</cloud.enabled>
+  </properties>
+
+  <!-- maven profiles -->
+  <profiles>
+    <profile>
+      <id>it</id>
+      <properties>
+        <skipITs>false</skipITs>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>system</id>
+      <properties>
+        <skipSystemTests>false</skipSystemTests>
+      </properties>
+    </profile>
+  </profiles>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+      <optional>true</optional>
+    </dependency>
+  </dependencies>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- Spring Cloud BOM: control version of spring-cloud-* artifacts -->
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>${spring-cloud.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Testcontainers BOM -->
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>${testcontainers.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Otel instrumentation BOM -->
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-instrumentation-bom-alpha</artifactId>
+        <version>${otel.instrumentation.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Otel db BOM -->
+      <dependency>
+        <groupId>net.ttddyy.observation</groupId>
+        <artifactId>datasource-micrometer-spring-boot</artifactId>
+        <version>${datasource-micrometer.version}</version>
+      </dependency>
+
+      <!-- ModelMapper BOM -->
+      <dependency>
+        <groupId>org.modelmapper</groupId>
+        <artifactId>modelmapper</artifactId>
+        <version>${modelmapper.version}</version>
+      </dependency>
+      <!-- jasypt -->
+      <dependency>
+        <groupId>org.jasypt</groupId>
+        <artifactId>jasypt</artifactId>
+        <version>${jasypt.version}</version>
+      </dependency>
+      <!-- zxcvbn BOM -->
+      <dependency>
+        <groupId>com.nulab-inc</groupId>
+        <artifactId>zxcvbn</artifactId>
+        <version>${zxcvbn.version}</version>
+      </dependency>
+
+      <!-- internal libs: so services can omit versions -->
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>common-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>common-contracts</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>common-data-jpa</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>common-spring</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>common-web</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>test-support</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <!-- Inherited by all children -->
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>properties</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Enforce java/maven version -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.6.2</version>
+        <executions>
+          <execution>
+            <id>enforce</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireJavaVersion>
+                  <version>(21,)</version>
+                </requireJavaVersion>
+                <requireMavenVersion>
+                  <version>(3.9.0,)</version>
+                </requireMavenVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Unit tests = Surefire -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.4</version>
+        <configuration>
+          <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+
+          <includes>
+            <include>**/*Test.java</include>
+          </includes>
+          <excludes>
+            <exclude>**/*IT.java</exclude>
+            <exclude>**/*E2E.java</exclude>
+          </excludes>
+
+          <!-- 
+            These are JVM system properties passed to the test JVM.
+          -->
+          <systemPropertyVariables>
+            <spring.profiles.active>${spring.profile.unit}</spring.profiles.active>
+
+            <spring.cloud.config.enabled>${cloud.enabled}</spring.cloud.config.enabled>
+            <spring.cloud.config.import-check.enabled>${cloud.enabled}</spring.cloud.config.import-check.enabled>
+            <spring.cloud.discovery.enabled>${cloud.enabled}</spring.cloud.discovery.enabled>
+            <eureka.client.enabled>${cloud.enabled}</eureka.client.enabled>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+
+      <!-- Integration test = Failsafe -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>3.5.4</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+
+          <skipITs>${skipITs}</skipITs>
+          <includes>
+            <include>**/*IT.java</include>
+          </includes>
+          <!-- prevents running @Nested / inner classes -->
+          <excludes>
+            <exclude>**/*$*</exclude>
+          </excludes>
+
+          <systemPropertyVariables>
+            <spring.profiles.active>${spring.profile.it}</spring.profiles.active>
+
+            <spring.cloud.config.enabled>${cloud.enabled}</spring.cloud.config.enabled>
+            <spring.cloud.config.import-check.enabled>${cloud.enabled}</spring.cloud.config.import-check.enabled>
+            <spring.cloud.discovery.enabled>${cloud.enabled}</spring.cloud.discovery.enabled>
+            <eureka.client.enabled>${cloud.enabled}</eureka.client.enabled>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+    </plugins>
+
+    <pluginManagement>
+      <plugins>
+        <!-- Spring boot maven plugin: build-info goal generates build metadata -->
+        <plugin>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>build-info</id>
+              <goals>
+                <goal>build-info</goal>
+              </goals>
+              <!-- run early enough so it ends up in the jar -->
+              <phase>process-resources</phase>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+
+    </pluginManagement>
+  </build>
+
+</project>
