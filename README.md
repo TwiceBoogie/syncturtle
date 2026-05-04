@@ -30,18 +30,16 @@
 - [Why I Built This](#why-built-this)
 - [Current Status](#current-status)
 - [Architecture Overview](#architecture-overview)
-- [Backend Architecture](#backend-architecture)
-- [Frontend Architecture](#frontend-architecture)
-- [Key Engineering Concepts](#key-engineering-concepts)
 - [Tech Stack](#tech-stack)
 - [Repository Structure]($repository-structure)
 - [Local Development Model](#local-development-model)
+- [Prerequisites](#prerequisites)
 - [Environment Setup](#environment-setup)
-- [Instance Setup Flow](#instance-setup-flow)
+- [Configuration Server Requirements](#configuration-server-requirements)
+- [Local Startup Order](#local-startup-order)
 - [Running Infrastructure Locally](#running-infrastructure-locally)
 - [Running Backend Services Locally](#running-backend-services-locally)
 - [Running Frontend Apps Locally](#running-frontend-apps-locally)
-- [Docker Status](#docker-status)
 - [Testing](#testing)
 - [Observability](#observability)
 - [Roadmap](#roadmap)
@@ -56,7 +54,7 @@
 
 **Syncturtle** is an open-source, self-hostable personal management platform.
 
-The long term gaol is to build a modular "Life OS" style application where users can manage personal systems such as:
+The long term goal is to build a modular "Life OS" style application where users can manage personal systems such as:
 
 - tasks
 - workspaces
@@ -68,7 +66,7 @@ The long term gaol is to build a modular "Life OS" style application where users
 - user/admin settings
 - email and authentication configurations
 
-Syncturtle is built as a \*polyglot monorepo\*\* with:
+Syncturtle is built as a **polyglot monorepo** with:
 
 - a **Next.js + TypeScript frontend**
 - a **Java 21 + Spring Boot backend**
@@ -76,7 +74,7 @@ Syncturtle is built as a \*polyglot monorepo\*\* with:
 - shared backend libraries
 - infrastructure/platform services
 - domain microservices
-- system-level testing support
+- local observability and system-level testing support
 
 The product itself is still pretty early, but the engineering foundation is design to mimic/explore production style patterns.
 
@@ -159,7 +157,7 @@ Backend Domain Services
 PostgreSQL / Redis / Kafka / Email Infrastructure
 ```
 
-The backend is organized around a production-style microservice architecture.
+The backend is organized around a production style microservice architecture.
 
 ```text
 apps/backend
@@ -195,278 +193,16 @@ services/
 
 ---
 
-## Backend Architecture
+### Backend configuration model
 
-The backend is a **Java 21 Spring Boot multi-module maven project**.
+Most backend applications load their spring configurations from the **Config Server**.
 
-The root backend `pom.xml` manges:
+The main exceptions are the foundational services that must start before the rest:
 
-- Java version
-- Spring Boot parent
-- Spring Cloud dependency management
-- Testcontainers dependency managemnt
-- internal module version
-- Maven Surefire for unit tests
-- Maven Failsafe for integration tests
-- Maven Enforcer for Java/Maven version consistency
+- `discovery-server`
+- `config-server`
 
-### Shared backend libraries
-
-```text
-libs/
-├── common-core
-├── common-contracts
-├── common-data-jpa
-├── common-spring
-├── common-web
-└── test-support
-```
-
-#### `common-core`
-
-Shared low-level constants and utilities.
-
-Examples:
-
-- cookie names
-- endpoint paths
-- gateway/header names
-- service client names
-- base exception types
-- text utilities
-
-#### `common-contracts`
-
-Shared service-to-service contracts.
-
-Examples:
-
-- API error response contracts
-- authentication DTOs
-- authorization request/response contracts
-- refresh session records
-- instance configuration keys
-- Kafka topic names
-- domain event contracts
-
-This module is intentionally used for **communication contracts**, not service implementation details.
-
-#### `common-data-jpa`
-
-Reusable JPA support.
-
-Examples:
-
-- audited entity base classes
-- soft delete support
-- time auditing support
-- UUID/time providers
-- timezone validation
-
-#### `common-spring`
-
-Reusable Spring infrastructure.
-
-Examples:
-
-- global exception handling
-- response cache annotations/aspects
-- OpenTelemetry/logging auto-configuration
-- CSRF support
-- password hashing support
-- public URL building
-- model mapping helpers
-- gateway context auto-configuration
-
-#### `common-web`
-
-Reusable web-layer utilities.
-
-Examples:
-
-- request user context
-- request client context
-- gateway header propagation
-- CSRF token utilities
-- pagination response helpers
-
-#### `test-support`
-
-Reusable testing infrastructure.
-
-Examples:
-
-- integration test annotations
-- Testcontainers helpers
-- Postgres container support
-- Redis container support
-- Kafka container support
-
----
-
-## Frontend Architecture
-
-The frontend uses **Next.js**, **TypeScript**, shared workspace packages, and Turborepo/Yarn workspace style organization.
-
-The admin app is organized around:
-
-```text
-apps/admin
-├── app/       # Next.js App Router routes/layouts
-├── core/      # Core components, hooks, services, stores
-├── ce/        # Community edition overrides/extensions
-├── ee/        # Enterprise edition placeholder/extensions
-├── helpers/
-├── public/
-└── styles/
-```
-
-### Frontend state management
-
-The admin frontend uses a custom state-management layer inspired by MobX style root stores, but implemented with:
-
-- TypeScript classes
-- `React.Context`
-- `useSyncExternalStore`
-- domain-specific stores
-- service classes for API calls
-
-Example stores:
-
-```text
-core/store/
-├── root.store.ts
-├── instance.store.ts
-├── user.store.ts
-├── workspace.store.ts
-└── theme.store.ts
-```
-
-The goal was to understand state management internals before relying on heavier dependencies.
-
-### API service layer
-
-Frontend service classes wrap fetch behavior behind reusable domain APIs.
-
-Examples:
-
-```text
-core/services/
-├── api.service.ts
-├── auth.service.ts
-├── instance.service.ts
-├── user.service.ts
-└── workspace.service.ts
-```
-
-The shared `APIService` handles:
-
-- URL construction
-- credentials
-- JSON serialization
-- response parsing
-- typed HTTP errors
-- CSRF token attachment for unsafe methods
-- silent session refresh on `401`
-- one-time retry after refresh
-
----
-
-## Key Engineering Concepts
-
-### API Gateway security
-
-The API Gateway is the entry point for external traffic.
-
-It is responsible for:
-
-- route authorization
-- JWT validation
-- JWKS-based token verification
-- issuer/audience/token-use validation
-- cookie-or-bearer token support
-- CORS handling
-- CSRF middleware
-- request correlation headers
-- client metadata headers
-- stripping spoofable inbound auth headers
-- injecting trusted downstream identity headers
-
-The gateway validates access tokens before requests reach downstream services.
-
-### Authentication
-
-The user-service owns authentication and token issuance.
-
-The authentication flow uses:
-
-- short-lived JWT access tokens
-- longer-lived refresh tokens
-- Redis-backed refresh sessions
-- refresh token rotation
-- hashed refresh token storage
-- session revocation
-- user auth versions
-- admin session versions
-- JWKS for gateway verification
-
-The API Gateway validates access tokens, while Redis backed session checks make revocation possible before JWT expiration.
-
-### Event-driven communication
-
-Syncturtle uses Kafka style eventing for asynchronous cross service communication.
-
-Current eventing patterns include:
-
-- domain events
-- service-owned topics
-- dead-letter topics
-- retry/backoff handling
-- event-driven read models
-- cache invalidation events
-- after-commit event publishing
-
-Kafka/Redpanda is used in local development.
-
-### Database-per-service
-
-Each service owns its own schema and migrations. When a service needs data owned by another service, it can rely on its own light weight local read model instead of querying other services.
-
-### Response caching
-
-Some backend GET endpoints use a Redis-backed response cache.
-
-The response cache supports:
-
-- annotation-based caching
-- cache groups
-- TTLs
-- per-user scope
-- per-workspace scope placeholder
-- canonical request hashing
-- group version keys
-- O(1) invalidation by incrementing version keys
-
-### Observability
-
-Local observability uses:
-
-- OpenTelemetry Collector
-- Grafana LGTM stack
-- traces
-- metrics
-- logs
-- correlation IDs
-- request IDs
-- trace/span IDs in logs
-- authorization-header redaction
-
-The collector separates:
-
-- system telemetry
-- product telemetry
-
-> Note: for product telemetry I had it sent to the locally to test if it works. it would be pointing to my cloud (my own app instance running on my own server).
+Because other services rely on `config-server`, it must be running before starting normal services or profile specific flows such as `instance-service` with the `setup` profile.
 
 ---
 
@@ -571,7 +307,7 @@ apps/backend
 The current recommended local development model is:
 
 ```text
-Docker Compose = infrastructure only
+Docker Compose  = infrastructure only
 Maven / IDE     = backend services
 Yarn/Turbo      = frontend apps
 .env            = local service configuration
@@ -579,21 +315,41 @@ Yarn/Turbo      = frontend apps
 
 Run PostgreSQL, Redis, Redpanda, OpenTelemetry, and Grafana through Docker Compose, then run Spring Boot services locally from your host machine.
 
-This makes local debugging easier because services can be run directly from an IDE, while infrastructure still behaves like external services.
-
 ---
+
+## Prerequsites
+
+Before running syncturtle locally, install the following tools.
+
+### Required
+
+| Tool     | Version        | Notes                                              |
+| -------- | -------------- | -------------------------------------------------- |
+| Node.js  | `>=20.9.0 <25` | More data                                          |
+| Corepack |                | Used to activate the repo managed yarn version     |
+| Yarn     | `4.13.0`       | managed through `packageManager` in `package.json` |
+| Java     | `Java 21`      |                                                    |
+| Docker   |                | Used for local infrastructure                      |
+
+### Node and Yarn setup
+
+This repository uses Yarn 4 through Corepack.
+
+Enable Corepack:
+
+```sh
+corepack enable
+```
+
+Then from the repository root install frontend dependecies
+
+```sh
+yarn install
+```
 
 ## Environment Setup
 
 The backend uses a local `.env` file during development.
-
-Recommended location:
-
-```text
-apps/backend/.env
-```
-
-This `.env` file is used locally to make running each microservice easier during development.
 
 A safe starter template is provided at:
 
@@ -609,47 +365,405 @@ cp apps/backend/.env.example apps/backend/.env
 
 Then update any values in `apps/backend/.env` as needed for your local machine.
 
----
+### Export `.env` values before running services
 
-## Instance Setup Flow
+Before running backend services directly from your terminal, export the `.env` valus into your shell sessions.
 
-Before `instance-service` is used as a normal running service, it must first be run with the **`setup` profile**.
+From `apps/backend`:
 
-The setup profile performs instance bootstrap work:
-
-1. Registers or updates the local instance.
-2. Resolves or generates a machine signature.
-3. Seeds mandatory instance configuration keys.
-4. Creates derived flags for providers like Google, GitHub, GitLab, and Intercom.
-5. Exits after setup completes.
-
-The setup runner reads the machine signature from either:
-
-- `--machine-signature=...`
-- `MACHINE_SIGNATURE` environment variable
-- a generated persisted signature for first-time setup
-
-### Option A: run setup with Maven
-
-```bash
+```sh
 cd apps/backend
 
-./mvnw -pl services/instance-service spring-boot:run \
-  -Dspring-boot.run.profiles=setup \
-  -Dspring-boot.run.arguments="--machine-signature=local-dev"
+set -a
+source .env
+set +a
 ```
 
-### Option B: run setup using `.env`
+Some spring configuration properties also provide safe local defaults. For example:
 
-```bash
+```yaml
+${OTLP_TRACES_ENDPOINT:http://localhost:14317}
+```
+
+These defaults help the app start in local development, but I recoomend exporting `.env` so you can see all values that are being used
+
+---
+
+## Configuration Server Requirement
+
+Most backend application read their `application-*.yaml` configuration through the `config-server`.
+
+That means `config-server` must be running before starting services that depend on it, including setup profiles.
+
+For example, `instance-service` with the `setup` profile loads setup specifc configuration through the `config-server`.
+Therefore this will not work correctly unless the `config-server` is already running:
+
+```sh
+./mvnw -pl services/instance-service spring-boot:run \
+  -Dspring-boot-run.profiles=setup
+```
+
+Start the foundational services first:
+
+```text
+1. discover-server
+2. config-server
+```
+
+Then run setup profiles and normal services.
+
+---
+
+## Local Startup Order
+
+Recommended startup order for local development:
+
+```text
+1. Copy apps/backend/.env.example to apps/backend/.env
+2. Export apps/backend/.env into your terminal session
+3. Start Docker Compose infrastructure
+4. Start Discovery Server
+5. Start Config Server
+6. Run Instance Service once with the setup profile
+7. Start API Gateway
+8. Start domain services
+9. Start frontend apps
+```
+
+The most important rule is:
+
+> Run `config-server` before `instance-service` setup or any normal backend service that loads remote Spring configuration.
+
+## Running Infrastructure Locally
+
+From the repository root:
+
+```sh
+docker compose up -d
+```
+
+---
+
+## Running Backend Services Locally
+
+All commands in this section assumes you are in inside:
+
+```sh
 cd apps/backend
+```
 
+Export the local environment first:
+
+```sh
+set -a
+source .env
+set +a
+```
+
+### 1: Build backend modules
+
+```sh
+./mvnw clean verify
+```
+
+### 2. Start Discovery Server
+
+Open a new terminal, export `.env`, then run:
+
+```sh
+./mvnw -pl platform/discover-server spring-boot:run
+```
+
+### 3. Start Config Server
+
+Open a new terminal, export `.env`, then run:
+
+```sh
+./mvnw -pl platform/config-server spring-boot:run \
+  -Dspring-boot.run.profiles=native
+```
+
+Wait until the Config Server is fully started before running setup or other services.
+
+### 4. Run instance setup once
+
+Before `instance-service` is used as a normal running service, it must first be run once with the `setup` profile.
+
+```sh
 ./mvnw -pl services/instance-service spring-boot:run \
   -Dspring-boot.run.profiles=setup
 ```
 
-Make sure `apps/backend/.env` contains:
+The setup profile performs instance bootstrap work:
+
+1. Registers or updates the local instance
+2. Resolves or generates a machine signature
+3. Seeds mandatory instance configuration keys
+4. Creates derived flags for providers like Google, GitHub, GitLab, and Intercom
+5. Exists after setup completes
+
+The setup runner reads the machine signature from one of the following:
+
+- `--machine-signature=...`
+- `MACHINE_SIGNATURE` environment variable
+- a generated persisted signature for first time setup
+
+If you want to pass the signature manually:
+
+```sh
+./mvnw -pl services/instance-service spring-boot:run -am \
+  -Dspring-boot.run.profiles=setup \
+  -Dspring-boot.run.arguments="--machine-signature=local-dev"
+```
+
+### 5. Start API Gateway
+
+Open a new terminal, expot `.env`, then run:
+
+```sh
+./mvnw -pl platform/api-gateway spring-boot:run -am
+```
+
+### 6. Start domain services
+
+Open a new terminal per service, export `.env`, then run the services you need.
+
+Instance Service:
+
+```sh
+./mvnw -pl services/instance-service spring-boot:run -am
+```
+
+User Service:
 
 ```bash
-MACHINE_SIGNATURE=local-dev
+./mvnw -pl services/user-service spring-boot:run -am
 ```
+
+Workspace Service:
+
+```bash
+./mvnw -pl services/workspace-service spring-boot:run -am
+```
+
+Email Service:
+
+```bash
+./mvnw -pl services/email-service spring-boot:run -am
+```
+
+---
+
+## Running Frontend Apps Locally
+
+From the repository root:
+
+```sh
+yarn install
+```
+
+Run the admin app:
+
+```sh
+yarn dev --filter=admin
+```
+
+Run the web app:
+
+```sh
+yarn dev --filter=web
+```
+
+Common local frontend URLs:
+
+| App              | URL                     |
+| ---------------- | ----------------------- |
+| Web app          | `http://localhost:3000` |
+| Admin app        | `http://localhost:3001` |
+| Observability UI | `http://localhost:3002` |
+
+---
+
+## Testing
+
+### Unit tests
+
+```sh
+cd apps/backend
+./mvnw test
+```
+
+### Integration tests
+
+```sh
+cd apps/backend
+./mvnw verify -Pit
+```
+
+### System tests
+
+```sh
+cd apps/backend
+./mvnw verify -Psystem
+```
+
+### Test naming conventions
+
+| Test Type              | Naming       |
+| ---------------------- | ------------ |
+| Unit test              | `*Test.java` |
+| Integration test       | `*IT.java`   |
+| End-to-end/system test | `*E2E.java`  |
+
+---
+
+## Observability
+
+Local observability uses an OpenTelemetry Collector and Grafana LGTM.
+
+The collector receives telemetry through OTLP and exports to the local observability backend.
+
+Telemetry includes:
+
+- traces
+- metrics
+- logs
+- request correlation IDs
+- request IDs
+- trace IDs
+- span IDs
+- access logs
+
+The collector also removes sensitive authorization header attributes before exporting telemetry.
+
+---
+
+## Roadmap
+
+### Core platform
+
+- [x] Multi-module backend structure
+- [x] API Gateway foundation
+- [x] Config Server foundation
+- [x] Discovery Server foundation
+- [x] Instance setup profile
+- [x] Instance configuration bootstrap
+- [x] JWT/JWKS access token validation
+- [x] Redis backed refresh sessions
+- [x] Response caching foundation
+- [x] OpenTelemetry local observability
+- [x] Unit/integration test structure
+- [ ] Full transactional outbox pattern
+- [ ] Expanded system test coverage
+- [ ] Production deployment guide
+- [ ] Refactored Docker service images
+- [ ] AWS deployment proof of concept
+
+## Authentication
+
+- [x] Email/password foundation
+- [x] Access tokens
+- [x] Refresh token rotation
+- [x] Admin session versioning
+- [ ] Google login
+- [ ] GitHub login
+- [ ] GitLab login
+- [ ] OIDC/SAML exploration
+
+### Product features
+
+- [x] Instance setup/admin foundation
+- [x] Workspace foundation
+- [x] Email configuration foundation
+- [ ] Task management
+- [ ] Calendar/events
+- [ ] Password manager
+- [ ] Subscriptions
+- [ ] Goals
+- [ ] Notes
+- [ ] File assets
+
+### Engineering improvements
+
+- [ ] More diagrams
+- [ ] Better local setup scripts
+- [ ] More frontend tests
+- [ ] More backend integration tests
+- [ ] Alert examples
+- [ ] Kubernetes deployment examples
+- [ ] Security hardening checklist
+- [ ] Fully documented Docker workflow
+
+---
+
+## Notes for Recruiters
+
+Syncturtle is my primary portfolio project and is designed to demonstrate backend engineering in depth, beyond just a basic CURD app.
+
+The project highlights experience with:
+
+- Java 21
+- Spring Boot
+- Spring Cloud Gateway
+- microservice architecture
+- API Gateway security
+- JWT/JWKS authentication
+- refresh token/session design
+- Redis backed session and cache state
+- Kafka style event driven data replication design
+- dead letter topic handling
+- PostgreSQL schema ownership
+- Liquibase migrations
+- Maven multi-module organization
+- OpenTelemetry observability
+- Docker based local infrastructure
+- frontend API/service architecture
+- Next.js and Typescript
+- unit, integration, and system testing strategy
+
+> Imporant Note: Syncturtle is a work in progress portfolio project, not a real production system.
+
+---
+
+## Known Limitations
+
+- The project is not finished
+- Not all planned product modules are complete
+- The docker service workflow is not finialized
+- AWS deployment is planned but not implemented
+- Transanctional outbox support is planned for stronger Kafka publishing guarantees
+- More system tests and dashboards are planned
+- OAuth providers are planned but not complete yet (at least on the server side)
+- Documentation is still being improved
+
+---
+
+## Contributing
+
+Contributions are welcome once the project stabilizes further. I would really appreciate if you include a comprehensive explanation of your changes.
+
+For now, the best way to help are:
+
+1. Open an issue for bugs or suggestions
+2. Propose documentation improvements
+3. Review architecture decisions
+4. Suggest test cases
+5. Create a pull request for small fixes
+
+Basic contribution flow:
+
+```sh
+git checkout -b feature/my-change
+git commit -m "Add my change"
+git push origin feature/my-change
+```
+
+Then open a pull request.
+
+---
+
+**Salvador Sebastian**
+
+- Email: `salsebastian13@gmail.com`
+- GitHub: [TwiceBoogie](https://github.com/TwiceBoogie)
+- LinkedIn: [salvador-sebastian](www.linkedin.com/in/salvador-sebastian-b0a58a169)
