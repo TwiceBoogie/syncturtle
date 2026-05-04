@@ -93,7 +93,7 @@ public final class ResponseCacheAspect {
         // 4: cache hit
         String cachedJson = redis.opsForValue().get(cacheKey);
         if (cachedJson != null) {
-            CachedHttpResponse cached = objectMapper.readValue(cachedJson, CachedHttpResponse.class);
+            CachedResponsePayload cached = objectMapper.readValue(cachedJson, CachedResponsePayload.class);
 
             JavaType declaredBodyType = resolveResponseEntityBodyType(pjp);
             JavaType deserializesAs = chooseDeserializationType(declaredBodyType, cached.getBodyType());
@@ -113,7 +113,7 @@ public final class ResponseCacheAspect {
             if (status == 200) {
                 Object bodyObj = re.getBody();
 
-                CachedHttpResponse toCache = new CachedHttpResponse();
+                CachedResponsePayload toCache = new CachedResponsePayload();
                 toCache.setStatus(status);
 
                 if (bodyObj == null) {

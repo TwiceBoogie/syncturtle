@@ -13,7 +13,7 @@
 
     <artifactId>common-data-jpa</artifactId>
     <packaging>jar</packaging>
-    <name>syncturtle :: common-data-jpa</name>
+    <name>common-data-jpa</name>
 
     <dependencies>
         <dependency>

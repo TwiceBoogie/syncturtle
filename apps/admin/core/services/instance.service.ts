@@ -66,7 +66,7 @@ export class InstanceService extends APIService {
     }
   }
 
-  async sendTesetEmail(receiverEmail: string): Promise<void> {
+  async sendTestEmail(receiverEmail: string): Promise<void> {
     try {
       await this.post<void>("/api/instances/email-credentials-check", {
         receiverEmail: receiverEmail,

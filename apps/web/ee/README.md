@@ -1,1 +1,1 @@
-Community build: EE stubs live here.
+Community build: enterprise implementation files are replaced with public-safe stubs.

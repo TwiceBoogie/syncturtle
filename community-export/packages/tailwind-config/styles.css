@@ -1,7 +1,0 @@
-@import "tailwindcss";
-/* tell tailwind to scan shared workspaces */
-@source "../ui/src/**/*.{ts,tsx}";
-@source "../utils/src/**/*.{ts,tsx}";
-@source "../types/src/**/*.{ts,tsx}";
-@source "../constants/src/**/*.{ts,tsx}";
-@source "../i18n/src/**/*.{ts,tsx}";

@@ -13,13 +13,21 @@ export type Unsubscribe = () => void;
  */
 export type Listener = () => void;
 
+export interface IFieldViolation {
+  field: string;
+  message: string;
+}
+
 export interface IApiErrorPayload {
-  type?: string;
-  status?: number;
-  message?: string;
-  fieldErrors?: Record<string, string[]>;
+  ok: boolean;
+  error: string;
+  message: string;
+  traceId?: string;
+  requestId?: string;
+  correlationId?: string;
   path?: string;
   timestamp?: string;
+  fields?: IFieldViolation[];
 }
 
 export type TPaginationInfo = {

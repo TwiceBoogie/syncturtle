@@ -5,7 +5,7 @@ app:
   telemetry:
     enabled: ${APP_TELEMETRY_ENABLED:true}
     support-required: ${APP_TELEMETRY_SUPPORT_REQUIRED:false}
-  skip-env-var: ${APP_SKIP_ENV_VAR:false}
+  skip-env-var: ${APP_SKIP_ENV_VAR:true}
   web-url: ${APP_WEB_URL:http://localhost:3000}
   base-urls:
     web-url: ${APP_BASE_URL_WEB:http://localhost:3000}

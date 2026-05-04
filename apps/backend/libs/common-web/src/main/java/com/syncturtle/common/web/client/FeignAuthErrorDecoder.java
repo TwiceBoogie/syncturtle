@@ -3,8 +3,8 @@ package com.syncturtle.common.web.client;
 import java.io.InputStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.syncturtle.common.core.enums.AuthErrorCode;
-import com.syncturtle.common.core.exceptions.AuthenticationException;
+import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
+import com.syncturtle.common.contracts.auth.exception.AuthException;
 import com.syncturtle.common.web.dto.response.AuthExceptionResponse;
 
 import feign.Response;
@@ -26,7 +26,7 @@ public class FeignAuthErrorDecoder implements ErrorDecoder {
 
             if (auth != null) {
                 AuthErrorCode code = AuthErrorCode.fromCodeOrDefault(auth.getErrorCode());
-                AuthenticationException exception = AuthenticationException.of(code);
+                AuthException exception = AuthException.of(code);
 
                 if (auth.getPayload() != null) {
                     auth.getPayload().forEach(exception::with);

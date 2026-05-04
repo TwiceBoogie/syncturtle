@@ -7,6 +7,12 @@ spring:
   reactor:
     context-propagation: auto
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: "http://localhost:8002/.well-known/jwks.json"
+
   cache:
     type: caffeine
 
@@ -49,45 +55,10 @@ spring:
               predicates:
                 - Path=/auth/**
 
-            - id: instance-workspace-protected
-              uri: lb://workspace-service
-              predicates:
-                - Path=/api/instances/workspaces/**
-              filters:
-                - name: SessionValidate
-                  args:
-                    required: true
-                    cookie-name: session-admin
-                    session-type: ADMIN
-
-            - id: instance-email-credentials-check
-              uri: lb://email-service
-              predicates:
-                - Path=/api/instances/email-credentials-check/**
-                - Method=POST
-              filters:
-                - name: SessionValidate
-                  args:
-                    required: true
-                    cookieName: session-admin
-                    sessionType: ADMIN
-
-            - id: instance-protected
+            - id: instance-root-public
               uri: lb://instance-service
               predicates:
-                - Path=/api/instances/admins/**, /api/instances/configurations/**
-                - Method=GET,OPTIONS,HEAD,DELETE
-              filters:
-                - name: SessionValidate
-                  args:
-                    required: true
-                    cookieName: session-admin
-                    sessionType: ADMIN
-
-            - id: instance-public
-              uri: lb://instance-service
-              predicates:
-                - Path=/api/instances/**
+                - Path=/api/instances,/api/instances/
                 - Method=GET,OPTIONS,HEAD
               filters:
                 - name: CircuitBreaker
@@ -99,34 +70,66 @@ spring:
                       - 503
                       - 504
 
+            - id: instance-admin-session
+              uri: lb://instance-service
+              predicates:
+                - Path=/api/instances/admins/session,/api/instances/admins/session/
+                - Method=GET,OPTIONS,HEAD
+
+            - id: instance-admin-sign-in
+              uri: lb://instance-service
+              predicates:
+                - Path=/api/instances/admins/sign-in,/api/instances/admins/sign-in/
+                - Method=POST,OPTIONS
+
+            - id: instance-admin-sign-up
+              uri: lb://instance-service
+              predicates:
+                - Path=/api/instances/admins/sign-up,/api/instances/admins/sign-up/
+                - Method=POST,OPTIONS
+
+            # INSTANCE: PROTECTED
             - id: instance-admin-sign-out-rewrite
               uri: lb://user-service
               predicates:
                 - Path=/api/instances/admins/sign-out/**
-                - Method=POST
+                - Method=POST,OPTIONS
               filters:
                 - RewritePath=/api/instances/admins/sign-out, /auth/sign-out
                 - AddRequestHeader=X-ST-Internal-Logout-CTX, ADMIN
-                - name: SessionValidate
-                  args:
-                    required: false
-                    cookie-name: session-admin
-                    session-type: ADMIN
-                - name: SessionLogout
-                  args:
-                    cookie-name: session-admin
-                    session-type: ADMIN
+                - name: AuthenticatedHeaders
+
+            - id: instance-workspace-protected
+              uri: lb://workspace-service
+              predicates:
+                - Path=/api/instances/workspaces/**
+              filters:
+                - name: AuthenticatedHeaders
+
+            - id: instance-email-credentials-check
+              uri: lb://email-service
+              predicates:
+                - Path=/api/instances/email-credentials-check/**
+                - Method=POST
+              metadata:
+                response-timeout: 15000
+                connect-timeout: 5000
+              filters:
+                - name: AuthenticatedHeaders
+
+            - id: instance-protected
+              uri: lb://instance-service
+              predicates:
+                - Path=/api/instances/admins/**, /api/instances/configurations/**
+                - Method=GET,OPTIONS,HEAD,DELETE
+              filters:
+                - name: AuthenticatedHeaders
 
             - id: instance-admin-post
               uri: lb://instance-service
               predicates:
                 - Path=/api/instances/**
                 - Method=POST
-              filters:
-                - name: SessionIssue
-                  args:
-                    cookieName: session-admin
-                    sessionType: ADMIN
 
             - id: instance-admin-patch
               uri: lb://instance-service
@@ -134,11 +137,7 @@ spring:
                 - Path=/api/instances/**
                 - Method=PATCH
               filters:
-                - name: SessionValidate
-                  args:
-                    required: true
-                    cookieName: session-admin
-                    sessionType: ADMIN
+                - name: AuthenticatedHeaders
 
     loadbalancer:
       cache:
@@ -164,6 +163,15 @@ resilience4j:
         baseConfig: default
 
 app:
+  passport:
+    gateway:
+      issuer: "https://api.syncturtle.com/auth"
+      audience: "syncturtle-api"
+      access-cookie-name: "passport"
+      auth-header-prefix: "X-Auth-"
+      redis:
+        session-key-prefix: "auth:session:"
+        user-version-key-prefix: "auth:user-version:"
   gateway:
     session:
       redisKeyPrefix: st

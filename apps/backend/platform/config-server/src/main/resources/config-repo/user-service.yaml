@@ -1,4 +1,6 @@
 app:
+  kafka:
+    config-broadcast-group: ${spring.application.name}-instance-config-${HOSTNAME:${random.uuid}}
   security:
     csrf:
       enabled: true
@@ -13,6 +15,13 @@ app:
     admin-base-url: ${APP_BASE_URL_ADMIN:http://localhost:3001}
     app-base-url: ${APP_BASE_URL_APP:http://localhost:3000}
     admin-base-path: ${APP_BASE_PATH_ADMIN:/god-mode/}
+  passport:
+    issuer: "https://api.syncturtle.com/auth"
+    audience: "syncturtle-api"
+    kid: "auth-key-2026-04"
+    private-key-location: "classpath:keys/jwt-private-key.pem"
+    public-key-location: "classpath:keys/jwt-public-key.pem"
+
 server:
   port: 8002
 

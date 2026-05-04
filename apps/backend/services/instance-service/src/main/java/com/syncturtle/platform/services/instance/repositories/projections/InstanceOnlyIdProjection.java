@@ -1,7 +1,0 @@
-package com.syncturtle.platform.services.instance.repositories.projections;
-
-import java.util.UUID;
-
-public interface InstanceOnlyIdProjection {
-    UUID getId();
-}

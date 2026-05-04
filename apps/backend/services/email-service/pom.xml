@@ -94,7 +94,13 @@
       <artifactId>spring-kafka</artifactId>
     </dependency>
 
-    <!-- test -->
+    <!-- TOOLS -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-devtools</artifactId>
+    </dependency>
+
+    <!-- TEST -->
     <dependency>
       <groupId>com.syncturtle</groupId>
       <artifactId>test-support</artifactId>

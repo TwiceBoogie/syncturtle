@@ -8,7 +8,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.5.13</version>
+    <version>3.5.14</version>
     <relativePath />
   </parent>
 
@@ -22,6 +22,7 @@
   <modules>
     <!-- libs -->
     <module>libs/common-core</module>
+    <module>libs/common-contracts</module>
     <module>libs/common-spring</module>
     <module>libs/common-web</module>
     <module>libs/common-data-jpa</module>
@@ -163,6 +164,11 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>common-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>common-contracts</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
