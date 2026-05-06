@@ -27,15 +27,15 @@
 ## Table of Contents
 
 - [About](#about)
-- [Why I Built This](#why-built-this)
+- [Why I Built This](#why-i-built-this)
 - [Current Status](#current-status)
 - [Architecture Overview](#architecture-overview)
 - [Tech Stack](#tech-stack)
-- [Repository Structure]($repository-structure)
+- [Repository Structure](#repository-structure)
 - [Local Development Model](#local-development-model)
 - [Prerequisites](#prerequisites)
 - [Environment Setup](#environment-setup)
-- [Configuration Server Requirements](#configuration-server-requirements)
+- [Configuration Server Requirement](#configuration-server-requirement)
 - [Local Startup Order](#local-startup-order)
 - [Running Infrastructure Locally](#running-infrastructure-locally)
 - [Running Backend Services Locally](#running-backend-services-locally)
@@ -317,7 +317,7 @@ Run PostgreSQL, Redis, Redpanda, OpenTelemetry, and Grafana through Docker Compo
 
 ---
 
-## Prerequsites
+## Prerequisites
 
 Before running syncturtle locally, install the following tools.
 
@@ -761,6 +761,8 @@ git push origin feature/my-change
 Then open a pull request.
 
 ---
+
+## Contact
 
 **Salvador Sebastian**
 
