@@ -15,35 +15,44 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public final class GatewayUserHeaderFilter extends OncePerRequestFilter {
 
-    private final RequestUserContext ctx;
+    private final RequestUserContext requestUserContext;
 
-    public GatewayUserHeaderFilter(RequestUserContext ctx) {
-        this.ctx = ctx;
+    public GatewayUserHeaderFilter(RequestUserContext requestUserContext) {
+        this.requestUserContext = requestUserContext;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
-            String raw = request.getHeader(GatewayHeaders.HDR_AUTH_USER_ID);
-            UUID userId = parseUuidOrNull(raw);
+            UUID userId = parseUuidOrNull(request.getHeader(GatewayHeaders.HDR_AUTH_USER_ID));
             if (userId != null) {
-                ctx.setUserId(userId);
+                requestUserContext.setUserId(userId);
             }
 
             filterChain.doFilter(request, response);
         } finally {
-            ctx.clear();
+            requestUserContext.clear();
         }
     }
 
-    private static UUID parseUuidOrNull(String raw) {
-        if (raw == null || raw.isBlank()) {
+    @Override
+    protected boolean shouldNotFilterAsyncDispatch() {
+        return true;
+    }
+
+    @Override
+    protected boolean shouldNotFilterErrorDispatch() {
+        return true;
+    }
+
+    private static UUID parseUuidOrNull(String value) {
+        if (value == null || value.isBlank()) {
             return null;
         }
         try {
-            return UUID.fromString(raw.trim());
-        } catch (Exception e) {
+            return UUID.fromString(value.trim());
+        } catch (IllegalArgumentException exception) {
             return null;
         }
     }

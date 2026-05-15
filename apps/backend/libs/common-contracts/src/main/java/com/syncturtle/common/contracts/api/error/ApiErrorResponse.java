@@ -20,8 +20,8 @@ public class ApiErrorResponse {
     @Builder.Default
     boolean ok = false;
 
-    Integer errorCode;
-    String errorMessage;
+    Integer code;
+    String key;
     String message;
     String traceId;
     String requestId;

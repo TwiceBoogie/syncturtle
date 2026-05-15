@@ -1,0 +1,25 @@
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              "[/**]":
+                allowedOrigins:
+                  - "http://localhost:3000"
+                  - "http://localhost:3001"
+                allowedMethods: "*"
+                allowedHeaders: "*"
+                allowCredentials: true
+
+app:
+  services:
+    instance-service:
+      base-url: http://localhost:8001
+    user-service:
+      base-url: http://localhost:8002
+    workspace-service:
+      base-url: http://localhost:8003
+    email-service:
+      base-url: http://localhost:8020

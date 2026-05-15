@@ -2,9 +2,10 @@ com.syncturtle.common.spring.autoconfigure.web.AccessLoggingAutoConfiguration
 com.syncturtle.common.spring.autoconfigure.web.ServletErrorHandlingAutoConfiguration
 com.syncturtle.common.spring.autoconfigure.web.GatewayContextAutoConfiguration
 com.syncturtle.common.spring.autoconfigure.web.PublicUrlAutoConfiguration
+com.syncturtle.common.spring.autoconfigure.web.CookieAutoConfiguration
 
 com.syncturtle.common.spring.autoconfigure.security.PasswordHashingAutoConfiguration
-com.syncturtle.common.spring.autoconfigure.security.CsrfTokenSignerAutoConfiguration
+com.syncturtle.common.spring.autoconfigure.security.CsrfTokenServiceAutoConfiguration
 
 com.syncturtle.common.spring.autoconfigure.http.client.FeignClientAutoConfiguration
 
@@ -12,3 +13,6 @@ com.syncturtle.common.spring.autoconfigure.mapping.ModelMapperAutoConfiguration
 com.syncturtle.common.spring.autoconfigure.observability.OpenTelemetryLogbackAutoConfiguration
 com.syncturtle.common.spring.autoconfigure.data.jpa.JpaAuditingAutoConfiguration
 com.syncturtle.common.spring.autoconfigure.cache.ResponseCacheAutoConfiguration
+
+com.syncturtle.common.spring.autoconfigure.observability.kafka.KafkaErrorHandlingAutoConfiguration
+com.syncturtle.common.spring.autoconfigure.observability.kafka.KafkaMdcConsumerAutoConfiguration

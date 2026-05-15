@@ -20,14 +20,6 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-actuator</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-validation</artifactId>
-    </dependency>
 
     <!-- MAIL -->
     <dependency>
@@ -67,7 +59,7 @@
     <!-- CONFIG / DISCOVERY / CLOUD -->
     <dependency>
       <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+      <artifactId>spring-cloud-starter-config</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.cloud</groupId>
@@ -88,13 +80,48 @@
       <artifactId>common-web</artifactId>
     </dependency>
 
+    <!-- OBSERVABILITY / METRICS / TRACING / LOGS -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <!-- Traces (Micrometer -> OpenTelemetry bridge) -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-tracing-bridge-otel</artifactId>
+    </dependency>
+    <!-- Traces for DB -->
+    <dependency>
+      <groupId>net.ttddyy.observation</groupId>
+      <artifactId>datasource-micrometer-spring-boot</artifactId>
+    </dependency>
+    <!-- OTLP exporter (traces) -->
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-exporter-otlp</artifactId>
+    </dependency>
+    <!-- Metrics over OTLP -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-otlp</artifactId>
+    </dependency>
+    <!-- Logback OTLP appender -->
+    <dependency>
+      <groupId>io.opentelemetry.instrumentation</groupId>
+      <artifactId>opentelemetry-logback-appender-1.0</artifactId>
+    </dependency>
+
     <!-- MESSAGING / EVENTS -->
     <dependency>
       <groupId>org.springframework.kafka</groupId>
       <artifactId>spring-kafka</artifactId>
     </dependency>
 
-    <!-- TOOLS -->
+    <!-- SUPPORT / UTILITIES -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-devtools</artifactId>

@@ -4,14 +4,14 @@ import java.util.UUID;
 
 public final class RequestUserContext {
 
-    private final ThreadLocal<UUID> userId = new ThreadLocal<>();
-
-    public void setUserId(UUID userId) {
-        this.userId.set(userId);
-    }
+    private final ThreadLocal<State> state = ThreadLocal.withInitial(State::new);
 
     public UUID getUserId() {
-        return userId.get();
+        return state.get().userId;
+    }
+
+    public void setUserId(UUID userId) {
+        state.get().userId = userId;
     }
 
     public boolean isAuthenticated() {
@@ -19,6 +19,10 @@ public final class RequestUserContext {
     }
 
     public void clear() {
-        userId.remove();
+        state.remove();
+    }
+
+    private static final class State {
+        private UUID userId;
     }
 }

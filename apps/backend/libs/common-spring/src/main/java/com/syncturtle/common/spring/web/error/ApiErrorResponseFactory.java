@@ -77,8 +77,8 @@ public class ApiErrorResponseFactory {
             ErrorCode errorCode,
             HttpServletRequest request) {
         ApiErrorResponse.ApiErrorResponseBuilder builder = ApiErrorResponse.builder()
-                .errorCode(errorCode.getCode())
-                .errorMessage(errorCode.getMessage());
+                .code(errorCode.getCode())
+                .key(errorCode.getKey());
 
         if (properties.isIncludeRequestIds()) {
             builder.traceId(resolveTraceId());
@@ -102,7 +102,7 @@ public class ApiErrorResponseFactory {
             return "Something went wrong.";
         }
 
-        return errorCode.getMessage();
+        return errorCode.getKey();
     }
 
     private DebugErrorDetails debugDetails(Exception exception) {

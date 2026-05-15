@@ -13,7 +13,11 @@ public final class GatewayHeaders {
 
     public static final String HDR_AUTH_USER_ID = "X-Auth-User-Id";
     public static final String HDR_AUTH_SESSION_ID = "X-Auth-Session-Id";
-    public static final String HDR_AUTH_SESSION_TYPE = "X-Auth-Session-Type";
+    public static final String HDR_AUTH_INSTANCE_ID = "X-Auth-Instance-Id";
+    public static final String HDR_AUTH_ROLES = "X-Auth-Roles";
+    public static final String HDR_AUTH_USER_AUTH_VERSION = "X-Auth-User-Auth-Version";
+    public static final String HDR_AUTH_ADMIN_SESSION_VERSION = "X-Auth-Admin-Session-Version";
+    public static final String HDR_AUTH_ISSUER = "X-Auth-Issuer";
     public static final String HDR_AUTH_WORKSPACE_ID = "X-Auth-Workspace-Id";
     // client -> api-gateway
     public static final String HDR_REQUEST_ID = "X-Request-Id";
@@ -24,13 +28,6 @@ public final class GatewayHeaders {
     public static final String HDR_CLIENT_DEVICE_ID = "X-ST-Client-Device-Id";
     public static final String HDR_CLIENT_LOCALE = "X-ST-Client-Locale";
 
-    public static final String HDR_INTERNAL_USER_ID = "X-ST-Internal-UserId";
-    public static final String HDR_INTERNAL_SESSION_TYPE = "X-ST-Internal-SessionType";
-    public static final String HDR_INTERNAL_ROLES = "X-ST-Internal-Roles";
     public static final String HDR_INTERNAL_LOGIN_CONTEXT = "X-ST-Internal-Login-CTX";
     public static final String HDR_INTERNAL_LOGOUT_CONTEXT = "X-ST-Internal-Logout-CTX";
-    public static final String HDR_INTERNAL_AUTH_STATUS = "X-ST-Internal-Auth-Status";
-    public static final String HDR_INTERNAL_AUTH_VERSION = "X-ST-Internal-Auth-Version";
-    public static final String HDR_INTERNAL_ADMIN_SESSION_VERSION = "X-ST-Internal-Admin-Session-Version";
-    public static final String HDR_INTERNAL_INSTANCE_ID = "X-ST-Internal-Instance-Id";
 }

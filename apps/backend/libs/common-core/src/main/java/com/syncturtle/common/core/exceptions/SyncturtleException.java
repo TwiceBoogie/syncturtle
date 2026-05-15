@@ -21,7 +21,7 @@ public class SyncturtleException extends RuntimeException {
     }
 
     public SyncturtleException(ErrorCode errorCode, Map<String, Object> payload, Throwable cause) {
-        super(Objects.requireNonNull(errorCode, "errorCode").getMessage(), cause);
+        super(Objects.requireNonNull(errorCode, "errorCode").getKey(), cause);
 
         this.errorCode = errorCode;
 
@@ -42,7 +42,7 @@ public class SyncturtleException extends RuntimeException {
     }
 
     public String getErrorMessage() {
-        return errorCode.getMessage();
+        return errorCode.getKey();
     }
 
     public Map<String, Object> getPayload() {
@@ -52,7 +52,7 @@ public class SyncturtleException extends RuntimeException {
     public Map<String, Object> getErrorMap() {
         Map<String, Object> error = new LinkedHashMap<>();
         error.put("error_code", errorCode.getCode());
-        error.put("error_message", errorCode.getMessage());
+        error.put("error_message", errorCode.getKey());
         error.putAll(payload);
 
         return Collections.unmodifiableMap(error);

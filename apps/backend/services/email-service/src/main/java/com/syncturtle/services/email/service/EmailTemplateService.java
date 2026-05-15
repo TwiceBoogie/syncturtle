@@ -2,7 +2,6 @@ package com.syncturtle.services.email.service;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -12,6 +11,7 @@ import org.thymeleaf.context.Context;
 
 import com.syncturtle.common.contracts.email.template.EmailTemplateType;
 import com.syncturtle.services.email.dto.EmailEnvelope;
+import com.syncturtle.services.email.exceptions.EmailTemplateException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,28 +34,32 @@ public class EmailTemplateService {
 
             return new RenderedEmail(normalizeSubject(envelope.getSubject()), html, text);
         } catch (Exception exception) {
-            throw new IllegalStateException("Failed rendering template. type=" + envelope.getTemplateType(), exception);
+            throw EmailTemplateException.renderFailed(envelope.getTemplateType(), exception);
         }
     }
 
     private void validateEnvelope(EmailEnvelope envelope) {
-        Objects.requireNonNull(envelope, "envelope must not be null");
-        Objects.requireNonNull(envelope.getTemplateType(), "templateType must not be null");
-
+        if (envelope == null) {
+            throw EmailTemplateException.invalidEnvelope("envelope must not be null");
+        }
+        if (envelope.getTemplateType() == null) {
+            throw EmailTemplateException.invalidEnvelope("templateType must not be null");
+        }
         if (!StringUtils.hasText(envelope.getSubject())) {
-            throw new IllegalArgumentException("subject must not be blank");
+            throw EmailTemplateException.invalidEnvelope("subject must not be blank");
         }
         if (envelope.getTo() == null || envelope.getTo().isEmpty()) {
-            throw new IllegalArgumentException("at least one recipient is required");
+            throw EmailTemplateException.invalidEnvelope("at least one recipient is required");
         }
     }
 
     private TemplateSet resolveTemplateSet(EmailTemplateType templateType) {
         return switch (templateType) {
             case MAGIC_LINK -> new TemplateSet("email/html/magic-link", "email/text/magic-link");
-            case PASSWORD_RESET -> throw new UnsupportedOperationException("PASSWORD_RESET not implemented yet");
-            case VERIFY_EMAIL -> throw new UnsupportedOperationException("VERIFY_EMAIL not implemented yet");
-            case GENERIC_HTML -> throw new UnsupportedOperationException("GENERIC_HTML not implemented yet");
+            case PASSWORD_RESET,
+                    VERIFY_EMAIL,
+                    GENERIC_HTML ->
+                throw EmailTemplateException.unsupportedTemplate(templateType);
         };
     }
 

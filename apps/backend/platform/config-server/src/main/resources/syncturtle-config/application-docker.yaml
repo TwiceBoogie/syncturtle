@@ -1,0 +1,10 @@
+management:
+  otlp:
+    tracing:
+      endpoint: ${OTLP_TRACES_ENDPOINT:http://syncturtle-otel:4317}
+      transport: grpc
+    metrics:
+      export:
+        url: ${OTLP_METRICS_URL:http://syncturtle-otel:4318/v1/metrics}
+    logging:
+      endpoint: ${OTLP_LOGS_ENDPOINT:http://syncturtle-otel:4318/v1/logs}
