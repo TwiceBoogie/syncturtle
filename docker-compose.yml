@@ -1,86 +1,256 @@
+name: syncturtle
+
+x-backend-build: &backend-build
+  context: ./apps/backend
+  dockerfile: Dockerfile.api
+  args:
+    JAVA_VERSION: "21"
+
+x-app-security: &app-security
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  read_only: true
+  tmpfs:
+    - /tmp
+
+x-spring-platform-env: &spring-platform-env
+  SPRING_PROFILES_ACTIVE: docker
+  CONFIG_SERVER_URL: http://config-server:8888
+  SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+# x-common-env: &common-env
+#   SPRING_PROFILES_ACTIVE: docker
+#   SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+#   EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+#   SPRING_DATA_REDIS_HOST: redis
+#   SPRING_DATA_REDIS_PORT: 6379
+#   SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+#   MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+#   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,prometheus
+
 services:
   syncturtle-obs:
-    image: grafana/otel-lgtm:latest
+    image: grafana/otel-lgtm:0.11.10
+    container_name: syncturtle-obs
     networks:
-      - dev_env
+      - observability
     ports:
       - "3002:3000"
-      - "4317:4317"
-      - "4318:4318"
     environment:
-      - GF_SERVER_ROOT_URL=http://localhost:3000
+      GF_SERVER_ROOT_URL: http://localhost:3002
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - obs-data:/data
+    healthcheck:
+      test: ["CMD", "cat", "/tmp/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+    restart: unless-stopped
 
   syncturtle-otel:
-    image: otel/opentelemetry-collector-contrib:latest
+    image: otel/opentelemetry-collector-contrib:0.126.0
+    container_name: syncturtle-otel
     command: ["--config=/etc/otelcol-contrib/config.yaml"]
     volumes:
       - ./deployments/observability/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
     networks:
-      - dev_env
+      - internal
+      - observability
     ports:
+      # host machine -> collector
       - "14317:4317"
       - "14318:4318"
-      - "15317:5317" # product telemetry
+      # product telemetry grpc
+      - "15317:5317"
+      # collector health endpoint
+      - "13133:13133"
     depends_on:
-      - syncturtle-obs
+      syncturtle-obs:
+        condition: service_started
     restart: unless-stopped
 
-  syncturtle-db:
-    image: postgres:16-alpine
+  postgres:
+    image: postgres:16
+    container_name: syncturtle-postgres
     environment:
-      - POSTGRES_PASSWORD=postgres
-    networks:
-      - dev_env
+      POSTGRES_USER: ${POSTGRES_ROOT_USER:-syncturtle_root}
+      POSTGRES_PASSWORD: ${POSTGRES_ROOT_PASSWORD:-syncturtle_root_dev_password}
+      POSTGRES_DB: postgres
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./deployments/postgres/initdb:/docker-entrypoint-initdb.d:ro
     ports:
       - "5432:5432"
-    volumes:
-      - ./deployments/postgres/initdb:/docker-entrypoint-initdb.d:ro
-      - pgdata:/var/lib/postgresql/data
-
-  syncturtle-kafka:
-    image: redpandadata/redpanda:v24.2.10
-    command:
-      - redpanda start
-      - --kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092
-      - --advertise-kafka-addr=internal://syncturtle-kafka:9092,external://localhost:19092
-      - --mode=dev-container
-      - --smp=1
-      - --default-log-level=info
     networks:
-      - dev_env
-    volumes:
-      - redpandadata:/var/lib/redpanda/data
-    ports:
-      - "19092:19092"
-      - "19644:9644"
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
     restart: unless-stopped
 
-  syncturtle-redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    networks:
-      - dev_env
+  redis:
+    image: redis:7.4-alpine
+    container_name: syncturtle-redis
+    command: ["sh", "-c", 'redis-server --appendonly yes --requirepass "$${REDIS_PASSWORD}"']
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-syncturtle_redis_dev_password}
     volumes:
-      - redisdata:/data
+      - redis-data:/data
     ports:
       - "6379:6379"
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", 'redis-cli -a "$${REDIS_PASSWORD}" --raw ping | grep PONG']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  kafka:
+    image: apache/kafka:3.9.1
+    container_name: syncturtle-kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: INTERNAL://:9092,EXTERNAL://:19092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # signle node dev
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    ports:
+      - "19092:19092"
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 40s
+    restart: unless-stopped
+
+  # config-server:
+  #   build:
+  #     <<: *backend-build
+  #     args:
+  #       JAVA_VERSION: "21"
+  #       MODULE_PATH: platform/config-server
+  #       APP_PORT: 8888
+  #   image: syncturtle/config-server:dev
+  #   container_name: syncturtle-config-server
+  #   environment:
+  #     SPRING_PROFILES_ACTIVE: docker
+  #     SERVER_PORT: 8888
+  #     MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+  #   ports:
+  #     - "8888:8888"
+  #   networks:
+  #     - internal
+  #   healthcheck:
+  #     test:
+  #       [
+  #         "CMD-SHELL",
+  #         "curl -fsS http://localhost:8888/actuator/health || exit 1",
+  #       ]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 12
+  #     start_period: 30s
+  #   restart: unless-stopped
+  #   <<: *app-security
 
   # discovery-server:
   #   build:
-  #     context: .
-  #     dockerfile: apps/backend/Dockerfile.dev
+  #     <<: *backend-build
   #     args:
+  #       JAVA_VERSION: "21"
   #       MODULE_PATH: platform/discovery-server
-  #       SYNCTURTLE_VERSION: ${SYNCTURTLE_VERSION}
-  #   image: syncturtle/discovery-server:${SYNCTURTLE_VERSION}
+  #       APP_PORT: 8761
+  #   image: syncturtle/discovery-server:dev
+  #   container_name: syncturtle-discovery-server
   #   environment:
-  #     SYNCTURTLE_VERSION: ${SYNCTURTLE_VERSION}
+  #     <<: *spring-platform-env
+  #     SERVER_PORT: 8761
+  #     EUREKA_HOST: discovery-server
+  #     EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+  #     EUREKA_CLIENT_FETCH_REGISTRY: "false"
+  #   ports:
+  #     - "8761:8761"
+  #   depends_on:
+  #     config-server:
+  #       condition: service_healthy
+  #   networks:
+  #     - internal
+  #   healthcheck:
+  #     test:
+  #       [
+  #         "CMD-SHELL",
+  #         "curl -fsS http://localhost:8761/actuator/health || exit 1",
+  #       ]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 12
+  #     start_period: 45s
+  #   restart: unless-stopped
+  #   <<: *app-security
+
+  # api-gateway:
+  #   build:
+  #     <<: *backend-build
+  #     args:
+  #       JAVA_VERSION: "21"
+  #       MODULE_PATH: platform/api-gateway
+  #       APP_PORT: 8000
+  #   image: syncturtle/api-gateway:dev
+  #   container_name: syncturtle-api-gateway
+  #   environment:
+  #     <<: *spring-platform-env
+  #     SERVER_PORT: 8000
+
+  #     # EUREKA
+  #     EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+  #     EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+  #     EUREKA_INSTANCE_HOSTNAME: api-gateway
+
+  #     # REDIS
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6579
 
 volumes:
-  pgdata:
-  redisdata:
-  redpandadata:
+  postgres-data:
+  redis-data:
+  kafka-data:
+  obs-data:
 
 networks:
-  dev_env:
-    driver: bridge
+  edge:
+    name: syncturtle-edge
+  internal:
+    name: syncturtle-internal
+  observability:
+    name: syncturtle-observability

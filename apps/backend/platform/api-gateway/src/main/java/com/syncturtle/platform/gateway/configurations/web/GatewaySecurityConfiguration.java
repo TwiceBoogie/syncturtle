@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,7 +17,6 @@ import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
-import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -36,13 +34,12 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.syncturtle.platform.gateway.configurations.properties.GatewayPassportProperties;
-import com.syncturtle.platform.gateway.filters.web.PassportSessionValidationWebFilter;
 import com.syncturtle.platform.gateway.support.CookieOrBearerServerAuthenticationConverter;
 
 import reactor.core.publisher.Mono;
 
-@Configuration
 @EnableWebFluxSecurity
+@Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(GatewayPassportProperties.class)
 public class GatewaySecurityConfiguration {
 
@@ -50,8 +47,7 @@ public class GatewaySecurityConfiguration {
     SecurityWebFilterChain securityWebFilterChain(
             ServerHttpSecurity http,
             CookieOrBearerServerAuthenticationConverter tokenConverter,
-            Converter<Jwt, Mono<AbstractAuthenticationToken>> jwtAuthenticationConverter,
-            PassportSessionValidationWebFilter sessionValidationWebFilter) {
+            Converter<Jwt, Mono<AbstractAuthenticationToken>> jwtAuthenticationConverter) {
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
@@ -59,57 +55,16 @@ public class GatewaySecurityConfiguration {
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .logout(ServerHttpSecurity.LogoutSpec::disable)
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((exchange, e) -> unauthorized(exchange))
-                        .accessDeniedHandler((exchange, e) -> forbidden(exchange)))
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint(
+                                (exchange, exception) -> unauthorized(exchange, "Authentication required"))
+                        .accessDeniedHandler((exchange, exception) -> forbidden(exchange, "Access denied")))
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .pathMatchers("/actuator/health").permitAll()
-
-                        .pathMatchers(HttpMethod.GET,
-                                "/api/instances",
-                                "/api/instances/admins/session")
-                        .permitAll()
-
-                        .pathMatchers(HttpMethod.POST,
-                                "/api/instances/admins/sign-in",
-                                "/api/instances/admins/sign-up",
-                                "/api/instances/admins/sign-up-screen-visited",
-                                "/api/instances/admins/sign-out")
-                        .permitAll()
-
-                        .pathMatchers(
-                                "/auth/sign-in/**",
-                                "/auth/sign-up/**",
-                                "/auth/sign-out/**",
-                                "/auth/get-csrf-token/**",
-                                "/auth/refresh",
-                                "/auth/email-check/**",
-                                "/auth/magic-generate/**",
-                                "/auth/magic-sign-in/**",
-                                "/auth/magic-sign-up/**",
-                                "/auth/forgot-password/**",
-                                "/auth/reset-password/**",
-                                "/auth/google/**",
-                                "/auth/github/**",
-                                "/auth/gitlab/**",
-                                "/oauth2/**")
-                        .permitAll()
-
-                        .pathMatchers("/api/users/**").authenticated()
-                        .pathMatchers("/api/workspaces/**").authenticated()
-                        .pathMatchers("/api/instances/**").authenticated()
-
-                        .pathMatchers(
-                                "/auth/change-password/**",
-                                "/auth/set-password/**")
-                        .authenticated()
-
                         .anyExchange().permitAll())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .bearerTokenConverter(tokenConverter)
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
-                .addFilterAfter(sessionValidationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }
 
@@ -117,7 +72,6 @@ public class GatewaySecurityConfiguration {
     ReactiveJwtDecoder jwtDecoder(
             @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}") String jwtSetUri,
             GatewayPassportProperties properties) {
-
         NimbusReactiveJwtDecoder decoder = NimbusReactiveJwtDecoder.withJwkSetUri(jwtSetUri).build();
 
         OAuth2TokenValidator<Jwt> issuerValidator = JwtValidators
@@ -161,46 +115,33 @@ public class GatewaySecurityConfiguration {
         };
     }
 
-    private Mono<Void> unauthorized(ServerWebExchange exchange) {
-        applyCorsHeaders(exchange);
-
-        ServerHttpResponse response = exchange.getResponse();
-        response.setStatusCode(HttpStatus.UNAUTHORIZED);
-        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-
-        String body = """
-                {"ok":false,"error":"UNAUTHORIZED","message":"Authentication required"}
-                """;
-
-        DataBuffer buffer = response.bufferFactory().wrap(body.getBytes(StandardCharsets.UTF_8));
-
-        return response.writeWith(Mono.just(buffer));
+    private Mono<Void> unauthorized(ServerWebExchange exchange, String message) {
+        return writeJson(exchange, HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", message);
     }
 
-    private Mono<Void> forbidden(ServerWebExchange exchange) {
-        applyCorsHeaders(exchange);
-
-        ServerHttpResponse response = exchange.getResponse();
-        response.setStatusCode(HttpStatus.FORBIDDEN);
-        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-
-        String body = """
-                {"ok":false,"error":"FORBIDDEN","message":"Access denied"}
-                """;
-
-        DataBuffer buffer = response.bufferFactory().wrap(body.getBytes(StandardCharsets.UTF_8));
-
-        return response.writeWith(Mono.just(buffer));
+    private Mono<Void> forbidden(ServerWebExchange exchange, String message) {
+        return writeJson(exchange, HttpStatus.FORBIDDEN, "FORBIDDEN", message);
     }
 
-    private void applyCorsHeaders(ServerWebExchange exchange) {
-        String origin = exchange.getRequest().getHeaders().getOrigin();
-
-        if ("http://localhost:3001".equals(origin) || "http://localhost:3000".equals(origin)) {
-            HttpHeaders headers = exchange.getResponse().getHeaders();
-            headers.setAccessControlAllowOrigin(origin);
-            headers.setAccessControlAllowCredentials(true);
-            headers.add("Vary", "Origin");
+    private Mono<Void> writeJson(
+            ServerWebExchange exchange,
+            HttpStatus status,
+            String error,
+            String message) {
+        ServerHttpResponse response = exchange.getResponse();
+        if (response.isCommitted()) {
+            return Mono.empty();
         }
+
+        response.setStatusCode(status);
+        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+
+        String body = """
+                {"ok":false,"error":"%s","message":"%s"}
+                """.formatted(error, message);
+
+        DataBuffer buffer = response.bufferFactory().wrap(body.getBytes(StandardCharsets.UTF_8));
+        return response.writeWith(Mono.just(buffer));
     }
+
 }

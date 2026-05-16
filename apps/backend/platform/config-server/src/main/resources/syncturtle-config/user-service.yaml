@@ -1,0 +1,92 @@
+server:
+  port: ${SERVER_PORT:8002}
+
+spring:
+  application:
+    name: user-service
+
+  datasource:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-timeout: 2000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+
+  kafka:
+    template:
+      observation-enabled: true
+    listener:
+      observation-enabled: true
+      auto-startup: ${app.kafka.enabled:true}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        enable.idempotence: true
+        linger.ms: 5
+        batch.size: 32768
+        compression.type: zstd
+        max.in.flight.requests.per.connection: 5
+        spring.json.add.type.headers: false # JsonSerializer.ADD_TYPE_INFO_HEADERS
+        interceptor.classes: com.syncturtle.common.spring.autoconfigure.observability.kafka.MdcKafkaHeaderProducerInterceptor
+    consumer:
+      auto-offset-reset: earliest
+
+jdbc:
+  datasource-proxy:
+    enabled: true
+    include-parameter-values: false
+  includes: QUERY
+
+app:
+  kafka:
+    enabled: true
+    config-broadcast-group: ${spring.application.name}-instance-config-${HOSTNAME:${random.uuid}}
+    error-handling:
+      initial-interval: 500ms
+      multiplier: 2.0
+      max-elapsed-time: 8s
+      dlt-suffix: ".DLT"
+      ack-after-handle: true
+      commit-recovered: true
+      log-retries: true
+  security:
+    csrf:
+      enabled: true
+      hmac-algorithm: ${APP_SECURITY_CSRF_HMAC_ALGORITHM:HmacSHA256}
+      signing-key: ${APP_SECURITY_CSRF_SIGNING_KEY}
+      transport:
+        cookie-name: csrf
+        header-name: X-CSRF-Token
+        form-field-name: csrfmiddlewaretoken
+  base-urls:
+    web-url: ${APP_BASE_URL_WEB:http://localhost:3000}
+    admin-base-url: ${APP_BASE_URL_ADMIN:http://localhost:3001}
+    app-base-url: ${APP_BASE_URL_APP:http://localhost:3000}
+    admin-base-path: ${APP_BASE_PATH_ADMIN:/god-mode/}
+  passport:
+    issuer: "https://api.syncturtle.com/auth"
+    audience: "syncturtle-api"
+    kid: "auth-key-2026-04"
+    private-key-location: "classpath:keys/jwt-private-key.pem"
+    public-key-location: "classpath:keys/jwt-public-key.pem"
+  cookies:
+    secure: false
+    host-prefix-enabled: false
+    domain: ""
+    path: /
+    access-same-site: Lax
+    refresh-same-site: Lax
+    csrf-same-site: Lax
+    csrf-max-age: 30m

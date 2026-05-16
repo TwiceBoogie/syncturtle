@@ -1,0 +1,33 @@
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${app.services.user-service.base-url}/.well-known/jwks.json
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              "[/**]":
+                allowedOrigins: ${GATEWAY_CORS_ALLOWED_ORIGINS:http://web:3000}
+                allowedMethods: "*"
+                allowedHeaders: "*"
+                allowCredentials: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+
+app:
+  services:
+    instance-service:
+      base-url: http://instance-service:8080
+    user-service:
+      base-url: http://user-service:8080
+    workspace-service:
+      base-url: http://workspace-service:8080
+    email-service:
+      base-url: http://email-service:8080

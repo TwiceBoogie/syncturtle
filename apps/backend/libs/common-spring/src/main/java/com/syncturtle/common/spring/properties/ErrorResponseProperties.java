@@ -40,6 +40,20 @@ public class ErrorResponseProperties {
         this.includeRequestIds = includeRequestIds;
         this.includeDebug = includeDebug;
         this.includeStackTrace = includeStackTrace;
-        this.maxStackTraceLines = maxStackTraceLines;
+        this.maxStackTraceLines = requirePositive(maxStackTraceLines, "max-stack-trace-lines");
+
+        if (includeStackTrace && !includeDebug) {
+            throw new IllegalArgumentException(
+                    "app.web.errors.include-stack-trace requires include-debug=true");
+        }
+    }
+
+    private static int requirePositive(int value, String propertyName) {
+        if (value <= 0) {
+            throw new IllegalArgumentException(
+                    "app.web.errors." + propertyName + " must be greater than 0");
+        }
+
+        return value;
     }
 }

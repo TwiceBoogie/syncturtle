@@ -12,7 +12,7 @@ import com.syncturtle.common.contracts.instance.admin.AdminSigninRequest;
 import com.syncturtle.common.contracts.instance.admin.AdminSignupRequest;
 import com.syncturtle.common.core.service.ServiceClientNames;
 
-@FeignClient(value = ServiceClientNames.USER_SERVICE, path = "/internal/v1/users")
+@FeignClient(value = ServiceClientNames.USER_SERVICE, contextId = "instanceUserClient", url = "${app.services.user-service.base-url}", path = "/internal/v1/users")
 public interface UserClient {
 
     @PostMapping("/admins/sign-up")

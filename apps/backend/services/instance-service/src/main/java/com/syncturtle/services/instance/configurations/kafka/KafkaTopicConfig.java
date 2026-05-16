@@ -1,111 +1,97 @@
 package com.syncturtle.services.instance.configurations.kafka;
 
 import org.apache.kafka.clients.admin.NewTopic;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.config.TopicBuilder;
 
 import com.syncturtle.common.contracts.messaging.KafkaTopics;
+import com.syncturtle.services.instance.configurations.properties.KafkaTopicProperties;
+
+import lombok.RequiredArgsConstructor;
 
 @Profile("setup")
+@RequiredArgsConstructor
 @Configuration(proxyBeanMethods = false)
+@EnableConfigurationProperties(KafkaTopicProperties.class)
 public class KafkaTopicConfig {
+
+    private final KafkaTopicProperties properties;
 
     @Bean
     NewTopic instanceEventsTopic() {
-        return TopicBuilder.name(KafkaTopics.INSTANCE_EVENTS_V1)
-                .partitions(1)
-                .replicas(1)
-                .build();
+        return topic(KafkaTopics.INSTANCE_EVENTS_V1);
     }
 
     @Bean
     NewTopic instanceConfigEventsTopic() {
-        return TopicBuilder.name(KafkaTopics.INSTANCE_CONFIG_EVENTS_V1)
-                .partitions(1)
-                .replicas(1)
-                .build();
+        return topic(KafkaTopics.INSTANCE_CONFIG_EVENTS_V1);
     }
 
     @Bean
     NewTopic userEventsTopic() {
-        return TopicBuilder.name(KafkaTopics.USER_EVENTS_V1)
-                .partitions(1)
-                .replicas(1)
-                .build();
+        return topic(KafkaTopics.USER_EVENTS_V1);
     }
 
     @Bean
     NewTopic workspaceEventsTopic() {
-        return TopicBuilder.name(KafkaTopics.WORKSPACE_EVENTS_V1)
-                .partitions(1)
-                .replicas(1)
-                .build();
+        return topic(KafkaTopics.WORKSPACE_EVENTS_V1);
     }
 
     @Bean
     NewTopic passwordEventsTopic() {
-        return TopicBuilder.name(KafkaTopics.PASSWORD_EVENTS_V1)
-                .partitions(1)
-                .replicas(1)
-                .build();
+        return topic(KafkaTopics.PASSWORD_EVENTS_V1);
     }
 
     @Bean
     NewTopic emailEventsTopic() {
-        return TopicBuilder.name(KafkaTopics.EMAIL_EVENTS_V1)
-                .partitions(1)
-                .replicas(1)
-                .build();
+        return topic(KafkaTopics.EMAIL_EVENTS_V1);
     }
 
     // DLT topics
     @Bean
     NewTopic instanceEventsDltTopic() {
-        return TopicBuilder.name(KafkaTopics.INSTANCE_EVENTS_V1 + ".DLT")
-                .partitions(1)
-                .replicas(1)
-                .build();
+        return dlt(KafkaTopics.INSTANCE_EVENTS_V1);
     }
 
     @Bean
     NewTopic instanceConfigEventsDltTopic() {
-        return TopicBuilder.name(KafkaTopics.INSTANCE_CONFIG_EVENTS_V1 + ".DLT")
-                .partitions(1)
-                .replicas(1)
-                .build();
+        return dlt(KafkaTopics.INSTANCE_CONFIG_EVENTS_V1);
     }
 
     @Bean
     NewTopic userEventsDltTopic() {
-        return TopicBuilder.name(KafkaTopics.USER_EVENTS_V1 + ".DLT")
-                .partitions(1)
-                .replicas(1)
-                .build();
+        return dlt(KafkaTopics.USER_EVENTS_V1);
     }
 
     @Bean
     NewTopic workspaceEventsDltTopic() {
-        return TopicBuilder.name(KafkaTopics.WORKSPACE_EVENTS_V1 + ".DLT")
-                .partitions(1)
-                .replicas(1)
-                .build();
+        return dlt(KafkaTopics.WORKSPACE_EVENTS_V1);
     }
 
     @Bean
     NewTopic passwordEventsDltTopic() {
-        return TopicBuilder.name(KafkaTopics.PASSWORD_EVENTS_V1 + ".DLT")
-                .partitions(1)
-                .replicas(1)
-                .build();
+        return dlt(KafkaTopics.PASSWORD_EVENTS_V1);
     }
 
     @Bean
     NewTopic emailEventsDltTopic() {
-        return TopicBuilder.name(KafkaTopics.EMAIL_EVENTS_V1 + ".DLT")
-                .partitions(1)
-                .replicas(1)
+        return dlt(KafkaTopics.EMAIL_EVENTS_V1);
+    }
+
+    private NewTopic topic(String name) {
+        return TopicBuilder.name(name)
+                .partitions(properties.getPartitions())
+                .replicas(properties.getReplicas())
+                .build();
+    }
+
+    private NewTopic dlt(String sourceTopic) {
+        return TopicBuilder.name(sourceTopic + ".DLT")
+                .partitions(properties.getPartitions())
+                .replicas(properties.getReplicas())
                 .build();
     }
 
