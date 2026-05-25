@@ -39,9 +39,10 @@ public class StripInboundAuthHeadersFilter implements GlobalFilter, Ordered {
     private static final Set<String> BLOCKED = Set.of(
             "X-Auth-User-Id",
             "X-Auth-Session-Id",
-            "X-Auth-Token-Version",
             "X-Auth-Instance-Id",
             "X-Auth-Roles",
+            "X-Auth-User-Auth-Version",
+            "X-Auth-Admin-Session-Version",
             "X-Auth-Issuer");
 
     /**

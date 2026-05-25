@@ -19,11 +19,18 @@
     <!-- INTERNAL LIBS -->
     <dependency>
       <groupId>com.syncturtle</groupId>
+      <artifactId>common-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.syncturtle</groupId>
       <artifactId>common-contracts</artifactId>
     </dependency>
 
-    <!-- SPRING WEB (non-boot) -->
-    <!-- Filters, request handling, basic web utilities -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-autoconfigure</artifactId>
+    </dependency>
+    <!-- WEB CORE -->
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-web</artifactId>
@@ -33,18 +40,35 @@
       <artifactId>spring-context</artifactId>
     </dependency>
 
+    <!-- SERVLET MVC: optional because reactive/gateway apps may consume only few pieces -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webmvc</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <!-- SERVLET API: optional because not every consumer is servlet-based -->
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <optional>true</optional>
+    </dependency>
+
     <dependency>
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-openfeign-core</artifactId>
       <optional>true</optional>
     </dependency>
 
-    <!-- SERVLET API (compile only) -->
     <dependency>
-      <groupId>jakarta.servlet</groupId>
-      <artifactId>jakarta.servlet-api</artifactId>
-      <scope>provided</scope>
+      <groupId>io.github.openfeign</groupId>
+      <artifactId>feign-core</artifactId>
       <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
     </dependency>
   </dependencies>
 </project>

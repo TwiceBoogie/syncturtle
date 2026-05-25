@@ -1,0 +1,3 @@
+com.syncturtle.common.security.autoconfigure.CsrfTokenServiceAutoConfiguration
+com.syncturtle.common.security.autoconfigure.PasswordHashingAutoConfiguration
+com.syncturtle.common.security.autoconfigure.CookieAutoConfiguration

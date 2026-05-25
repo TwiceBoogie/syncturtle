@@ -17,6 +17,7 @@ import com.syncturtle.common.contracts.email.event.EmailToSendEvent;
 import com.syncturtle.common.contracts.email.template.EmailTemplateType;
 import com.syncturtle.services.email.dto.EmailEnvelope;
 import com.syncturtle.services.email.enums.EmailEventInboxStatus;
+import com.syncturtle.services.email.exceptions.EmailInboxException;
 import com.syncturtle.services.email.models.EmailEventInbox;
 import com.syncturtle.services.email.repositories.EmailEventInboxRepository;
 
@@ -85,15 +86,14 @@ public class EmailEventInboxService {
                     .correlationId(row.getCorrelationId())
                     .build();
         } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Failed to rebuild EmailEnvelope for eventId=" + row.getEventId(),
-                    exception);
+            throw EmailInboxException.payloadDeserializationFailed(row.getEventId(), exception);
         }
     }
 
     @Transactional
     public void markSent(String eventId) {
         EmailEventInbox entity = repository.findByEventIdForUpdate(eventId)
-                .orElseThrow(() -> new IllegalStateException("Inbox row not found for eventId=" + eventId));
+                .orElseThrow(() -> EmailInboxException.rowNotFound(eventId));
 
         entity.setStatus(EmailEventInboxStatus.SENT);
         entity.setProcessedAt(Instant.now());
@@ -107,7 +107,7 @@ public class EmailEventInboxService {
     @Transactional
     public void markRetryableFailure(String eventId, Exception exception) {
         EmailEventInbox entity = repository.findByEventIdForUpdate(eventId)
-                .orElseThrow(() -> new IllegalStateException("Inbox row not found for eventId=" + eventId));
+                .orElseThrow(() -> EmailInboxException.rowNotFound(eventId));
 
         Instant now = Instant.now();
         String errorMessage = summarizeException(exception);
@@ -130,7 +130,7 @@ public class EmailEventInboxService {
     @Transactional
     public void markPermanentFailure(String eventId, Exception exception) {
         EmailEventInbox entity = repository.findByEventIdForUpdate(eventId)
-                .orElseThrow(() -> new IllegalStateException("Inbox row not found for eventId=" + eventId));
+                .orElseThrow(() -> EmailInboxException.rowNotFound(eventId));
 
         entity.setStatus(EmailEventInboxStatus.FAILED_PERMANENT);
         entity.setProcessedAt(Instant.now());

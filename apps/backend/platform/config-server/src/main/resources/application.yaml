@@ -7,13 +7,20 @@ spring:
     group:
       local:
         - native
+      docker:
+        - native
 
 management:
   endpoints:
     web:
+      base-path: /actuator
       exposure:
         include:
           - health
           - info
           - metrics
           - prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true

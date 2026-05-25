@@ -36,7 +36,7 @@ public enum ApiErrorCode implements ErrorCode {
     }
 
     @Override
-    public String getMessage() {
+    public String getKey() {
         return message;
     }
 

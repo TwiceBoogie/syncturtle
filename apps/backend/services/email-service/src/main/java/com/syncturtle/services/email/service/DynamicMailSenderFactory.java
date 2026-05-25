@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.syncturtle.services.email.configurations.properties.SyncturtleConfig;
 import com.syncturtle.services.email.dto.EmailRuntimeConfig;
+import com.syncturtle.services.email.exceptions.EmailRuntimeConfigException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,8 +23,8 @@ public class DynamicMailSenderFactory {
     private final SyncturtleConfig syncturtleConfig;
 
     public JavaMailSender create(EmailRuntimeConfig config) {
-        if (!config.isComplete()) {
-            throw new IllegalStateException("Email runtime config is incomplete");
+        if (config == null || !config.isComplete()) {
+            throw EmailRuntimeConfigException.incomplete();
         }
 
         JavaMailSenderImpl sender = new JavaMailSenderImpl();

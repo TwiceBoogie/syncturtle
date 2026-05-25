@@ -19,56 +19,68 @@ import reactor.core.publisher.Mono;
 @Component
 public class ClientMetadataHeadersFilter implements GlobalFilter, Ordered {
 
-    private final RemoteAddressResolver remoteAddressResolver = XForwardedRemoteAddressResolver.maxTrustedIndex(2);
+    private static final int ORDER = Ordered.HIGHEST_PRECEDENCE + 5;
+    private static final int MAX_TRUSTED_INDEX = 1;
+
+    private final RemoteAddressResolver remoteAddressResolver = XForwardedRemoteAddressResolver
+            .maxTrustedIndex(MAX_TRUSTED_INDEX);
 
     @Override
     public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE + 5;
+        return ORDER;
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        ServerHttpRequest request = exchange.getRequest();
-
         String clientIp = resolveClientIp(exchange);
-        String ua = request.getHeaders().getFirst(HttpHeaders.USER_AGENT);
+        String userAgent = blankToNull(exchange.getRequest()
+                .getHeaders()
+                .getFirst(HttpHeaders.USER_AGENT));
 
-        ServerHttpRequest mutated = request.mutate()
-                .headers(h -> {
-                    h.remove(GatewayHeaders.HDR_CLIENT_IP);
-                    h.remove(GatewayHeaders.HDR_CLIENT_UA);
+        ServerHttpRequest request = exchange.getRequest()
+                .mutate()
+                .headers(headers -> {
+                    headers.remove(GatewayHeaders.HDR_CLIENT_IP);
+                    headers.remove(GatewayHeaders.HDR_CLIENT_UA);
 
-                    if (clientIp != null && !clientIp.isBlank()) {
-                        h.set(GatewayHeaders.HDR_CLIENT_IP, clientIp);
+                    if (clientIp != null) {
+                        headers.set(GatewayHeaders.HDR_CLIENT_IP, clientIp);
                     }
-                    if (ua != null && !ua.isBlank()) {
-                        h.set(GatewayHeaders.HDR_CLIENT_UA, ua);
+                    if (userAgent != null) {
+                        headers.set(GatewayHeaders.HDR_CLIENT_UA, userAgent);
                     }
-                }).build();
+                })
+                .build();
 
-        return chain.filter(exchange.mutate().request(mutated).build());
+        return chain.filter(exchange.mutate().request(request).build());
     }
 
     private String resolveClientIp(ServerWebExchange exchange) {
-        HttpHeaders headers = exchange.getRequest().getHeaders();
+        String forwardedIp = resolveForwardedIp(exchange);
 
-        String cloudFlare = headers.getFirst("CF-Connecting-IP");
-        if (cloudFlare != null && !cloudFlare.isBlank()) {
-            return cloudFlare.trim();
+        if (forwardedIp != null) {
+            return forwardedIp;
         }
 
-        InetSocketAddress addr = remoteAddressResolver.resolve(exchange);
-        if (addr != null && addr.getAddress() != null) {
-            return addr.getAddress().getHostAddress();
+        InetSocketAddress remoteAddress = exchange.getRequest().getRemoteAddress();
+        if (remoteAddress != null && remoteAddress.getAddress() != null) {
+            return remoteAddress.getAddress().getHostAddress();
         }
 
-        // fallback
-        InetSocketAddress remote = exchange.getRequest().getRemoteAddress();
-        if (remote != null && remote.getAddress() != null) {
-            return remote.getAddress().getHostAddress();
+        return null;
+    }
+
+    private String resolveForwardedIp(ServerWebExchange exchange) {
+        InetSocketAddress address = remoteAddressResolver.resolve(exchange);
+        if (address == null || address.getAddress() == null) {
+            return null;
         }
 
-        return "unknown";
+        return blankToNull(address.getAddress().getHostAddress());
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
 }

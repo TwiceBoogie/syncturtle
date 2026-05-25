@@ -4,4 +4,4 @@ spring:
       server:
         native:
           search-locations:
-          - classpath:/config-repo
+            - classpath:/syncturtle-config

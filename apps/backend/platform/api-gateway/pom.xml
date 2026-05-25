@@ -33,23 +33,11 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-cache</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.github.ben-manes.caffeine</groupId>
-      <artifactId>caffeine</artifactId>
-    </dependency>
 
     <!-- CONFIG / DISCOVERY / CLOUD -->
     <dependency>
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-config</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.cloud</groupId>
@@ -103,7 +91,15 @@
     </dependency>
     <dependency>
       <groupId>com.syncturtle</groupId>
-      <artifactId>common-spring</artifactId>
+      <artifactId>common-contracts</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.syncturtle</groupId>
+      <artifactId>common-security-spring</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.syncturtle</groupId>
+      <artifactId>common-observability-spring</artifactId>
     </dependency>
 
     <!-- SUPPORT -->

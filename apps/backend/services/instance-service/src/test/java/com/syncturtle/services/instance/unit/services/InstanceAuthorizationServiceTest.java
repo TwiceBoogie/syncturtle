@@ -30,7 +30,7 @@ public class InstanceAuthorizationServiceTest {
         // arrange
         // conditions
         // act
-        boolean result = service.isInstanceAdmin(null, 15);
+        boolean result = service.hasInstanceRoleAtLeast(null, 15);
         // assertions
         assertThat(result).isFalse();
         // verify
@@ -44,7 +44,7 @@ public class InstanceAuthorizationServiceTest {
         // conditions
         when(instanceAdminRepository.existsByUserIdAndRoleGreaterThanEqual(userId, 15)).thenReturn(true);
         // act
-        boolean result = service.isInstanceAdmin(userId, 15);
+        boolean result = service.hasInstanceRoleAtLeast(userId, 15);
         // assertions
         assertThat(result).isTrue();
         // verify
@@ -58,7 +58,7 @@ public class InstanceAuthorizationServiceTest {
         // conditions
         when(instanceAdminRepository.existsByUserIdAndRoleGreaterThanEqual(userId, 0)).thenReturn(false);
         // act
-        boolean result = service.isInstanceAdmin(userId, 0);
+        boolean result = service.hasInstanceRoleAtLeast(userId, 0);
         // assertions
         assertThat(result).isFalse();
         // verify

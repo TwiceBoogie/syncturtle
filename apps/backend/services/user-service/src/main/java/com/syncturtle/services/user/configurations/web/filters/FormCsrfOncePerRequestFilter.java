@@ -1,81 +1,114 @@
 package com.syncturtle.services.user.configurations.web.filters;
 
+import static com.syncturtle.common.core.cookie.CsrfConstants.CSRF_FORM_FIELD_NAME;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
+import java.util.Set;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
-import com.syncturtle.common.spring.properties.CsrfTransportProperties;
+import com.syncturtle.common.spring.web.cookie.ServletAuthCookieWriter;
 import com.syncturtle.common.spring.web.url.PublicUrlBuilder;
-import com.syncturtle.common.web.csrf.CsrfTokenSigner;
+import com.syncturtle.common.web.csrf.CsrfTokenService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
-@Component
-@RequiredArgsConstructor
 public final class FormCsrfOncePerRequestFilter extends OncePerRequestFilter {
 
-    private static final List<String> ENDPOINTS = List.of("/auth/sign-out");
-
-    private final CsrfTokenSigner signer;
-    private final CsrfTransportProperties props;
+    private final Set<String> protectedFormEndpoints;
+    private final CsrfTokenService csrfTokenService;
+    private final ServletAuthCookieWriter cookieWriter;
     private final PublicUrlBuilder hostResolver;
+
+    public FormCsrfOncePerRequestFilter(
+            Collection<String> protectedFormEndpoints,
+            CsrfTokenService csrfTokenService,
+            ServletAuthCookieWriter cookieWriter,
+            PublicUrlBuilder hostResolver) {
+        Assert.notEmpty(protectedFormEndpoints, "protectedFormEndpoints must not be empty");
+
+        this.protectedFormEndpoints = Set.copyOf(protectedFormEndpoints);
+        this.csrfTokenService = csrfTokenService;
+        this.cookieWriter = cookieWriter;
+        this.hostResolver = hostResolver;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String rawFormToken = request.getParameter(props.getFormFieldName());
-        String signedCookie = readCookie(request, props.getCookieName());
-
-        if (!StringUtils.hasText(rawFormToken) || !StringUtils.hasText(signedCookie)) {
-            denyWithCsrfError(request, response);
-            return;
-        }
-
-        if (!signer.verify(signedCookie)) {
-            denyWithCsrfError(request, response);
-            return;
-        }
-
-        String rawCookieToken = signer.extractToken(signedCookie);
-        if (!StringUtils.hasText(rawCookieToken) || !constantTimeEquals(rawCookieToken, rawFormToken.trim())) {
-            denyWithCsrfError(request, response);
+        if (!hasValidCsrfPair(request)) {
+            denyWithCsrfError(response);
             return;
         }
 
         filterChain.doFilter(request, response);
-        ;
     }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+        return !isProtectedPostFormEndpoint(request);
+    }
+
+    @Override
+    protected boolean shouldNotFilterAsyncDispatch() {
+        return true;
+    }
+
+    @Override
+    protected boolean shouldNotFilterErrorDispatch() {
+        return true;
+    }
+
+    private boolean isProtectedPostFormEndpoint(HttpServletRequest request) {
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
-            return true;
+            return false;
         }
 
-        if (!ENDPOINTS.contains(request.getRequestURI())) {
-            return true;
+        String path = request.getServletPath();
+        if (!StringUtils.hasText(path)) {
+            path = request.getRequestURI();
         }
 
+        if (!protectedFormEndpoints.contains(path)) {
+            return false;
+        }
+
+        return isApplicationFormUrlEncoded(request);
+    }
+
+    private boolean isApplicationFormUrlEncoded(HttpServletRequest request) {
         String contentType = request.getContentType();
         if (!StringUtils.hasText(contentType)) {
-            return true;
+            return false;
         }
-        return !contentType.toLowerCase().startsWith(MediaType.APPLICATION_FORM_URLENCODED_VALUE);
+
+        try {
+            MediaType actualContentType = MediaType.parseMediaType(contentType);
+            return actualContentType.isCompatibleWith(MediaType.APPLICATION_FORM_URLENCODED);
+        } catch (InvalidMediaTypeException exception) {
+            return false;
+        }
+    }
+
+    private boolean hasValidCsrfPair(HttpServletRequest request) {
+        String signedToken = readCookie(request, cookieWriter.csrfCookieName());
+        String submittedRawToken = request.getParameter(CSRF_FORM_FIELD_NAME);
+
+        return csrfTokenService.matches(signedToken, submittedRawToken);
     }
 
     private String readCookie(HttpServletRequest request, String cookieName) {
@@ -90,30 +123,15 @@ public final class FormCsrfOncePerRequestFilter extends OncePerRequestFilter {
                 .orElse(null);
     }
 
-    private void denyWithCsrfError(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private void denyWithCsrfError(HttpServletResponse response) throws IOException {
         AuthException exception = AuthException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
-        String location = hostResolver.adminWithQuery("", exception.getErrorMap());
-        deny(response, location);
-    }
+        cookieWriter.clearCsrfCookie(response);
 
-    private void deny(HttpServletResponse response, String location) throws IOException {
-        response.setStatus(303);
-        response.setHeader("Location", location);
-    }
+        String location = hostResolver.userAppWithQuery("/sign-in", exception.getErrorMap());
 
-    private static boolean constantTimeEquals(String a, String b) {
-        if (a == null || b == null) {
-            return false;
-        }
-
-        byte[] x = a.getBytes(StandardCharsets.UTF_8);
-        byte[] y = b.getBytes(StandardCharsets.UTF_8);
-
-        int diff = x.length ^ y.length;
-        for (int i = 0; i < Math.min(x.length, y.length); i++) {
-            diff |= x[i] ^ y[i];
-        }
-        return diff == 0;
+        response.setStatus(HttpServletResponse.SC_SEE_OTHER);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setHeader(HttpHeaders.LOCATION, response.encodeRedirectURL(location));
     }
 
 }

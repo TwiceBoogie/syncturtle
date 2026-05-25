@@ -5,10 +5,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties({
-                PassportProperties.class,
-                AuthProperties.class,
-                EndpointProperties.class,
-                HttpProperties.class
+        PassportProperties.class,
+        AuthProperties.class
 })
 public class PropertiesConfiguration {
 

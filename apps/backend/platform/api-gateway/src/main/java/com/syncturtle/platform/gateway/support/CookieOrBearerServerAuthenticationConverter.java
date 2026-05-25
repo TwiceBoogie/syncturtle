@@ -1,7 +1,6 @@
 package com.syncturtle.platform.gateway.support;
 
-import static com.syncturtle.common.core.cookie.CookieNames.COOKIE_NAME_ACCESS_TOKEN;
-
+import org.springframework.http.HttpCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.web.server.authentication.ServerBearerTokenAuthenticationConverter;
@@ -9,7 +8,8 @@ import org.springframework.security.web.server.authentication.ServerAuthenticati
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
-import lombok.RequiredArgsConstructor;
+import com.syncturtle.common.security.cookie.SecurityCookieFactory;
+
 import reactor.core.publisher.Mono;
 
 /**
@@ -36,17 +36,23 @@ import reactor.core.publisher.Mono;
  * @see ServerAuthenticationConverter
  */
 @Component
-@RequiredArgsConstructor
 public class CookieOrBearerServerAuthenticationConverter implements ServerAuthenticationConverter {
 
-    private final ServerBearerTokenAuthenticationConverter delegate = new ServerBearerTokenAuthenticationConverter();
+    private final ServerBearerTokenAuthenticationConverter bearerTokenConverter;
+    private final SecurityCookieFactory cookieFactory;
+
+    public CookieOrBearerServerAuthenticationConverter(SecurityCookieFactory cookieFactory) {
+        this.bearerTokenConverter = new ServerBearerTokenAuthenticationConverter();
+        this.cookieFactory = cookieFactory;
+    }
 
     /**
      * Performs conditional extraction logic.
      * 
      * <p>
-     * Executes the {@code delegate} first. If the resulting {@link Mono} is empty,
-     * it switches to {@link #extractFromCookie(ServerWebExchange)}.
+     * Executes the {@code bearerTokenConverter} first. If the resulting
+     * {@link Mono} is empty,
+     * it switches to {@link #convertCookie(ServerWebExchange)}.
      * 
      * @param exchange the current reactive exchange
      * @return a {@link Mono} containing the first valid {@link Authentication}
@@ -54,8 +60,8 @@ public class CookieOrBearerServerAuthenticationConverter implements ServerAuthen
      */
     @Override
     public Mono<Authentication> convert(ServerWebExchange exchange) {
-        return delegate.convert(exchange)
-                .switchIfEmpty(Mono.defer(() -> extractFromCookie(exchange)));
+        return bearerTokenConverter.convert(exchange)
+                .switchIfEmpty(Mono.defer(() -> convertCookie(exchange)));
     }
 
     /**
@@ -65,9 +71,16 @@ public class CookieOrBearerServerAuthenticationConverter implements ServerAuthen
      * @return a {@link BearerTokenAuthenticationToken} if the cookie exists, else
      *         {@link Mono#empty()}
      */
-    private Mono<Authentication> extractFromCookie(ServerWebExchange exchange) {
-        return Mono.justOrEmpty(exchange.getRequest().getCookies().getFirst(COOKIE_NAME_ACCESS_TOKEN))
-                .map(cookie -> new BearerTokenAuthenticationToken(cookie.getValue()));
+    private Mono<Authentication> convertCookie(ServerWebExchange exchange) {
+        HttpCookie cookie = exchange.getRequest()
+                .getCookies()
+                .getFirst(cookieFactory.accessCookieName());
+
+        if (cookie == null || cookie.getValue() == null || cookie.getValue().isBlank()) {
+            return Mono.empty();
+        }
+
+        return Mono.just(new BearerTokenAuthenticationToken(cookie.getValue().trim()));
     }
 
 }

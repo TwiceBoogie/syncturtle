@@ -1,68 +1,107 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
-psql -v ON_ERROR_STOP=1 --username postgres <<'SQL'
--- INSTANCE DB
-CREATE DATABASE syncturtle_instance;
-CREATE USER instance_svc WITH ENCRYPTED PASSWORD 'instance_svc_dev';
-GRANT ALL PRIVILEGES ON DATABASE syncturtle_instance TO instance_svc;
+psql -v ON_ERROR_STOP=1 \
+  --username "$POSTGRES_USER" \
+  --dbname "$POSTGRES_DB" <<'SQL'
+
+-- prevent public object creation in default db
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+
+-- ================
+-- INSTANCE-SERVICE
+-- ================
+CREATE ROLE instance_migrator LOGIN PASSWORD 'instance_migrator_dev';
+CREATE ROLE instance_app LOGIN PASSWORD 'instance_app_dev';
+
+CREATE DATABASE syncturtle_instance OWNER instance_migrator;
 
 \connect syncturtle_instance
 
--- Ensure the service user can use and create in public
-GRANT USAGE, CREATE ON SCHEMA public TO instance_svc;
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON DATABASE syncturtle_instance FROM PUBLIC;
 
-ALTER DEFAULT PRIVILEGES FOR USER instance_svc IN SCHEMA public
-  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO instance_svc;
+GRANT CONNECT ON DATABASE syncturtle_instance TO instance_app;
+GRANT USAGE ON SCHEMA public TO instance_app;
 
-ALTER DEFAULT PRIVILEGES FOR USER instance_svc IN SCHEMA public
-  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO instance_svc;
+ALTER DEFAULT PRIVILEGES FOR ROLE instance_migrator IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO instance_app;
 
--- USER DB
+ALTER DEFAULT PRIVILEGES FOR ROLE instance_migrator IN SCHEMA public
+  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO instance_app;
+
+-- ============
+-- USER-SERVICE
+-- ============
+
 \connect postgres
 
-CREATE DATABASE syncturtle_user;
-CREATE USER user_svc WITH ENCRYPTED PASSWORD 'user_svc_dev';
-GRANT ALL PRIVILEGES ON DATABASE syncturtle_user TO user_svc;
+CREATE ROLE user_migrator LOGIN PASSWORD 'user_migrator_dev';
+CREATE ROLE user_app LOGIN PASSWORD 'user_app_dev';
+
+CREATE DATABASE syncturtle_user OWNER user_migrator;
 
 \connect syncturtle_user
-GRANT USAGE, CREATE ON SCHEMA public TO user_svc;
 
-ALTER DEFAULT PRIVILEGES FOR USER user_svc IN SCHEMA public
-  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO user_svc;
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON DATABASE syncturtle_user FROM PUBLIC;
 
-ALTER DEFAULT PRIVILEGES FOR USER user_svc IN SCHEMA public
-  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO user_svc;
+GRANT CONNECT ON DATABASE syncturtle_user TO user_app;
+GRANT USAGE ON SCHEMA public TO user_app;
 
--- WORKSPACE DB
+ALTER DEFAULT PRIVILEGES FOR ROLE user_migrator IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO user_app;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE user_migrator IN SCHEMA public
+  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO user_app;
+
+-- =================
+-- WORKSPACE-SERVICE
+-- =================
+
 \connect postgres
 
-CREATE DATABASE syncturtle_workspace;
-CREATE USER workspace_svc WITH ENCRYPTED PASSWORD 'workspace_svc_dev';
-GRANT ALL PRIVILEGES ON DATABASE syncturtle_workspace TO workspace_svc;
+CREATE ROLE workspace_migrator LOGIN PASSWORD 'workspace_migrator_dev';
+CREATE ROLE workspace_app LOGIN PASSWORD 'workspace_app_dev';
+
+CREATE DATABASE syncturtle_workspace OWNER workspace_migrator;
 
 \connect syncturtle_workspace
-GRANT USAGE, CREATE ON SCHEMA public TO workspace_svc;
 
-ALTER DEFAULT PRIVILEGES FOR USER workspace_svc IN SCHEMA public
-  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO workspace_svc;
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON DATABASE syncturtle_workspace FROM PUBLIC;
 
-ALTER DEFAULT PRIVILEGES FOR USER workspace_svc IN SCHEMA public
-  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO workspace_svc;
+GRANT CONNECT ON DATABASE syncturtle_workspace TO workspace_app;
+GRANT USAGE ON SCHEMA public TO workspace_app;
 
--- EMAIL DB
+ALTER DEFAULT PRIVILEGES FOR ROLE workspace_migrator IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO workspace_app;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE workspace_migrator IN SCHEMA public
+  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO workspace_app;
+
+-- =============
+-- EMAIL-SERVICE
+-- =============
+
 \connect postgres
 
-CREATE DATABASE syncturtle_email;
-CREATE USER email_svc WITH ENCRYPTED PASSWORD 'email_svc_dev';
-GRANT ALL PRIVILEGES ON DATABASE syncturtle_email TO email_svc;
+CREATE ROLE email_migrator LOGIN PASSWORD 'email_migrator_dev';
+CREATE ROLE email_app LOGIN PASSWORD 'email_app_dev';
+
+CREATE DATABASE syncturtle_email OWNER email_migrator;
 
 \connect syncturtle_email
-GRANT USAGE, CREATE ON SCHEMA public TO email_svc;
 
-ALTER DEFAULT PRIVILEGES FOR USER email_svc IN SCHEMA public
-  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO email_svc;
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON DATABASE syncturtle_email FROM PUBLIC;
 
-ALTER DEFAULT PRIVILEGES FOR USER email_svc IN SCHEMA public
-  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO email_svc;
+GRANT CONNECT ON DATABASE syncturtle_email TO email_app;
+GRANT USAGE ON SCHEMA public TO email_app;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE email_migrator IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO email_app;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE email_migrator IN SCHEMA public
+  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO email_app;
+
 SQL

@@ -70,6 +70,7 @@ class EmailToSendEventListenerIT {
         // arrange
         String eventId = UUID.randomUUID().toString();
         EmailToSendEvent event = event(eventId);
+
         doNothing().when(emailDispatchService).send(any(EmailEnvelope.class));
         // act
         publish(event);
@@ -82,7 +83,7 @@ class EmailToSendEventListenerIT {
         EmailEnvelope sentEnvelope = envelopeCaptor.getValue();
         assertThat(sentEnvelope.getTemplateType()).isEqualTo(EmailTemplateType.MAGIC_LINK);
         assertThat(sentEnvelope.getSubject()).isEqualTo("Your magic link");
-        assertThat(sentEnvelope.getTo()).containsExactly("user@example.com");
+        assertThat(sentEnvelope.getTo()).containsExactly("lunasnow@marvel.com");
         assertThat(sentEnvelope.getCorrelationId()).isEqualTo("corr-123");
         assertThat(sentEnvelope.getModel()).containsEntry("firstName", "Luna");
         assertThat(sentEnvelope.getModel()).containsEntry("magicLink", "https://app.syncturtle.com/magic?token=abc");
@@ -96,10 +97,11 @@ class EmailToSendEventListenerIT {
         assertThat(row.getCorrelationId()).isEqualTo("corr-123");
         assertThat(row.getTemplateType()).isEqualTo("MAGIC_LINK");
         assertThat(row.getSubject()).isEqualTo("Your magic link");
-        assertThat(row.getRecipientToJson()).contains("user@example.com");
+        assertThat(row.getRecipientToJson()).contains("lunasnow@marvel.com");
         assertThat(row.getTemplateModelJson()).contains("firstName");
         assertThat(row.getTemplateModelJson()).contains("magicLink");
 
+        assertThat(row.getStatus()).isEqualTo(EmailEventInboxStatus.SENT);
         assertThat(row.getAttemptCount()).isEqualTo(1);
         assertThat(row.getProcessedAt()).isNotNull();
         assertThat(row.getNextAttemptAt()).isNull();
@@ -108,17 +110,21 @@ class EmailToSendEventListenerIT {
     }
 
     @Test
-    void onEmailToSend_whenDuplicateArrivesWhileFirstIsStillProcessing_doesNotDispatchTwice() throws Exception {
+    void onEmailToSend_whenDuplicateArrivesWhileFirstIsStillProcessing_doesNotDispatchTwice()
+            throws Exception {
         // arrange
         String eventId = UUID.randomUUID().toString();
         EmailToSendEvent event = event(eventId);
         CountDownLatch firstSendEntered = new CountDownLatch(1);
         CountDownLatch releaseFirstSend = new CountDownLatch(1);
         AtomicInteger sendCalls = new AtomicInteger();
+
         doAnswer(invocation -> {
             sendCalls.incrementAndGet();
             firstSendEntered.countDown();
-            releaseFirstSend.await(10, TimeUnit.SECONDS);
+            boolean released = releaseFirstSend.await(10, TimeUnit.SECONDS);
+            assertThat(released).isTrue();
+
             return null;
         }).when(emailDispatchService).send(any(EmailEnvelope.class));
         // act
@@ -138,21 +144,31 @@ class EmailToSendEventListenerIT {
         publish(event);
 
         // assert: no second dispatch while active processing lease exists
-        await().during(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(4)).untilAsserted(() -> {
-            assertThat(sendCalls.get()).isEqualTo(1);
-            verify(emailDispatchService, times(1)).send(any(EmailEnvelope.class));
+        await().during(Duration.ofSeconds(2))
+                .atMost(Duration.ofSeconds(4))
+                .untilAsserted(() -> {
+                    assertThat(sendCalls.get()).isEqualTo(1);
+                    verify(emailDispatchService, times(1)).send(any(EmailEnvelope.class));
+                    EmailEventInbox row = findRowOrThrow(eventId);
 
-            EmailEventInbox row = findRowOrThrow(eventId);
-            assertThat(row.getStatus()).isEqualTo(EmailEventInboxStatus.PROCESSING);
-            assertThat(row.getAttemptCount()).isEqualTo(1);
-        });
+                    assertThat(repository.count()).isEqualTo(1);
+                    assertThat(row.getStatus()).isEqualTo(EmailEventInboxStatus.PROCESSING);
+                    assertThat(row.getAttemptCount()).isEqualTo(1);
+                });
 
         // release first dispatch and allow pipeline to finish
         releaseFirstSend.countDown();
 
-        EmailEventInbox finalRow = awaitRowWithStatus(eventId, EmailEventInboxStatus.SENT);
-        assertThat(finalRow.getAttemptCount()).isEqualTo(1);
+        EmailEventInbox finalRow = awaitRowWithStatus(eventId,
+                EmailEventInboxStatus.SENT);
+
         assertThat(repository.count()).isEqualTo(1);
+        assertThat(finalRow.getAttemptCount()).isEqualTo(1);
+        assertThat(finalRow.getProcessedAt()).isNotNull();
+        assertThat(finalRow.getLockUntil()).isNull();
+        assertThat(finalRow.getNextAttemptAt()).isNull();
+        assertThat(finalRow.getLastError()).isNull();
+        // verify
         verify(emailDispatchService, times(1)).send(any(EmailEnvelope.class));
     }
 
@@ -165,47 +181,56 @@ class EmailToSendEventListenerIT {
 
         // first delivery
         publish(event);
-        EmailEventInbox firstRow = awaitRowWithStatus(eventId, EmailEventInboxStatus.SENT);
+        EmailEventInbox firstRow = awaitRowWithStatus(eventId,
+                EmailEventInboxStatus.SENT);
         assertThat(firstRow.getAttemptCount()).isEqualTo(1);
+        assertThat(repository.count()).isEqualTo(1);
+
         verify(emailDispatchService, times(1)).send(any(EmailEnvelope.class));
 
-        // clear mock history so it can assert duplicate behavior cleanly
+        // clear mock history so it can assert dupe behavior cleanly
         clearInvocations(emailDispatchService);
 
         // act: duplicate event after already SENT
         publish(event);
 
-        // assert: still only one row, still SENT, no re-dispatch
-        await().during(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(4)).untilAsserted(() -> {
-            assertThat(repository.count()).isEqualTo(1);
+        // assert: still only one row, still SENT, no redispatch
+        await().during(Duration.ofSeconds(2))
+                .atMost(Duration.ofSeconds(4))
+                .untilAsserted(() -> {
+                    assertThat(repository.count()).isEqualTo(1);
+                    EmailEventInbox row = findRowOrThrow(eventId);
 
-            EmailEventInbox row = findRowOrThrow(eventId);
-            assertThat(row.getStatus()).isEqualTo(EmailEventInboxStatus.SENT);
-            assertThat(row.getAttemptCount()).isEqualTo(1);
-            assertThat(row.getProcessedAt()).isNotNull();
+                    assertThat(row.getStatus()).isEqualTo(EmailEventInboxStatus.SENT);
+                    assertThat(row.getAttemptCount()).isEqualTo(1);
+                    assertThat(row.getProcessedAt()).isNotNull();
 
-            verifyNoInteractions(emailDispatchService);
-        });
+                    verifyNoInteractions(emailDispatchService);
+                });
     }
 
     @Test
-    void onEmailSend_whenDispatchFailsRetryably_marksFailedRetryable_andSchedulesNextAttempt() {
+    void onEmailSend_whenDispatchFailsRetryably_marksFailedRetryableAndSchedulesNextAttempt() {
         // arrange
         String eventId = UUID.randomUUID().toString();
         EmailToSendEvent event = event(eventId);
-        doThrow(EmailDispatchException.retryable("SMTP temporarily unavailable",
-                new IllegalStateException("smtp unavailable")))
+        RuntimeException thrown = new IllegalStateException("smtp unavailable");
+
+        doThrow(EmailDispatchException.sendFailed(thrown))
                 .when(emailDispatchService)
                 .send(any(EmailEnvelope.class));
         // act
         publish(event);
         // assert
-        EmailEventInbox row = awaitRowWithStatus(eventId, EmailEventInboxStatus.FAILED_RETRYABLE);
+        EmailEventInbox row = awaitRowWithStatus(eventId,
+                EmailEventInboxStatus.FAILED_RETRYABLE);
 
+        assertThat(repository.count()).isEqualTo(1);
         assertThat(row.getAttemptCount()).isEqualTo(1);
         assertThat(row.getProcessedAt()).isNull();
         assertThat(row.getNextAttemptAt()).isNotNull();
         assertThat(row.getNextAttemptAt()).isAfter(Instant.now());
+        assertThat(row.getLockUntil()).isNull();
         assertThat(row.getLastError()).contains("smtp unavailable");
         // verify
         verify(emailDispatchService, times(1)).send(any(EmailEnvelope.class));
@@ -216,16 +241,18 @@ class EmailToSendEventListenerIT {
         // arrange
         String eventId = UUID.randomUUID().toString();
         EmailToSendEvent event = event(eventId);
-        doThrow(EmailDispatchException.permanent(
-                "Template resolution failed",
-                new IllegalArgumentException("template missing variable")))
+        RuntimeException thrown = new IllegalArgumentException("template missing variable");
+
+        doThrow(EmailDispatchException.templateFailed(thrown))
                 .when(emailDispatchService)
                 .send(any(EmailEnvelope.class));
         // act
         publish(event);
         // assert
-        EmailEventInbox row = awaitRowWithStatus(eventId, EmailEventInboxStatus.FAILED_PERMANENT);
+        EmailEventInbox row = awaitRowWithStatus(eventId,
+                EmailEventInboxStatus.FAILED_PERMANENT);
 
+        assertThat(repository.count()).isEqualTo(1);
         assertThat(row.getAttemptCount()).isEqualTo(1);
         assertThat(row.getProcessedAt()).isNotNull();
         assertThat(row.getNextAttemptAt()).isNull();
@@ -236,7 +263,7 @@ class EmailToSendEventListenerIT {
     }
 
     @Test
-    void onEmailToSend_whenExistingProcessingLeaseExpired_requiresRow_and_ProcessingAgain() {
+    void onEmailToSend_whenExistingProcessingLeaseExpired_requiresRowAndProcessingAgain() {
         // arrange
         String eventId = UUID.randomUUID().toString();
         saveInboxRow(
@@ -251,7 +278,8 @@ class EmailToSendEventListenerIT {
         // act
         publish(event(eventId));
         // assert
-        EmailEventInbox row = awaitRowWithStatus(eventId, EmailEventInboxStatus.SENT);
+        EmailEventInbox row = awaitRowWithStatus(eventId,
+                EmailEventInboxStatus.SENT);
 
         assertThat(repository.count()).isEqualTo(1);
         assertThat(row.getAttemptCount()).isEqualTo(2);
@@ -278,16 +306,18 @@ class EmailToSendEventListenerIT {
         // act
         publish(event(eventId));
         // assert
-        await().during(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(4)).untilAsserted(() -> {
-            assertThat(repository.count()).isEqualTo(1);
+        await().during(Duration.ofSeconds(2))
+                .atMost(Duration.ofSeconds(4))
+                .untilAsserted(() -> {
+                    assertThat(repository.count()).isEqualTo(1);
 
-            EmailEventInbox row = findRowOrThrow(eventId);
-            assertThat(row.getStatus()).isEqualTo(EmailEventInboxStatus.FAILED_PERMANENT);
-            assertThat(row.getAttemptCount()).isEqualTo(3);
-            assertThat(row.getLastError()).contains("template missing variable");
-            // verify
-            verifyNoInteractions(emailDispatchService);
-        });
+                    EmailEventInbox row = findRowOrThrow(eventId);
+                    assertThat(row.getStatus()).isEqualTo(EmailEventInboxStatus.FAILED_PERMANENT);
+                    assertThat(row.getAttemptCount()).isEqualTo(3);
+                    assertThat(row.getLastError()).contains("template missing variable");
+                    // verify
+                    verifyNoInteractions(emailDispatchService);
+                });
     }
 
     @Disabled("Enable after EmailEventInboxService.tryAcquire() returns RETRY_SCHEDULED for FAILED_RETRYABLE rows whose nextAttemptAt is still in the future.")
@@ -306,16 +336,18 @@ class EmailToSendEventListenerIT {
         // act
         publish(event(eventId));
         // assert
-        await().during(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(4)).untilAsserted(() -> {
-            assertThat(repository.count()).isEqualTo(2);
+        await().during(Duration.ofSeconds(2))
+                .atMost(Duration.ofSeconds(4))
+                .untilAsserted(() -> {
+                    assertThat(repository.count()).isEqualTo(2);
 
-            EmailEventInbox row = findRowOrThrow(eventId);
-            assertThat(row.getStatus()).isEqualTo(EmailEventInboxStatus.FAILED_RETRYABLE);
-            assertThat(row.getAttemptCount()).isEqualTo(2);
-            assertThat(row.getNextAttemptAt()).isAfter(Instant.now());
+                    EmailEventInbox row = findRowOrThrow(eventId);
+                    assertThat(row.getStatus()).isEqualTo(EmailEventInboxStatus.FAILED_RETRYABLE);
+                    assertThat(row.getAttemptCount()).isEqualTo(2);
+                    assertThat(row.getNextAttemptAt()).isAfter(Instant.now());
 
-            verifyNoInteractions(emailDispatchService);
-        });
+                    verifyNoInteractions(emailDispatchService);
+                });
     }
 
     private void publish(EmailToSendEvent event) {
@@ -329,7 +361,7 @@ class EmailToSendEventListenerIT {
                 .correlationId("corr-123")
                 .templateType(EmailTemplateType.MAGIC_LINK)
                 .subject("Your magic link")
-                .to(List.of("user@example.com"))
+                .to(List.of("lunasnow@marvel.com"))
                 .model(Map.of(
                         "firstName", "Luna",
                         "magicLink", "https://app.syncturtle.com/magic?token=abc"))
@@ -351,7 +383,7 @@ class EmailToSendEventListenerIT {
         row.setCorrelationId("corr-123");
         row.setTemplateType("MAGIC_LINK");
         row.setSubject("Your magic link");
-        row.setRecipientToJson("[\"user@example.com\"]");
+        row.setRecipientToJson("[\"lunasnow@marvel.com\"]");
         row.setTemplateModelJson("""
                 {"firstName":"Luna","magicLink":"https://app.syncturtle.com/magic?token=abc"}
                 """);

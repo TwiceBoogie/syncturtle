@@ -20,9 +20,7 @@ public class KafkaUserEventConsumer {
     private final UserRepository userRepository;
 
     @Transactional
-    @KafkaListener(topics = KafkaTopics.USER_EVENTS_V1, groupId = "workspace-svc-user-event-v1", properties = {
-            "spring.json.value.default.type=com.syncturtle.common.core.events.UserEvent"
-    })
+    @KafkaListener(topics = KafkaTopics.USER_EVENTS_V1, groupId = "workspace-svc-user-event-v1", containerFactory = "userKafkaListenerFactory")
     public void onUser(UserEvent event) {
         UUID userId = event.getId();
 

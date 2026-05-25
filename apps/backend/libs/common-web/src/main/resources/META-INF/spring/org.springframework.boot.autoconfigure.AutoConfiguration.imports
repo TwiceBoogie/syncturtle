@@ -1,0 +1,7 @@
+com.syncturtle.common.web.autoconfigure.GatewayContextAutoConfiguration
+com.syncturtle.common.web.autoconfigure.CurrentUserMvcAutoConfiguration
+com.syncturtle.common.web.autoconfigure.RequestUserActorAutoConfiguration
+com.syncturtle.common.web.autoconfigure.PublicUrlAutoConfiguration
+com.syncturtle.common.web.autoconfigure.ServletErrorHandlingAutoConfiguration
+com.syncturtle.common.web.autoconfigure.FeignClientAutoConfiguration
+com.syncturtle.common.web.autoconfigure.TimeAutoConfiguration

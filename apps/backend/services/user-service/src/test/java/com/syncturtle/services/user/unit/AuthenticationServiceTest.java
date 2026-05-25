@@ -64,12 +64,12 @@ class AuthenticationServiceTest {
                         AuthException authException = (AuthException) exception;
                         assertThat(authException.getErrorCode()).isEqualTo(AuthErrorCode.INSTANCE_NOT_CONFIGURED);
                         assertThat(authException.getMessage())
-                                .isEqualTo(AuthErrorCode.INSTANCE_NOT_CONFIGURED.getMessage());
+                                .isEqualTo(AuthErrorCode.INSTANCE_NOT_CONFIGURED.getKey());
 
                         // verify errorMap shape
                         assertThat(authException.getErrorMap())
                                 .containsEntry("error_code", AuthErrorCode.INSTANCE_NOT_CONFIGURED.getCode())
-                                .containsEntry("error_message", AuthErrorCode.INSTANCE_NOT_CONFIGURED.getMessage());
+                                .containsEntry("error_message", AuthErrorCode.INSTANCE_NOT_CONFIGURED.getKey());
                         assertThat(authException.getPayload()).isEmpty();
                     });
 
