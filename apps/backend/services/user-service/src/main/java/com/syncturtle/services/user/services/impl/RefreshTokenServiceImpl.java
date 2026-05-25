@@ -13,13 +13,13 @@ import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.syncturtle.common.contracts.auth.session.RefreshSessionRecord;
+import com.syncturtle.common.core.security.token.SecureTokenGenerator;
+import com.syncturtle.common.core.security.token.TokenHasher;
 import com.syncturtle.services.user.configurations.properties.AuthProperties;
 import com.syncturtle.services.user.dto.command.CreateRefreshSessionCommand;
 import com.syncturtle.services.user.dto.command.RotateRefreshSessionCommand;
 import com.syncturtle.services.user.payload.IssuedRefreshToken;
 import com.syncturtle.services.user.services.RefreshTokenService;
-import com.syncturtle.services.user.services.TokenGenerator;
-import com.syncturtle.services.user.services.TokenHashingService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,8 +30,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     private static final int REFRESH_SECRET_BYTES = 48;
 
     private final StringRedisTemplate redis;
-    private final TokenGenerator tokenGenerator;
-    private final TokenHashingService tokenHashingService;
+    private final SecureTokenGenerator tokenGenerator;
+    private final TokenHasher tokenHasher;
     private final ObjectMapper objectMapper;
     private final AuthProperties authProperties;
 
@@ -108,7 +108,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         Assert.notNull(record, "record is required");
         Assert.hasText(record.getRefreshTokenHash(), "record.refreshToken is required");
 
-        return tokenHashingService.hash(presentedRefreshToken).equals(record.getRefreshTokenHash());
+        return tokenHasher.hash(presentedRefreshToken).equals(record.getRefreshTokenHash());
     }
 
     @Override
@@ -143,7 +143,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             Long adminSessionVersion,
             String ipAddress,
             String userAgent) {
-        String secret = tokenGenerator.generate(REFRESH_SECRET_BYTES);
+        String secret = tokenGenerator.generateBase64Url(REFRESH_SECRET_BYTES);
         String refreshToken = sessionId + "." + secret;
 
         Instant issuedAt = Instant.now();
@@ -157,7 +157,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                 .authVersion(authVersion)
                 .adminSessionVersion(adminSessionVersion)
                 .active(true)
-                .refreshTokenHash(tokenHashingService.hash(refreshToken))
+                .refreshTokenHash(tokenHasher.hash(refreshToken))
                 .ipAddress(ipAddress)
                 .userAgent(userAgent)
                 .issuedAt(issuedAt)

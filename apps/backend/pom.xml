@@ -58,7 +58,7 @@
     <skipSystemTests>true</skipSystemTests>
 
     <!-- Spring Cloud BOM -->
-    <spring-cloud.version>2025.0.1</spring-cloud.version>
+    <spring-cloud.version>2025.0.2</spring-cloud.version>
     <otel.instrumentation.version>2.24.0-alpha</otel.instrumentation.version>
 
     <!-- Testcontainers BOM -->
@@ -68,6 +68,7 @@
     <jasypt.version>1.9.3</jasypt.version>
     <datasource-micrometer.version>1.2.1</datasource-micrometer.version>
     <zxcvbn.version>1.9.0</zxcvbn.version>
+    <postgresql.version>42.7.11</postgresql.version>
 
     <spring.profile.unit>test</spring.profile.unit>
     <spring.profile.it>it</spring.profile.it>

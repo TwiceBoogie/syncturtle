@@ -1,0 +1,185 @@
+server:
+  port: ${SERVER_PORT:8001}
+
+spring:
+  application:
+    name: instance-service
+
+  profiles:
+    group:
+      setup-local:
+        - setup
+        - local
+      setup-docker:
+        - setup
+        - docker
+
+  datasource:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-timeout: 2000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+
+  kafka:
+    template:
+      observation-enabled: true
+    listener:
+      observation-enabled: true
+      auto-startup: ${app.kafka.enabled:true}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        enable.idempotence: true
+        linger.ms: 5
+        batch.size: 32768
+        compression.type: zstd
+        max.in.flight.requests.per.connection: 5
+        spring.json.add.type.headers: false # JsonSerializer.ADD_TYPE_INFO_HEADERS
+        interceptor.classes: com.syncturtle.common.spring.autoconfigure.observability.kafka.MdcKafkaHeaderProducerInterceptor
+    consumer:
+      auto-offset-reset: earliest
+
+jdbc:
+  datasource-proxy:
+    enabled: true
+    include-parameter-values: false
+  includes: QUERY
+
+app:
+  name: ${APP_NAME:syncturtle}
+  edition: ${APP_EDITION:COMMUNITY}
+  test: ${APP_TEST:false}
+
+  public:
+    api:
+      origin: ${APP_PUBLIC_API_ORIGIN:http://localhost:8000}
+      base-path: ${APP_PUBLIC_API_BASE_PATH:/}
+    web:
+      origin: ${APP_PUBLIC_WEB_ORIGIN:http://localhost:3000}
+      base-path: ${APP_PUBLIC_WEB_BASE_PATH:/}
+    admin:
+      origin: ${APP_PUBLIC_ADMIN_ORIGIN:http://localhost:3001}
+      base-path: ${APP_PUBLIC_ADMIN_BASE_PATH:/god-mode/}
+
+  security:
+    encryption:
+      secret-key: ${APP_SECURITY_ENCRYPTION_SECRET_KEY}
+
+    csrf:
+      enabled: ${APP_SECURITY_CSRF_ENABLED:true}
+      signing-key: ${APP_SECURITY_CSRF_SIGNING_KEY:}
+      raw-token-bytes: 32
+      form:
+        enabled: true
+
+    cookies:
+      secure: ${APP_SECURITY_COOKIES_SECURE:false}
+      host-prefix-enabled: ${APP_SECURITY_COOKIES_HOST_PREFIX_ENABLED:false}
+      domain: ${APP_SECURITY_COOKIES_DOMAIN:}
+      path: /
+      access-same-site: Lax
+      refresh-same-site: Lax
+      csrf-same-site: Lax
+      csrf-max-age: 30m
+
+  gateway:
+    context:
+      enabled: true
+
+  web:
+    errors:
+      include-path: true
+      include-request-ids: true
+      include-debug: false
+      include-stack-trace: false
+      max-stack-trace-lines: 30
+
+    authorization:
+      enabled: true
+      order: -30
+      require-authentication-by-default: false
+      path-patterns:
+        - /api/**
+      exclude-path-patterns:
+        - /actuator/**
+        - /error
+
+  kafka:
+    enabled: true
+    topics:
+      partitions: ${APP_KAFKA_TOPIC_PARTITIONS:3}
+      replicas: ${APP_KAFKA_TOPIC_REPLICAS:1}
+    error-handling:
+      initial-interval: 500ms
+      multiplier: 2.0
+      max-elapsed-time: 8s
+      dlt-suffix: ".DLT"
+      ack-after-handle: true
+      commit-recovered: true
+      log-retries: true
+
+  response-cache:
+    enabled: true
+    key-prefix: "st:resp:"
+    hash-bytes: 16
+
+  telemetry:
+    enabled: ${APP_TELEMETRY_ENABLED:true}
+    support-required: ${APP_TELEMETRY_SUPPORT_REQUIRED:false}
+
+  skip-env-var: ${APP_SKIP_ENV_VAR:true}
+
+  config-keys:
+    enable-signup: ${APP_ENABLE_SIGNUP:1}
+    enable-email-password: ${APP_ENABLE_EMAIL_PASSWORD:1}
+    disable-workspace-creation: ${APP_DISABLE_WORKSPACE_CREATION:0}
+
+    enable-smtp: ${APP_ENABLE_SMTP:0}
+    email-host: ${APP_EMAIL_HOST:}
+    email-host-user: ${APP_EMAIL_HOST_USER:}
+    email-host-password: ${APP_EMAIL_HOST_PASSWORD:}
+    email-port: ${APP_EMAIL_PORT:587}
+    email-from: ${APP_EMAIL_FROM:}
+    email-use-tls: ${APP_EMAIL_USE_TLS:1}
+    email-use-ssl: ${APP_EMAIL_USE_SSL:0}
+
+    enable-magic-link-login: ${APP_ENABLE_MAGIC_LINK_LOGIN:0}
+
+    google-client-id: ${APP_GOOGLE_CLIENT_ID:}
+    google-client-secret: ${APP_GOOGLE_CLIENT_SECRET:}
+
+    github-client-id: ${APP_GITHUB_CLIENT_ID:}
+    github-client-secret: ${APP_GITHUB_CLIENT_SECRET:}
+
+    gitlab-host: ${APP_GITLAB_HOST:}
+    gitlab-client-id: ${APP_GITLAB_CLIENT_ID:}
+    gitlab-client-secret: ${APP_GITLAB_CLIENT_SECRET:}
+
+    intercom-app-id: ${APP_INTERCOM_APP_ID:}
+
+    posthog-api-key: ${APP_POSTHOG_API_KEY:}
+    posthog-host: ${APP_POSTHOG_HOST:}
+
+  product-telemetry:
+    enabled: true
+    endpoint: ${PRODUCT_TELEMETRY_ENDPOINT:http://localhost:15317}
+    api-key: ""
+    interval: 10m
+
+  data:
+    jpa:
+      auditing:
+        enabled: true

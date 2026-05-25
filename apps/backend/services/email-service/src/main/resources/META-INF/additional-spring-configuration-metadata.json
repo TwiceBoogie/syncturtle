@@ -95,6 +95,26 @@
       "name": "app.clients.instance-service.read-timeout",
       "type": "java.time.Duration",
       "description": "Read timeout for HTTP calls to instance-service."
+    },
+    {
+      "name": "app.observability.otel.logback.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable OpenTelemetry logging"
+    },
+    {
+      "name": "app.response-cache.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable response caching"
+    },
+    {
+      "name": "app.data.jpa.auditing.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable JPA auditor aware"
+    },
+    {
+      "name": "app.web.access-logging.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable request logging"
     }
   ]
 }

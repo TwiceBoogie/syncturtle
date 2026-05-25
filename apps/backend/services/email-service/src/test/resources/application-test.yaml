@@ -16,3 +16,7 @@ eureka:
 app:
   kafka:
     enabled: false
+  observability:
+    otel:
+      logback:
+        enabled: false

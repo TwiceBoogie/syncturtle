@@ -1,0 +1,16 @@
+spring:
+  main:
+    web-application-type: none
+
+  kafka:
+    listener:
+      auto-startup: false
+    admin:
+      fail-fast: true
+      auto-create: true
+
+app:
+  kafka:
+    enabled: true
+    topics:
+      create: true

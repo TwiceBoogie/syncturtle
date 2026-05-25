@@ -8,9 +8,9 @@ import static org.mockito.Mockito.when;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -20,7 +20,8 @@ import org.springframework.web.method.HandlerMethod;
 import com.syncturtle.common.spring.security.authz.AllowAnonymous;
 import com.syncturtle.common.spring.security.authz.RequireInstanceAdmin;
 import com.syncturtle.common.web.context.RequestUserContext;
-import com.syncturtle.services.instance.configurations.web.AuthorizationInterceptor;
+import com.syncturtle.services.instance.configurations.web.interceptors.AuthorizationInterceptor;
+import com.syncturtle.services.instance.configurations.web.interceptors.AuthorizationResponseWriter;
 import com.syncturtle.services.instance.services.authz.InstanceAuthorizationService;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -33,7 +34,6 @@ public class AuthorizationInterceptorTest {
     @Mock
     InstanceAuthorizationService service;
 
-    @InjectMocks
     AuthorizationInterceptor interceptor;
 
     static class DemoController {
@@ -44,6 +44,16 @@ public class AuthorizationInterceptorTest {
         @RequireInstanceAdmin(minRole = 15)
         public void admin() {
         }
+
+        public void unannotated() {
+        }
+    }
+
+    @BeforeEach
+    void setup() {
+        AuthorizationResponseWriter responseWriter = new AuthorizationResponseWriter();
+
+        interceptor = new AuthorizationInterceptor(ctx, service, responseWriter, true);
     }
 
     @Test
@@ -87,14 +97,14 @@ public class AuthorizationInterceptorTest {
         // conditions
         when(ctx.isAuthenticated()).thenReturn(true);
         when(ctx.getUserId()).thenReturn(userId);
-        when(service.isInstanceAdmin(userId, 15)).thenReturn(false);
+        when(service.hasInstanceRoleAtLeast(userId, 15)).thenReturn(false);
         // act
         boolean allowed = interceptor.preHandle(request, response, handler(new DemoController(), "admin"));
         // assertions
         assertThat(allowed).isFalse();
         assertThat(response.getStatus()).isEqualTo(403);
         // verify
-        verify(service).isInstanceAdmin(userId, 15);
+        verify(service).hasInstanceRoleAtLeast(userId, 15);
     }
 
     private HandlerMethod handler(Object controller, String methodName) throws Exception {

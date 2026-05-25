@@ -18,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.syncturtle.common.contracts.email.event.EmailToSendEvent;
 import com.syncturtle.services.email.enums.EmailEventInboxStatus;
+import com.syncturtle.services.email.exceptions.EmailInboxException;
 import com.syncturtle.services.email.models.EmailEventInbox;
 import com.syncturtle.services.email.repositories.EmailEventInboxRepository;
 import com.syncturtle.services.email.service.EmailEventInboxService.AcquireResult;
@@ -66,8 +67,7 @@ public class EmailEventInboxAcquireTxService {
         Instant now = Instant.now();
 
         EmailEventInbox existing = repository.findByEventIdForUpdate(eventId)
-                .orElseThrow(
-                        () -> new IllegalStateException("Inbox row disappeared for eventId=" + eventId));
+                .orElseThrow(() -> EmailInboxException.rowNotFound(eventId));
 
         if (existing.getStatus() == EmailEventInboxStatus.SENT) {
             return AcquireResult.alreadySent(existing);
@@ -146,7 +146,7 @@ public class EmailEventInboxAcquireTxService {
         try {
             return objectMapper.writeValueAsString(value);
         } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Failed to serialize inbox payload", exception);
+            throw EmailInboxException.payloadSerializationFailed(exception);
         }
     }
 

@@ -21,4 +21,8 @@ public final class EndpointPaths {
     public static final String CONFIGURATIONS_DISABLE_EMAIL_FEATURE = CONFIGURATIONS + "/disable-email-feature";
     public static final String ADMINS = "/admins";
     public static final String ADMINS_ME = ADMINS + "/me";
+    public static final String ADMINS_ID = ADMINS + "/{instanceAdminId}";
+    public static final String ADMINS_SESSION = ADMINS + "/session";
+    // workspace-service
+    public static final String API_INSTANCE_WORKSPACES = API_INSTANCES + "/workspaces";
 }

@@ -11,7 +11,7 @@ import com.syncturtle.common.contracts.auth.config.UserAuthRuntimeConfigResponse
 import com.syncturtle.common.contracts.auth.config.UserAuthRuntimeSecretConfigResponse;
 import com.syncturtle.common.core.service.ServiceClientNames;
 
-@FeignClient(value = ServiceClientNames.INSTANCE_SERVICE, path = "/internal/v1/instances")
+@FeignClient(value = ServiceClientNames.INSTANCE_SERVICE, contextId = "userInstanceClient", url = "${app.services.instance-service.base-url}", path = "/internal/v1/instances")
 public interface InstanceClient {
 
     @GetMapping("/configurations/user-auth-config")

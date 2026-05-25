@@ -6,6 +6,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.syncturtle.common.contracts.email.config.EmailRuntimeSecretConfigResponse;
 import com.syncturtle.services.email.clients.InstanceClient;
 import com.syncturtle.services.email.dto.EmailRuntimeConfig;
+import com.syncturtle.services.email.exceptions.EmailRuntimeConfigException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -51,9 +52,7 @@ public class EmailRuntimeConfigService {
 
             EmailRuntimeConfig fresh = fetchFresh();
             if (fresh.getVersion() < requiredScopeVersion) {
-                throw new IllegalStateException(
-                        "Fetched stale email runtime config. fetchedVersion=%d, requiredScopeVersion=%d"
-                                .formatted(fresh.getVersion(), requiredScopeVersion));
+                throw EmailRuntimeConfigException.stale(fresh.getVersion(), requiredScopeVersion);
             }
 
             cache.put(CACHE_KEY, fresh);
@@ -66,19 +65,23 @@ public class EmailRuntimeConfigService {
     }
 
     private EmailRuntimeConfig fetchFresh() {
-        EmailRuntimeSecretConfigResponse response = instanceClient.getRuntimeEmailConfig();
+        try {
+            EmailRuntimeSecretConfigResponse response = instanceClient.getRuntimeEmailConfig();
 
-        return EmailRuntimeConfig.builder()
-                .enabled(response.isEnabled())
-                .host(response.getHost())
-                .port(response.getPort())
-                .username(response.getUsername())
-                .password(response.getPassword())
-                .from(response.getFrom())
-                .useTls(response.isUseTls())
-                .useSsl(response.isUseSsl())
-                .version(response.getVersion())
-                .build();
+            return EmailRuntimeConfig.builder()
+                    .enabled(response.isEnabled())
+                    .host(response.getHost())
+                    .port(response.getPort())
+                    .username(response.getUsername())
+                    .password(response.getPassword())
+                    .from(response.getFrom())
+                    .useTls(response.isUseTls())
+                    .useSsl(response.isUseSsl())
+                    .version(response.getVersion())
+                    .build();
+        } catch (Exception exception) {
+            throw EmailRuntimeConfigException.fetchFailed(exception);
+        }
     }
 
 }

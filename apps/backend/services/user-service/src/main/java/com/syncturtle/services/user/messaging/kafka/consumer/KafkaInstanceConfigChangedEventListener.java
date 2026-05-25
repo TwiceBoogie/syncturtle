@@ -43,7 +43,7 @@ public class KafkaInstanceConfigChangedEventListener {
     private final FeatureFlagService featureFlagService;
     private final UserAuthRuntimeSecretService userAuthRuntimeSecretService;
 
-    @KafkaListener(topics = KafkaTopics.INSTANCE_CONFIG_EVENTS_V1, groupId = "${app.kafka.config-broadcast-group}")
+    @KafkaListener(topics = KafkaTopics.INSTANCE_CONFIG_EVENTS_V1, groupId = "${app.kafka.config-broadcast-group}", containerFactory = "instanceConfigurationKafkaListenerFactory")
     public void onInstanceConfigurationChanged(InstanceConfigurationEvent event) {
         if (event.getScope() != InstanceConfigurationScopeNames.AUTH) {
             log.debug("Ignoring instance config event for non-auth scope. scope={}, eventId={}", event.getScope(),

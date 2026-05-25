@@ -68,42 +68,49 @@ public class EmailCredentialCheckService {
 
         if (root instanceof AuthenticationFailedException) {
             emailRuntimeConfigService.evict();
-            return EmailCredentialCheckException.authenticationFailed(root);
+            return EmailCredentialCheckException.authenticationFailed(exception);
         }
 
-        if (root instanceof SocketTimeoutException || root instanceof TimeoutException) {
-            return EmailCredentialCheckException.timeout(root);
+        if (isTimeout(root)) {
+            return EmailCredentialCheckException.timeout(exception);
         }
 
-        if (root instanceof UnknownHostException || root instanceof ConnectException
-                || root instanceof NoRouteToHostException) {
-            return EmailCredentialCheckException.connectionFailed(root);
+        if (isConnectionFailure(root)) {
+            return EmailCredentialCheckException.connectionFailed(exception);
         }
 
         if (root instanceof SendFailedException) {
-            return EmailCredentialCheckException.recipientsRefused(root);
+            return EmailCredentialCheckException.recipientsRefused(exception);
         }
 
-        return EmailCredentialCheckException.sendFailed(root);
+        return EmailCredentialCheckException.sendFailed(exception);
     }
 
     private EmailCredentialCheckException translateMessagingException(MessagingException exception) {
         Throwable root = rootCause(exception);
 
         if (root instanceof AddressException) {
-            return EmailCredentialCheckException.invalidFromAddress(root);
+            return EmailCredentialCheckException.invalidFromAddress(exception);
         }
 
-        if (root instanceof SocketTimeoutException || root instanceof TimeoutException) {
-            return EmailCredentialCheckException.timeout(root);
+        if (isTimeout(root)) {
+            return EmailCredentialCheckException.timeout(exception);
         }
 
-        if (root instanceof UnknownHostException || root instanceof ConnectException
-                || root instanceof NoRouteToHostException) {
-            return EmailCredentialCheckException.connectionFailed(root);
+        if (isConnectionFailure(root)) {
+            return EmailCredentialCheckException.connectionFailed(exception);
         }
 
-        return EmailCredentialCheckException.sendFailed(root);
+        return EmailCredentialCheckException.sendFailed(exception);
+    }
+
+    private static boolean isTimeout(Throwable throwable) {
+        return throwable instanceof SocketTimeoutException || throwable instanceof TimeoutException;
+    }
+
+    private static boolean isConnectionFailure(Throwable throwable) {
+        return throwable instanceof UnknownHostException || throwable instanceof ConnectException
+                || throwable instanceof NoRouteToHostException;
     }
 
     private Throwable rootCause(Throwable throwable) {

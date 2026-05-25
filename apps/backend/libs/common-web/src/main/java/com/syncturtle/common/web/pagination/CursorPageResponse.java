@@ -2,17 +2,19 @@ package com.syncturtle.common.web.pagination;
 
 import java.util.List;
 
-import lombok.Data;
+import lombok.Builder;
+import lombok.Value;
 
-@Data
-public final class CursorPageResponse<T> {
-    private int count;
-    private String nextCursor;
-    private boolean nextPageResults;
-    private String prevCursor;
-    private boolean prevPageResults;
-    private int totalPages;
-    private Integer perPage;
-    private long totalResults;
-    private List<T> results;
+@Value
+@Builder
+public class CursorPageResponse<T> {
+    String nextCursor;
+    String prevCursor;
+    boolean nextPageResults;
+    boolean prevPageResults;
+    int count;
+    int totalPages;
+    Integer perPage;
+    long totalResults;
+    List<T> results;
 }

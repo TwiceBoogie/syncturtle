@@ -4,21 +4,34 @@ import java.util.UUID;
 
 public final class RequestUserContext {
 
-    private final ThreadLocal<UUID> userId = new ThreadLocal<>();
+    private final ThreadLocal<RequestUser> currentUser = ThreadLocal.withInitial(RequestUser::anonymous);
 
-    public void setUserId(UUID userId) {
-        this.userId.set(userId);
+    public RequestUser getCurrentUser() {
+        return currentUser.get();
     }
 
     public UUID getUserId() {
-        return userId.get();
+        return getCurrentUser().getUserId();
+    }
+
+    public UUID requireUserId() {
+        return getCurrentUser().requireUserId();
     }
 
     public boolean isAuthenticated() {
-        return getUserId() != null;
+        return getCurrentUser().isAuthenticated();
+    }
+
+    public void setAuthenticated(UUID userId) {
+        currentUser.set(RequestUser.authenticated(userId));
+    }
+
+    public void setAnonymous() {
+        currentUser.set(RequestUser.anonymous());
     }
 
     public void clear() {
-        userId.remove();
+        currentUser.remove();
     }
+
 }
