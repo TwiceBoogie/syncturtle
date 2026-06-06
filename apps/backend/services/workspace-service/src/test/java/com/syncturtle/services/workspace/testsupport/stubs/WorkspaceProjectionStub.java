@@ -3,8 +3,8 @@ package com.syncturtle.services.workspace.testsupport.stubs;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.syncturtle.services.workspace.repositories.projections.UserProjection;
-import com.syncturtle.services.workspace.repositories.projections.WorkspaceProjection;
+import com.syncturtle.services.workspace.repository.projection.UserProjection;
+import com.syncturtle.services.workspace.repository.projection.WorkspaceProjection;
 
 import lombok.Builder;
 import lombok.Getter;

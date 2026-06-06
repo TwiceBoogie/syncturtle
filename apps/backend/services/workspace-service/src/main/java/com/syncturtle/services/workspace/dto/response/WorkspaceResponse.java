@@ -5,19 +5,21 @@ import java.util.UUID;
 
 import com.syncturtle.common.web.pagination.CursorIdentifiable;
 
-import lombok.Data;
+import lombok.Builder;
+import lombok.Value;
 
-@Data
-public final class WorkspaceResponse implements CursorIdentifiable {
-    private UUID id;
-    private String name;
-    private String logo;
-    private UUID logoAssetId;
-    private String slug;
-    private String organizationSize;
-    private UserResponse owner;
-    private Instant createdAt;
-    private Instant updatedAt;
-    private UUID createdById;
-    private UUID updatedById;
+@Value
+@Builder
+public class WorkspaceResponse implements CursorIdentifiable {
+    UUID id;
+    String name;
+    String logo;
+    UUID logoAssetId;
+    String slug;
+    String organizationSize;
+    UserResponse owner;
+    Instant createdAt;
+    Instant updatedAt;
+    UUID createdById;
+    UUID updatedById;
 }
