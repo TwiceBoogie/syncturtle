@@ -1,68 +1,61 @@
 package com.syncturtle.services.workspace.messaging.kafka.consumer;
 
-import java.util.UUID;
+import java.time.Clock;
 
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import com.syncturtle.common.contracts.messaging.KafkaTopics;
 import com.syncturtle.common.contracts.user.event.UserEvent;
-import com.syncturtle.services.workspace.models.User;
-import com.syncturtle.services.workspace.repositories.UserRepository;
+import com.syncturtle.services.workspace.messaging.kafka.mapper.UserEventMapper;
+import com.syncturtle.services.workspace.model.User;
+import com.syncturtle.services.workspace.model.param.UserReplicaParam;
+import com.syncturtle.services.workspace.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class KafkaUserEventConsumer {
 
-    private final UserRepository userRepository;
+    private final UserRepository repository;
+    private final UserEventMapper mapper;
+    private final Clock clock;
 
     @Transactional
     @KafkaListener(topics = KafkaTopics.USER_EVENTS_V1, groupId = "workspace-svc-user-event-v1", containerFactory = "userKafkaListenerFactory")
     public void onUser(UserEvent event) {
-        UUID userId = event.getId();
+        Assert.notNull(event, "user event is required");
 
-        userRepository.findById(userId).ifPresentOrElse(existing -> {
-            Long current = existing.getVersion();
-            Long incoming = event.getVersion();
+        UserReplicaParam param = mapper.toParam(event);
 
-            // ignore dupe or out of order events
-            if (incoming != null && current != null && incoming <= current) {
-                return;
-            }
+        repository.findById(param.getId()).ifPresentOrElse(
+                existing -> applyToExisting(existing, param),
+                () -> insertNew(param));
+    }
 
-            existing.setUsername(event.getUsername());
-            existing.setEmail(event.getEmail());
-            existing.setDisplayName(event.getDisplayName());
-            existing.setFirstName(event.getFirstName());
-            existing.setLastName(event.getLastName());
-            existing.setAvatarAssetId(event.getAvatarAssetId());
-            existing.setCoverImageAssetId(event.getCoverImageAssetId());
-            existing.setActive(event.isActive());
-            existing.setPasswordAutoset(event.isPasswordAutoset());
-            existing.setUserTimezone(event.getUserTimezone());
-            existing.setVersion(incoming);
-        }, () -> {
-            User user = new User();
-            user.setId(userId);
-            user.setUsername(event.getUsername());
-            user.setEmail(event.getEmail());
-            user.setDisplayName(event.getDisplayName());
-            user.setFirstName(event.getFirstName());
-            user.setLastName(event.getLastName());
-            user.setDateJoined(event.getDateJoined());
-            user.setAvatarAssetId(event.getAvatarAssetId());
-            user.setCoverImageAssetId(event.getCoverImageAssetId());
-            user.setActive(event.isActive());
-            user.setPasswordAutoset(event.isPasswordAutoset());
-            user.setUserTimezone(event.getUserTimezone());
-            user.setBot(event.isBot());
-            user.setVersion(event.getVersion());
+    private void applyToExisting(User existing, UserReplicaParam param) {
+        boolean changed = existing.applyReplicaParam(param, clock);
 
-            userRepository.save(user);
-        });
+        if (!changed) {
+            log.debug(
+                    "Ignored stale or duplicate user replica. userId={} incomingVersion={} currentVersion={}",
+                    param.getId(),
+                    param.getSourceVersion(),
+                    existing.getSourceVersion());
+            return;
+        }
+
+        repository.save(existing);
+    }
+
+    private void insertNew(UserReplicaParam param) {
+        User user = User.fromReplicaParam(param, clock);
+        repository.save(user);
     }
 
 }

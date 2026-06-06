@@ -7,10 +7,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 
-import com.syncturtle.common.spring.cache.response.ResponseCacheKeyBuilder;
+import com.syncturtle.common.cache.response.ResponseCacheKeyBuilder;
 
 @ExtendWith(MockitoExtension.class)
-public class ResponseCacheKeyBuilderTest {
+class ResponseCacheKeyBuilderTest {
 
     private final ResponseCacheKeyBuilder cacheKeyBuilder = new ResponseCacheKeyBuilder();
 
@@ -23,9 +23,9 @@ public class ResponseCacheKeyBuilderTest {
         request.addParameter("a", "1");
         // conditions
         // act
-        String canonical = cacheKeyBuilder.canonicalVariantInput(request);
+        String canonical = cacheKeyBuilder.canonicalVariantInput(request, null);
         // assertions
-        assertThat(canonical).isEqualTo("/api/instances?a=1&a=2&b=2");
+        assertThat(canonical).isEqualTo("GET /api/instances?a=1&a=2&b=2");
         // verify
     }
 

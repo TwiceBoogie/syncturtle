@@ -10,11 +10,45 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CacheResponse {
-    long ttlSeconds() default 3600;
 
+    /**
+     * Business invalidation group
+     */
     String group();
 
-    boolean perUser() default true;
+    /**
+     * TTL for actual response data keys.
+     * 
+     * Version keys do not expire
+     */
+    long ttlSeconds() default 3600;
 
+    /**
+     * Adds u:{userId} to the key.
+     * 
+     * If enabled but no user id exists, the response is not cached
+     */
+    boolean perUser() default false;
+
+    /**
+     * Adds w:{workspaceId} to the key.
+     * 
+     * If enabled but no workspace id exists, the response is not cached
+     */
     boolean perWorkspace() default false;
+
+    /**
+     * Optional headers that should affect the cache variant.
+     * 
+     * Example:
+     * varyHeaders = {"Accept-Language"}
+     */
+    String[] varyHeaders() default {};
+
+    /**
+     * Status code allowed to be cached.
+     * 
+     * Default: only 200
+     */
+    int[] cacheableStatuses() default { 200 };
 }

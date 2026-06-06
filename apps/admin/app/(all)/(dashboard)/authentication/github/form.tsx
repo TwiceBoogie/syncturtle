@@ -78,6 +78,7 @@ export const InstanceGithubConfigForm: FC<IInstanceGithubConfigFormProps> = (pro
       ),
     },
   ];
+
   return (
     <>
       <div className="flex flex-col gap-8">

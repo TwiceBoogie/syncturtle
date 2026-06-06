@@ -12,7 +12,7 @@ export class WorkspaceService extends APIService {
 
   async list(nextPageCursor?: string): Promise<TWorkspacePaginationInfo> {
     try {
-      const response = await this.get<TWorkspacePaginationInfo>("/api/instances/workspaces/", {
+      const response = await this.get<TWorkspacePaginationInfo>("/api/instances/workspaces", {
         params: {
           cursor: nextPageCursor,
         },
@@ -26,7 +26,7 @@ export class WorkspaceService extends APIService {
 
   async create(data: Partial<IWorkspace>): Promise<IWorkspace> {
     try {
-      const response = await this.post<IWorkspace>("/api/instances/workspaces/", data);
+      const response = await this.post<IWorkspace>("/api/instances/workspaces", data);
       return response.data;
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;
@@ -36,7 +36,7 @@ export class WorkspaceService extends APIService {
 
   async slugCheck(slug: string, signal?: AbortSignal): Promise<TSlugCheckResult> {
     try {
-      const response = await this.get<TSlugCheckResult>("/api/instances/workspaces/slug-check/", {
+      const response = await this.get<TSlugCheckResult>("/api/instances/workspaces/slug-check", {
         params: { slug },
         signal,
       });

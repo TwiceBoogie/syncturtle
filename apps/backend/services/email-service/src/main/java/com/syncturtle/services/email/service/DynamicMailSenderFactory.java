@@ -6,9 +6,9 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Component;
 
-import com.syncturtle.services.email.configurations.properties.SyncturtleConfig;
+import com.syncturtle.services.email.configuration.property.SyncturtleConfig;
 import com.syncturtle.services.email.dto.EmailRuntimeConfig;
-import com.syncturtle.services.email.exceptions.EmailRuntimeConfigException;
+import com.syncturtle.services.email.exception.EmailRuntimeConfigException;
 
 import lombok.RequiredArgsConstructor;
 

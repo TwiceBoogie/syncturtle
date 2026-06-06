@@ -77,6 +77,7 @@ export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStor
 
     try {
       const currentUser = await this.userService.adminDetails();
+      console.log(`currentUser: ${currentUser}`);
       if (currentUser) {
         await this._store.instance.fetchInstanceAdmins();
 

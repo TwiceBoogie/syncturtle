@@ -24,10 +24,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.syncturtle.platform.gateway.configurations.properties.GatewayPassportProperties;
+import com.syncturtle.platform.gateway.support.PassportRedisKeys;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -42,14 +43,18 @@ public final class PassportAuthenticationGatewayFilterFactory
     private static final long DEFAULT_VERSION = 0L;
 
     private final ReactiveStringRedisTemplate redis;
-    private final GatewayPassportProperties properties;
+    private final PassportRedisKeys redisKeys;
 
     public PassportAuthenticationGatewayFilterFactory(
             ReactiveStringRedisTemplate redis,
-            GatewayPassportProperties properties) {
+            PassportRedisKeys redisKeys) {
         super(Config.class);
+
+        Assert.notNull(redis, "redis is required");
+        Assert.notNull(redisKeys, "redisKeys is required");
+
         this.redis = redis;
-        this.properties = properties;
+        this.redisKeys = redisKeys;
     }
 
     @Override
@@ -57,8 +62,8 @@ public final class PassportAuthenticationGatewayFilterFactory
         Config effectiveConfig = Config.withDefaults(config);
 
         return (exchange, chain) -> currentJwtAuthentication(exchange)
-                .flatMap(authentication -> authenticate(exchange, chain, authentication, effectiveConfig))
-                .thenReturn(Boolean.TRUE)
+                .flatMap(authentication -> authenticate(exchange, chain, authentication, effectiveConfig)
+                        .thenReturn(Boolean.TRUE))
                 .switchIfEmpty(Mono.defer(() -> unauthorized(exchange, "Authentication required.")
                         .thenReturn(Boolean.TRUE)))
                 .then();
@@ -102,7 +107,7 @@ public final class PassportAuthenticationGatewayFilterFactory
             return Mono.just(true);
         }
 
-        String key = sessionKey(claims.getSessionId());
+        String key = redisKeys.sessionKey(claims.getSessionId());
 
         return redis.hasKey(key)
                 .doOnNext(exists -> log.info("Passport Redis session check: key={}, exists={}", key, exists))
@@ -126,9 +131,13 @@ public final class PassportAuthenticationGatewayFilterFactory
             return Mono.just(false);
         }
 
-        return readVersion(userVersionKey(claims.getUserId()))
+        String key = redisKeys.userAuthVersionKey(claims.getUserId());
+
+        return readVersion(key)
                 .flatMap(currentVersion -> {
                     if (!Objects.equals(currentVersion, claims.getAuthVersion())) {
+                        log.debug("Passport user auth version mismatch. key={}, current={}, token={}", key,
+                                currentVersion, claims.getAuthVersion());
                         return Mono.just(false);
                     }
 
@@ -144,8 +153,19 @@ public final class PassportAuthenticationGatewayFilterFactory
             return Mono.just(false);
         }
 
-        return readVersion(adminSessionVersionKey(claims.getInstanceId(), claims.getUserId()))
-                .map(currentVersion -> Objects.equals(currentVersion, claims.getAdminSessionVersion()));
+        String key = redisKeys.adminSessionVersionKey(claims.getInstanceId(), claims.getUserId());
+
+        return readVersion(key)
+                .map(currentVersion -> {
+                    boolean matches = Objects.equals(currentVersion, claims.getAdminSessionVersion());
+
+                    if (!matches) {
+                        log.debug("Passport admin session version mismatch. key={}, current={}, token={}", key,
+                                currentVersion, claims.getAdminSessionVersion());
+                    }
+
+                    return matches;
+                });
     }
 
     private Mono<Long> readVersion(String key) {
@@ -205,21 +225,6 @@ public final class PassportAuthenticationGatewayFilterFactory
 
         byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
         return exchange.getResponse().writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(bytes)));
-    }
-
-    private String sessionKey(String sessionId) {
-        return properties.getRedis().getSessionKeyPrefix() + sessionId;
-    }
-
-    private String userVersionKey(String userId) {
-        return properties.getRedis().getUserVersionKeyPrefix() + userId;
-    }
-
-    private String adminSessionVersionKey(String instanceId, String userId) {
-        return properties.getRedis().getAdminSessionVersionKeyPrefix()
-                + instanceId
-                + ":"
-                + userId;
     }
 
     private long parseLong(String value) {
