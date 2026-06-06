@@ -17,11 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.syncturtle.common.contracts.email.event.EmailToSendEvent;
-import com.syncturtle.services.email.enums.EmailEventInboxStatus;
-import com.syncturtle.services.email.exceptions.EmailInboxException;
+import com.syncturtle.services.email.exception.EmailInboxException;
 import com.syncturtle.services.email.models.EmailEventInbox;
-import com.syncturtle.services.email.repositories.EmailEventInboxRepository;
+import com.syncturtle.services.email.repository.EmailEventInboxRepository;
 import com.syncturtle.services.email.service.EmailEventInboxService.AcquireResult;
+import com.syncturtle.services.email.type.EmailEventInboxStatus;
 
 import lombok.RequiredArgsConstructor;
 

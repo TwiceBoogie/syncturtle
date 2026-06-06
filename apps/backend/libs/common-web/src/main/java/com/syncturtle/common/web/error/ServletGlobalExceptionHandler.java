@@ -5,8 +5,9 @@ import java.util.List;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
+import org.springframework.util.Assert;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -18,14 +19,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.syncturtle.common.contracts.api.error.ApiErrorCode;
 import com.syncturtle.common.contracts.api.error.ApiErrorResponse;
 import com.syncturtle.common.contracts.api.error.FieldViolation;
-import com.syncturtle.common.contracts.auth.exception.AuthException;
 import com.syncturtle.common.core.exceptions.SyncturtleException;
-import com.syncturtle.common.web.error.exceptions.HttpStatusAwareException;
-import com.syncturtle.common.web.error.exceptions.PublicMessageAwareException;
-import com.syncturtle.common.web.error.mapper.AuthErrorPublicMessageMapper;
-import com.syncturtle.common.web.error.mapper.AuthErrorStatusMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -36,41 +34,23 @@ public final class ServletGlobalExceptionHandler {
     private final ApiErrorResponseFactory responseFactory;
 
     public ServletGlobalExceptionHandler(ApiErrorResponseFactory responseFactory) {
+        Assert.notNull(responseFactory, "api error response factory is required");
+
         this.responseFactory = responseFactory;
-    }
-
-    @ExceptionHandler(AuthException.class)
-    public ResponseEntity<ApiErrorResponse> handleAuthException(
-            AuthException exception,
-            HttpServletRequest request) {
-        HttpStatus status = AuthErrorStatusMapper.toHttpStatus(exception.getAuthErrorCode());
-        String publicMessage = AuthErrorPublicMessageMapper.toPublicMessage(exception.getAuthErrorCode());
-
-        logAtExpectedLevel(status, exception);
-
-        ApiErrorResponse body = responseFactory.fromSyncturtleException(
-                exception,
-                status,
-                request,
-                publicMessage);
-
-        return ResponseEntity.status(status).body(body);
     }
 
     @ExceptionHandler(SyncturtleException.class)
     public ResponseEntity<ApiErrorResponse> handleSyncturtleException(
             SyncturtleException exception,
             HttpServletRequest request) {
-        HttpStatus status = resolveSyncturtleStatus(exception);
-        String publicMessage = resolveSyncturtlePublicMessage(exception, status);
+        HttpStatusCode status = HttpStatusCode.valueOf(exception.getHttpStatusCode());
 
         logAtExpectedLevel(status, exception);
 
         ApiErrorResponse body = responseFactory.fromSyncturtleException(
                 exception,
                 status,
-                request,
-                publicMessage);
+                request);
 
         return ResponseEntity.status(status).body(body);
     }
@@ -82,7 +62,21 @@ public final class ServletGlobalExceptionHandler {
         List<FieldViolation> fields = exception.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(ServletGlobalExceptionHandler::toFieldViolation)
+                .map(fieldError -> toFieldViolation(fieldError))
+                .toList();
+
+        ApiErrorResponse body = responseFactory.fromValidationErrors(fields, request);
+
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiErrorResponse> handleConstraintViolation(
+            ConstraintViolationException exception,
+            HttpServletRequest request) {
+        List<FieldViolation> fields = exception.getConstraintViolations()
+                .stream()
+                .map(violation -> toFieldViolation(violation))
                 .toList();
 
         ApiErrorResponse body = responseFactory.fromValidationErrors(fields, request);
@@ -111,7 +105,6 @@ public final class ServletGlobalExceptionHandler {
             HttpServletRequest request) {
         ApiErrorResponse body = responseFactory.fromStatus(
                 ApiErrorCode.METHOD_NOT_ALLOWED,
-                "HTTP method is not allowed for this endpoint.",
                 request);
 
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(body);
@@ -123,7 +116,6 @@ public final class ServletGlobalExceptionHandler {
             HttpServletRequest request) {
         ApiErrorResponse body = responseFactory.fromStatus(
                 ApiErrorCode.UNSUPPORTED_MEDIA_TYPE,
-                "Content type is not supported.",
                 request);
 
         return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(body);
@@ -133,6 +125,8 @@ public final class ServletGlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleUnhandledException(
             Exception exception,
             HttpServletRequest request) {
+        log.error("Unhandled exception", exception);
+
         ApiErrorResponse body = responseFactory.fromUnhandledException(exception, request);
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
@@ -154,49 +148,29 @@ public final class ServletGlobalExceptionHandler {
                 .build();
     }
 
-    private static HttpStatus resolveSyncturtleStatus(SyncturtleException exception) {
-        if (exception instanceof HttpStatusAwareException statusAware) {
-            HttpStatus status = statusAware.getStatus();
-            if (status != null) {
-                return status;
-            }
-        }
+    private static FieldViolation toFieldViolation(ConstraintViolation<?> violation) {
+        String field = violation.getPropertyPath() == null
+                ? null
+                : violation.getPropertyPath().toString();
 
-        return HttpStatus.BAD_REQUEST;
+        String message = violation.getMessage() == null
+                ? "Invalid field value"
+                : violation.getMessage();
+
+        return FieldViolation.builder()
+                .field(field)
+                .errorMessage("INVALID_FIELD")
+                .message(message)
+                .build();
     }
 
-    private static String resolveSyncturtlePublicMessage(
-            SyncturtleException exception,
-            HttpStatus status) {
-        if (exception instanceof PublicMessageAwareException messageAware) {
-            String publicMessage = messageAware.getPublicMessage();
-            if (StringUtils.hasText(publicMessage)) {
-                return publicMessage;
-            }
-        }
-
-        if (status.is5xxServerError()) {
-            return "Something went wrong.";
-        }
-
-        if (StringUtils.hasText(exception.getMessage())) {
-            return exception.getMessage();
-        }
-
-        if (exception.getErrorCode() != null) {
-            return exception.getErrorMessage();
-        }
-
-        return "Request failed.";
-    }
-
-    private static void logAtExpectedLevel(HttpStatus status, Exception exception) {
+    private static void logAtExpectedLevel(HttpStatusCode status, Exception exception) {
         if (status.is5xxServerError()) {
             log.error("Server error handled by global exception handler", exception);
             return;
         }
 
-        if (status == HttpStatus.UNAUTHORIZED || status == HttpStatus.FORBIDDEN) {
+        if (status.value() == 401 || status.value() == 403) {
             log.debug("Auth/security exception handled: {}", exception.getMessage());
             return;
         }

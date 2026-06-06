@@ -1,62 +1,137 @@
 package com.syncturtle.services.instance.unit.web;
-// package com.syncturtle.platform.services.instance.unit.web;
 
-// import static org.mockito.ArgumentMatchers.any;
-// import static org.mockito.ArgumentMatchers.eq;
-// import static org.mockito.Mockito.when;
-// import static
-// org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-// import static
-// org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-// import static
-// org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// import org.junit.jupiter.api.Test;
-// import org.junit.jupiter.api.extension.ExtendWith;
-// import org.mockito.InjectMocks;
-// import org.mockito.Mock;
-// import org.mockito.junit.jupiter.MockitoExtension;
-// import org.springframework.http.MediaType;
-// import org.springframework.test.web.servlet.MockMvc;
-// import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 
-// import
-// com.syncturtle.platform.services.instance.application.query.InstanceQueryHandler;
-// import
-// com.syncturtle.platform.services.instance.controllers.client.InstanceController;
-// import
-// com.syncturtle.platform.services.instance.utils.validation.AuthFormValidator;
+import com.syncturtle.common.core.endpoint.EndpointPaths;
+import com.syncturtle.services.instance.controller.client.InstanceController;
+import com.syncturtle.services.instance.dto.request.InstanceUpdateRequest;
+import com.syncturtle.services.instance.service.InstanceService;
+import com.syncturtle.services.instance.support.JsonContent;
+import com.syncturtle.services.instance.support.fixture.ResponseFixtures;
 
-// @ExtendWith(MockitoExtension.class)
-// public class InstanceControllerTest {
+@WebMvcTest(controllers = InstanceController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@DisplayName("InstanceController")
+class InstanceControllerTest {
 
-// @Mock
-// InstanceQueryHandler query;
-// @Mock
-// AuthFormValidator authValidator;
+    @Autowired
+    private MockMvc mvc;
+    @MockitoBean
+    private InstanceService service;
 
-// @InjectMocks
-// InstanceController controller;
+    @Nested
+    @DisplayName("GET " + EndpointPaths.API_INSTANCES)
+    class GetInstanceSetupInfo {
 
-// @Test
-// void instanceAdminSignup_shouldRedirectWithCustomHeaders() throws Exception {
-// // arrange
-// MockMvc mvc = MockMvcBuilders.standaloneSetup(controller).build();
-// // conditions
-// when(query.instanceAdminSignup(any()))
-// .thenReturn(eq("https://admin.syncturtle.com/auth/bootstrap/exchange"));
-// // act
-// mvc.perform(post("/api/instances/admins/sign-up")
-// .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-// .param("firstName", "Sal")
-// .param("lastName", "Sebastian")
-// .param("email", "admin@example.com")
-// .param("password", "VeryStrongPassword!2026#OK")
-// .param("companyName", "SyncTurtle")
-// .param("telemetryEnabled", "true"))
-// .andExpect(status().isSeeOther())
-// .andExpect(header().string("Location",
-// "https://admin.syncturtle.com/auth/bootstrap/exchange"));
-// }
+        @Test
+        @DisplayName("returns public instance setup info")
+        void returnsPublicInstanceSetupInfo() throws Exception {
+            // arrange
+            // conditions
+            when(service.getPublicInstance()).thenReturn(ResponseFixtures.inactiveSetupResponse());
+            // act
+            mvc.perform(get(EndpointPaths.API_INSTANCES).accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+            // assert
+            // verify
+            verify(service).getPublicInstance();
+        }
 
-// }
+    }
+
+    @Nested
+    @DisplayName("PATCH " + EndpointPaths.API_INSTANCES)
+    class UpdateInstance {
+
+        @Test
+        @DisplayName("accepts a valid partial update")
+        void acceptsValidPartialUpdate() throws Exception {
+            // arrange
+            // conditions
+            when(service.instanceUpdate(any(InstanceUpdateRequest.class)))
+                    .thenReturn(ResponseFixtures.instanceResponse("New Name", 2L));
+            // act
+            mvc.perform(patch(EndpointPaths.API_INSTANCES)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .content(JsonContent.instanceUpdate("New Name", null)))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+            // assert
+            // verify
+            verify(service).instanceUpdate(argThat(request -> "New Name".equals(request.getInstanceName())
+                    && request.getTelemetryEnabled() == null));
+        }
+
+        @Test
+        @DisplayName("rejects empty update object using DTO validation")
+        void rejectsEmtpyUpdateObjectUsingDtoValidation() throws Exception {
+            // arrange
+            // conditions
+            // act
+            mvc.perform(patch(EndpointPaths.API_INSTANCES)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .content("{}"))
+                    .andExpect(status().isBadRequest());
+            // assert
+            // verify
+            verifyNoInteractions(service);
+        }
+
+        @Test
+        @DisplayName("rejects blank instanceName using DTO validation")
+        void rejectsBlankInstanceNameUsingDtoValidation() throws Exception {
+            // arrange
+            // conditions
+            // act
+            mvc.perform(patch(EndpointPaths.API_INSTANCES)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .content(JsonContent.instanceUpdate(" ", null)))
+                    .andExpect(status().isBadRequest());
+            // assert
+            // verify
+            verifyNoInteractions(service);
+        }
+
+        @Test
+        @DisplayName("rejects malformed JSON before service layer")
+        void rejectsMalformedJsonBeforeServiceLayer() throws Exception {
+            // arrange
+            // conditions
+            // act
+            mvc.perform(patch(EndpointPaths.API_INSTANCES)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .content(JsonContent.object("\"instanceName\": ")))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().string(containsString("")));
+            // assert
+            // verify
+            verifyNoInteractions(service);
+        }
+
+    }
+
+}

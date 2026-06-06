@@ -1,11 +1,16 @@
 package com.syncturtle.services.user.dto.response;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
-@AllArgsConstructor
-public final class SignoutResponse {
-    private final boolean success;
+public final class SignOutResponse {
     private final String redirection;
+
+    private SignOutResponse(String redirection) {
+        this.redirection = redirection;
+    }
+
+    public static SignOutResponse redirect(String location) {
+        return new SignOutResponse(location);
+    }
 }

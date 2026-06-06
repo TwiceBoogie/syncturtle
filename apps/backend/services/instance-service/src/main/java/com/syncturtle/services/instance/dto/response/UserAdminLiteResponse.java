@@ -5,11 +5,9 @@ import java.util.UUID;
 
 import lombok.Builder;
 import lombok.Value;
-import lombok.extern.jackson.Jacksonized;
 
 @Value
 @Builder
-@Jacksonized
 public class UserAdminLiteResponse {
     UUID id;
     String email;
@@ -17,5 +15,5 @@ public class UserAdminLiteResponse {
     String lastName;
     String displayName;
     String avatarUrl;
-    Instant joiningDate;
+    Instant dateJoined;
 }

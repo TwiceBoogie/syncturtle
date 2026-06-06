@@ -5,6 +5,8 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 
+import com.syncturtle.common.core.actor.PrincipalType;
+
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
@@ -30,16 +32,17 @@ public final class UserEvent {
     private final String displayName;
     private final String firstName;
     private final String lastName;
-    private final Instant dateJoined;
     private final UUID avatarAssetId;
     private final UUID coverImageAssetId;
     private final boolean active;
     private final boolean emailVerified;
     private final boolean passwordAutoset;
     private final String userTimezone;
-    private final boolean bot;
+    private final PrincipalType principalType;
     private final Long version;
     private final Long authVersion;
+    private final Instant createdAt;
+    private final Instant updatedAt;
 
     private UserEvent(
             String eventId,
@@ -51,16 +54,17 @@ public final class UserEvent {
             String displayName,
             String firstName,
             String lastName,
-            Instant dateJoined,
             UUID avatarAssetId,
             UUID coverImageAssetId,
             Boolean active,
             Boolean emailVerified,
             Boolean passwordAutoset,
             String userTimezone,
-            Boolean bot,
+            PrincipalType principalType,
             Long version,
-            Long authVersion) {
+            Long authVersion,
+            Instant createdAt,
+            Instant updatedAt) {
         this.eventId = requireText(eventId, "eventId is required");
         this.occurredAt = Objects.requireNonNull(occurredAt, "occurredAt is required");
         this.type = Objects.requireNonNull(type, "type is required");
@@ -71,7 +75,8 @@ public final class UserEvent {
         this.displayName = requireText(displayName, "displayName is required");
         this.firstName = normalizeNullable(firstName);
         this.lastName = normalizeNullable(lastName);
-        this.dateJoined = Objects.requireNonNull(dateJoined, "dateJoined is required");
+        this.createdAt = Objects.requireNonNull(createdAt, "createdAt is required");
+        this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt is required");
 
         this.avatarAssetId = avatarAssetId;
         this.coverImageAssetId = coverImageAssetId;
@@ -80,7 +85,7 @@ public final class UserEvent {
         this.emailVerified = requireBoolean(emailVerified, "emailVerified is required");
         this.passwordAutoset = requireBoolean(passwordAutoset, "passwordAutoset is required");
         this.userTimezone = requireText(userTimezone, "userTimezone is required");
-        this.bot = requireBoolean(bot, "bot is required");
+        this.principalType = Objects.requireNonNull(principalType, "principalType is required");
 
         this.version = requireNonNegative(version, "version is required");
         this.authVersion = requireNonNegative(authVersion, "authVersion is required");

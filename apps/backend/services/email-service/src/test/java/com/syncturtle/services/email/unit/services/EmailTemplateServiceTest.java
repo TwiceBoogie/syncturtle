@@ -24,7 +24,7 @@ import org.thymeleaf.context.Context;
 import com.syncturtle.common.contracts.email.error.EmailErrorCode;
 import com.syncturtle.common.contracts.email.template.EmailTemplateType;
 import com.syncturtle.services.email.dto.EmailEnvelope;
-import com.syncturtle.services.email.exceptions.EmailTemplateException;
+import com.syncturtle.services.email.exception.EmailTemplateException;
 import com.syncturtle.services.email.service.EmailTemplateService;
 import com.syncturtle.services.email.service.EmailTemplateService.RenderedEmail;
 
@@ -195,9 +195,8 @@ class EmailTemplateServiceTest {
             String expectedPublicMessage) {
         assertThat(exception).isNotNull();
         assertThat(exception.getEmailErrorCode()).isEqualTo(expectedCode);
-        assertThat(exception.getMessage()).isEqualTo(expectedCode.getKey());
+        assertThat(exception.getErrorKey()).isEqualTo(expectedCode.getKey());
         assertThat(exception.getPublicMessage()).isEqualTo(expectedPublicMessage);
-        assertThat(exception.getStatus()).isEqualTo(expectedStatus);
     }
 
     private static EmailEnvelope envelope(EmailTemplateType templateType) {

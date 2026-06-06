@@ -3,7 +3,7 @@ package com.syncturtle.services.email.models;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.syncturtle.services.email.enums.EmailEventInboxStatus;
+import com.syncturtle.services.email.type.EmailEventInboxStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
