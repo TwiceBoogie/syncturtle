@@ -39,11 +39,13 @@ public final class PublicUrlProperties {
             @DefaultValue Api api,
             @DefaultValue Web userApp,
             @DefaultValue Admin admin,
-            @DefaultValue String instanceChangelogUrl) {
+            String instanceChangelogUrl) {
         this.api = Objects.requireNonNull(api, "api is required");
         this.userApp = Objects.requireNonNull(userApp, "userApp is required");
         this.admin = Objects.requireNonNull(admin, "admin is required");
-        this.instanceChangelogUrl = normalizeRequiredOrigin(instanceChangelogUrl, "app.public.instance-changelog-url");
+        // this.instanceChangelogUrl = normalizeRequiredOrigin(instanceChangelogUrl,
+        // "app.public.instance-changelog-url");
+        this.instanceChangelogUrl = instanceChangelogUrl;
     }
 
     @Getter

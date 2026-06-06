@@ -7,11 +7,30 @@ spring:
             cors-configurations:
               "[/**]":
                 allowedOrigins:
+                  - "http://localhost"
                   - "http://localhost:3000"
                   - "http://localhost:3001"
-                allowedMethods: "*"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - PATCH
+                  - DELETE
+                  - OPTIONS
+                  - HEAD
                 allowedHeaders: "*"
+                exposedHeaders:
+                  - X-Request-Id
+                  - X-Correlation-Id
                 allowCredentials: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${REDIS_PASSWORD:syncturtle_redis_dev_password}
+      database: 0
+      timeout: 3s
 
 app:
   services:

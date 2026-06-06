@@ -8,8 +8,6 @@ import static org.mockito.Mockito.when;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
@@ -19,20 +17,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.syncturtle.common.contracts.instance.config.InstanceConfigurationKey;
-import com.syncturtle.common.contracts.instance.model.InstanceEdition;
-import com.syncturtle.common.contracts.instance.model.InstanceEditions;
-import com.syncturtle.common.spring.web.url.PublicUrlBuilder;
+import com.syncturtle.common.web.url.PublicUrlResolver;
 import com.syncturtle.services.instance.client.UserClient;
-import com.syncturtle.services.instance.models.Instance;
-import com.syncturtle.services.instance.payload.BinaryMetadata;
-import com.syncturtle.services.instance.payload.InstanceSummaryWithConfig;
-import com.syncturtle.services.instance.payload.RegistrationSpec;
-import com.syncturtle.services.instance.payload.RuntimeMetadata;
-import com.syncturtle.services.instance.repositories.InstanceAdminRepository;
-import com.syncturtle.services.instance.repositories.InstanceRepository;
-import com.syncturtle.services.instance.repositories.UserRepository;
-import com.syncturtle.services.instance.services.InstanceService;
-import com.syncturtle.services.instance.services.configuration.InstanceConfigurationResolver;
+import com.syncturtle.services.instance.dto.response.InstanceSetupResponse;
+import com.syncturtle.services.instance.model.Instance;
+import com.syncturtle.services.instance.model.param.InstanceBinaryParam;
+import com.syncturtle.services.instance.model.param.InstanceRegistrationParam;
+import com.syncturtle.services.instance.model.param.InstanceRuntimeParam;
+import com.syncturtle.services.instance.repository.InstanceAdminRepository;
+import com.syncturtle.services.instance.repository.InstanceRepository;
+import com.syncturtle.services.instance.repository.UserRepository;
+import com.syncturtle.services.instance.service.InstanceService;
+import com.syncturtle.services.instance.service.configuration.InstanceConfigurationResolver;
+import com.syncturtle.services.instance.service.configuration.param.RequestedKeyParam;
 import com.syncturtle.testing.annotations.IntegrationTest;
 import com.syncturtle.testing.annotations.UsePostgresDb;
 
@@ -56,7 +53,7 @@ public class InstanceServiceIT {
     UserClient userClient;
 
     @MockitoBean
-    PublicUrlBuilder hostResolver;
+    PublicUrlResolver hostResolver;
 
     @MockitoBean
     InstanceConfigurationResolver resolver;
@@ -77,37 +74,38 @@ public class InstanceServiceIT {
             instanceRepository.save(instance);
 
             @SuppressWarnings("unchecked")
-            ArgumentCaptor<List<InstanceConfigurationResolver.RequestedKey>> captor = ArgumentCaptor
+            ArgumentCaptor<List<RequestedKeyParam>> captor = ArgumentCaptor
                     .forClass(List.class);
             when(resolver.resolveRequested(captor.capture())).thenReturn(Map.of(InstanceConfigurationKey.ENABLE_SIGNUP,
                     "1", InstanceConfigurationKey.POSTHOG_HOST, "https://posthog.local"));
 
             // Act
-            Optional<InstanceSummaryWithConfig> result = instanceService.instanceInfoAndConfig();
+            InstanceSetupResponse result = instanceService.getPublicInstance();
             // Assert
-            assertThat(result).isPresent();
-            assertThat(result.get().getUserCount()).isEqualTo(0);
+            assertThat(result).isNotNull();
+            assertThat(result.getInstance().isActivated()).isTrue();
             // Verify
             verify(resolver).resolveRequested(anyList());
-            List<InstanceConfigurationResolver.RequestedKey> requested = captor.getValue();
-            assertThat(requested).extracting(InstanceConfigurationResolver.RequestedKey::key).contains(
-                    InstanceConfigurationKey.ENABLE_SIGNUP, InstanceConfigurationKey.POSTHOG_HOST,
-                    InstanceConfigurationKey.ENABLE_MAGIC_LINK_LOGIN);
+            List<RequestedKeyParam> requested = captor.getValue();
+            assertThat(requested).extracting(item -> item.getKey())
+                    .containsExactlyInAnyOrder(
+                            InstanceConfigurationKey.ENABLE_SIGNUP,
+                            InstanceConfigurationKey.POSTHOG_HOST,
+                            InstanceConfigurationKey.ENABLE_MAGIC_LINK_LOGIN);
         }
 
     }
 
     private static Instance generateInstance() {
         Instant now = Instant.now();
-        RuntimeMetadata runtimeMetadata = new RuntimeMetadata("", "", "");
-        BinaryMetadata binaryMetadata = BinaryMetadata.from(null, now);
-        RegistrationSpec spec = new RegistrationSpec(UUID.randomUUID().toString(),
-                InstanceEditions.defaultInstanceName(InstanceEdition.COMMUNITY), InstanceEdition.COMMUNITY, true, true,
-                true, runtimeMetadata, binaryMetadata);
+        InstanceRuntimeParam runtimeMetadata = InstanceRuntimeParam.empty();
+        InstanceBinaryParam binaryMetadata = InstanceBinaryParam.from(null, now);
+        InstanceRegistrationParam param = InstanceRegistrationParam.builder()
+                .runtime(runtimeMetadata)
+                .binary(binaryMetadata)
+                .build();
 
-        Instance instance = new Instance();
-        instance.initializeForRegistration(spec, now);
-        return instance;
+        return Instance.register(param);
     }
 
 }

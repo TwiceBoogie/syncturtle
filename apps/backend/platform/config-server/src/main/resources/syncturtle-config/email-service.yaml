@@ -55,7 +55,7 @@ spring:
         compression.type: zstd
         max.in.flight.requests.per.connection: 5
         spring.json.add.type.headers: false # JsonSerializer.ADD_TYPE_INFO_HEADERS
-        interceptor.classes: com.syncturtle.common.spring.autoconfigure.observability.kafka.MdcKafkaHeaderProducerInterceptor
+        interceptor.classes: com.syncturtle.common.kafka.interceptor.MdcKafkaHeaderProducerInterceptor
     consumer:
       auto-offset-reset: earliest
 
@@ -72,6 +72,17 @@ app:
       ack-after-handle: true
       commit-recovered: true
       log-retries: true
+
+  security:
+    cookies:
+      secure: ${APP_SECURITY_COOKIES_SECURE:false}
+      host-prefix-enabled: ${APP_SECURITY_COOKIES_HOST_PREFIX_ENABLED:false}
+      domain: ${APP_SECURITY_COOKIES_DOMAIN:}
+      path: /
+      access-same-site: Lax
+      refresh-same-site: Lax
+      csrf-same-site: Lax
+      csrf-max-age: 30m
 
   email:
     cache-name: emailRuntimeConfig

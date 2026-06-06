@@ -3,8 +3,8 @@ package com.syncturtle.services.email.service;
 import org.springframework.stereotype.Service;
 
 import com.syncturtle.services.email.dto.EmailEnvelope;
-import com.syncturtle.services.email.exceptions.EmailDispatchException;
-import com.syncturtle.services.email.exceptions.EmailInboxException;
+import com.syncturtle.services.email.exception.EmailDispatchException;
+import com.syncturtle.services.email.exception.EmailInboxException;
 import com.syncturtle.services.email.models.EmailEventInbox;
 
 import lombok.RequiredArgsConstructor;

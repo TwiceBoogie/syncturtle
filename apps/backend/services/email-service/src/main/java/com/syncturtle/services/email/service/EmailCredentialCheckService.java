@@ -14,7 +14,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import com.syncturtle.services.email.dto.EmailRuntimeConfig;
-import com.syncturtle.services.email.exceptions.EmailCredentialCheckException;
+import com.syncturtle.services.email.exception.EmailCredentialCheckException;
 
 import jakarta.mail.AuthenticationFailedException;
 import jakarta.mail.MessagingException;

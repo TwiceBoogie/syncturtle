@@ -7,6 +7,6 @@ import lombok.Setter;
 @Setter
 public final class CachedResponsePayload {
     private int status;
-    private String body;
+    private String bodyJson;
     private String bodyType;
 }

@@ -48,21 +48,26 @@ CREATE TABLE instance_configurations (
 
 --changeset syncturtle:0001-003-create-users-lite labels:instance
 CREATE TABLE users_lite (
+    created_at              TIMESTAMPTZ NOT NULL,
+    updated_at              TIMESTAMPTZ NOT NULL,
     id                      UUID PRIMARY KEY,
     username                VARCHAR(128) NOT NULL,
     email                   VARCHAR(255),
     display_name            VARCHAR(255) NOT NULL,
     first_name              VARCHAR(36),
     last_name               VARCHAR(36),
-    date_joined             TIMESTAMPTZ NOT NULL,
+    user_timezone           VARCHAR(255) NOT NULL,
+    principal_type          VARCHAR(40) NOT NULL,
     avatar_asset_id         UUID, -- logical fk to file-service:file_assets.id,
     cover_image_asset_id    UUID, -- logical fk to file-service:file_assets.id,
     is_active               BOOLEAN NOT NULL,
     is_email_verified       BOOLEAN NOT NULL,
     is_password_autoset     BOOLEAN NOT NULL,
-    user_timezone           VARCHAR(255) NOT NULL,
-    is_bot                  BOOLEAN NOT NULL,
-    version                 BIGINT NOT NULL
+    last_login_medium       VARCHAR(20),
+    source_version          BIGINT NOT NULL,
+    auth_version            BIGINT NOT NULL,
+    deleted_at              TIMESTAMPTZ,
+    projected_at            TIMESTAMPTZ NOT NULL
 );
 --rollback DROP TABLE IF EXISTS users_lite;
 
@@ -77,6 +82,7 @@ CREATE TABLE instance_admins (
     updated_by_id               UUID,
     instance_id                 UUID NOT NULL, -- fk at app-level
     user_id                     UUID, -- logical fk to user-service.users.id
+    session_version             BIGINT NOT NULL,
     deleted_at                  TIMESTAMPTZ
 );
 --rollback DROP TABLE IF EXISTS instance_admins;

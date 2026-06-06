@@ -12,12 +12,12 @@ management:
       probability: 0.05
     baggage:
       remote-fields:
-      - X-Correlation-Id
+        - X-Correlation-Id
       # Optional
       # - X-Request-Id
       correlation:
         fields:
-        - X-Correlation-Id
+          - X-Correlation-Id
         # Optional
         # - X-Request-Id
   otlp:
@@ -42,3 +42,15 @@ management:
 logging:
   pattern:
     correlation: "[trace=%X{traceId:-},span=%X{spanId:-},corr=%X{X-Correlation-Id:-},req=%X{X-Request-Id:-}] "
+
+app:
+  env: ${DEPLOYMENT_ENV:local}
+  redis:
+    keys:
+      key-prefix: ${APP_REDIS_KEY_PREFIX:st:${app.env}:}
+  response-cache:
+    enabled: ${APP_RESPONSE_CACHE_ENABLED:true}
+    key-prefix: ${APP_RESPONSE_CACHE_KEY_PREFIX:${app.redis.keys.key-prefix}rc:}
+    hash-bytes: ${APP_RESPONSE_CACHE_HASH_BYTES:16}
+    body-type-allowlist-prefix: com.syncturtle.
+    workspace-header-name: X-Workspace-Id

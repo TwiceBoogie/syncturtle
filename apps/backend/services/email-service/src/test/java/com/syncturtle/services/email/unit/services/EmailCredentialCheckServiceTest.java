@@ -36,7 +36,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 
 import com.syncturtle.common.contracts.email.error.EmailErrorCode;
 import com.syncturtle.services.email.dto.EmailRuntimeConfig;
-import com.syncturtle.services.email.exceptions.EmailCredentialCheckException;
+import com.syncturtle.services.email.exception.EmailCredentialCheckException;
 import com.syncturtle.services.email.service.DynamicMailSenderFactory;
 import com.syncturtle.services.email.service.EmailCredentialCheckService;
 import com.syncturtle.services.email.service.EmailRuntimeConfigService;
@@ -73,7 +73,7 @@ class EmailCredentialCheckServiceTest {
                 exception,
                 EmailErrorCode.EMAIL_SMTP_DISABLED,
                 HttpStatus.BAD_REQUEST,
-                "SMTP is disabled.",
+                "SMTP email delivery is disabled.",
                 null);
         // verify
         verifyNoInteractions(dynamicMailSenderFactory);
@@ -92,7 +92,7 @@ class EmailCredentialCheckServiceTest {
                 exception,
                 EmailErrorCode.EMAIL_SMTP_NOT_CONFIGURED,
                 HttpStatus.BAD_REQUEST,
-                "Could not send email. Please check your configuration.",
+                "Email delivery is not configured.",
                 null);
         // verify
         verifyNoInteractions(dynamicMailSenderFactory);
@@ -214,7 +214,7 @@ class EmailCredentialCheckServiceTest {
                 exception,
                 EmailErrorCode.EMAIL_SMTP_SEND_FAILED,
                 HttpStatus.BAD_GATEWAY,
-                "Could not send email. Please check your configuration.",
+                "Could not send email.",
                 thrown);
     }
 
@@ -228,9 +228,7 @@ class EmailCredentialCheckServiceTest {
         assertThat(exception.getEmailErrorCode()).isEqualTo(expectedCode);
         assertThat(exception.getErrorCode()).isEqualTo(expectedCode);
         assertThat(exception.getCode()).isEqualTo(expectedCode.getCode());
-        assertThat(exception.getMessage()).isEqualTo(expectedCode.getKey());
-        assertThat(exception.getErrorMessage()).isEqualTo(expectedCode.getKey());
-        assertThat(exception.getStatus()).isEqualTo(expectedStatus);
+        assertThat(exception.getErrorKey()).isEqualTo(expectedCode.getKey());
         assertThat(exception.getPublicMessage()).isEqualTo(expectedPublicMessage);
 
         if (expectedCause == null) {
@@ -259,13 +257,13 @@ class EmailCredentialCheckServiceTest {
                         new SocketTimeoutException("timed out"),
                         EmailErrorCode.EMAIL_SMTP_TIMEOUT,
                         HttpStatus.GATEWAY_TIMEOUT,
-                        "Timed out while checking SMTP credentials.",
+                        "Timed out while communicating with the SMTP server.",
                         false),
                 Arguments.of(
                         new TimeoutException("timed out"),
                         EmailErrorCode.EMAIL_SMTP_TIMEOUT,
                         HttpStatus.GATEWAY_TIMEOUT,
-                        "Timed out while checking SMTP credentials.",
+                        "Timed out while communicating with the SMTP server.",
                         false),
                 Arguments.of(
                         new UnknownHostException("smtp.example.com"),
@@ -289,13 +287,13 @@ class EmailCredentialCheckServiceTest {
                         new SendFailedException("all recipients refused"),
                         EmailErrorCode.EMAIL_SMTP_RECIPIENTS_REFUSED,
                         HttpStatus.BAD_REQUEST,
-                        "All recipient addresses were refused.",
+                        "Recipient address was refused.",
                         false),
                 Arguments.of(
                         new IllegalStateException("unexpected mail send failure"),
                         EmailErrorCode.EMAIL_SMTP_SEND_FAILED,
                         HttpStatus.BAD_GATEWAY,
-                        "Could not send email. Please check your configuration.",
+                        "Could not send email.",
                         false));
     }
 
@@ -310,12 +308,12 @@ class EmailCredentialCheckServiceTest {
                         new SocketTimeoutException("timed out"),
                         EmailErrorCode.EMAIL_SMTP_TIMEOUT,
                         HttpStatus.GATEWAY_TIMEOUT,
-                        "Timed out while checking SMTP credentials."),
+                        "Timed out while communicating with the SMTP server."),
                 Arguments.of(
                         new TimeoutException("timed out"),
                         EmailErrorCode.EMAIL_SMTP_TIMEOUT,
                         HttpStatus.GATEWAY_TIMEOUT,
-                        "Timed out while checking SMTP credentials."),
+                        "Timed out while communicating with the SMTP server."),
                 Arguments.of(
                         new UnknownHostException("smtp.example.com"),
                         EmailErrorCode.EMAIL_SMTP_CONNECTION_FAILED,
@@ -335,7 +333,7 @@ class EmailCredentialCheckServiceTest {
                         new IllegalStateException("unexpected messaging failure"),
                         EmailErrorCode.EMAIL_SMTP_SEND_FAILED,
                         HttpStatus.BAD_GATEWAY,
-                        "Could not send email. Please check your configuration."));
+                        "Could not send email."));
     }
 
     private static EmailRuntimeConfig disabledConfig() {

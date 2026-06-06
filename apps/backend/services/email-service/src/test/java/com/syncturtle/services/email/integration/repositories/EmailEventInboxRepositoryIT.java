@@ -9,9 +9,9 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.syncturtle.services.email.enums.EmailEventInboxStatus;
 import com.syncturtle.services.email.models.EmailEventInbox;
-import com.syncturtle.services.email.repositories.EmailEventInboxRepository;
+import com.syncturtle.services.email.repository.EmailEventInboxRepository;
+import com.syncturtle.services.email.type.EmailEventInboxStatus;
 import com.syncturtle.testing.annotations.JpaIntegrationTest;
 import com.syncturtle.testing.annotations.UsePostgresDb;
 
