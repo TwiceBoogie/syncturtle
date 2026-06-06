@@ -95,6 +95,10 @@
     </dependency>
     <dependency>
       <groupId>com.syncturtle</groupId>
+      <artifactId>common-cache-spring</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.syncturtle</groupId>
       <artifactId>common-security-spring</artifactId>
     </dependency>
     <dependency>

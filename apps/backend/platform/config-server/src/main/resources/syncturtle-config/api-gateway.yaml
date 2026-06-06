@@ -98,7 +98,7 @@ spring:
                     require-instance-id: true
 
             - id: instance-workspace-protected
-              uri: ${app.services.workspace-service.base-url}
+              uri: ${app.services.instance-service.base-url}
               predicates:
                 - Path=/api/instances/workspaces/**
               filters:
@@ -189,5 +189,13 @@ app:
       secret-key: ${APP_SECURITY_ENCRYPTION_SECRET_KEY}
     csrf:
       enabled: true
-      hmac-algorithm: ${APP_SECURITY_CSRF_HMAC_ALGORITHM:HmacSHA256}
       signing-key: ${APP_SECURITY_CSRF_SIGNING_KEY}
+    cookies:
+      secure: ${APP_SECURITY_COOKIES_SECURE:false}
+      host-prefix-enabled: ${APP_SECURITY_COOKIES_HOST_PREFIX_ENABLED:false}
+      domain: ${APP_SECURITY_COOKIES_DOMAIN:}
+      path: /
+      access-same-site: Lax
+      refresh-same-site: Lax
+      csrf-same-site: Lax
+      csrf-max-age: 30m

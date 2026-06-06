@@ -11,7 +11,6 @@ import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -72,20 +71,6 @@ public class CursorCodec {
         }
 
         return cursor + "====".substring(mod);
-    }
-
-    @Getter
-    public static final class DecodedCursor {
-        private final UUID id;
-        private final Instant createdAt;
-
-        public DecodedCursor(UUID id, Instant createdAt) {
-            Assert.notNull(id, "id is required");
-            Assert.notNull(createdAt, "createdAt is required");
-
-            this.id = id;
-            this.createdAt = createdAt;
-        }
     }
 
 }
