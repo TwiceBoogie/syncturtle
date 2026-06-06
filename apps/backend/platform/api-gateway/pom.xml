@@ -91,7 +91,15 @@
     </dependency>
     <dependency>
       <groupId>com.syncturtle</groupId>
-      <artifactId>common-spring</artifactId>
+      <artifactId>common-contracts</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.syncturtle</groupId>
+      <artifactId>common-security-spring</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.syncturtle</groupId>
+      <artifactId>common-observability-spring</artifactId>
     </dependency>
 
     <!-- SUPPORT -->

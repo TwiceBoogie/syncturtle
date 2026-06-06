@@ -20,7 +20,7 @@ import reactor.core.publisher.Mono;
 public class ClientMetadataHeadersFilter implements GlobalFilter, Ordered {
 
     private static final int ORDER = Ordered.HIGHEST_PRECEDENCE + 5;
-    private static final int MAX_TRUSTED_INDEX = 2;
+    private static final int MAX_TRUSTED_INDEX = 1;
 
     private final RemoteAddressResolver remoteAddressResolver = XForwardedRemoteAddressResolver
             .maxTrustedIndex(MAX_TRUSTED_INDEX);

@@ -8,7 +8,7 @@ import org.springframework.security.web.server.authentication.ServerAuthenticati
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.syncturtle.common.spring.web.cookie.SecurityCookieFactory;
+import com.syncturtle.common.security.cookie.SecurityCookieFactory;
 
 import reactor.core.publisher.Mono;
 

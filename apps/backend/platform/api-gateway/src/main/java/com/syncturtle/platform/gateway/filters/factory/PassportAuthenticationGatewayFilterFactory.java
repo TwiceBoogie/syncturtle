@@ -31,8 +31,10 @@ import com.syncturtle.platform.gateway.configurations.properties.GatewayPassport
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Component
 public final class PassportAuthenticationGatewayFilterFactory
         extends AbstractGatewayFilterFactory<PassportAuthenticationGatewayFilterFactory.Config> {
@@ -100,7 +102,10 @@ public final class PassportAuthenticationGatewayFilterFactory
             return Mono.just(true);
         }
 
-        return redis.hasKey(sessionKey(claims.getSessionId()))
+        String key = sessionKey(claims.getSessionId());
+
+        return redis.hasKey(key)
+                .doOnNext(exists -> log.info("Passport Redis session check: key={}, exists={}", key, exists))
                 .flatMap(exists -> {
                     if (!Boolean.TRUE.equals(exists)) {
                         return Mono.just(false);
@@ -108,6 +113,8 @@ public final class PassportAuthenticationGatewayFilterFactory
 
                     return validateUserAuthVersion(claims, config);
                 })
+                .doOnError(
+                        exception -> log.error("Passport Redis session validation failed for key={}", key, exception))
                 .onErrorReturn(false);
     }
 

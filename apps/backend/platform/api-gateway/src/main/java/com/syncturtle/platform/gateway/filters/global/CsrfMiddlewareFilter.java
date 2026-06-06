@@ -15,8 +15,8 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.syncturtle.common.spring.web.cookie.SecurityCookieFactory;
-import com.syncturtle.common.web.csrf.CsrfTokenService;
+import com.syncturtle.common.security.cookie.SecurityCookieFactory;
+import com.syncturtle.common.security.csrf.CsrfTokenService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
