@@ -11820,15 +11820,15 @@
     </pluginRepository>
   </pluginRepositories>
   <build>
-    <sourceDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/src/main/java</sourceDirectory>
-    <scriptSourceDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/src/main/scripts</scriptSourceDirectory>
-    <testSourceDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/src/test/java</testSourceDirectory>
-    <outputDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target/classes</outputDirectory>
-    <testOutputDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target/test-classes</testOutputDirectory>
+    <sourceDirectory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/src/main/java</sourceDirectory>
+    <scriptSourceDirectory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/src/main/scripts</scriptSourceDirectory>
+    <testSourceDirectory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/src/test/java</testSourceDirectory>
+    <outputDirectory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/target/classes</outputDirectory>
+    <testOutputDirectory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/target/test-classes</testOutputDirectory>
     <resources>
       <resource>
         <filtering>true</filtering>
-        <directory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/src/main/resources</directory>
+        <directory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/src/main/resources</directory>
         <includes>
           <include>**/application*.yml</include>
           <include>**/application*.yaml</include>
@@ -11836,7 +11836,7 @@
         </includes>
       </resource>
       <resource>
-        <directory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/src/main/resources</directory>
+        <directory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/src/main/resources</directory>
         <excludes>
           <exclude>**/application*.yml</exclude>
           <exclude>**/application*.yaml</exclude>
@@ -11846,10 +11846,10 @@
     </resources>
     <testResources>
       <testResource>
-        <directory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/src/test/resources</directory>
+        <directory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/src/test/resources</directory>
       </testResource>
     </testResources>
-    <directory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target</directory>
+    <directory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/target</directory>
     <finalName>common-core-0.0.1</finalName>
     <pluginManagement>
       <plugins>
@@ -11870,7 +11870,7 @@
               </goals>
               <configuration>
                 <projectType>application</projectType>
-                <outputDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target/classes/META-INF/sbom</outputDirectory>
+                <outputDirectory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/target/classes/META-INF/sbom</outputDirectory>
                 <outputFormat>json</outputFormat>
                 <outputName>application.cdx</outputName>
               </configuration>
@@ -11894,14 +11894,14 @@
               <configuration>
                 <verbose>true</verbose>
                 <generateGitPropertiesFile>true</generateGitPropertiesFile>
-                <generateGitPropertiesFilename>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target/classes/git.properties</generateGitPropertiesFilename>
+                <generateGitPropertiesFilename>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/target/classes/git.properties</generateGitPropertiesFilename>
               </configuration>
             </execution>
           </executions>
           <configuration>
             <verbose>true</verbose>
             <generateGitPropertiesFile>true</generateGitPropertiesFile>
-            <generateGitPropertiesFilename>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target/classes/git.properties</generateGitPropertiesFilename>
+            <generateGitPropertiesFilename>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/target/classes/git.properties</generateGitPropertiesFilename>
           </configuration>
         </plugin>
         <plugin>
@@ -11992,12 +11992,12 @@
                 <goal>verify</goal>
               </goals>
               <configuration>
-                <classesDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target/classes</classesDirectory>
+                <classesDirectory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/target/classes</classesDirectory>
               </configuration>
             </execution>
           </executions>
           <configuration>
-            <classesDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target/classes</classesDirectory>
+            <classesDirectory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/target/classes</classesDirectory>
           </configuration>
         </plugin>
         <plugin>
@@ -12283,7 +12283,7 @@
                 <spring.cloud.discovery.enabled>false</spring.cloud.discovery.enabled>
                 <eureka.client.enabled>false</eureka.client.enabled>
               </systemPropertyVariables>
-              <classesDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target/classes</classesDirectory>
+              <classesDirectory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/target/classes</classesDirectory>
             </configuration>
           </execution>
         </executions>
@@ -12303,7 +12303,7 @@
             <spring.cloud.discovery.enabled>false</spring.cloud.discovery.enabled>
             <eureka.client.enabled>false</eureka.client.enabled>
           </systemPropertyVariables>
-          <classesDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target/classes</classesDirectory>
+          <classesDirectory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/target/classes</classesDirectory>
         </configuration>
       </plugin>
       <plugin>
@@ -12455,7 +12455,7 @@
               <goal>site</goal>
             </goals>
             <configuration>
-              <outputDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target/site</outputDirectory>
+              <outputDirectory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/target/site</outputDirectory>
               <reportPlugins>
                 <reportPlugin>
                   <groupId>org.apache.maven.plugins</groupId>
@@ -12471,7 +12471,7 @@
               <goal>deploy</goal>
             </goals>
             <configuration>
-              <outputDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target/site</outputDirectory>
+              <outputDirectory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/target/site</outputDirectory>
               <reportPlugins>
                 <reportPlugin>
                   <groupId>org.apache.maven.plugins</groupId>
@@ -12482,7 +12482,7 @@
           </execution>
         </executions>
         <configuration>
-          <outputDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target/site</outputDirectory>
+          <outputDirectory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/target/site</outputDirectory>
           <reportPlugins>
             <reportPlugin>
               <groupId>org.apache.maven.plugins</groupId>
@@ -12494,6 +12494,6 @@
     </plugins>
   </build>
   <reporting>
-    <outputDirectory>/Users/sebastian/Projects/syncturtle/apps/backend/libs/common-core/target/site</outputDirectory>
+    <outputDirectory>/Users/sebastian/Developer/projects/portfolio/syncturtle/apps/backend/libs/common-core/target/site</outputDirectory>
   </reporting>
 </project>
