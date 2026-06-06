@@ -5,9 +5,15 @@ import static com.syncturtle.common.core.cookie.CsrfConstants.CSRF_FORM_FIELD_NA
 
 import org.springframework.web.bind.annotation.RestController;
 
+<<<<<<< HEAD
 import com.syncturtle.common.security.cookie.ReactiveCsrfCookieWriter;
 import com.syncturtle.common.security.csrf.CsrfTokenService;
 import com.syncturtle.common.security.csrf.IssuedCsrfToken;
+=======
+import com.syncturtle.common.spring.web.cookie.ReactiveCsrfCookieWriter;
+import com.syncturtle.common.web.csrf.CsrfTokenService;
+import com.syncturtle.common.web.csrf.IssuedCsrfToken;
+>>>>>>> origin/preview
 
 import lombok.RequiredArgsConstructor;
 
