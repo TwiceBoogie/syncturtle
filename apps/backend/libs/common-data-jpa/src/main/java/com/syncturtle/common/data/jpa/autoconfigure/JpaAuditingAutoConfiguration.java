@@ -27,11 +27,13 @@ import jakarta.persistence.EntityManagerFactory;
 })
 @ConditionalOnClass({
         EntityManager.class,
+        EntityManagerFactory.class,
         AuditorAware.class,
         EnableJpaAuditing.class
 })
 @ConditionalOnBean(EntityManagerFactory.class)
 @ConditionalOnProperty(prefix = "app.data.jpa.auditing", name = "enabled", havingValue = "true", matchIfMissing = true)
+@EnableJpaAuditing
 public class JpaAuditingAutoConfiguration {
 
     @Bean
