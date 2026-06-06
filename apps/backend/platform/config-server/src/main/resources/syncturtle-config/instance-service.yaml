@@ -48,7 +48,7 @@ spring:
         compression.type: zstd
         max.in.flight.requests.per.connection: 5
         spring.json.add.type.headers: false # JsonSerializer.ADD_TYPE_INFO_HEADERS
-        interceptor.classes: com.syncturtle.common.spring.autoconfigure.observability.kafka.MdcKafkaHeaderProducerInterceptor
+        interceptor.classes: com.syncturtle.common.kafka.interceptor.MdcKafkaHeaderProducerInterceptor
     consumer:
       auto-offset-reset: earliest
 
@@ -73,6 +73,7 @@ app:
     admin:
       origin: ${APP_PUBLIC_ADMIN_ORIGIN:http://localhost:3001}
       base-path: ${APP_PUBLIC_ADMIN_BASE_PATH:/god-mode/}
+    instance-changelog-url: "https://syncturtle.com/changelog"
 
   security:
     encryption:
@@ -117,6 +118,9 @@ app:
         - /actuator/**
         - /error
 
+    access-logging:
+      enabled: true
+
   kafka:
     enabled: true
     topics:
@@ -130,11 +134,6 @@ app:
       ack-after-handle: true
       commit-recovered: true
       log-retries: true
-
-  response-cache:
-    enabled: true
-    key-prefix: "st:resp:"
-    hash-bytes: 16
 
   telemetry:
     enabled: ${APP_TELEMETRY_ENABLED:true}
