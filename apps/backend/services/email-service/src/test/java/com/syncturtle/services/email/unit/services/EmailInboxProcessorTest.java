@@ -19,8 +19,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.syncturtle.common.contracts.email.template.EmailTemplateType;
 import com.syncturtle.services.email.dto.EmailEnvelope;
-import com.syncturtle.services.email.exceptions.EmailDispatchException;
-import com.syncturtle.services.email.exceptions.EmailInboxException;
+import com.syncturtle.services.email.exception.EmailDispatchException;
+import com.syncturtle.services.email.exception.EmailInboxException;
 import com.syncturtle.services.email.models.EmailEventInbox;
 import com.syncturtle.services.email.service.EmailDispatchService;
 import com.syncturtle.services.email.service.EmailEventInboxService;

@@ -1,0 +1,2 @@
+com.syncturtle.common.cache.autoconfigure.RedisKeyAutoConfiguration
+com.syncturtle.common.cache.autoconfigure.ResponseCacheAutoConfiguration

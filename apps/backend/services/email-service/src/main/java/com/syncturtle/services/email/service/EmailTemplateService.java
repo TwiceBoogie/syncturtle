@@ -11,7 +11,7 @@ import org.thymeleaf.context.Context;
 
 import com.syncturtle.common.contracts.email.template.EmailTemplateType;
 import com.syncturtle.services.email.dto.EmailEnvelope;
-import com.syncturtle.services.email.exceptions.EmailTemplateException;
+import com.syncturtle.services.email.exception.EmailTemplateException;
 
 import lombok.RequiredArgsConstructor;
 
