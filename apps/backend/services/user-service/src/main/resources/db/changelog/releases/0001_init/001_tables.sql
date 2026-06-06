@@ -27,32 +27,28 @@ CREATE TABLE users (
     display_name                VARCHAR(255) NOT NULL,
     first_name                  VARCHAR(255) NOT NULL,
     last_name                   VARCHAR(255) NOT NULL,
-    password                    VARCHAR(128) NOT NULL,
-    avatar                      TEXT NOT NULL,
-    cover_image                 VARCHAR(800),
+    password_hash               VARCHAR(128) NOT NULL,
     avatar_asset_id             UUID, -- logical fk to file-service:file_assets.id,
     cover_image_asset_id        UUID, -- logical fk to file-service:file_assets.id,
-    last_location               VARCHAR(255) NOT NULL,
-    created_location            VARCHAR(255) NOT NULL,
     is_managed                  BOOLEAN NOT NULL,
     is_password_expired         BOOLEAN NOT NULL,
     is_active                   BOOLEAN NOT NULL,
     is_email_verified           BOOLEAN NOT NULL,
     is_password_autoset         BOOLEAN NOT NULL,
-    token                       VARCHAR(64) NOT NULL,
+    is_email_valid              BOOLEAN NOT NULL,
     user_timezone               VARCHAR(255) NOT NULL,
     last_active                 TIMESTAMPTZ,
     last_login_time             TIMESTAMPTZ,
-    last_logout_time            TIMESTAMPTZ,
     last_login_ip               VARCHAR(255) NOT NULL,
-    last_logout_ip              VARCHAR(255) NOT NULL,
     last_login_medium           VARCHAR(20) NOT NULL,
     last_login_uagent           TEXT NOT NULL,
-    token_updated_at            TIMESTAMPTZ,
-    is_bot                      BOOLEAN NOT NULL,
-    bot_type                    VARCHAR(30),
-    is_email_valid              BOOLEAN NOT NULL,
-    masked_at                   TIMESTAMPTZ
+    principal_type              VARCHAR(40) NOT NULL,
+    masked_at                   TIMESTAMPTZ,
+    auth_version                BIGINT NOT NULL,
+    version                     BIGINT NOT NULL,
+    created_by_id               UUID,
+    updated_by_id               UUID,
+    deleted_at                  TIMESTAMPTZ
 );
 --rollback DROP TABLE IF EXISTS users;
 
@@ -74,7 +70,10 @@ CREATE TABLE profiles (
     company_name                VARCHAR(255) NOT NULL,
     user_id                     UUID NOT NULL,
     language                    VARCHAR(255) NOT NULL,
-    has_marketing_email_consent BOOLEAN NOT NULL
+    has_marketing_email_consent BOOLEAN NOT NULL,
+    created_by_id               UUID,
+    updated_by_id               UUID,
+    deleted_at                  TIMESTAMPTZ
 );
 --rollback DROP TABLE IF EXISTS profiles;
 

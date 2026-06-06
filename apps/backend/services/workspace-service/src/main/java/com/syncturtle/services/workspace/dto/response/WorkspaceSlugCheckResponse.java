@@ -1,11 +1,17 @@
 package com.syncturtle.services.workspace.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Value;
 
-@Getter
-@AllArgsConstructor
-public final class WorkspaceSlugCheckResponse {
-    private boolean available;
-    private String reason;
+@Value
+public class WorkspaceSlugCheckResponse {
+    boolean available;
+    String message;
+
+    public static WorkspaceSlugCheckResponse unavailable(String message) {
+        return new WorkspaceSlugCheckResponse(false, message);
+    }
+
+    public static WorkspaceSlugCheckResponse available() {
+        return new WorkspaceSlugCheckResponse(true, null);
+    }
 }

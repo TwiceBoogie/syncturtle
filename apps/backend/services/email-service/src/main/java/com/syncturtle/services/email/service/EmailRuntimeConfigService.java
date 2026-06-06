@@ -4,9 +4,9 @@ import org.springframework.stereotype.Service;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.syncturtle.common.contracts.email.config.EmailRuntimeSecretConfigResponse;
-import com.syncturtle.services.email.clients.InstanceClient;
+import com.syncturtle.services.email.client.InstanceClient;
 import com.syncturtle.services.email.dto.EmailRuntimeConfig;
-import com.syncturtle.services.email.exceptions.EmailRuntimeConfigException;
+import com.syncturtle.services.email.exception.EmailRuntimeConfigException;
 
 import lombok.RequiredArgsConstructor;
 

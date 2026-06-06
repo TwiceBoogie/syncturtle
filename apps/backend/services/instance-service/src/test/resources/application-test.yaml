@@ -2,8 +2,25 @@ spring:
   cloud:
     config:
       enabled: false
-    discovery:
-      enabled: false
 
 server:
   port: 0
+
+app:
+  web:
+    authorization:
+      enabled: false
+  security:
+    csrf:
+      form:
+        enabled: false
+  gateway:
+    context:
+      enabled: false
+  services:
+    user-service:
+      base-url: http://localhost:8002
+  data:
+    jpa:
+      auditing:
+        enabled: false

@@ -6,7 +6,6 @@ CREATE TABLE workspaces (
     updated_at          TIMESTAMPTZ NOT NULL,
     id                  UUID PRIMARY KEY,
     name                VARCHAR(80) NOT NULL,
-    logo                TEXT,
     logo_asset_id       UUID, -- logical fk to file-service:file_assets.id
     slug                VARCHAR(48) NOT NULL,
     organization_size   VARCHAR(20),
@@ -56,21 +55,25 @@ CREATE TABLE workspace_members (
 
 --changeset syncturtle:0001-004-create-table-users-lite labels:workspace
 CREATE TABLE users_lite (
+    created_at              TIMESTAMPTZ NOT NULL,
+    updated_at              TIMESTAMPTZ NOT NULL,
     id                      UUID PRIMARY KEY,
     username                VARCHAR(128) NOT NULL,
     email                   VARCHAR(255),
     display_name            VARCHAR(255) NOT NULL,
     first_name              VARCHAR(36),
     last_name               VARCHAR(36),
-    date_joined             TIMESTAMPTZ NOT NULL,
+    user_timezone           VARCHAR(255) NOT NULL,
+    principal_type          VARCHAR(40) NOT NULL,
     avatar_asset_id         UUID, -- logical fk to file-service:file_assets.id,
     cover_image_asset_id    UUID, -- logical fk to file-service:file_assets.id,
     is_active               BOOLEAN NOT NULL,
     is_email_verified       BOOLEAN NOT NULL,
     is_password_autoset     BOOLEAN NOT NULL,
-    user_timezone           VARCHAR(255) NOT NULL,
-    is_bot                  BOOLEAN NOT NULL,
-    version                 BIGINT NOT NULL
+    last_login_medium       VARCHAR(20),
+    source_version          BIGINT NOT NULL,
+    auth_version            BIGINT NOT NULL,
+    projected_at            TIMESTAMPTZ NOT NULL
 );
 --rollback DROP TABLE IF EXISTS users_lite;
 

@@ -102,7 +102,7 @@ public final class PublicUrlResolver {
         String normalizedBasePath = normalizeBasePathForJoin(basePath);
         String normalizedRelativePath = normalizeRelativePath(path);
 
-        if (!StringUtils.hasText(normalizedRelativePath) && !StringUtils.hasText(normalizedRelativePath)) {
+        if (!StringUtils.hasText(normalizedBasePath) && !StringUtils.hasText(normalizedRelativePath)) {
             return "";
         }
 

@@ -23,9 +23,12 @@
     <!-- libs -->
     <module>libs/common-core</module>
     <module>libs/common-contracts</module>
-    <module>libs/common-spring</module>
     <module>libs/common-web</module>
     <module>libs/common-data-jpa</module>
+    <module>libs/common-security-spring</module>
+    <module>libs/common-cache-spring</module>
+    <module>libs/common-kafka-spring</module>
+    <module>libs/common-observability-spring</module>
     <module>libs/test-support</module>
 
     <!-- platform (infra apps) -->
@@ -37,6 +40,7 @@
     <module>services/instance-service</module>
     <module>services/user-service</module>
     <module>services/workspace-service</module>
+    <module>services/file-service</module>
     <!-- <module>services/password-service</module> -->
     <module>services/email-service</module>
 
@@ -59,12 +63,13 @@
 
     <!-- Spring Cloud BOM -->
     <spring-cloud.version>2025.0.2</spring-cloud.version>
-    <otel.instrumentation.version>2.24.0-alpha</otel.instrumentation.version>
+    <!-- OpenTelemetry -->
+    <otel.version>1.62.0</otel.version>
+    <otel.instrumentation.version>2.28.0-alpha</otel.instrumentation.version>
 
     <!-- Testcontainers BOM -->
     <testcontainers.version>1.21.4</testcontainers.version>
 
-    <modelmapper.version>3.2.6</modelmapper.version>
     <jasypt.version>1.9.3</jasypt.version>
     <datasource-micrometer.version>1.2.1</datasource-micrometer.version>
     <zxcvbn.version>1.9.0</zxcvbn.version>
@@ -126,7 +131,15 @@
         <scope>import</scope>
       </dependency>
 
-      <!-- Otel instrumentation BOM -->
+      <!-- OpenTelemetry core BOM: controls io.opentelemetry:* artifacts -->
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-bom</artifactId>
+        <version>${otel.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- Otel instrumentation BOM: controls appender/instrumentation artifacts -->
       <dependency>
         <groupId>io.opentelemetry.instrumentation</groupId>
         <artifactId>opentelemetry-instrumentation-bom-alpha</artifactId>
@@ -142,12 +155,6 @@
         <version>${datasource-micrometer.version}</version>
       </dependency>
 
-      <!-- ModelMapper BOM -->
-      <dependency>
-        <groupId>org.modelmapper</groupId>
-        <artifactId>modelmapper</artifactId>
-        <version>${modelmapper.version}</version>
-      </dependency>
       <!-- jasypt -->
       <dependency>
         <groupId>org.jasypt</groupId>
@@ -174,17 +181,32 @@
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
+        <artifactId>common-web</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
         <artifactId>common-data-jpa</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
-        <artifactId>common-spring</artifactId>
+        <artifactId>common-security-spring</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
-        <artifactId>common-web</artifactId>
+        <artifactId>common-cache-spring</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>common-kafka-spring</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>common-observability-spring</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

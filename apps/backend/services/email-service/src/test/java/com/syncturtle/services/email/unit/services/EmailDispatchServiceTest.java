@@ -32,8 +32,8 @@ import com.syncturtle.common.contracts.email.error.EmailErrorCode;
 import com.syncturtle.common.contracts.email.template.EmailTemplateType;
 import com.syncturtle.services.email.dto.EmailEnvelope;
 import com.syncturtle.services.email.dto.EmailRuntimeConfig;
-import com.syncturtle.services.email.exceptions.EmailDispatchException;
-import com.syncturtle.services.email.exceptions.EmailTemplateException;
+import com.syncturtle.services.email.exception.EmailDispatchException;
+import com.syncturtle.services.email.exception.EmailTemplateException;
 import com.syncturtle.services.email.service.DynamicMailSenderFactory;
 import com.syncturtle.services.email.service.EmailDispatchService;
 import com.syncturtle.services.email.service.EmailRuntimeConfigService;
@@ -78,7 +78,7 @@ class EmailDispatchServiceTest {
                 exception,
                 EmailErrorCode.EMAIL_SMTP_DISABLED,
                 HttpStatus.SERVICE_UNAVAILABLE,
-                "SMTP is disabled.",
+                "SMTP email delivery is disabled.",
                 true,
                 null);
         // verify
@@ -98,7 +98,7 @@ class EmailDispatchServiceTest {
                 exception,
                 EmailErrorCode.EMAIL_SMTP_NOT_CONFIGURED,
                 HttpStatus.SERVICE_UNAVAILABLE,
-                "SMTP config is incomplete.",
+                "Email delivery is not configured.",
                 true,
                 null);
         // verify
@@ -211,7 +211,7 @@ class EmailDispatchServiceTest {
                 exception,
                 EmailErrorCode.EMAIL_SMTP_TIMEOUT,
                 HttpStatus.SERVICE_UNAVAILABLE,
-                "Timed out while sending email.",
+                "Timed out while communicating with the SMTP server.",
                 true,
                 thrown);
     }
@@ -265,7 +265,7 @@ class EmailDispatchServiceTest {
                 exception,
                 EmailErrorCode.EMAIL_SMTP_RECIPIENTS_REFUSED,
                 HttpStatus.BAD_REQUEST,
-                "All recipient addresses were refused.",
+                "Recipient address was refused.",
                 false,
                 thrown);
     }
@@ -290,7 +290,7 @@ class EmailDispatchServiceTest {
                 exception,
                 EmailErrorCode.EMAIL_DISPATCH_FAILED,
                 HttpStatus.SERVICE_UNAVAILABLE,
-                "Failed to send email.",
+                "Failed to dispatch email.",
                 true,
                 thrown);
     }
@@ -355,10 +355,8 @@ class EmailDispatchServiceTest {
         assertThat(exception).isNotNull();
         assertThat(exception.getEmailErrorCode()).isEqualTo(expectedCode);
         assertThat(exception.getErrorCode()).isEqualTo(expectedCode);
-        assertThat(exception.getCode()).isEqualTo(expectedCode.getCode());
-        assertThat(exception.getMessage()).isEqualTo(expectedCode.getKey());
+        assertThat(exception.getErrorKey()).isEqualTo(expectedCode.getKey());
         assertThat(exception.getPublicMessage()).isEqualTo(expectedPublicMessage);
-        assertThat(exception.getStatus()).isEqualTo(expectedStatus);
         assertThat(exception.isRetryable()).isEqualTo(expectedRetryable);
 
         if (expectedCause == null) {

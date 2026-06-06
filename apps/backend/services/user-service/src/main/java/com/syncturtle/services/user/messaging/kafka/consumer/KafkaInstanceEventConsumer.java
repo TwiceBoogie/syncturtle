@@ -8,8 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.syncturtle.common.contracts.instance.event.InstanceEvent;
 import com.syncturtle.common.contracts.messaging.KafkaTopics;
-import com.syncturtle.services.user.models.Instance;
-import com.syncturtle.services.user.repositories.InstanceRepository;
+import com.syncturtle.services.user.model.Instance;
+import com.syncturtle.services.user.repository.InstanceRepository;
 
 import lombok.RequiredArgsConstructor;
 
