@@ -10,8 +10,8 @@ import com.syncturtle.common.contracts.instance.config.InstanceConfigurationScop
 import com.syncturtle.common.contracts.instance.config.InstanceConfigurationKey;
 import com.syncturtle.common.contracts.instance.event.InstanceConfigurationEvent;
 import com.syncturtle.common.contracts.messaging.KafkaTopics;
-import com.syncturtle.services.user.services.FeatureFlagService;
-import com.syncturtle.services.user.services.UserAuthRuntimeSecretService;
+import com.syncturtle.services.user.service.runtime.UserAuthRuntimeConfigResolver;
+import com.syncturtle.services.user.service.runtime.UserAuthRuntimeSecretResolver;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +40,8 @@ public class KafkaInstanceConfigChangedEventListener {
             InstanceConfigurationKey.GITLAB_CLIENT_ID,
             InstanceConfigurationKey.GITLAB_CLIENT_SECRET);
 
-    private final FeatureFlagService featureFlagService;
-    private final UserAuthRuntimeSecretService userAuthRuntimeSecretService;
+    private final UserAuthRuntimeConfigResolver configResolver;
+    private final UserAuthRuntimeSecretResolver configSecretResolver;
 
     @KafkaListener(topics = KafkaTopics.INSTANCE_CONFIG_EVENTS_V1, groupId = "${app.kafka.config-broadcast-group}", containerFactory = "instanceConfigurationKafkaListenerFactory")
     public void onInstanceConfigurationChanged(InstanceConfigurationEvent event) {
@@ -57,11 +57,11 @@ public class KafkaInstanceConfigChangedEventListener {
                 || intersects(changedKeys, CAFFEINE_AUTH_SECRET_KEYS);
 
         if (evictRedis) {
-            featureFlagService.evict();
+            configResolver.evict();
         }
 
         if (evictCaffeine) {
-            userAuthRuntimeSecretService.evict();
+            configSecretResolver.evict();
         }
 
         log.info(
