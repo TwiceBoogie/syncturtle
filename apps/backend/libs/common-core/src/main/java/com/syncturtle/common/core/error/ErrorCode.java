@@ -10,5 +10,10 @@ package com.syncturtle.common.core.error;
 public interface ErrorCode {
     int getCode();
 
-    String getMessage();
+    /**
+     * Stable machine readable key
+     * 
+     * @return key
+     */
+    String getKey();
 }

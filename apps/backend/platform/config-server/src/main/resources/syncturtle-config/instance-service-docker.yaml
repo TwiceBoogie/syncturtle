@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/syncturtle_instance
+    username: instance_app
+    password: ${INSTANCE_DB_PASSWORD}
+
+  liquibase:
+    user: instance_migrator
+    password: ${INSTANCE_MIGRATOR_DB_PASSWORD}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+  data:
+    redis:
+      host: redis
+      port: 6379
+      password: ${REDIS_PASSWORD:syncturtle_redis_dev_password}
+
+app:
+  services:
+    instance-service:
+      base-url: http://instance-service:8080
+    user-service:
+      base-url: http://user-service:8080
+    workspace-service:
+      base-url: http://workspace-service:8080
+    email-service:
+      base-url: http://email-service:8080

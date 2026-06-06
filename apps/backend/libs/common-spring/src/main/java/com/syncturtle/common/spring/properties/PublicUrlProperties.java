@@ -30,21 +30,21 @@ import lombok.Getter;
 @ConfigurationProperties(prefix = "app.public")
 public final class PublicUrlProperties {
 
-    private final ApiRoute api;
-    private final UserAppRoute userApp;
-    private final AdminRoute admin;
+    private final Api api;
+    private final Web userApp;
+    private final Admin admin;
 
     public PublicUrlProperties(
-            @DefaultValue ApiRoute api,
-            @DefaultValue UserAppRoute userApp,
-            @DefaultValue AdminRoute admin) {
+            @DefaultValue Api api,
+            @DefaultValue Web userApp,
+            @DefaultValue Admin admin) {
         this.api = Objects.requireNonNull(api, "api is required");
         this.userApp = Objects.requireNonNull(userApp, "userApp is required");
         this.admin = Objects.requireNonNull(admin, "admin is required");
     }
 
     @Getter
-    public static final class ApiRoute {
+    public static final class Api {
         /**
          * Public backend/gateway origin.
          * 
@@ -66,7 +66,7 @@ public final class PublicUrlProperties {
          */
         private final String basePath;
 
-        public ApiRoute(
+        public Api(
                 @DefaultValue("http://localhost:8000") String origin,
                 @DefaultValue("") String basePath) {
             this.origin = normalizeRequiredOrigin(origin, "api.origin");
@@ -75,7 +75,7 @@ public final class PublicUrlProperties {
     }
 
     @Getter
-    public static final class UserAppRoute {
+    public static final class Web {
         /**
          * Public origin for the normal user facing frontend
          */
@@ -85,7 +85,7 @@ public final class PublicUrlProperties {
          */
         private final String basePath;
 
-        public UserAppRoute(
+        public Web(
                 @DefaultValue("http://localhost:3000") String origin,
                 @DefaultValue("/") String basePath) {
             this.origin = normalizeRequiredOrigin(origin, "userApp.origin");
@@ -94,7 +94,7 @@ public final class PublicUrlProperties {
     }
 
     @Getter
-    public static final class AdminRoute {
+    public static final class Admin {
 
         /**
          * Public origin for the admin frontend
@@ -105,7 +105,7 @@ public final class PublicUrlProperties {
          */
         private final String basePath;
 
-        public AdminRoute(
+        public Admin(
                 @DefaultValue("http://localhost:3001") String origin,
                 @DefaultValue("/god-mode/") String basePath) {
             this.origin = normalizeRequiredOrigin(origin, "admin.origin");

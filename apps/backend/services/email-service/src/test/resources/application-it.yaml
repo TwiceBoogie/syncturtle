@@ -58,3 +58,7 @@ app:
     retry:
       scheduler:
         enabled: false
+
+  web:
+    access-logging:
+      enabled: false

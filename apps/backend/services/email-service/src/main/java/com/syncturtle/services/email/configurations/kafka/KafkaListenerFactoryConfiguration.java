@@ -49,6 +49,7 @@ public class KafkaListenerFactoryConfiguration {
     private <T> ConsumerFactory<String, T> typedConsumerFactory(KafkaProperties kafkaProperties, Class<T> valueType) {
         Map<String, Object> props = new HashMap<>(kafkaProperties.buildConsumerProperties());
 
+        removeJsonDeserializerProperties(props);
         JsonDeserializer<T> delegate = new JsonDeserializer<>(valueType);
         delegate.addTrustedPackages("com.syncturtle.*");
         delegate.setUseTypeHeaders(false);
@@ -59,6 +60,18 @@ public class KafkaListenerFactoryConfiguration {
                 props,
                 new StringDeserializer(),
                 valueDeserializer);
+    }
+
+    private static void removeJsonDeserializerProperties(Map<String, Object> props) {
+        props.remove(JsonDeserializer.TRUSTED_PACKAGES);
+        props.remove(JsonDeserializer.USE_TYPE_INFO_HEADERS);
+        props.remove(JsonDeserializer.VALUE_DEFAULT_TYPE);
+        props.remove(JsonDeserializer.KEY_DEFAULT_TYPE);
+        props.remove(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS);
+        props.remove(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS);
+
+        props.keySet().removeIf(key -> key instanceof String stringKey
+                && stringKey.startsWith("spring.json."));
     }
 
     private <T> ConcurrentKafkaListenerContainerFactory<String, T> buildFactory(

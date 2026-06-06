@@ -92,14 +92,14 @@ public enum AuthErrorCode implements ErrorCode {
     AUTHENTICATION_FAILED(5999, "AUTHENTICATION_FAILED");
 
     private final int code;
-    private final String message;
+    private final String key;
 
     private static final Map<Integer, AuthErrorCode> BY_CODE = Stream.of(values())
             .collect(Collectors.toUnmodifiableMap(AuthErrorCode::getCode, Function.identity()));
 
-    AuthErrorCode(int code, String message) {
+    AuthErrorCode(int code, String key) {
         this.code = code;
-        this.message = message;
+        this.key = key;
     }
 
     @Override
@@ -108,8 +108,8 @@ public enum AuthErrorCode implements ErrorCode {
     }
 
     @Override
-    public String getMessage() {
-        return message;
+    public String getKey() {
+        return key;
     }
 
     public static AuthErrorCode fromCode(int code) {

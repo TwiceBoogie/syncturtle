@@ -1,7 +1,7 @@
 package com.syncturtle.services.email.unit.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.Mockito.when;
 
 import java.util.Properties;
@@ -12,11 +12,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
+import com.syncturtle.common.contracts.email.error.EmailErrorCode;
 import com.syncturtle.services.email.configurations.properties.SyncturtleConfig;
 import com.syncturtle.services.email.dto.EmailRuntimeConfig;
+import com.syncturtle.services.email.exceptions.EmailRuntimeConfigException;
 import com.syncturtle.services.email.service.DynamicMailSenderFactory;
 
 @ExtendWith(MockitoExtension.class)
@@ -82,7 +85,7 @@ public class DynamicMailSenderFactoryTest {
     }
 
     @Test
-    void create_whenConfigIncomplete_throwsIllegalStateException() {
+    void create_whenConfigIncomplete_throwsEmailRuntimeConfigException() {
         // arrange
         EmailRuntimeConfig config = EmailRuntimeConfig.builder()
                 .enabled(true)
@@ -94,10 +97,17 @@ public class DynamicMailSenderFactoryTest {
                 .version(1L)
                 .build();
 
-        // act + assert
-        assertThatThrownBy(() -> factory.create(config))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Email runtime config is incomplete");
+        // act
+        EmailRuntimeConfigException exception = catchThrowableOfType(
+                EmailRuntimeConfigException.class,
+                () -> factory.create(config));
+        // assert
+        assertThat(exception).isNotNull();
+        assertThat(exception.getEmailErrorCode()).isEqualTo(EmailErrorCode.EMAIL_RUNTIME_CONFIG_INCOMPLETE);
+        assertThat(exception.getMessage()).isEqualTo(EmailErrorCode.EMAIL_RUNTIME_CONFIG_INCOMPLETE.getKey());
+        assertThat(exception.getPublicMessage()).isEqualTo("Email runtime config is incomplete.");
+        assertThat(exception.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(exception.getCause()).isNull();
     }
 
     private void stubSenderTimeout() {

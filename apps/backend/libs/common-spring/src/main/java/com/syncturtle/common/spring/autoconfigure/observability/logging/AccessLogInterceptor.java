@@ -9,9 +9,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import com.syncturtle.common.core.header.GatewayHeaders;
 
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.context.Context;
-import io.opentelemetry.context.Scope;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -20,19 +17,19 @@ import lombok.extern.slf4j.Slf4j;
 public class AccessLogInterceptor implements HandlerInterceptor {
 
     private static final String ATTR_START_NANOS = AccessLogInterceptor.class.getName() + ".startNanos";
-    private static final String ATTR_OTEL_CTX = AccessLogInterceptor.class.getName() + ".otelCtx";
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         request.setAttribute(ATTR_START_NANOS, System.nanoTime());
-        request.setAttribute(ATTR_OTEL_CTX, Context.current());
         return true;
     }
 
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler,
             Exception exception) {
-        long start = (request.getAttribute(ATTR_START_NANOS) instanceof Long l) ? l : System.nanoTime();
+        long start = (request.getAttribute(ATTR_START_NANOS) instanceof Long l)
+                ? l
+                : System.nanoTime();
         long durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
 
         int status = response.getStatus();
@@ -44,9 +41,12 @@ public class AccessLogInterceptor implements HandlerInterceptor {
         String method = request.getMethod();
         String path = request.getRequestURI();
 
-        String ua = firstNonBlank(request.getHeader(GatewayHeaders.HDR_CLIENT_UA),
+        String ua = firstNonBlank(
+                request.getHeader(GatewayHeaders.HDR_CLIENT_UA),
                 nullToDash(request.getHeader("User-Agent")));
-        String ip = firstNonBlank(request.getHeader(GatewayHeaders.HDR_CLIENT_IP), resolveClientIp(request));
+        String ip = firstNonBlank(
+                request.getHeader(GatewayHeaders.HDR_CLIENT_IP),
+                resolveClientIp(request));
 
         String userId = header(request, GatewayHeaders.HDR_AUTH_USER_ID);
         String workspaceId = header(request, GatewayHeaders.HDR_AUTH_WORKSPACE_ID);
@@ -58,14 +58,20 @@ public class AccessLogInterceptor implements HandlerInterceptor {
                 response.getHeader(GatewayHeaders.HDR_REQUEST_ID),
                 request.getHeader(GatewayHeaders.HDR_REQUEST_ID));
 
-        Context ctx = (request.getAttribute(ATTR_OTEL_CTX) instanceof Context c) ? c : Context.current();
-
-        try (Scope ignored = ctx.makeCurrent()) {
+        try {
             putMdcForOneLogLine(corrId, reqId);
 
-            log.info("{} {} {} {}ms userId={} workspaceId={} ip={} ua=\"{}\" reqId={} corrId={}", method, path,
-                    status, durationMs, nullToDash(userId), nullToDash(workspaceId), nullToDash(ip), ua,
-                    nullToDash(reqId), nullToDash(corrId));
+            log.info("{} {} {} {}ms userId={} workspaceId={} ip={} ua=\"{}\" reqId={} corrId={}",
+                    method,
+                    path,
+                    status,
+                    durationMs,
+                    nullToDash(userId),
+                    nullToDash(workspaceId),
+                    nullToDash(ip),
+                    ua,
+                    nullToDash(reqId),
+                    nullToDash(corrId));
         } finally {
             clearMdcForOneLogLine();
         }
@@ -94,13 +100,6 @@ public class AccessLogInterceptor implements HandlerInterceptor {
     }
 
     private static void putMdcForOneLogLine(String corrId, String reqId) {
-        if (MDC.get("traceId") == null || MDC.get("spanId") == null) {
-            Span span = Span.current();
-            if (span != null && span.getSpanContext().isValid()) {
-                MDC.put("traceId", span.getSpanContext().getTraceId());
-                MDC.put("spanId", span.getSpanContext().getSpanId());
-            }
-        }
         if (corrId != null && !corrId.isBlank()) {
             MDC.put("X-Correlation-Id", corrId);
         }
@@ -110,8 +109,6 @@ public class AccessLogInterceptor implements HandlerInterceptor {
     }
 
     private static void clearMdcForOneLogLine() {
-        MDC.remove("traceId");
-        MDC.remove("spanId");
         MDC.remove(GatewayHeaders.HDR_CORRELATION_ID);
         MDC.remove(GatewayHeaders.HDR_REQUEST_ID);
     }
