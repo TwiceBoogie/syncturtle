@@ -1,4 +1,4 @@
-package com.syncturtle.services.email.clients;
+package com.syncturtle.services.email.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;

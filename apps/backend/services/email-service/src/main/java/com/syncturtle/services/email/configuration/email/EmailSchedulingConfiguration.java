@@ -1,4 +1,4 @@
-package com.syncturtle.services.email.configurations.email;
+package com.syncturtle.services.email.configuration.email;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;

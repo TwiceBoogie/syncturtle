@@ -1,4 +1,4 @@
-package com.syncturtle.services.email.repositories;
+package com.syncturtle.services.email.repository;
 
 import java.time.Instant;
 import java.util.List;

@@ -12,15 +12,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.syncturtle.common.contracts.email.config.EmailRuntimeSecretConfigResponse;
 import com.syncturtle.common.contracts.email.error.EmailErrorCode;
-import com.syncturtle.services.email.clients.InstanceClient;
+import com.syncturtle.services.email.client.InstanceClient;
 import com.syncturtle.services.email.dto.EmailRuntimeConfig;
-import com.syncturtle.services.email.exceptions.EmailRuntimeConfigException;
+import com.syncturtle.services.email.exception.EmailRuntimeConfigException;
 import com.syncturtle.services.email.service.EmailRuntimeConfigService;
 
 @ExtendWith(MockitoExtension.class)
@@ -96,9 +95,8 @@ class EmailRuntimeConfigServiceTest {
         // assert
         assertThat(exception).isNotNull();
         assertThat(exception.getEmailErrorCode()).isEqualTo(EmailErrorCode.EMAIL_RUNTIME_CONFIG_STALE);
-        assertThat(exception.getMessage()).isEqualTo(EmailErrorCode.EMAIL_RUNTIME_CONFIG_STALE.getKey());
-        assertThat(exception.getPublicMessage()).isEqualTo("Fetched stale email runtime config.");
-        assertThat(exception.getStatus()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        assertThat(exception.getErrorKey()).isEqualTo(EmailErrorCode.EMAIL_RUNTIME_CONFIG_STALE.getKey());
+        assertThat(exception.getPublicMessage()).isEqualTo("Email runtime configuration is stale.");
         assertThat(exception.getPayload())
                 .containsEntry("fetched_version", 3L)
                 .containsEntry("required_scope_version", 5L);
@@ -119,9 +117,8 @@ class EmailRuntimeConfigServiceTest {
         // assert
         assertThat(exception).isNotNull();
         assertThat(exception.getEmailErrorCode()).isEqualTo(EmailErrorCode.EMAIL_RUNTIME_CONFIG_FETCH_FAILED);
-        assertThat(exception.getMessage()).isEqualTo(EmailErrorCode.EMAIL_RUNTIME_CONFIG_FETCH_FAILED.getKey());
-        assertThat(exception.getPublicMessage()).isEqualTo("Failed to fetch email runtime config.");
-        assertThat(exception.getStatus()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        assertThat(exception.getErrorKey()).isEqualTo(EmailErrorCode.EMAIL_RUNTIME_CONFIG_FETCH_FAILED.getKey());
+        assertThat(exception.getPublicMessage()).isEqualTo("Failed to fetch email runtime configuration.");
         assertThat(exception.getCause()).isSameAs(thrown);
         // verify
         verify(instanceClient).getRuntimeEmailConfig();

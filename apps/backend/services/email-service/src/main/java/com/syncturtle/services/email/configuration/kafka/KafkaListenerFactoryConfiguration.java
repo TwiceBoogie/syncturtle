@@ -1,4 +1,4 @@
-package com.syncturtle.services.email.configurations.kafka;
+package com.syncturtle.services.email.configuration.kafka;
 
 import java.util.HashMap;
 import java.util.Map;

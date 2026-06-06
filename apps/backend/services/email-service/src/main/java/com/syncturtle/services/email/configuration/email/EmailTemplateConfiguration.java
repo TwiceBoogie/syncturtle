@@ -1,4 +1,4 @@
-package com.syncturtle.services.email.configurations.email;
+package com.syncturtle.services.email.configuration.email;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Set;

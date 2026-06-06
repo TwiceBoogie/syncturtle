@@ -1,4 +1,4 @@
-package com.syncturtle.services.email.configurations.properties;
+package com.syncturtle.services.email.configuration.property;
 
 import java.time.Duration;
 

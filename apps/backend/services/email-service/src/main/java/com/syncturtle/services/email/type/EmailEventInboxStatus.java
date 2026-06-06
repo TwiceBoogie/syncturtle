@@ -1,4 +1,4 @@
-package com.syncturtle.services.email.enums;
+package com.syncturtle.services.email.type;
 
 public enum EmailEventInboxStatus {
     PROCESSING,

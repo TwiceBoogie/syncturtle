@@ -15,8 +15,8 @@ import org.springframework.stereotype.Service;
 
 import com.syncturtle.services.email.dto.EmailEnvelope;
 import com.syncturtle.services.email.dto.EmailRuntimeConfig;
-import com.syncturtle.services.email.exceptions.EmailDispatchException;
-import com.syncturtle.services.email.exceptions.EmailTemplateException;
+import com.syncturtle.services.email.exception.EmailDispatchException;
+import com.syncturtle.services.email.exception.EmailTemplateException;
 import com.syncturtle.services.email.service.EmailTemplateService.RenderedEmail;
 
 import jakarta.mail.AuthenticationFailedException;
