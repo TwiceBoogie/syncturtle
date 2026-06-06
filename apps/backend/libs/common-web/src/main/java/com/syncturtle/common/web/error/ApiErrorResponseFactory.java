@@ -4,8 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpStatus;
-import org.springframework.util.StringUtils;
+import org.springframework.http.HttpStatusCode;
 
 import com.syncturtle.common.contracts.api.error.ApiErrorCode;
 import com.syncturtle.common.contracts.api.error.ApiErrorResponse;
@@ -31,13 +30,12 @@ public class ApiErrorResponseFactory {
 
     public ApiErrorResponse fromSyncturtleException(
             SyncturtleException exception,
-            HttpStatus status,
-            HttpServletRequest request,
-            String publicMessage) {
+            HttpStatusCode status,
+            HttpServletRequest request) {
         ErrorCode errorCode = exception.getErrorCode();
 
         return baseBuilder(errorCode, request)
-                .message(resolvePublicMessage(publicMessage, errorCode, status))
+                .message(resolvePublicMessage(exception, status))
                 .meta(exception.getPayload())
                 .debug(debugDetails(exception))
                 .build();
@@ -47,7 +45,7 @@ public class ApiErrorResponseFactory {
             List<FieldViolation> fields,
             HttpServletRequest request) {
         return baseBuilder(ApiErrorCode.VALIDATION_FAILED, request)
-                .message("One or more fields are invalid.")
+                .message(ApiErrorCode.VALIDATION_FAILED.getPublicMessage())
                 .fields(fields)
                 .build();
     }
@@ -56,17 +54,16 @@ public class ApiErrorResponseFactory {
             Exception exception,
             HttpServletRequest request) {
         return baseBuilder(ApiErrorCode.INTERNAL_SERVER_ERROR, request)
-                .message("Something went wrong.")
+                .message(ApiErrorCode.INTERNAL_SERVER_ERROR.getPublicMessage())
                 .debug(debugDetails(exception))
                 .build();
     }
 
     public ApiErrorResponse fromStatus(
             ApiErrorCode errorCode,
-            String publicMessage,
             HttpServletRequest request) {
         return baseBuilder(errorCode, request)
-                .message(publicMessage)
+                .message(errorCode.getPublicMessage())
                 .build();
     }
 
@@ -90,16 +87,14 @@ public class ApiErrorResponseFactory {
         return builder;
     }
 
-    private String resolvePublicMessage(String publicMessage, ErrorCode errorCode, HttpStatus status) {
-        if (StringUtils.hasText(publicMessage)) {
-            return publicMessage;
-        }
-
+    private String resolvePublicMessage(SyncturtleException exception, HttpStatusCode status) {
         if (status.is5xxServerError()) {
-            return "Something went wrong.";
+            return exception.getPublicMessage() == null || exception.getPublicMessage().isBlank()
+                    ? "Something went wrong."
+                    : exception.getPublicMessage();
         }
 
-        return errorCode.getKey();
+        return exception.getPublicMessage();
     }
 
     private DebugErrorDetails debugDetails(Exception exception) {

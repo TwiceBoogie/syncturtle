@@ -27,7 +27,6 @@ public final class WorkspaceEvent {
     private final Type type;
 
     private final UUID id;
-    private final UUID instanceId;
     private final String name;
     private final String logo;
     private final UUID logoAssetId;
@@ -35,13 +34,12 @@ public final class WorkspaceEvent {
     private final String organizationSize;
     private final UUID ownerId;
     private final String timezone;
-    private final Integer totalMembers;
+    private final Long totalMembers;
     private final UUID createdById;
     private final UUID updatedById;
     private final Instant createdAt;
     private final Instant updatedAt;
     private final Instant deletedAt;
-    private final Boolean active;
     private final Long version;
 
     private WorkspaceEvent(
@@ -49,7 +47,6 @@ public final class WorkspaceEvent {
             Instant occurredAt,
             Type type,
             UUID id,
-            UUID instanceId,
             String name,
             String logo,
             UUID logoAssetId,
@@ -57,20 +54,18 @@ public final class WorkspaceEvent {
             String organizationSize,
             UUID ownerId,
             String timezone,
-            Integer totalMembers,
+            Long totalMembers,
             UUID createdById,
             UUID updatedById,
             Instant createdAt,
             Instant updatedAt,
             Instant deletedAt,
-            Boolean active,
             Long version) {
         this.eventId = requireText(eventId, "eventId is required");
         this.occurredAt = Objects.requireNonNull(occurredAt, "occurredAt is required");
         this.type = Objects.requireNonNull(type, "type is required");
 
         this.id = Objects.requireNonNull(id, "id is required");
-        this.instanceId = Objects.requireNonNull(instanceId, "instanceId is required");
 
         this.name = requireText(name, "name is required");
         this.logo = normalizeNullable(logo);
@@ -80,7 +75,7 @@ public final class WorkspaceEvent {
         this.ownerId = Objects.requireNonNull(ownerId, "ownerId is required");
         this.timezone = requireText(timezone, "timezone is required");
 
-        this.totalMembers = requireNonNegativeInteger(totalMembers, "totalMembers is required");
+        this.totalMembers = requireNonNegativeLong(totalMembers, "totalMembers is required");
 
         this.createdById = createdById;
         this.updatedById = updatedById;
@@ -88,7 +83,6 @@ public final class WorkspaceEvent {
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt is required");
         this.deletedAt = deletedAt;
 
-        this.active = requireBoolean(active, "active is required");
         this.version = requireNonNegative(version, "version is required");
 
         requireDeleteEventShape();
@@ -115,21 +109,9 @@ public final class WorkspaceEvent {
             return;
         }
 
-        if (active) {
-            throw new IllegalArgumentException("soft-delete workspace event must have active=false");
-        }
-
         if (deletedAt == null) {
             throw new IllegalArgumentException("soft-delete workspace event must have deletedAt");
         }
-    }
-
-    private static Boolean requireBoolean(Boolean value, String message) {
-        if (value == null) {
-            throw new IllegalArgumentException(message);
-        }
-
-        return value;
     }
 
     private static Long requireNonNegative(Long value, String message) {
@@ -144,7 +126,7 @@ public final class WorkspaceEvent {
         return value;
     }
 
-    private static Integer requireNonNegativeInteger(Integer value, String message) {
+    private static Long requireNonNegativeLong(Long value, String message) {
         if (value == null) {
             throw new IllegalArgumentException(message);
         }

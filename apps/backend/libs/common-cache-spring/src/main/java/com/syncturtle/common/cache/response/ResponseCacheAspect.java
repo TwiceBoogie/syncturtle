@@ -5,6 +5,9 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -12,6 +15,8 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -25,7 +30,9 @@ import com.syncturtle.common.cache.response.annotation.InvalidateCache;
 import com.syncturtle.common.web.context.RequestUserContext;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Aspect
 public final class ResponseCacheAspect {
 
@@ -43,12 +50,19 @@ public final class ResponseCacheAspect {
             ResponseCacheKeyBuilder keyBuilder,
             RequestUserContext userContext,
             String serviceName) {
+        Assert.notNull(redis, "redis is required");
+        Assert.notNull(objectMapper, "objectMapper is required");
+        Assert.notNull(props, "props is required");
+        Assert.notNull(keyBuilder, "keyBuilder is required");
+        Assert.notNull(userContext, "userContext is required");
+        Assert.hasText(serviceName, "serviceName is required");
+
         this.redis = redis;
         this.objectMapper = objectMapper;
         this.props = props;
         this.keyBuilder = keyBuilder;
         this.userContext = userContext;
-        this.serviceName = serviceName;
+        this.serviceName = serviceName.trim();
     }
 
     @Around("@annotation(cacheAnn)")
@@ -62,82 +76,51 @@ public final class ResponseCacheAspect {
             return pjp.proceed();
         }
 
+        if (!isSafeHttpMethod(request)) {
+            return pjp.proceed();
+        }
+
+        if (cacheAnn.ttlSeconds() <= 0) {
+            return pjp.proceed();
+        }
+
         String group = cacheAnn.group();
 
-        // 1: read current group version (O(1) invalidation strategy)
-        String verKey = keyBuilder.versionKey(props.getKeyPrefix(), serviceName, group);
-        String version = redis.opsForValue().get(verKey);
-        if (version == null) {
-            Boolean ok = redis.opsForValue().setIfAbsent(verKey, "1");
-            version = Boolean.TRUE.equals(ok) ? "1" : redis.opsForValue().get(verKey);
-            if (version == null) {
-                version = "1";
-            }
+        String userScope = resolveUserScope(cacheAnn);
+        if (cacheAnn.perUser() && userScope == null) {
+            return pjp.proceed();
         }
 
-        // 2: build variant hash from canonical request (URI + canonical query)
-        String canonicalVariant = keyBuilder.canonicalVariantInput(request);
+        String workspaceScope = resolveWorkspaceScope(request, cacheAnn);
+        if (cacheAnn.perWorkspace() && workspaceScope == null) {
+            return pjp.proceed();
+        }
+
+        String generation = currentGeneration(group);
+
+        String canonicalVariant = keyBuilder.canonicalVariantInput(request, cacheAnn.varyHeaders());
         String hash = keyBuilder.variantHashHex(canonicalVariant, props.getHashBytes());
 
-        // 3: scopes
-        String userScope = "";
-        if (cacheAnn.perUser() && userContext != null && userContext.getUserId() != null) {
-            userScope = "u:" + userContext.getUserId();
-        }
-
-        String workspaceScope = "";
-        if (cacheAnn.perWorkspace()) {
-            // TODO: add workspace context
-        }
-
-        String cacheKey = keyBuilder.responseKey(props.getKeyPrefix(), serviceName, group, version, hash,
+        String cacheKey = keyBuilder.responseKey(props.getKeyPrefix(), serviceName, group, generation, hash,
                 workspaceScope, userScope);
 
-        // 4: cache hit
         String cachedJson = redis.opsForValue().get(cacheKey);
         if (cachedJson != null) {
-            CachedResponsePayload cached = objectMapper.readValue(cachedJson, CachedResponsePayload.class);
-
-            JavaType declaredBodyType = resolveResponseEntityBodyType(pjp);
-            JavaType deserializesAs = chooseDeserializationType(declaredBodyType, cached.getBodyType());
-
-            Object body = (deserializesAs == null) ? cached.getBody()
-                    : objectMapper.readValue(cached.getBody(), deserializesAs);
-
-            return ResponseEntity.status(cached.getStatus()).body(body);
-        }
-
-        // 5: miss proceed and cache only if 200
-        Object result = pjp.proceed();
-
-        if (result instanceof ResponseEntity<?> re) {
-            int status = re.getStatusCode().value();
-
-            if (status == 200) {
-                Object bodyObj = re.getBody();
-
-                CachedResponsePayload toCache = new CachedResponsePayload();
-                toCache.setStatus(status);
-
-                if (bodyObj == null) {
-                    toCache.setBody("null");
-                    toCache.setBodyType(null);
-                } else {
-                    toCache.setBody(objectMapper.writeValueAsString(bodyObj));
-                    toCache.setBodyType(bodyObj.getClass().getName());
-                }
-
-                String toCacheJson = objectMapper.writeValueAsString(toCache);
-
-                redis.opsForValue().set(cacheKey, toCacheJson, Duration.ofSeconds(cacheAnn.ttlSeconds()));
+            ResponseEntity<?> cachedResponse = readCachedResponse(pjp, cacheKey, cachedJson);
+            if (cachedResponse != null) {
+                log.debug("Response cache hit: {}", cacheKey);
+                return cachedResponse;
             }
+
+            redis.delete(cacheKey);
         }
 
-        return result;
+        log.debug("Response cache miss: {}", cacheKey);
+        return proceedAndMaybeCache(pjp, cacheAnn, cacheKey);
     }
 
-    @Around("@annotation(com.syncturtle.common.spring.cache.response.ResponseCacheEvict) || " +
-            "@annotation(com.syncturtle.common.spring.cache.response.ResponseCacheEvicts)")
+    @Around("@annotation(com.syncturtle.common.cache.response.annotation.InvalidateCache) || " +
+            "@annotation(com.syncturtle.common.cache.response.annotation.InvalidateCaches)")
     public Object aroundEvict(ProceedingJoinPoint pjp) throws Throwable {
         if (!props.isEnabled()) {
             return pjp.proceed();
@@ -149,8 +132,7 @@ public final class ResponseCacheAspect {
         // bump all that want "before"
         for (InvalidateCache evict : evicts) {
             if (evict.beforeInvocation()) {
-                String versionKey = keyBuilder.versionKey(props.getKeyPrefix(), serviceName, evict.group());
-                redis.opsForValue().increment(versionKey);
+                bumpGeneration(evict.group());
             }
         }
 
@@ -159,18 +141,130 @@ public final class ResponseCacheAspect {
         // bump all that want "after"
         for (InvalidateCache evict : evicts) {
             if (!evict.beforeInvocation()) {
-                String versionKey = keyBuilder.versionKey(props.getKeyPrefix(), serviceName, evict.group());
-                redis.opsForValue().increment(versionKey);
+                bumpGeneration(evict.group());
             }
         }
 
         return result;
     }
 
+    private Object proceedAndMaybeCache(ProceedingJoinPoint pjp, CacheResponse annotation, String cacheKey)
+            throws Throwable {
+        Object result = pjp.proceed();
+
+        if (!(result instanceof ResponseEntity<?> response)) {
+            return result;
+        }
+
+        int status = response.getStatusCode().value();
+        if (!isCacheableStatus(status, annotation.cacheableStatuses())) {
+            return result;
+        }
+
+        Object body = response.getBody();
+
+        CachedResponsePayload payload = new CachedResponsePayload();
+        payload.setStatus(status);
+
+        if (body == null) {
+            payload.setBodyJson(null);
+            payload.setBodyType(null);
+        } else {
+            payload.setBodyJson(objectMapper.writeValueAsString(body));
+            payload.setBodyType(body.getClass().getName());
+        }
+
+        String json = objectMapper.writeValueAsString(payload);
+        redis.opsForValue().set(cacheKey, json, Duration.ofSeconds(annotation.ttlSeconds()));
+
+        log.debug("Response cached: {}", cacheKey);
+
+        return result;
+    }
+
+    private ResponseEntity<?> readCachedResponse(ProceedingJoinPoint pjp, String cacheKey, String cachedJson) {
+        try {
+            CachedResponsePayload cached = objectMapper.readValue(cachedJson, CachedResponsePayload.class);
+
+            if (cached.getBodyType() == null) {
+                return ResponseEntity.status(cached.getStatus()).body(null);
+            }
+
+            JavaType declaredBodyType = resolveResponseEntityBodyType(pjp);
+            JavaType deserializeAs = chooseDeserializationType(declaredBodyType, cached.getBodyType());
+
+            if (deserializeAs == null) {
+                log.warn("Ignoring cached response because body type is not safe. key={}, bodyType={}", cacheKey,
+                        cached.getBodyType());
+                return null;
+            }
+
+            Object body = objectMapper.readValue(cached.getBodyJson(), deserializeAs);
+
+            return ResponseEntity.status(cached.getStatus()).body(body);
+        } catch (Exception exception) {
+            log.warn("Failed to read cached response. key={}", cacheKey, exception);
+            return null;
+        }
+    }
+
+    private String currentGeneration(String group) {
+        String versionKey = keyBuilder.versionKey(props.getKeyPrefix(), serviceName, group);
+
+        String existingGeneration = redis.opsForValue().get(versionKey);
+        if (existingGeneration != null) {
+            return existingGeneration;
+        }
+
+        Boolean initialized = redis.opsForValue().setIfAbsent(versionKey, "1");
+        if (Boolean.TRUE.equals(initialized)) {
+            return "1";
+        }
+
+        String genCreatedByAnotherRequest = redis.opsForValue().get(versionKey);
+        if (genCreatedByAnotherRequest != null) {
+            return genCreatedByAnotherRequest;
+        }
+
+        return "1";
+    }
+
+    private void bumpGeneration(String group) {
+        String versionKey = keyBuilder.versionKey(props.getKeyPrefix(), serviceName, group);
+        Long generation = redis.opsForValue().increment(versionKey);
+
+        log.debug("response cache generation bumped. key={}, generation={}", versionKey, generation);
+    }
+
+    private String resolveUserScope(CacheResponse annotation) {
+        if (!annotation.perUser()) {
+            return "";
+        }
+
+        if (userContext == null || userContext.getUserId() == null) {
+            return null;
+        }
+
+        return keyBuilder.userScope(userContext.getUserId().toString());
+    }
+
+    private String resolveWorkspaceScope(HttpServletRequest request, CacheResponse annotation) {
+        if (!annotation.perWorkspace()) {
+            return "";
+        }
+
+        String workspaceId = request.getHeader(props.getWorkspaceHeaderName());
+        if (!StringUtils.hasText(workspaceId)) {
+            return null;
+        }
+
+        return keyBuilder.workspaceScope(workspaceId);
+    }
+
     private HttpServletRequest currentRequestOrNull() {
-        RequestAttributes ra = RequestContextHolder.getRequestAttributes();
-        if (ra instanceof ServletRequestAttributes sra) {
-            return sra.getRequest();
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        if (attributes instanceof ServletRequestAttributes servletRequestAttributes) {
+            return servletRequestAttributes.getRequest();
         }
         return null;
     }
@@ -194,15 +288,31 @@ public final class ResponseCacheAspect {
     }
 
     private JavaType chooseDeserializationType(JavaType declaredBodyType, String cachedBodyTypeName) {
+        if (!StringUtils.hasText(cachedBodyTypeName)) {
+            return null;
+        }
+
         if (declaredBodyType == null) {
             return safeTypeFromCache(null, cachedBodyTypeName);
         }
 
         Class<?> declaredRaw = declaredBodyType.getRawClass();
+
+        if (Collection.class.isAssignableFrom(declaredRaw)) {
+            return declaredBodyType;
+        }
+
+        if (Map.class.isAssignableFrom(declaredRaw)) {
+            return declaredBodyType;
+        }
+
         boolean declaredIsInterfaceOrAbstract = declaredRaw.isInterface()
                 || Modifier.isAbstract(declaredRaw.getModifiers());
 
         if (!declaredIsInterfaceOrAbstract) {
+            if (!declaredRaw.getName().equals(cachedBodyTypeName)) {
+                return null;
+            }
             return declaredBodyType;
         }
 
@@ -210,12 +320,12 @@ public final class ResponseCacheAspect {
     }
 
     private JavaType safeTypeFromCache(Class<?> declaredBase, String cachedBodyTypeName) {
-        if (cachedBodyTypeName == null || cachedBodyTypeName.isBlank()) {
+        if (!StringUtils.hasText(cachedBodyTypeName)) {
             return null;
         }
 
         // allowlist
-        if (!cachedBodyTypeName.startsWith("com.syncturtle.")) {
+        if (!cachedBodyTypeName.startsWith(props.getBodyTypeAllowlistPrefix())) {
             return null;
         }
 
@@ -230,5 +340,18 @@ public final class ResponseCacheAspect {
         } catch (ClassNotFoundException ex) {
             return null;
         }
+    }
+
+    private static boolean isSafeHttpMethod(HttpServletRequest request) {
+        String method = request.getMethod();
+        return "GET".equalsIgnoreCase(method) || "HEAD".equalsIgnoreCase(method);
+    }
+
+    private static boolean isCacheableStatus(int status, int[] cacheableStatuses) {
+        if (cacheableStatuses == null || cacheableStatuses.length == 0) {
+            return status == 200;
+        }
+
+        return Arrays.stream(cacheableStatuses).anyMatch(candidate -> candidate == status);
     }
 }

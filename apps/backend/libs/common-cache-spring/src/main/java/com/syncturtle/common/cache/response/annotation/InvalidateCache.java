@@ -18,7 +18,8 @@ public @interface InvalidateCache {
     String group();
 
     /**
-     * invalidates before calling handler
+     * true = bump generation before method runs.
+     * false = bump generation after method succeeds.
      */
     boolean beforeInvocation() default true;
 }
