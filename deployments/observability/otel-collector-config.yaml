@@ -1,5 +1,7 @@
 receivers:
   # SYSTEM OBSERVEABILITY INGRESS
+  # host apps: localhost:14317 / localhost:14318
+  # docker apps: syncturtle-otel:4317 / syncturtle-otel:4318
   otlp/system:
     protocols:
       grpc:
@@ -7,6 +9,8 @@ receivers:
       http:
         endpoint: 0.0.0.0:4318
   # PRODUCT OBSERVABILITY INGRESS
+  # host apps: localhost:15317
+  # docker apps: syncturtle-tel:5317
   otlp/product:
     protocols:
       grpc:
@@ -16,26 +20,47 @@ processors:
   memory_limiter:
     check_interval: 1s
     limit_mib: 512
-  batch:
-    timeout: 2s
-    send_batch_size: 2048
+    spike_limit_mib: 128
+
+  filter/drop_noise:
+    error_mode: ignore
+    traces:
+      span:
+        - 'attributes["http.url"] != nil and IsMatch(attributes["http.url"], ".*/actuator/.*")'
+        - 'attributes["http.url"] != nil and IsMatch(attributes["http.url"], ".*/eureka/.*")'
+        - 'attributes["url.full"] != nil and IsMatch(attributes["url.full"], ".*/actuator/.*")'
+        - 'attributes["url.full"] != nil and IsMatch(attributes["url.full"], ".*/eureka/.*")'
+        - 'attributes["http.route"] != nil and IsMatch(attributes["http.route"], "^/actuator(/.*)?$")'
+        - 'attributes["http.route"] != nil and IsMatch(attributes["http.route"], "^/eureka(/.*)?$")'
+        - 'attributes["url.path"] != nil and IsMatch(attributes["url.path"], "^/actuator(/.*)?$")'
+        - 'attributes["url.path"] != nil and IsMatch(attributes["url.path"], "^/eureka(/.*)?$")'
+
   attributes/redact:
     actions:
-      # drop auth header if it sneaks in as an attribute
       - key: http.request.header.authorization
         action: delete
-  filter/drop_eureka:
-    spans:
-      exclude:
-        match_type: regexp
-        attributes:
-          - key: http.url
-            value: .*/eureka/.*
+      - key: http.request.header.cookie
+        action: delete
+      - key: db.statement
+        action: delete
+      - key: enduser.id
+        action: delete
+
+  attributes/mark_system:
+    actions:
+      - key: telemetry.mode
+        action: upsert
+        value: system
+
   attributes/mark_product:
     actions:
       - key: telemetry.mode
         action: upsert
         value: product
+
+  batch:
+    timeout: 2s
+    send_batch_size: 2048
 
 exporters:
   otlp/lgtm:
@@ -43,24 +68,48 @@ exporters:
     tls:
       insecure: true
 
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
 service:
+  extensions: [health_check]
+
   pipelines:
     # SYSTEM
     traces/system:
       receivers: [otlp/system]
-      processors: [memory_limiter, filter/drop_eureka, attributes/redact, batch]
+      processors:
+        - memory_limiter
+        - filter/drop_noise
+        - attributes/redact
+        - attributes/mark_system
+        - batch
       exporters: [otlp/lgtm]
+
     metrics/system:
       receivers: [otlp/system]
-      processors: [memory_limiter, batch]
+      processors:
+        - memory_limiter
+        - attributes/mark_system
+        - batch
       exporters: [otlp/lgtm]
+
     logs/system:
       receivers: [otlp/system]
-      processors: [memory_limiter, attributes/redact, batch]
+      processors:
+        - memory_limiter
+        - attributes/redact
+        - attributes/mark_system
+        - batch
       exporters: [otlp/lgtm]
 
     # PRODUCT
     traces/product:
       receivers: [otlp/product]
-      processors: [memory_limiter, attributes/mark_product, attributes/redact, batch]
+      processors:
+        - memory_limiter
+        - attributes/redact
+        - attributes/mark_product
+        - batch
       exporters: [otlp/lgtm]
