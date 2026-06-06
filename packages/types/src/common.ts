@@ -16,11 +16,13 @@ export type Listener = () => void;
 export interface IFieldViolation {
   field: string;
   message: string;
+  errorMessage?: string;
 }
 
 export interface IApiErrorPayload {
   ok: boolean;
-  error: string;
+  code: number;
+  key: string;
   message: string;
   traceId?: string;
   requestId?: string;
@@ -28,7 +30,10 @@ export interface IApiErrorPayload {
   path?: string;
   timestamp?: string;
   fields?: IFieldViolation[];
+  meta?: Record<string, unknown>;
 }
+
+export type TFieldErrors = Record<string, string>;
 
 export type TPaginationInfo = {
   count: number;

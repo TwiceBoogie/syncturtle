@@ -1,3 +1,5 @@
+"use client";
+
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { Button, Tooltip } from "@heroui/react";
 import { WEB_BASE_URL } from "@syncturtle/constants";

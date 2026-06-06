@@ -1,3 +1,5 @@
+"use client";
+
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useOutsideClickDetector } from "@syncturtle/hooks";
 import { useEffect, useRef } from "react";

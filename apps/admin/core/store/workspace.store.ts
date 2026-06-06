@@ -97,6 +97,7 @@ export class WorkspaceStore extends ExternalStore<TWorkspaceSnapshot> implements
 
     try {
       const response = await this.workspaceService.list();
+      console.log(response);
       const { results, ...paginationInfo } = response;
 
       this.batch(() => {

@@ -1,3 +1,5 @@
+"use client";
+
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { cn, ScrollShadow, Tooltip } from "@heroui/react";
 import { Cog, Mail, Lock, BrainCog, Image, Network } from "lucide-react";

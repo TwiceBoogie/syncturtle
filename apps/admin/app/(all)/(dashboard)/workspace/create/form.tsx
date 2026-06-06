@@ -19,10 +19,11 @@ import {
 // constants
 import { ORGANIZATION_SIZE, WEBSITE_URL } from "@syncturtle/constants";
 // types
-import { IWorkspace, TSlugStatus } from "@syncturtle/types";
+import { IWorkspace, TFieldErrors, TSlugStatus } from "@syncturtle/types";
 import { WorkspaceService } from "@/services/workspace.service";
 import { useDebouncerValue } from "@syncturtle/hooks";
 import { useWorkspace } from "@/hooks/store/use-workspace";
+import { getFieldErrors, getPublicErrorMessage } from "@/helpers/error.helper";
 
 const workspaceService = new WorkspaceService();
 
@@ -42,37 +43,58 @@ export const WorkspaceCreateForm = () => {
     slug: "",
     organizationSize: "",
   });
+  const [serverErrors, setServerErrors] = useState<TFieldErrors>({});
   // async state
   const [slugStatus, setSlugStatus] = useState<TSlugStatus>("idle");
   const [slugMessage, setSlugMessage] = useState<string | undefined>(undefined);
   // store hooks
   const { createWorkspace } = useWorkspace();
 
-  const handleFormChange = (key: keyof IWorkspace, value: string) => setFormData((prev) => ({ ...prev, [key]: value }));
+  const clearServerError = (key: keyof IWorkspace) => {
+    setServerErrors((prev) => {
+      if (!prev[key]) return prev;
+
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const handleFormChange = (key: keyof IWorkspace, value: string) => {
+    clearServerError(key);
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  };
 
   const submit = async (data: Partial<IWorkspace>) => {
-    await createWorkspace(data)
-      .then(() => {
-        toast("Success", {
-          actionProps: {
-            children: "Dismiss",
-            onPress: () => toast.clear(),
-            className: "bg-success text-success-foreground",
-            variant: "tertiary",
-          },
-          description: "Workspace created successfully",
-        });
-        router.push("/workspace");
-      })
-      .catch(() => {
-        toast("Error!", {
-          actionProps: {
-            children: "Dismiss",
-            onPress: () => toast.clear(),
-            variant: "danger",
-          },
-        });
+    setServerErrors({});
+
+    try {
+      await createWorkspace(data);
+
+      toast("Success", {
+        description: "Workspace created successfully",
+        actionProps: {
+          children: "Dismiss",
+          onPress: () => toast.clear(),
+          className: "bg-success text-success-foreground",
+          variant: "tertiary",
+        },
       });
+    } catch (error: unknown) {
+      const fieldErrors = getFieldErrors(error);
+      setServerErrors(fieldErrors);
+
+      toast("Error!", {
+        description: getPublicErrorMessage(error, "Failed to create workspace."),
+        actionProps: {
+          children: "Dismiss",
+          onPress: () => toast.clear(),
+          variant: "danger",
+        },
+      });
+
+      throw error;
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -141,7 +163,7 @@ export const WorkspaceCreateForm = () => {
   const isUnavailable = slugStatus === "unavailable";
 
   return (
-    <Form className="space-y-6" onSubmit={handleSubmit}>
+    <Form className="space-y-6" onSubmit={handleSubmit} validationErrors={serverErrors}>
       <div className="grid grid-cols-1 w-full max-w-4xl gap-x-10 gap-y-6 lg:grid-cols-2">
         <TextField
           isRequired

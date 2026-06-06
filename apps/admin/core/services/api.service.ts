@@ -8,7 +8,17 @@ export interface IRequestConfig {
   credentials?: RequestCredentials;
   csrf?: boolean;
   validateStatus?: (status: number) => boolean;
+  /**
+   * Hard optout. use for public/bootstrap endpoints where 401 is expected but shouldn't really trigger refresh
+   */
   skipAuthRefresh?: boolean;
+  /**
+   * Opt-in refresh. only endpoints that are truly protected should attempt silent refresh if this is set to true
+   */
+  authRefresh?: boolean;
+  /**
+   * Internal retry counter used to prevent infinite refresh loops
+   */
   _retryAttempt?: number;
 }
 
@@ -38,16 +48,20 @@ export class HttpError<T> extends Error {
 
 export abstract class APIService {
   protected baseUrl: string;
-  private csrfPromise: Promise<string> | null = null;
-  private refreshPromise: Promise<void> | null = null;
+
+  /**
+   * All APIService subclasses share these promises in the same browser runtime
+   */
+  private static csrfPromise: Promise<string> | null = null;
+  private static refreshPromise: Promise<void> | null = null;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
   }
 
   private async getCsrfToken(): Promise<string> {
-    if (!this.csrfPromise) {
-      this.csrfPromise = this.get<{ csrfToken: string }>("/api/get-csrf-token", {
+    if (!APIService.csrfPromise) {
+      APIService.csrfPromise = this.get<{ csrfToken: string }>("/api/get-csrf-token", {
         csrf: false,
         skipAuthRefresh: true,
       })
@@ -59,18 +73,21 @@ export abstract class APIService {
           return token;
         })
         .catch((err) => {
-          this.csrfPromise = null;
+          APIService.csrfPromise = null;
           throw err;
         });
     }
-    return this.csrfPromise;
+    return APIService.csrfPromise;
   }
 
   private async refreshSession(): Promise<void> {
-    if (!this.refreshPromise) {
-      this.refreshPromise = this.request<void>("POST", "/auth/refresh", {
+    if (!APIService.refreshPromise) {
+      APIService.refreshPromise = this.request<void>("POST", "/auth/refresh", {
+        // keep refresh from recursively trying to refresh itself
         skipAuthRefresh: true,
-        validateStatus: (status) => status === 200 || status === 204 || status === 401,
+        csrf: false,
+        // accept 401/403 as parsed responess so we can convert them into a normal "refresh failed" error
+        validateStatus: (status) => status === 200 || status === 204 || status === 401 || status === 403,
       })
         .then((res) => {
           if (res.status !== 200 && res.status !== 204) {
@@ -78,10 +95,10 @@ export abstract class APIService {
           }
         })
         .finally(() => {
-          this.refreshPromise = null;
+          APIService.refreshPromise = null;
         });
     }
-    return this.refreshPromise;
+    return APIService.refreshPromise;
   }
 
   private shouldAttachCsrf(method: HttpMethod, config: IRequestConfig): boolean {
@@ -124,15 +141,27 @@ export abstract class APIService {
     if (status !== 401) {
       return false;
     }
+    /**
+     * Refresh is now opt-in.
+     *
+     * This key behavior change public/bootstrap endpoints can return 401 without triggering /auth/refresh
+     */
+    if (config.authRefresh !== true) {
+      return false;
+    }
+    // Hard opt-out still wins
     if (config.skipAuthRefresh === true) {
       return false;
     }
+    // Prevent infinite loops
     if ((config._retryAttempt ?? 0) >= 1) {
       return false;
     }
+    // never refresh the refresh endpoint
     if (path.startsWith("/auth/refresh")) {
       return false;
     }
+    // never refresh the CSRF endpoint
     if (path.startsWith("/api/get-csrf-token")) {
       return false;
     }
@@ -196,13 +225,13 @@ export abstract class APIService {
 
     // if csrf is stale or missing, force a fresh token fetch next time
     if (response.status === 403 && this.shouldAttachCsrf(method, configWithCsrf)) {
-      this.csrfPromise = null;
+      APIService.csrfPromise = null;
     }
 
     const isOk = validateStatus ? validateStatus(response.status) : response.ok;
 
     if (!isOk) {
-      throw new HttpError(response, parsed);
+      throw new HttpError<T>(response, parsed as T | null);
     }
 
     return {
