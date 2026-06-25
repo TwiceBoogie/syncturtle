@@ -1,13 +1,13 @@
-import { InstanceStore, type TInstanceStore } from "./instance.store";
-import { ThemeStore, type TThemeStore } from "./theme.store";
-import { UserStore, type TUserStore } from "./user.store";
-import { TWorkspaceStore, WorkspaceStore } from "./workspace.store";
+import { InstanceStore } from "./instance.store";
+import { ThemeStore } from "./theme.store";
+import { UserStore } from "./user.store";
+import { WorkspaceStore } from "./workspace.store";
 
 export abstract class CoreRootStore {
-  theme: TThemeStore;
-  instance: TInstanceStore;
-  user: TUserStore;
-  workspace: TWorkspaceStore;
+  theme: ThemeStore;
+  instance: InstanceStore;
+  user: UserStore;
+  workspace: WorkspaceStore;
 
   constructor() {
     this.theme = new ThemeStore();

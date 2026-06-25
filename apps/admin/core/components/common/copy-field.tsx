@@ -1,8 +1,9 @@
 "use client";
 
+import type { FC, ReactNode } from "react";
+// heroui
 import { Button, toast } from "@heroui/react";
 import { Copy } from "lucide-react";
-import { FC, ReactNode } from "react";
 
 interface ICopyFieldProps {
   label: string;

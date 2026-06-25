@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, ReactNode } from "react";
+import type { ReactNode } from "react";
+import { createContext } from "react";
 import { RootStore } from "@/syncturtle-admin/store/root.store";
 
 let rootStore: RootStore | null = null;

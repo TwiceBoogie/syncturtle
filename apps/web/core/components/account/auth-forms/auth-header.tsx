@@ -1,9 +1,13 @@
-import { EAuthModes, EAuthSteps } from "@/helpers/authentication.helper";
-import { WorkspaceService } from "@/services/workspace.service";
-import { Spinner } from "@heroui/react";
-import { useTranslation } from "@syncturtle/i18n";
-import { FC, ReactNode } from "react";
+import type { FC, ReactNode } from "react";
 import useSWR from "swr";
+// heroui
+import { Spinner } from "@heroui/react";
+// syncturtle imports
+import { useTranslation } from "@syncturtle/i18n";
+// helpers
+import { EAuthModes, EAuthSteps } from "@/helpers/authentication.helper";
+// services
+import { WorkspaceService } from "@/services/workspace.service";
 
 interface IAuthHeader {
   workspaceSlug: string | undefined;
@@ -72,10 +76,9 @@ export const AuthHeader: FC<IAuthHeader> = (props) => {
       </div>
     );
   }
-
+  console.log(invitation, invitationEmail);
   return (
     <>
-      {invitation} {invitationEmail}
       <div className="space-y-1 text-center">
         <h1 className="text-3xl font-bold text-onboarding-text-100">{t(header)}</h1>
         <p className="font-medium text-onboarding-text-400">{t(subHeader)}</p>

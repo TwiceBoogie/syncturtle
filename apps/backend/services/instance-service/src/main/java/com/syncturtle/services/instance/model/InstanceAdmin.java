@@ -118,9 +118,9 @@ public class InstanceAdmin extends AuditedEntity {
     }
 
     public void revoke(Clock clock) {
-        requireActive("InstanceAdmin");
-        softDelete(clock);
+        Assert.notNull(clock, "clock is required");
         bumpSessionVersion();
+        softDelete(clock);
     }
 
     public void bumpSessionVersion() {

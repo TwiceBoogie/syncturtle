@@ -104,4 +104,29 @@ ALTER DEFAULT PRIVILEGES FOR ROLE email_migrator IN SCHEMA public
 ALTER DEFAULT PRIVILEGES FOR ROLE email_migrator IN SCHEMA public
   GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO email_app;
 
+-- ============
+-- FILE-SERVICE
+-- ============
+
+\connect postgres
+
+CREATE ROLE file_migrator LOGIN PASSWORD 'file_migrator_dev';
+CREATE ROLE file_app LOGIN PASSWORD 'file_app_dev';
+
+CREATE DATABASE syncturtle_file OWNER file_migrator;
+
+\connect syncturtle_file
+
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON DATABASE syncturtle_file FROM PUBLIC;
+
+GRANT CONNECT ON DATABASE syncturtle_file TO file_app;
+GRANT USAGE ON SCHEMA public TO file_app;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE file_migrator IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO file_app;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE file_migrator IN SCHEMA public
+  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO file_app;
+
 SQL

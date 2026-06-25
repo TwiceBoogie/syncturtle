@@ -191,7 +191,7 @@ public class InstanceConfigurationServiceImpl implements InstanceConfigurationSe
     }
 
     private void publishEvents(Instance instance, Set<InstanceConfigurationKey> changedKeys) {
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         String correlationId = UUID.randomUUID().toString();
 
         EnumSet<InstanceConfigurationScopeNames> changedScopes = InstanceConfigurationScope.scopesOf(changedKeys);

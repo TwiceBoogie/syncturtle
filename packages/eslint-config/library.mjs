@@ -1,13 +1,14 @@
 import js from "@eslint/js";
+import prettier from "eslint-config-prettier/flat";
 import tseslint from "typescript-eslint";
 
 export default [
   js.configs.recommended,
-  // Teypscript rules (non-type-aware; fast)
   ...tseslint.configs.recommended,
+  prettier,
 
   {
-    ignores: ["node_modules/**", "dist/**", "**/*.d.ts"],
+    ignores: ["node_modules/**", "dist/**", "build/**", "coverage/**", "storybook-static/**", "**/*.d.ts"],
   },
 
   {
@@ -17,7 +18,12 @@ export default [
       "prefer-const": "error",
       "no-irregular-whitespace": "error",
       "no-trailing-spaces": "error",
-      "no-duplicate-imports": "error",
+      "no-duplicate-imports": [
+        "error",
+        {
+          allowSeparateTypeImports: true,
+        },
+      ],
       "no-useless-catch": "warn",
       "no-case-declarations": "error",
       "no-unreachable": "error",

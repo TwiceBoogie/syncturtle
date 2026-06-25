@@ -1,8 +1,11 @@
 "use client";
 
-import { useAppTheme } from "@/hooks/store/use-app-theme";
-import { useOutsideClickDetector } from "@syncturtle/hooks";
 import { useEffect, useRef } from "react";
+// syncturtle imports
+import { useOutsideClickDetector } from "@syncturtle/hooks";
+// store hooks
+import { useAppTheme } from "@/hooks/store/use-app-theme";
+// components
 import { AdminSidebarDropdown } from "./sidebar-dropdown";
 import { AdminSidebarMenu } from "./sidebar-menu";
 import { AdminSidebarHelpSection } from "./sidebar-help-section";
