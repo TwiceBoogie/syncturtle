@@ -1,7 +1,7 @@
-import { IUserLite } from "../users";
-import { TInstanceAuthenticationKeys } from "./auth";
-import { TInstanceEmailConfigurationKeys } from "./email";
-import { TInstanceWorkspaceConfigurationKeys } from "./workspace";
+import type { IUserLite } from "../users";
+import type { TInstanceAuthenticationKeys } from "./auth";
+import type { TInstanceEmailConfigurationKeys } from "./email";
+import type { TInstanceWorkspaceConfigurationKeys } from "./workspace";
 
 export interface IInstanceInfo {
   instance: IInstance;

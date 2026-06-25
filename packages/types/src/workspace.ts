@@ -1,12 +1,11 @@
-import { TPaginationInfo } from "../common";
-import { TUserPermissions } from "../enums";
-import { IUser } from "../users";
+import type { TPaginationInfo } from "./common";
+import type { IUserLite, TUserPermissions } from "./users";
 
 export type TLoader = "init-loader" | "mutation" | "pagination" | "loaded" | undefined;
 
 export interface IWorkspace {
   readonly id: string;
-  readonly owner: IUser;
+  readonly owner: IUserLite;
   readonly createdAt: Date;
   readonly updatedAt: Date;
   name: string;
@@ -17,7 +16,7 @@ export interface IWorkspace {
   readonly createdById: string;
   readonly updatedById: string;
   organizationSize: string;
-  role: number;
+  role: TUserPermissions;
 }
 
 export type TWorkspacePaginationInfo = TPaginationInfo & {
@@ -47,3 +46,14 @@ export interface IWorkspaceMemberInvitation {
     slug: string;
   };
 }
+
+export interface IWorkspaceBulkInviteFormData {
+  emails: { email: string; role: TUserPermissions }[];
+}
+
+export type TOnboardingStep =
+  | "PROFILE_SETUP"
+  | "ROLE_SETUP"
+  | "USE_CASE_SETUP"
+  | "WORKSPACE_CREATE_OR_JOIN"
+  | "INVITE_MEMBERS";
