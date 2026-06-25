@@ -153,7 +153,7 @@ public class InstanceAdminServiceImpl implements InstanceAdminService {
     @Override
     @Transactional(readOnly = true)
     public InstanceAdminSessionResponse getSession(UUID currentUserId) {
-        if (currentUserId != null) {
+        if (currentUserId == null) {
             return InstanceAdminSessionResponse.anonymous();
         }
 

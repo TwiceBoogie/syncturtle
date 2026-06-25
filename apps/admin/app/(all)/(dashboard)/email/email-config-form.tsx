@@ -1,21 +1,10 @@
 "use client";
 
+import type { FC, SyntheticEvent, Key } from "react";
+import { useMemo, useState } from "react";
 import { useInstance } from "@/hooks/store/use-instance";
-import {
-  Button,
-  Description,
-  Form,
-  Input,
-  Key,
-  Label,
-  ListBox,
-  Select,
-  Spinner,
-  TextField,
-  toast,
-} from "@heroui/react";
-import { TFormattedInstanceConfiguration, TInstanceEmailConfigurationKeys } from "@syncturtle/types";
-import { FC, FormEvent, useMemo, useState } from "react";
+import { Button, Description, Form, Input, Label, ListBox, Select, Spinner, TextField, toast } from "@heroui/react";
+import type { TFormattedInstanceConfiguration, TInstanceEmailConfigurationKeys } from "@syncturtle/types";
 import { SendTestEmailModal } from "./test-email-modal";
 
 interface IInstanceEmailForm {
@@ -84,7 +73,7 @@ export const InstanceEmailForm: FC<IInstanceEmailForm> = (props) => {
   const handleFormChange = (key: keyof TEmailFormState, value: string) =>
     setFormData((prev) => ({ ...prev, [key]: value }));
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (isSubmitting) return;
 

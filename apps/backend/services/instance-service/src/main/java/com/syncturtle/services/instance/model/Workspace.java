@@ -123,7 +123,7 @@ public class Workspace {
     }
 
     public boolean isDeletedReplica() {
-        return deletedAt == null;
+        return deletedAt != null;
     }
 
     private void requireSameWorkspaceOrUninitialized(WorkspaceReplicaParam param) {
