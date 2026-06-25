@@ -1,5 +1,5 @@
+import type { FC } from "react";
 import { useInstance } from "@/hooks/store/use-instance";
-import { FC } from "react";
 
 interface IOAuthOptions {
   isSignUp: boolean | undefined;

@@ -14,10 +14,7 @@ const initialSnapshot: TThemeSnapshot = {
   isSidebarCollapsed: undefined,
 };
 
-export interface IThemeStoreInternal {
-  _subscribe: ExternalStore<TThemeSnapshot>["_subscribe"];
-  _getSnapshot: ExternalStore<TThemeSnapshot>["_getSnapshot"];
-  _getServerSnapshot: ExternalStore<TThemeSnapshot>["_getServerSnapshot"];
+export interface IThemeStore {
   // observables
   isNewUserPopup: boolean;
   theme: string | undefined;
@@ -28,7 +25,11 @@ export interface IThemeStoreInternal {
   setTheme: (currentTheme: TTheme) => void;
 }
 
-export type TThemeStore = Omit<IThemeStoreInternal, "_subscribe" | "_getSnapshot" | "_getServerSnapshot">;
+export interface IThemeStoreInternal extends IThemeStore {
+  _subscribe: ExternalStore<TThemeSnapshot>["_subscribe"];
+  _getSnapshot: ExternalStore<TThemeSnapshot>["_getSnapshot"];
+  _getServerSnapshot: ExternalStore<TThemeSnapshot>["_getServerSnapshot"];
+}
 
 export class ThemeStore extends ExternalStore<TThemeSnapshot> implements IThemeStoreInternal {
   constructor() {

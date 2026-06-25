@@ -41,6 +41,8 @@ public final class UserEvent {
     private final PrincipalType principalType;
     private final Long version;
     private final Long authVersion;
+    private final UUID updatedById;
+    private final UUID createdById;
     private final Instant createdAt;
     private final Instant updatedAt;
 
@@ -63,6 +65,8 @@ public final class UserEvent {
             PrincipalType principalType,
             Long version,
             Long authVersion,
+            UUID updatedById,
+            UUID createdById,
             Instant createdAt,
             Instant updatedAt) {
         this.eventId = requireText(eventId, "eventId is required");
@@ -86,6 +90,9 @@ public final class UserEvent {
         this.passwordAutoset = requireBoolean(passwordAutoset, "passwordAutoset is required");
         this.userTimezone = requireText(userTimezone, "userTimezone is required");
         this.principalType = Objects.requireNonNull(principalType, "principalType is required");
+
+        this.createdById = createdById;
+        this.updatedById = updatedById;
 
         this.version = requireNonNegative(version, "version is required");
         this.authVersion = requireNonNegative(authVersion, "authVersion is required");

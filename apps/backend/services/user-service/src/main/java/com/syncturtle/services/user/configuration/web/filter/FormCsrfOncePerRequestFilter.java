@@ -127,7 +127,7 @@ public final class FormCsrfOncePerRequestFilter extends OncePerRequestFilter {
         AuthException exception = AuthException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
         cookieWriter.clearCsrfCookie(response);
 
-        String location = hostResolver.userAppWithQuery("/sign-in", exception.getErrorMap());
+        String location = hostResolver.userAppWithQuery("", exception.getErrorMap());
 
         response.setStatus(HttpServletResponse.SC_SEE_OTHER);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());

@@ -6,15 +6,15 @@ import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
 @Converter(autoApply = true)
-public class WorkspaceRoleConverter implements AttributeConverter<WorkspaceRole, Short> {
+public class WorkspaceRoleConverter implements AttributeConverter<WorkspaceRole, Integer> {
 
     @Override
-    public Short convertToDatabaseColumn(WorkspaceRole attribute) {
-        return (attribute == null) ? null : (short) attribute.code;
+    public Integer convertToDatabaseColumn(WorkspaceRole attribute) {
+        return (attribute == null) ? null : attribute.code;
     }
 
     @Override
-    public WorkspaceRole convertToEntityAttribute(Short dbData) {
+    public WorkspaceRole convertToEntityAttribute(Integer dbData) {
         return (dbData == null) ? null : WorkspaceRole.from(dbData);
     }
 

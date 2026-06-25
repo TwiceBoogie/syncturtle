@@ -21,6 +21,7 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -57,6 +58,10 @@ public class WorkspaceMemberInvite extends AuditedEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "workspace_id", nullable = false, updatable = false, foreignKey = @ForeignKey(name = "fk_workspace_member_invites_workspace"))
     private Workspace workspace;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     public static WorkspaceMemberInvite create(WorkspaceMemberInviteCreateParam param) {
         Assert.notNull(param, "workspace member invite create param is required");

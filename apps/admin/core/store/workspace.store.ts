@@ -1,5 +1,5 @@
 import { WorkspaceService } from "@/services/workspace.service";
-import { IWorkspace, TLoader, TPaginationInfo } from "@syncturtle/types";
+import type { IWorkspace, TLoader, TPaginationInfo } from "@syncturtle/types";
 import { ExternalStore } from "@syncturtle/utils";
 import { CoreRootStore } from "./root.store";
 
@@ -22,10 +22,7 @@ const createInitialSnapshot = (): TWorkspaceSnapshot => ({
   error: undefined,
 });
 
-export interface IWorkspaceStoreInternal {
-  _subscribe: ExternalStore<TWorkspaceSnapshot>["_subscribe"];
-  _getSnapshot: ExternalStore<TWorkspaceSnapshot>["_getSnapshot"];
-  _getServerSnapshot: ExternalStore<TWorkspaceSnapshot>["_getServerSnapshot"];
+export interface IWorkspaceStore {
   // observables
   loader: TLoader;
   workspaces: Record<string, IWorkspace>;
@@ -40,7 +37,11 @@ export interface IWorkspaceStoreInternal {
   createWorkspace: (data: Partial<IWorkspace>) => Promise<IWorkspace>;
 }
 
-export type TWorkspaceStore = Omit<IWorkspaceStoreInternal, "_subscribe" | "_getSnapshot" | "_getServerSnapshot">;
+export interface IWorkspaceStoreInternal extends IWorkspaceStore {
+  _subscribe: ExternalStore<TWorkspaceSnapshot>["_subscribe"];
+  _getSnapshot: ExternalStore<TWorkspaceSnapshot>["_getSnapshot"];
+  _getServerSnapshot: ExternalStore<TWorkspaceSnapshot>["_getServerSnapshot"];
+}
 
 export class WorkspaceStore extends ExternalStore<TWorkspaceSnapshot> implements IWorkspaceStoreInternal {
   private readonly workspaceService: WorkspaceService;

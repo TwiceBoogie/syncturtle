@@ -1,8 +1,11 @@
 package com.syncturtle.services.user.service.impl;
 
 import com.syncturtle.services.user.service.authentication.redirect.AuthenticationRedirector;
+import com.syncturtle.services.user.service.mapper.UserApiMapper;
+
 import java.util.UUID;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -10,9 +13,11 @@ import org.springframework.util.StringUtils;
 
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
+import com.syncturtle.common.contracts.user.exception.UserException;
 import com.syncturtle.common.web.context.RequestClientContext;
 import com.syncturtle.services.user.dto.response.EmailCheckResponse;
 import com.syncturtle.services.user.dto.response.IssueTokenResponse;
+import com.syncturtle.services.user.dto.response.IssueTokenWithUserResponse;
 import com.syncturtle.services.user.model.Instance;
 import com.syncturtle.services.user.model.User;
 import com.syncturtle.services.user.repository.InstanceRepository;
@@ -48,6 +53,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final MagicCodeCredentialProvider magicCodeProvider;
     private final AuthenticatedSessionIssuer authenticatedSessionIssuer;
     private final RefreshSessionTokenStore refreshSessionTokenStore;
+    private final PasswordEncoder passwordEncoder;
+    private final UserApiMapper userApiMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -179,6 +186,39 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         refreshSessionTokenStore.revokeSession(sessionId);
         return authenticationRedirector.signOutRedirect(logoutContext).getRedirection();
+    }
+
+    @Override
+    @Transactional
+    public IssueTokenWithUserResponse setPassword(UUID currentUserId, String sessionId, String password) {
+        Assert.notNull(currentUserId, "currentUserId is required");
+        Assert.notNull(password, "password is required");
+        Assert.notNull(sessionId, "sessionId is required");
+
+        Instance instance = requireInstanceSetup();
+        User user = userRepository.findById(currentUserId).orElseThrow(() -> UserException.userNotFound(currentUserId));
+
+        // If user password is not autoset then return error
+        if (!user.isPasswordAutoset()) {
+            throw AuthException.of(AuthErrorCode.PASSWORD_ALREADY_SET)
+                    .with("error", "Your password is already set please change your password from profile");
+        }
+
+        // Check password validation
+        // TODO: plug zxcvbn4j later
+        if (password.length() < 8) {
+            throw AuthException.of(AuthErrorCode.INVALID_PASSWORD);
+        }
+
+        String passwordhash = passwordEncoder.encode(password);
+        user.markPasswordChanged(passwordhash, false);
+        // TODO: publish UserEvent to kafka
+
+        refreshSessionTokenStore.revokeSession(sessionId);
+        return IssueTokenWithUserResponse.builder()
+                .tokens(issueTokenResponse(user, instance.getId(), null))
+                .user(userApiMapper.toMe(user))
+                .build();
     }
 
     private Instance requireInstanceSetup() {

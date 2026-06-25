@@ -14,11 +14,7 @@ public interface InstanceWorkspaceProjection {
 
     String getOrganizationSize();
 
-    InstanceWorkspaceOwnerProjection getOwner();
-
     String getTimezone();
-
-    long getTotalMembers();
 
     UUID getCreatedById();
 
@@ -27,4 +23,32 @@ public interface InstanceWorkspaceProjection {
     Instant getCreatedAt();
 
     Instant getUpdatedAt();
+
+    Long getTotalMembers();
+
+    UUID getOwnerId();
+
+    String getOwnerUsername();
+
+    String getOwnerEmail();
+
+    String getOwnerDisplayName();
+
+    String getOwnerFirstName();
+
+    String getOwnerLastName();
+
+    Instant getOwnerCreatedAt();
+
+    UUID getOwnerAvatarAssetId();
+
+    UUID getOwnerCoverImageAssetId();
+
+    Boolean getOwnerEmailVerified();
+
+    Boolean getOwnerPasswordAutoset();
+
+    String getOwnerUserTimezone();
+
+    String getOwnerPrincipalType();
 }
