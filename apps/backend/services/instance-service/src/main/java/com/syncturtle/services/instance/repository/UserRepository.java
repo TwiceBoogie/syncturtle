@@ -9,20 +9,20 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.syncturtle.services.instance.model.User;
+import com.syncturtle.services.instance.model.UserLite;
 import com.syncturtle.services.instance.repository.projection.AdminUserDetailLiteProjection;
 
-public interface UserRepository extends JpaRepository<User, UUID> {
+public interface UserRepository extends JpaRepository<UserLite, UUID> {
     @Query("""
             SELECT u.id
-            FROM User u
+            FROM UserLite u
             WHERE lower(u.email) = lower(:email)
             """)
     Optional<UUID> findIdByEmailIgnoreCase(@Param("email") String email);
 
     long countByActiveTrue();
 
-    Optional<User> findFirstByEmailIgnoreCase(String email);
+    Optional<UserLite> findFirstByEmailIgnoreCase(String email);
 
     boolean existsByEmailIgnoreCase(String email);
 

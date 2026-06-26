@@ -1,76 +1,96 @@
-import type { Listener, Unsubscribe } from "@syncturtle/types";
-import { Emitter } from "@syncturtle/utils";
+import { ExternalStore } from "@syncturtle/utils";
+
+const SIDEBAR_COLLAPSED_STORAGE_KEY = "app_sidebar_collapsed";
 
 export type TThemeSnapshot = {
   sidebarCollapsed: boolean | undefined;
 };
 
-const initialSnapshot: TThemeSnapshot = {
+const createInitialSnapshot = (): TThemeSnapshot => ({
   sidebarCollapsed: undefined,
-};
+});
 
-export interface IThemeStoreInternal {
-  _subscribe(listener: Listener): Unsubscribe;
-  _getSnapshot(): TThemeSnapshot;
-  _getServerSnapshot(): TThemeSnapshot;
+export interface IThemeStore {
   // observables
   sidebarCollapsed: boolean | undefined;
+  // actions
+  hydrateSidebarCollapsed: () => void;
   toggleSidebar: (collapsed?: boolean) => void;
+  reset: () => void;
 }
 
-export type TThemeStore = Omit<IThemeStoreInternal, "_subscribe" | "_getSnapshot" | "_getServerSnapshot">;
+export interface IThemeStoreInternal extends IThemeStore {
+  _subscribe: ExternalStore<TThemeSnapshot>["_subscribe"];
+  _getSnapshot: ExternalStore<TThemeSnapshot>["_getSnapshot"];
+  _getServerSnapshot: ExternalStore<TThemeSnapshot>["_getServerSnapshot"];
+}
 
-export class ThemeStore implements IThemeStoreInternal {
-  private emitter = new Emitter();
-  private _snap: TThemeSnapshot = initialSnapshot;
-
-  // useSyncExternalStore integration
-  /** @internal */
-  public _subscribe = (listener: Listener): Unsubscribe => this.emitter.subscribe(listener);
-  /** @internal */
-  public _getSnapshot = (): TThemeSnapshot => this._snap;
-  /** @internal */
-  public _getServerSnapshot = (): TThemeSnapshot => this._snap;
+export class ThemeStore extends ExternalStore<TThemeSnapshot> implements IThemeStoreInternal {
+  constructor() {
+    super(createInitialSnapshot());
+  }
 
   // raw getters for data
   get sidebarCollapsed(): boolean | undefined {
-    return this._snap.sidebarCollapsed;
+    return this.state.sidebarCollapsed;
   }
 
-  public toggleSidebar = (collapsed?: boolean) => {
-    const next = this.computeNext(this._snap.sidebarCollapsed, collapsed);
-    this.set({ sidebarCollapsed: next });
-    if (typeof window !== "undefined") {
-      localStorage.setItem("app_sidebar_collapsed", next.toString());
-    }
+  // actions
+  public hydrateSidebarCollapsed = (): void => {
+    if (typeof window === "undefined") return;
+
+    const storedValue = window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
+
+    if (storedValue === null) return;
+
+    const sidebarCollapsed = this.parseStoredBoolean(storedValue);
+
+    if (sidebarCollapsed === undefined) return;
+
+    this.setSidebarCollapsed(sidebarCollapsed, {
+      persist: false,
+    });
   };
 
-  private computeNext(current: boolean | undefined, collapsed?: boolean): boolean {
-    if (collapsed === undefined) {
-      const prev = current ?? false;
-      return !prev;
+  public toggleSidebar = (collapsed?: boolean) => {
+    const next = this.computeNextSidebarCollapsed(this.state.sidebarCollapsed, collapsed);
+
+    this.setSidebarCollapsed(next, {
+      persist: true,
+    });
+  };
+
+  public reset = (): void => {
+    this.replaceState(createInitialSnapshot());
+  };
+
+  // internal helpers
+  private setSidebarCollapsed(sidebarCollapsed: boolean, options: { persist: boolean }): void {
+    if (Object.is(this.state.sidebarCollapsed, sidebarCollapsed)) return;
+
+    this.setState({ sidebarCollapsed });
+
+    if (options.persist) {
+      this.persistSidebarCollapsed(sidebarCollapsed);
     }
-    return collapsed;
   }
 
-  private set(patch: Partial<TThemeSnapshot>) {
-    const prev = this._snap;
-    const next = { ...prev, ...patch };
+  private computeNextSidebarCollapsed(current: boolean | undefined, collapsed?: boolean): boolean {
+    if (collapsed !== undefined) return collapsed;
 
-    let changed = false;
-    for (const key in next) {
-      const k = key as keyof TThemeSnapshot;
-      if (!Object.is(next[k], prev[k])) {
-        changed = true;
-        break;
-      }
-    }
+    return !(current ?? false);
+  }
 
-    if (!changed) {
-      return;
-    }
+  private parseStoredBoolean(value: string): boolean | undefined {
+    if (value === "true") return true;
+    if (value === "false") return false;
 
-    this._snap = next;
-    this.emitter.emit();
+    return undefined;
+  }
+
+  private persistSidebarCollapsed(sidebarCollapsed: boolean): void {
+    if (typeof window === "undefined") return;
+
+    window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(sidebarCollapsed));
   }
 }

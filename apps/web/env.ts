@@ -1,6 +1,7 @@
 import { isClient, isServer, ObjectFromEntries, ObjectKeys } from "@syncturtle/utils";
 import { createEnv } from "@t3-oss/env-nextjs";
-import { CamelCase, concat, kebabCase, Replace, slice, length } from "string-ts";
+import { concat, kebabCase, slice, length } from "string-ts";
+import type { CamelCase, Replace } from "string-ts";
 import * as z from "zod";
 
 export const CLIENT_ENV_PREFIX = "NEXT_PUBLIC_";

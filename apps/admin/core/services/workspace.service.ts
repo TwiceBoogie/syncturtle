@@ -3,7 +3,7 @@ import { API_BASE_URL } from "@syncturtle/constants";
 // services
 import { APIService, HttpError } from "./api.service";
 // types
-import { IApiErrorPayload, IWorkspace, TSlugCheckResult, TWorkspacePaginationInfo } from "@syncturtle/types";
+import type { IApiErrorPayload, IWorkspace, TSlugCheckResult, TWorkspacePaginationInfo } from "@syncturtle/types";
 
 export class WorkspaceService extends APIService {
   constructor() {

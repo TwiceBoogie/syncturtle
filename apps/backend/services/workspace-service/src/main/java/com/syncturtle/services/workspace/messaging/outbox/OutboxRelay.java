@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
-import com.syncturtle.common.contracts.workspace.event.WorkspaceEvent;
+import com.syncturtle.common.contracts.workspace.event.WorkspaceOutboxEvent;
 import com.syncturtle.services.workspace.messaging.kafka.publisher.OutboxKafkaPublisher;
 
 import lombok.RequiredArgsConstructor;
@@ -46,9 +46,9 @@ public class OutboxRelay {
         Assert.notNull(envelope, "outbox envelope is required");
 
         try {
-            WorkspaceEvent event = deserializer.toWorkspaceEvent(envelope);
+            WorkspaceOutboxEvent event = deserializer.toWorkspaceEvent(envelope);
 
-            kafkaPublisher.publishWorkspaceEvent(envelope.getTopic(), envelope.getMessageKey(), event);
+            kafkaPublisher.publishWorkspaceOutboxEvent(envelope.getTopic(), envelope.getMessageKey(), event);
 
             recorder.markPublished(envelope.getId());
         } catch (Exception exception) {

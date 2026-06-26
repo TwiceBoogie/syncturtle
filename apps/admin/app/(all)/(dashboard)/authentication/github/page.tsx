@@ -1,16 +1,19 @@
 "use client";
 
-import { AuthenticationMethodCard } from "@/components/authentication/authentication-method-card";
-import { useInstance } from "@/hooks/store/use-instance";
-import { useTheme } from "next-themes";
-import Image from "next/image";
 import { useState } from "react";
+import Image from "next/image";
 import useSWR from "swr";
+import { useTheme } from "next-themes";
+// heroui
+import { Spinner, Switch, toast } from "@heroui/react";
+// store
+import { useInstance } from "@/hooks/store/use-instance";
+// components
+import { AuthenticationMethodCard } from "@/components/authentication/authentication-method-card";
+import { InstanceGithubConfigForm } from "./form";
 // assets
 import githubLightModeImage from "@/public/logos/github-black.png";
 import githubDarkModeImage from "@/public/logos/github-white.png";
-import { Spinner, Switch, toast } from "@heroui/react";
-import { InstanceGithubConfigForm } from "./form";
 
 export default function InstanceGithubAuthenticationPage() {
   // store hooks

@@ -8,7 +8,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.5.14</version>
+    <version>3.5.16</version>
     <relativePath />
   </parent>
 
@@ -74,6 +74,7 @@
     <datasource-micrometer.version>1.2.1</datasource-micrometer.version>
     <zxcvbn.version>1.9.0</zxcvbn.version>
     <postgresql.version>42.7.11</postgresql.version>
+    <s3.version>2.42.18</s3.version>
 
     <spring.profile.unit>test</spring.profile.unit>
     <spring.profile.it>it</spring.profile.it>

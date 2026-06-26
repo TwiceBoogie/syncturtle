@@ -1,4 +1,5 @@
-import { FC, useState } from "react";
+import type { FC } from "react";
+import { useState } from "react";
 import useSWR from "swr";
 import { MessageSquare } from "lucide-react";
 // heroui
@@ -6,7 +7,7 @@ import { Card, Switch } from "@heroui/react";
 // hooks
 import { useInstance } from "@/hooks/store/use-instance";
 // types
-import { TFormattedInstanceConfiguration } from "@syncturtle/types";
+import type { TFormattedInstanceConfiguration } from "@syncturtle/types";
 
 interface IIntercomConfig {
   isTelemetryEnabled: boolean;

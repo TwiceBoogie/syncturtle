@@ -23,7 +23,7 @@ const normalizeManifestUrl = (url: string): string => {
   return withLeadingSlash(url);
 };
 
-const manifest = self.__SW_MANIFEST?.map((entry) => {
+const manifest: (PrecacheEntry | string)[] = (self.__SW_MANIFEST ?? []).map((entry): PrecacheEntry | string => {
   if (typeof entry === "string") return normalizeManifestUrl(entry);
 
   return {

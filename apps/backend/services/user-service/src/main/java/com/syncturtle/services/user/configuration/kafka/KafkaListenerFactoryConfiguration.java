@@ -17,6 +17,9 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 import com.syncturtle.common.contracts.instance.event.InstanceConfigurationEvent;
 import com.syncturtle.common.contracts.instance.event.InstanceEvent;
+import com.syncturtle.common.contracts.workspace.event.WorkspaceEvent;
+import com.syncturtle.common.contracts.workspace.event.WorkspaceMemberEvent;
+import com.syncturtle.common.contracts.workspace.event.WorkspaceMemberInviteEvent;
 
 @Configuration(proxyBeanMethods = false)
 public class KafkaListenerFactoryConfiguration {
@@ -33,6 +36,22 @@ public class KafkaListenerFactoryConfiguration {
     }
 
     @Bean
+    ConsumerFactory<String, WorkspaceEvent> workspaceEventConsumerFactory(KafkaProperties kafkaProperties) {
+        return typedConsumerFactory(kafkaProperties, WorkspaceEvent.class);
+    }
+
+    @Bean
+    ConsumerFactory<String, WorkspaceMemberEvent> workspaceMemberEventConsumerFactory(KafkaProperties kafkaProperties) {
+        return typedConsumerFactory(kafkaProperties, WorkspaceMemberEvent.class);
+    }
+
+    @Bean
+    ConsumerFactory<String, WorkspaceMemberInviteEvent> workspaceMemberInviteConsumerFactory(
+            KafkaProperties kafkaProperties) {
+        return typedConsumerFactory(kafkaProperties, WorkspaceMemberInviteEvent.class);
+    }
+
+    @Bean
     ConcurrentKafkaListenerContainerFactory<String, InstanceConfigurationEvent> instanceConfigurationKafkaListenerFactory(
             ConsumerFactory<String, InstanceConfigurationEvent> instanceConfigurationConsumerFactory,
             CommonErrorHandler kafkaErrorHandler) {
@@ -44,6 +63,27 @@ public class KafkaListenerFactoryConfiguration {
             ConsumerFactory<String, InstanceEvent> instanceConsumerFactory,
             CommonErrorHandler kafkaErrorHandler) {
         return buildFactory(instanceConsumerFactory, kafkaErrorHandler);
+    }
+
+    @Bean
+    ConcurrentKafkaListenerContainerFactory<String, WorkspaceEvent> workspaceKafkaListenerFactory(
+            ConsumerFactory<String, WorkspaceEvent> workspaceConsumerFactory,
+            CommonErrorHandler kafkaErrorHandler) {
+        return buildFactory(workspaceConsumerFactory, kafkaErrorHandler);
+    }
+
+    @Bean
+    ConcurrentKafkaListenerContainerFactory<String, WorkspaceMemberEvent> workspaceMemberKafkaListenerFactory(
+            ConsumerFactory<String, WorkspaceMemberEvent> workspaceMemberConsumerFactory,
+            CommonErrorHandler kafkaErrorHandler) {
+        return buildFactory(workspaceMemberConsumerFactory, kafkaErrorHandler);
+    }
+
+    @Bean
+    ConcurrentKafkaListenerContainerFactory<String, WorkspaceMemberInviteEvent> workspaceMemberInviteKafkaListenerFactory(
+            ConsumerFactory<String, WorkspaceMemberInviteEvent> workspaceMemberInviteConsumerFactory,
+            CommonErrorHandler kafkaErrorHandler) {
+        return buildFactory(workspaceMemberInviteConsumerFactory, kafkaErrorHandler);
     }
 
     private <T> ConsumerFactory<String, T> typedConsumerFactory(KafkaProperties kafkaProperties, Class<T> valueType) {
