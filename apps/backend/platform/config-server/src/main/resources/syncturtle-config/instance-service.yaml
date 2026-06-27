@@ -67,7 +67,7 @@ app:
     api:
       origin: ${APP_PUBLIC_API_ORIGIN:http://localhost:8000}
       base-path: ${APP_PUBLIC_API_BASE_PATH:/}
-    web:
+    user-app:
       origin: ${APP_PUBLIC_WEB_ORIGIN:http://localhost:3000}
       base-path: ${APP_PUBLIC_WEB_BASE_PATH:/}
     admin:

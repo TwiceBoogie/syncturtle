@@ -1,4 +1,4 @@
-import { FC, ReactNode } from "react";
+import type { FC, ReactNode } from "react";
 import useSWR from "swr";
 // hooks
 import { useInstance } from "@/hooks/store/use-instance";

@@ -4,3 +4,5 @@ export * from "./instance";
 export * from "./metadata";
 export * from "./swr";
 export * from "./workspace";
+export * from "./file";
+export * from "./user";

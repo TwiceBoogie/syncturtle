@@ -1,6 +1,7 @@
 import { InstanceService } from "@/services/instance.service";
-import { IInstance, IInstanceConfig } from "@syncturtle/types";
 import { ExternalStore } from "@syncturtle/utils";
+// types
+import type { IInstance, IInstanceConfig } from "@syncturtle/types";
 
 type TError = {
   status: string;
@@ -25,10 +26,7 @@ const createInitialSnapshot = (): TInstanceSnapshot => ({
   error: undefined,
 });
 
-export interface IInstanceStoreInternal {
-  _subscribe: ExternalStore<TInstanceSnapshot>["_subscribe"];
-  _getSnapshot: ExternalStore<TInstanceSnapshot>["_getSnapshot"];
-  _getServerSnapshot: ExternalStore<TInstanceSnapshot>["_getServerSnapshot"];
+export interface IInstanceStore {
   // observables
   isLoading: boolean;
   instance: IInstance | undefined;
@@ -38,7 +36,11 @@ export interface IInstanceStoreInternal {
   fetchInstanceInfo: () => Promise<void>;
 }
 
-export type TInstanceStore = Omit<IInstanceStoreInternal, "_subscribe" | "_getSnapshot" | "_getServerSnapshot">;
+export interface IInstanceStoreInternal extends IInstanceStore {
+  _subscribe: ExternalStore<TInstanceSnapshot>["_subscribe"];
+  _getSnapshot: ExternalStore<TInstanceSnapshot>["_getSnapshot"];
+  _getServerSnapshot: ExternalStore<TInstanceSnapshot>["_getServerSnapshot"];
+}
 
 export class InstanceStore extends ExternalStore<TInstanceSnapshot> implements IInstanceStoreInternal {
   private readonly instanceService: InstanceService;
