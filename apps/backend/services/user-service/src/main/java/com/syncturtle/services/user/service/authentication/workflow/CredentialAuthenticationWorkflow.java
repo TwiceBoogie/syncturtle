@@ -11,6 +11,9 @@ import org.springframework.util.Assert;
 
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
+import com.syncturtle.common.contracts.user.event.UserEvent;
+import com.syncturtle.services.user.messaging.kafka.factory.UserEventFactory;
+import com.syncturtle.services.user.messaging.outbox.UserOutboxWriter;
 import com.syncturtle.services.user.model.Profile;
 import com.syncturtle.services.user.model.User;
 import com.syncturtle.services.user.model.param.UserCreateParam;
@@ -28,6 +31,8 @@ public class CredentialAuthenticationWorkflow {
     private final ProfileRepository profileRepository;
     private final UserAuthRuntimeConfigResolver configFlagResolver;
     private final PasswordEncoder passwordEncoder;
+    private final UserEventFactory userEventFactory;
+    private final UserOutboxWriter outboxWriter;
     private final Clock clock;
 
     @Transactional
@@ -56,9 +61,13 @@ public class CredentialAuthenticationWorkflow {
         if (createdUser) {
             Profile profile = Profile.create(user, clock, "");
             profileRepository.save(profile);
+            UserEvent event = userEventFactory.created(savedUser);
+            outboxWriter.saveUserEvent(event);
         }
 
-        // Later: publish to kafka
+        // Later: publish to kafka on updates
+        // NOTE: may not need to publish as no field that is wanted is updated aside
+        // from updatedAt.
 
         return savedUser;
     }

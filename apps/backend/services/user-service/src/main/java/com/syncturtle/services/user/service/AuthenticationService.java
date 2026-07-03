@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import com.syncturtle.services.user.dto.response.EmailCheckResponse;
 import com.syncturtle.services.user.dto.response.IssueTokenResponse;
+import com.syncturtle.services.user.dto.response.IssueTokenWithUserResponse;
 
 public interface AuthenticationService {
     EmailCheckResponse emailCheck(String email);
@@ -17,4 +18,6 @@ public interface AuthenticationService {
     IssueTokenResponse magicCodeSignUp(String email, String code, String nextPath);
 
     String signOut(UUID currentUserId, String logoutContext, String sessionId);
+
+    IssueTokenWithUserResponse setPassword(UUID currentUserId, String sessionId, String password);
 }

@@ -1,8 +1,10 @@
 package com.syncturtle.services.user.service.session;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -28,6 +30,7 @@ public class RefreshSessionTokenStore {
 
     private static final String OWNER = "user-service";
     private static final String RESOURCE_REFRESH_SESSION = "refresh-session";
+    private static final String RESOURCE_USER_REFRESH_SESSIONS = "refresh-sessions-by-user";
     private static final String RESOURCE_USER_AUTH_VERSION = "user-auth-version";
     private static final String RESOURCE_ADMIN_SESSION_VERSION = "admin-session-version";
     private static final String SCOPE_SESSION_ID = "sid";
@@ -88,7 +91,78 @@ public class RefreshSessionTokenStore {
     public void revokeSession(String sessionId) {
         Assert.hasText(sessionId, "sessionId is required");
 
-        redis.delete(sessionKey(sessionId));
+        String key = sessionKey(sessionId);
+        String json = redis.opsForValue().get(key);
+
+        redis.delete(key);
+
+        if (!StringUtils.hasText(json)) {
+            return;
+        }
+
+        RefreshSessionRecord record = fromJson(json);
+        if (StringUtils.hasText(record.getUserId())) {
+            redis.opsForSet().remove(userSessionsKey(record.getUserId()), sessionId);
+        }
+    }
+
+    public void revokeUserSessions(String userId) {
+        Assert.hasText(userId, "userId is required");
+
+        String userSessionsKey = userSessionsKey(userId);
+        Set<String> sessionIds = redis.opsForSet().members(userSessionsKey);
+
+        if (sessionIds == null || sessionIds.isEmpty()) {
+            redis.delete(userSessionsKey);
+            return;
+        }
+
+        List<String> sessionKeys = new ArrayList<>(sessionIds.size());
+        for (String sessionId : sessionIds) {
+            if (StringUtils.hasText(sessionId)) {
+                sessionKeys.add(sessionKey(sessionId));
+            }
+        }
+
+        if (!sessionKeys.isEmpty()) {
+            redis.delete(sessionKeys);
+        }
+
+        redis.delete(userSessionsKey);
+    }
+
+    public void revokeUserSessionExcept(String userId, String retainedSessionId) {
+        Assert.hasText(userId, "userId is required");
+        Assert.hasText(retainedSessionId, "retainedSessionId is required");
+
+        String userSessionsKey = userSessionsKey(userId);
+        Set<String> sessionIds = redis.opsForSet().members(userSessionsKey);
+
+        if (sessionIds == null || sessionIds.isEmpty()) {
+            return;
+        }
+
+        List<String> revokedSessionIds = new ArrayList<>();
+        List<String> revokedSessionKeys = new ArrayList<>();
+
+        for (String sessionId : sessionIds) {
+            if (!StringUtils.hasText(sessionId) || retainedSessionId.equals(sessionId)) {
+                continue;
+            }
+
+            revokedSessionIds.add(sessionId);
+            revokedSessionKeys.add(sessionKey(sessionId));
+        }
+
+        if (!revokedSessionKeys.isEmpty()) {
+            redis.delete(revokedSessionKeys);
+        }
+
+        if (!revokedSessionIds.isEmpty()) {
+            redis.opsForSet().remove(userSessionsKey, revokedSessionIds.toArray());
+        }
+
+        redis.expire(userSessionsKey, authProperties.getRefreshTokenTtl());
     }
 
     public String extractSessionIdFromRefreshToken(String refreshToken) {
@@ -115,6 +189,12 @@ public class RefreshSessionTokenStore {
         Assert.hasText(sessionId, "sessionId is required");
 
         return redisKeyBuilder.authKey(OWNER, RESOURCE_REFRESH_SESSION, SCOPE_SESSION_ID, sessionId);
+    }
+
+    public String userSessionsKey(String userId) {
+        Assert.hasText(userId, "userId is required");
+
+        return redisKeyBuilder.authKey(OWNER, RESOURCE_USER_REFRESH_SESSIONS, SCOPE_USER_ID, userId);
     }
 
     public String currentUserAuthVersionKey(String userId) {
@@ -167,12 +247,24 @@ public class RefreshSessionTokenStore {
                 toJson(sessionRecord),
                 authProperties.getRefreshTokenTtl());
 
+        indexSessionForUser(userId, sessionId);
+
         return IssuedRefreshTokenReceipt.builder()
                 .sessionId(sessionId)
                 .token(refreshToken)
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
                 .build();
+    }
+
+    private void indexSessionForUser(String userId, String sessionId) {
+        Assert.hasText(userId, "userId is required");
+        Assert.hasText(sessionId, "sessionId is required");
+
+        String key = userSessionsKey(userId);
+
+        redis.opsForSet().add(key, sessionId);
+        redis.expire(key, authProperties.getRefreshTokenTtl());
     }
 
     private void validateCreate(RefreshSessionCreateSpec spec) {

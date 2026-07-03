@@ -41,6 +41,16 @@ public class KafkaTopicConfig {
     }
 
     @Bean
+    NewTopic workspaceMemberEventsTopic() {
+        return topic(KafkaTopics.WORKSPACE_MEMBER_EVENTS_V1);
+    }
+
+    @Bean
+    NewTopic workspaceMemberInviteEventsTopic() {
+        return topic(KafkaTopics.WORKSPACE_MEMBER_INVITE_EVENTS_V1);
+    }
+
+    @Bean
     NewTopic passwordEventsTopic() {
         return topic(KafkaTopics.PASSWORD_EVENTS_V1);
     }
@@ -69,6 +79,16 @@ public class KafkaTopicConfig {
     @Bean
     NewTopic workspaceEventsDltTopic() {
         return dlt(KafkaTopics.WORKSPACE_EVENTS_V1);
+    }
+
+    @Bean
+    NewTopic workspaceMemberEventsDltTopic() {
+        return dlt(KafkaTopics.WORKSPACE_MEMBER_EVENTS_V1);
+    }
+
+    @Bean
+    NewTopic workspaceMemberInviteEventsDltTopic() {
+        return dlt(KafkaTopics.WORKSPACE_MEMBER_INVITE_EVENTS_V1);
     }
 
     @Bean

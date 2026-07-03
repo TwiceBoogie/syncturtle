@@ -1,7 +1,15 @@
 {
   "extends": "@syncturtle/typescript-config/react-library.json",
-  "include": ["src"],
   "compilerOptions": {
-    "rootDir": "src"
-  }
+    "noEmit": true
+  },
+  "include": [
+    "vite-env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.d.ts",
+    ".storybook/**/*.ts",
+    ".storybook/**/*.tsx"
+  ],
+  "exclude": ["dist", "build", "node_modules", "storybook-static"]
 }

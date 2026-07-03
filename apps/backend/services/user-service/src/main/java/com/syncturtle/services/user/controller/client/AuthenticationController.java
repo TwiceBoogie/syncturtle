@@ -3,6 +3,7 @@ package com.syncturtle.services.user.controller.client;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.syncturtle.common.cache.response.annotation.InvalidateCache;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
 import com.syncturtle.common.contracts.auth.flow.AuthFlow;
 import com.syncturtle.common.core.endpoint.EndpointPaths;
@@ -11,10 +12,13 @@ import com.syncturtle.common.security.cookie.ServletAuthCookieWriter;
 import com.syncturtle.common.web.annotation.CurrentUser;
 import com.syncturtle.common.web.url.PublicUrlResolver;
 import com.syncturtle.services.user.dto.request.EmailCheckRequest;
+import com.syncturtle.services.user.dto.request.SetPasswordRequest;
 import com.syncturtle.services.user.dto.request.SignInRequest;
 import com.syncturtle.services.user.dto.request.SignUpRequest;
 import com.syncturtle.services.user.dto.response.EmailCheckResponse;
 import com.syncturtle.services.user.dto.response.IssueTokenResponse;
+import com.syncturtle.services.user.dto.response.IssueTokenWithUserResponse;
+import com.syncturtle.services.user.dto.response.UserMeResponse;
 import com.syncturtle.services.user.service.AuthenticationService;
 import com.syncturtle.services.user.service.RefreshSessionService;
 import com.syncturtle.services.user.util.AuthFormValidator;
@@ -124,6 +128,19 @@ public class AuthenticationController {
         return ResponseEntity.status(HttpStatus.SEE_OTHER)
                 .location(URI.create(authenticationService.signOut(currentUserId, logoutContext, sessionId)))
                 .build();
+    }
+
+    @PostMapping("/set-password")
+    @InvalidateCache(group = "user-me.v1")
+    public ResponseEntity<UserMeResponse> setPassword(@CurrentUser UUID currentUserId,
+            @RequestHeader(name = "X-Auth-Session-Id", required = false) String sessionId,
+            @Valid @RequestBody SetPasswordRequest request,
+            HttpServletResponse servletResponse) {
+        IssueTokenWithUserResponse response = authenticationService.setPassword(currentUserId, sessionId,
+                request.getPassword());
+        cookieWriter.clearAuthCookies(servletResponse);
+        writeSessionCookiesIfPresent(servletResponse, response.getTokens());
+        return ResponseEntity.ok(response.getUser());
     }
 
     private void writeSessionCookiesIfPresent(HttpServletResponse response, IssueTokenResponse session) {

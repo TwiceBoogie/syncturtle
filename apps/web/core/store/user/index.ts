@@ -1,10 +1,12 @@
-import { IUser } from "@syncturtle/types";
-import { ProfileStore, TUserProfileStore } from "./profile.store";
-import { ExternalStore } from "@syncturtle/utils";
+import { cloneDeep, merge } from "lodash";
+import { ProfileStore, type IUserProfileStore } from "./profile.store";
 import { UserService } from "@/services/user.service";
 import { RootStore } from "@/syncturtle-web/store/root.store";
-import { cloneDeep, merge } from "lodash";
 import { AuthService } from "@/services/auth.service";
+import { UserSettingsStore, type IUserSettingsStore } from "./settings.store";
+// syncturtle imports
+import { ExternalStore } from "@syncturtle/utils";
+import type { IUser } from "@syncturtle/types";
 
 type TError = {
   status: string;
@@ -25,47 +27,51 @@ const createInitialSnapshot = (): TUserSnapshot => ({
   error: undefined,
 });
 
-export interface IUserStoreInternal {
-  _subscribe: ExternalStore<TUserSnapshot>["_subscribe"];
-  _getSnapshot: ExternalStore<TUserSnapshot>["_getSnapshot"];
-  _getServerSnapshot: ExternalStore<TUserSnapshot>["_getServerSnapshot"];
+export interface IUserStore {
   // observables
   isLoading: boolean;
   isAuthenticated: boolean;
   data: IUser | undefined;
   error: TError | undefined;
   // store observables
-  userProfile: TUserProfileStore;
+  userProfile: IUserProfileStore;
+  userSettings: IUserSettingsStore;
   // computed
   //   localDBEnabled: boolean;
   //   canPerformAnyCreateAction: boolean;
   // actions
   fetchCurrentUser: () => Promise<IUser | undefined>;
   updateCurrentUser: (data: Partial<IUser>) => Promise<IUser | undefined>;
-  handleSetPassword: (csrfToken: string, data: { password: string }) => Promise<IUser | undefined>;
-  changePassword: (
-    csrfToken: string,
-    payload: { oldPassword?: string; newPassword: string }
-  ) => Promise<IUser | undefined>;
+  handleSetPassword: (data: { password: string }) => Promise<IUser | undefined>;
+  changePassword: (payload: { oldPassword?: string; newPassword: string }) => Promise<IUser | undefined>;
   // deactivateAccount: () => Promise<void>;
   reset: () => void;
-  // signOut: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
-export type TUserStore = Omit<IUserStoreInternal, "_subscribe" | "_getSnapshot" | "_getServerSnapshot">;
+export interface IUserStoreInternal extends IUserStore {
+  _subscribe: ExternalStore<TUserSnapshot>["_subscribe"];
+  _getSnapshot: ExternalStore<TUserSnapshot>["_getSnapshot"];
+  _getServerSnapshot: ExternalStore<TUserSnapshot>["_getServerSnapshot"];
+}
 
 export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStoreInternal {
   private readonly userService: UserService;
   private readonly authService: AuthService;
   // sub-stores
   public userProfile: ProfileStore;
+  public userSettings: UserSettingsStore;
 
-  constructor(private readonly store: RootStore) {
+  private fetchCurrentUserSeq = 0;
+
+  constructor(private readonly _store: RootStore) {
     super(createInitialSnapshot());
+
     this.userService = new UserService();
     this.authService = new AuthService();
 
-    this.userProfile = new ProfileStore(store, { userService: this.userService });
+    this.userProfile = new ProfileStore(_store, { userService: this.userService });
+    this.userSettings = new UserSettingsStore();
   }
 
   // raw getters for data
@@ -86,12 +92,28 @@ export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStor
   }
 
   public fetchCurrentUser = async (): Promise<IUser> => {
+    const requestSeq = ++this.fetchCurrentUserSeq;
+
     this.setState({ isLoading: true, error: undefined });
 
     try {
       const user = await this.userService.currentUser();
+
+      if (requestSeq !== this.fetchCurrentUserSeq) {
+        return user;
+      }
+
       if (user && user?.id) {
-        await Promise.all([this.userProfile.fetchUserProfile()]);
+        await Promise.all([
+          this.userProfile.fetchUserProfile(),
+          this.userSettings.fetchCurrentUserSettings(),
+          this._store.workspace.fetchWorkspaces(),
+        ]);
+
+        if (requestSeq !== this.fetchCurrentUserSeq) {
+          return user;
+        }
+
         this.setState({ data: user, isLoading: false, isAuthenticated: true });
       } else {
         this.setState({ data: user, isLoading: false, isAuthenticated: false });
@@ -143,7 +165,7 @@ export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStor
     }
   };
 
-  public handleSetPassword = async (csrfToken: string, payload: { password: string }): Promise<IUser | undefined> => {
+  public handleSetPassword = async (payload: { password: string }): Promise<IUser | undefined> => {
     const currentUserData = this.data;
 
     if (!currentUserData) return undefined;
@@ -158,7 +180,7 @@ export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStor
     }));
 
     try {
-      const user = await this.authService.setPassword(csrfToken, payload);
+      const user = await this.authService.setPassword(payload);
       if (user) {
         this.setState({ data: user });
         return user;
@@ -178,12 +200,12 @@ export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStor
     }
   };
 
-  public changePassword = async (
-    csrfToken: string,
-    payload: { oldPassword?: string; newPassword: string }
-  ): Promise<IUser | undefined> => {
+  public changePassword = async (payload: {
+    oldPassword?: string;
+    newPassword: string;
+  }): Promise<IUser | undefined> => {
     try {
-      const user = await this.userService.changePassword(csrfToken, payload);
+      const user = await this.userService.changePassword(payload);
 
       this.setState((s) => ({
         ...s,
@@ -199,6 +221,15 @@ export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStor
           message: "Failed to change password",
         },
       });
+      throw error;
+    }
+  };
+
+  public signOut = async (): Promise<void> => {
+    try {
+      await this.authService.signOut();
+    } catch (error) {
+      console.log(error);
       throw error;
     }
   };

@@ -39,6 +39,24 @@ public enum WorkspaceErrorCode implements ErrorCode {
             404,
             "Workspace owner was not found."),
 
+    WORKSPACE_LOGO_ASSET_INVALID(
+            4005,
+            "WORKSPACE_LOGO_ASSET_INVALID",
+            400,
+            "Workspace logo asset is invalid."),
+
+    WORKSPACE_LOGO_ASSET_NOT_UPLOADED(
+            4006,
+            "WORKSPACE_LOGO_ASSET_NOT_UPLOADED",
+            409,
+            "Workspace logo asset has not been uploaded."),
+
+    WORKSPACE_LOGO_ASSET_FORBIDDEN(
+            4007,
+            "WORKSPACE_LOGO_ASSET_FORBIDDEN",
+            403,
+            "Workspace logo cannot be used for this workspace."),
+
     WORKSPACE_CREATE_FAILED(
             4099,
             "WORKSPACE_CREATE_FAILED",

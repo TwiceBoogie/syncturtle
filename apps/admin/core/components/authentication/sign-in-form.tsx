@@ -1,6 +1,7 @@
-import { useSearchParams } from "next/navigation";
-import { AuthHeader } from "../common/auth-header";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
+// heroui
 import {
   Button,
   Description,
@@ -15,10 +16,13 @@ import {
   Surface,
   TextField,
 } from "@heroui/react";
-import { Eye, EyeOff } from "lucide-react";
-import { API_BASE_URL } from "@syncturtle/constants";
-import { AuthService } from "@/services/auth.service";
+// components
+import { AuthHeader } from "../common/auth-header";
 import { Banner } from "../common/banner";
+// syncturtle imports
+import { API_BASE_URL } from "@syncturtle/constants";
+// services
+import { AuthService } from "@/services/auth.service";
 
 enum EErrorCodes {
   INSTANCE_NOT_CONFIGURED = "INSTANCE_NOT_CONFIGURED",

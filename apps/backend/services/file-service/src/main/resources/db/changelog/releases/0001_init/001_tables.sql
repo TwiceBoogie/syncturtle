@@ -5,14 +5,13 @@ CREATE TABLE file_assets (
     created_at              TIMESTAMPTZ NOT NULL,
     updated_at              TIMESTAMPTZ NOT NULL,
     id                      UUID PRIMARY KEY,
-    instance_id             UUID,
     workspace_id            UUID,
     owner_user_id           UUID,
     storage_provider        VARCHAR(32) NOT NULL,
     bucket                  VARCHAR(255) NOT NULL,
     object_key              VARCHAR(1000) NOT NULL,
     original_filename       VARCHAR(255) NOT NULL,
-    content_type            VARCHAR(127) NOT NULL,
+    content_type            VARCHAR(128) NOT NULL,
     extension               VARCHAR(20),
     declared_size_bytes     BIGINT NOT NULL,
     actual_size_bytes       BIGINT,
@@ -36,7 +35,7 @@ CREATE TABLE file_asset_links (
     created_at              TIMESTAMPTZ NOT NULL,
     updated_at              TIMESTAMPTZ NOT NULL,
     id                      UUID PRIMARY KEY,
-    asset_id                UUID NOT NULL REFERENCES file_assets(id) ON DELETE CASCADE,
+    asset_id                UUID,
     workspace_id            UUID,
     target_service          VARCHAR(64) NOT NULL,
     target_type             VARCHAR(64) NOT NULL,
@@ -44,6 +43,10 @@ CREATE TABLE file_asset_links (
     usage_type              VARCHAR(64) NOT NULL,
     is_primary              BOOLEAN NOT NULL DEFAULT false,
     linked_by_user_id       UUID,
-    attributes              JSONB NOT NULL DEFAULT '{}'::jsonb
+    attributes              JSONB NOT NULL DEFAULT '{}'::jsonb,
+    deleted_at              TIMESTAMPTZ,
+    created_by_id           UUID,
+    updated_by_id           UUID,
+    source_version          BIGINT NOT NULL
 );
 --rollback DROP TABLE IF EXISTS file_asset_links;
