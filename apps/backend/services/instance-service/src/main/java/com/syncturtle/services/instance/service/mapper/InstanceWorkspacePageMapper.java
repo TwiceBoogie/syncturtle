@@ -12,9 +12,7 @@ public final class InstanceWorkspacePageMapper
 
     private final InstanceWorkspaceResponseMapper mapper;
 
-    public InstanceWorkspacePageMapper(
-            CursorCodec cursorCodec,
-            InstanceWorkspaceResponseMapper mapper) {
+    public InstanceWorkspacePageMapper(CursorCodec cursorCodec, InstanceWorkspaceResponseMapper mapper) {
         super(cursorCodec);
 
         Assert.notNull(mapper, "mapper is required");

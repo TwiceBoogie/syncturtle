@@ -10,17 +10,12 @@ import lombok.Value;
 @Builder
 public class UserResponse {
     UUID id;
-    String username;
-    String email;
     String displayName;
+    String email;
     String firstName;
     String lastName;
     Instant dateJoined;
+    String avatarUrl;
     UUID avatarAssetId;
-    UUID coverImageAssetId;
-    boolean active;
-    boolean emailVerified;
-    boolean passwordAutoset;
-    String timezone;
     boolean bot;
 }

@@ -11,6 +11,9 @@ import org.springframework.util.Assert;
 
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
+import com.syncturtle.common.contracts.user.event.UserEvent;
+import com.syncturtle.services.user.messaging.kafka.factory.UserEventFactory;
+import com.syncturtle.services.user.messaging.outbox.UserOutboxWriter;
 import com.syncturtle.services.user.model.Profile;
 import com.syncturtle.services.user.model.User;
 import com.syncturtle.services.user.model.param.UserCreateParam;
@@ -27,7 +30,10 @@ public class CredentialAuthenticationWorkflow {
     private final UserRepository userRepository;
     private final ProfileRepository profileRepository;
     private final UserAuthRuntimeConfigResolver configFlagResolver;
+    private final PostUserAuthenticationWorkflow postUserAuthenticationWorkflow;
     private final PasswordEncoder passwordEncoder;
+    private final UserEventFactory userEventFactory;
+    private final UserOutboxWriter outboxWriter;
     private final Clock clock;
 
     @Transactional
@@ -53,14 +59,28 @@ public class CredentialAuthenticationWorkflow {
         user.recordSuccessfullLogin(param.getProvider().value(), param.getIpAddress(), param.getUserAgent(), clock);
         User savedUser = userRepository.saveAndFlush(user);
 
+        ensureProfileExists(savedUser);
+
         if (createdUser) {
-            Profile profile = Profile.create(user, clock, "");
-            profileRepository.save(profile);
+            UserEvent event = userEventFactory.created(savedUser);
+            outboxWriter.saveUserEvent(event);
         }
 
-        // Later: publish to kafka
+        // Later: publish to kafka on updates
+        // NOTE: may not need to publish as no field that is wanted is updated aside
+        // from updatedAt.
+        postUserAuthenticationWorkflow.afterAuthentication(savedUser, createdUser, param.getProvider());
 
         return savedUser;
+    }
+
+    private void ensureProfileExists(User user) {
+        if (profileRepository.existsByUserId(user.getId())) {
+            return;
+        }
+
+        Profile profile = Profile.create(user, clock, "");
+        profileRepository.save(profile);
     }
 
     private User createUser(CredentialUserDataSpec userDataParam, CredentialCompletionSpec completionParam) {

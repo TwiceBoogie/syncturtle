@@ -5,7 +5,12 @@ import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.syncturtle.common.contracts.email.event.EmailToSendEvent;
+import com.syncturtle.common.contracts.messaging.KafkaTopics;
+import com.syncturtle.common.contracts.messaging.OutboxEvent;
 import com.syncturtle.common.contracts.workspace.event.WorkspaceEvent;
+import com.syncturtle.common.contracts.workspace.event.WorkspaceMemberEvent;
+import com.syncturtle.common.contracts.workspace.event.WorkspaceMemberInviteEvent;
 
 import lombok.RequiredArgsConstructor;
 
@@ -15,15 +20,38 @@ public class OutboxEventDeserializer {
 
     private final ObjectMapper objectMapper;
 
-    public WorkspaceEvent toWorkspaceEvent(OutboxEnvelope envelope) {
+    public OutboxEvent toEvent(OutboxEnvelope envelope) {
         Assert.notNull(envelope, "outbox envelope is required");
 
         try {
-            return objectMapper.readValue(envelope.getPayload(), WorkspaceEvent.class);
+            return objectMapper.readValue(envelope.getPayload(), payloadType(envelope));
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException(
-                    "Could not deserialize workspace outbox event. outboxId=" + envelope.getId(), exception);
+                    "Could not deserialize outbox event. outboxId=%s topic=%s eventType=%s"
+                            .formatted(envelope.getId(), envelope.getTopic(), envelope.getEventType()),
+                    exception);
         }
+    }
+
+    private static Class<? extends OutboxEvent> payloadType(OutboxEnvelope envelope) {
+        return switch (envelope.getTopic()) {
+            case KafkaTopics.WORKSPACE_EVENTS_V1 -> WorkspaceEvent.class;
+            case KafkaTopics.WORKSPACE_MEMBER_EVENTS_V1 -> WorkspaceMemberEvent.class;
+            case KafkaTopics.WORKSPACE_MEMBER_INVITE_EVENTS_V1 -> WorkspaceMemberInviteEvent.class;
+            case KafkaTopics.EMAIL_EVENTS_V1 -> emailPayloadType(envelope);
+            default ->
+                throw new IllegalStateException("Unsupported workspace outbox topic. topic=%s eventType=%s outboxId=%s"
+                        .formatted(envelope.getTopic(), envelope.getEventType(), envelope.getId()));
+        };
+    }
+
+    private static Class<? extends OutboxEvent> emailPayloadType(OutboxEnvelope envelope) {
+        return switch (envelope.getEventType()) {
+            case EmailToSendEvent.EVENT_TYPE -> EmailToSendEvent.class;
+            default ->
+                throw new IllegalStateException("Unsupported email outbox event type. topic=%s eventType=%s outboxId=%s"
+                        .formatted(envelope.getTopic(), envelope.getEventType(), envelope.getId()));
+        };
     }
 
 }

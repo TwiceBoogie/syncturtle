@@ -1,13 +1,15 @@
 import { useEffect } from "react";
 
+const DEFAULT_TITLE = "Syncturtle | The open source Life OS";
+
 interface IUseHeadProps {
-  title?: string;
+  title?: string | undefined;
 }
 
 export const useHead = ({ title }: IUseHeadProps) => {
   useEffect(() => {
     if (title) {
-      document.title = title ?? "SyncTurtle | The open source Life OS";
+      document.title = title?.trim() ? title : DEFAULT_TITLE;
     }
   }, [title]);
 };

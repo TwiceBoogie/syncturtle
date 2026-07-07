@@ -16,6 +16,7 @@ import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 import com.syncturtle.common.contracts.instance.event.InstanceConfigurationEvent;
+import com.syncturtle.common.contracts.user.event.UserAuthenticatedEvent;
 import com.syncturtle.common.contracts.user.event.UserEvent;
 
 @Configuration(proxyBeanMethods = false)
@@ -33,6 +34,12 @@ public class KafkaListenerFactoryConfiguration {
     }
 
     @Bean
+    ConsumerFactory<String, UserAuthenticatedEvent> userAuthenticatedEventConsumerFactory(
+            KafkaProperties kafkaProperties) {
+        return typedConsumerFactory(kafkaProperties, UserAuthenticatedEvent.class);
+    }
+
+    @Bean
     ConcurrentKafkaListenerContainerFactory<String, InstanceConfigurationEvent> instanceConfigurationKafkaListenerFactory(
             ConsumerFactory<String, InstanceConfigurationEvent> instanceConfigurationConsumerFactory,
             CommonErrorHandler kafkaErrorHandler) {
@@ -44,6 +51,13 @@ public class KafkaListenerFactoryConfiguration {
             ConsumerFactory<String, UserEvent> userConsumerFactory,
             CommonErrorHandler kafkaErrorHandler) {
         return buildFactory(userConsumerFactory, kafkaErrorHandler);
+    }
+
+    @Bean
+    ConcurrentKafkaListenerContainerFactory<String, UserAuthenticatedEvent> userAuthenticatedKafkaListenerFactory(
+            ConsumerFactory<String, UserAuthenticatedEvent> userAuthenticatedConsumerFactory,
+            CommonErrorHandler kafkaErrorHandler) {
+        return buildFactory(userAuthenticatedConsumerFactory, kafkaErrorHandler);
     }
 
     private <T> ConsumerFactory<String, T> typedConsumerFactory(KafkaProperties kafkaProperties, Class<T> valueType) {

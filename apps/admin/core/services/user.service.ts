@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "@syncturtle/constants";
 import { APIService, HttpError } from "./api.service";
-import { IApiErrorPayload, IUser, TUserProfile } from "@syncturtle/types";
+import type { IApiErrorPayload, IUser, TUserProfile } from "@syncturtle/types";
 
 export class UserService extends APIService {
   constructor() {

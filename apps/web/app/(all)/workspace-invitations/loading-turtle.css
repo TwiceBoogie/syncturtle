@@ -1,0 +1,32 @@
+.loading-turtle {
+  display: inline-block;
+
+  /* The shimmer colors */
+  background: linear-gradient(90deg, #39d97a 0%, #52e38a 20%, #8ff5b3 45%, #52e38a 70%, #39d97a 100%);
+
+  background-size: 200% 100%;
+  background-position: 200% 0;
+
+  /* Use the turtle PNG as a mask */
+  mask-image: url("/syncturtle-logos/syncturtle-logo-dark.png");
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+
+  /* Safari support */
+  -webkit-mask-image: url("/syncturtle-logos/syncturtle-logo-dark.png");
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+
+  animation: turtle-shimmer 2s linear infinite;
+}
+
+@keyframes turtle-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

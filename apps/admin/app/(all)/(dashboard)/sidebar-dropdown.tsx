@@ -11,10 +11,9 @@ import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useUser } from "@/hooks/store/use-user";
 // services
 import { AuthService } from "@/services/auth.service";
-// constants
+// syncturtle imports
 import { API_BASE_URL } from "@syncturtle/constants";
-// utils
-import { cn } from "@syncturtle/utils";
+import { cn } from "@syncturtle/ui";
 
 const authService = new AuthService();
 

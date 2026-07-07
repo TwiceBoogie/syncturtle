@@ -1,10 +1,11 @@
 "use client";
 
-import { useAppTheme } from "@/hooks/store/use-app-theme";
-import { cn, ScrollShadow, Tooltip } from "@heroui/react";
-import { Cog, Mail, Lock, BrainCog, Image, Network } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Cog, Mail, Lock, BrainCog, Image, Network } from "lucide-react";
+// heroui
+import { cn, ScrollShadow, Tooltip } from "@heroui/react";
+import { useAppTheme } from "@/hooks/store/use-app-theme";
 
 const INSTANCE_ADMIN_LINKS = [
   {

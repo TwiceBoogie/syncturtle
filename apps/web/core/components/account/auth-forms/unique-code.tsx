@@ -1,5 +1,6 @@
+import type { FC } from "react";
+// helpers
 import { EAuthModes } from "@/helpers/authentication.helper";
-import { FC } from "react";
 
 interface IAuthUniqueCodeForm {
   mode: EAuthModes;

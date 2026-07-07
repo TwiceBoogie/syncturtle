@@ -29,6 +29,8 @@ dist/
 .turbo/
 **/.turbo/
 
+storybook-static
+
 coverage/
 **/coverage/
 

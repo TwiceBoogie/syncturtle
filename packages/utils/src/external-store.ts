@@ -1,4 +1,4 @@
-import { Listener, Unsubscribe } from "@syncturtle/types";
+import type { Listener, Unsubscribe } from "@syncturtle/types";
 import { Emitter } from "./common";
 
 type AnyRecord = Record<string, unknown>;

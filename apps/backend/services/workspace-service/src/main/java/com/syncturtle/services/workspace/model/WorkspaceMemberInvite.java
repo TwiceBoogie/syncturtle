@@ -6,10 +6,10 @@ import java.util.UUID;
 
 import org.springframework.util.Assert;
 
+import com.syncturtle.common.contracts.workspace.type.WorkspaceRole;
 import com.syncturtle.common.data.jpa.entity.AuditedEntity;
 import com.syncturtle.services.workspace.model.param.WorkspaceMemberInviteCreateParam;
 import com.syncturtle.services.workspace.model.support.WorkspaceRoleConverter;
-import com.syncturtle.services.workspace.type.WorkspaceRole;
 
 import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;
@@ -21,6 +21,7 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,6 +42,9 @@ public class WorkspaceMemberInvite extends AuditedEntity {
     @Column(name = "accepted", nullable = false)
     private boolean accepted;
 
+    @Column(name = "consumed_at")
+    private Instant consumedAt;
+
     @Column(name = "token", nullable = false, length = MAX_TOKEN_LENGTH)
     private String token;
 
@@ -57,6 +61,10 @@ public class WorkspaceMemberInvite extends AuditedEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "workspace_id", nullable = false, updatable = false, foreignKey = @ForeignKey(name = "fk_workspace_member_invites_workspace"))
     private Workspace workspace;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     public static WorkspaceMemberInvite create(WorkspaceMemberInviteCreateParam param) {
         Assert.notNull(param, "workspace member invite create param is required");
@@ -126,6 +134,31 @@ public class WorkspaceMemberInvite extends AuditedEntity {
         requireActive("WorkspaceMemberInvite");
 
         softDelete(clock);
+    }
+
+    public boolean isAcceptedResponse() {
+        return respondedAt != null && accepted;
+    }
+
+    public boolean isConsumed() {
+        return consumedAt != null;
+    }
+
+    public boolean isAcceptedAwaitingConsumption() {
+        return isActive() && isAcceptedResponse() && !isConsumed();
+    }
+
+    public void consume(Clock clock) {
+        requireActive("WorkspaceMemberInvite");
+        Assert.notNull(clock, "clock is required");
+
+        Assert.state(isAcceptedResponse(), "workspace member invite must be accepted before it can be consumed");
+
+        if (consumedAt != null) {
+            return;
+        }
+
+        consumedAt = Instant.now(clock);
     }
 
     private void initializeForCreate(WorkspaceMemberInviteCreateParam param) {
