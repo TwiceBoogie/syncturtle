@@ -58,7 +58,8 @@ public class EmailTemplateService {
             case MAGIC_LINK -> new TemplateSet("email/html/magic-link", "email/text/magic-link");
             case PASSWORD_RESET,
                     VERIFY_EMAIL,
-                    GENERIC_HTML ->
+                    GENERIC_HTML,
+                    WORKSPACE_INVITATION ->
                 throw EmailTemplateException.unsupportedTemplate(templateType);
         };
     }

@@ -4,8 +4,8 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.syncturtle.services.workspace.model.User;
+import com.syncturtle.services.workspace.model.UserLite;
 
-public interface UserRepository extends JpaRepository<User, UUID> {
+public interface UserRepository extends JpaRepository<UserLite, UUID> {
 
 }

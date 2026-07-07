@@ -1,8 +1,10 @@
-import { useWorkspace } from "@/hooks/store/use-workspace";
+import type { FC } from "react";
+import { ExternalLink } from "lucide-react";
+// syncturtle imports
 import { WEB_BASE_URL } from "@syncturtle/constants";
 import { getFileURL } from "@syncturtle/utils";
-import { ExternalLink } from "lucide-react";
-import { FC } from "react";
+// store hooks
+import { useWorkspace } from "@/hooks/store/use-workspace";
 
 interface IWorkspaceListItemProps {
   workspaceId: string;

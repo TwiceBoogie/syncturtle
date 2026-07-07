@@ -121,6 +121,16 @@ public final class ServletGlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(body);
     }
 
+    @ExceptionHandler({ IllegalArgumentException.class, IllegalStateException.class, NullPointerException.class })
+    public ResponseEntity<ApiErrorResponse> handleDeveloperInvariantFailure(RuntimeException exception,
+            HttpServletRequest request) {
+        log.error("Developer invariant failed", exception);
+
+        ApiErrorResponse body = responseFactory.fromUnhandledException(exception, request);
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnhandledException(
             Exception exception,

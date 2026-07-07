@@ -1,13 +1,16 @@
 "use client";
 
-import { useInstance } from "@/hooks/store/use-instance";
-import { AuthenticationModes } from "@/syncturtle-admin/components/authentication";
-import { Switch, toast } from "@heroui/react";
-import { TInstanceConfigurationKeys } from "@syncturtle/types";
-import { Loader } from "@syncturtle/ui";
-import { cn } from "@syncturtle/utils";
 import { useState } from "react";
 import useSWR from "swr";
+// heroui
+import { Switch, toast } from "@heroui/react";
+// syncturtle imports
+import type { TInstanceConfigurationKeys } from "@syncturtle/types";
+import { cn, Loader } from "@syncturtle/ui";
+// store hooks
+import { useInstance } from "@/hooks/store/use-instance";
+// components
+import { AuthenticationModes } from "@/syncturtle-admin/components/authentication";
 
 export default function AuthenticationPage() {
   // store hooks

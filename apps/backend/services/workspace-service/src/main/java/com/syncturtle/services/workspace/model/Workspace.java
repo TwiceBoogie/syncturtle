@@ -14,10 +14,6 @@ import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ForeignKey;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import lombok.AccessLevel;
@@ -50,10 +46,6 @@ public class Workspace extends AuditedEntity {
 
     @Column(name = "owner_id", nullable = false)
     private UUID ownerId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", insertable = false, updatable = false, foreignKey = @ForeignKey(name = "fk_workspaces_owner"))
-    private User owner;
 
     @Column(name = "timezone", nullable = false, length = MAX_TIMEZONE_LENGTH)
     private String timezone;

@@ -1,5 +1,5 @@
 import { useContext, useSyncExternalStore } from "react";
-import { TTranslationStore } from "../store";
+import type { TTranslationStore } from "../store";
 import { TranslationContext } from "../context";
 
 export const useTranslation = (): TTranslationStore => {
