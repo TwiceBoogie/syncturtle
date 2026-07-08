@@ -2,16 +2,16 @@ package com.syncturtle.services.instance.service.mapper;
 
 import org.springframework.stereotype.Component;
 
+import com.syncturtle.common.core.asset.AssetContentUrlFactory;
 import com.syncturtle.services.instance.dto.response.InstanceAdminMeResponse;
 import com.syncturtle.services.instance.dto.response.InstanceAdminResponse;
 import com.syncturtle.services.instance.dto.response.InstanceAdminSessionResponse;
 import com.syncturtle.services.instance.dto.response.UserAdminLiteResponse;
 import com.syncturtle.services.instance.model.InstanceAdmin;
-import com.syncturtle.services.instance.model.User;
+import com.syncturtle.services.instance.model.UserLite;
 import com.syncturtle.services.instance.repository.projection.AdminUserDetailLiteProjection;
 import com.syncturtle.services.instance.repository.projection.AdminUserDetailsProjection;
 import com.syncturtle.services.instance.repository.projection.InstanceAdminProjection;
-import com.syncturtle.services.instance.service.asset.UserAssetUrlFactory;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class InstanceAdminApiMapper {
 
-    private final UserAssetUrlFactory assetUrlFactory;
+    private final AssetContentUrlFactory assetUrlFactory;
 
     public InstanceAdminResponse toResponse(InstanceAdminProjection instanceAdmin,
             AdminUserDetailLiteProjection userDetail) {
@@ -60,9 +60,9 @@ public class InstanceAdminApiMapper {
                 .lastName(instanceAdmin.getLastName())
                 .userTimezone(instanceAdmin.getUserTimezone())
                 .avatar(instanceAdmin.getAvatarAssetId())
-                .avatarUrl(assetUrlFactory.avatarContentUrl(instanceAdmin.getAvatarAssetId()))
+                .avatarUrl(assetUrlFactory.staticAssetUrl(instanceAdmin.getAvatarAssetId()))
                 .coverImage(instanceAdmin.getCoverImageAssetId())
-                .coverImageUrl(assetUrlFactory.coverImageContentUrl(instanceAdmin.getCoverImageAssetId()))
+                .coverImageUrl(assetUrlFactory.staticAssetUrl(instanceAdmin.getCoverImageAssetId()))
                 .emailVerified(instanceAdmin.isEmailVerified())
                 .passwordAutoset(instanceAdmin.isPasswordAutoset())
                 .bot(instanceAdmin.isBot())
@@ -75,7 +75,7 @@ public class InstanceAdminApiMapper {
         return InstanceAdminSessionResponse.authenticated(toMeResponse(instanceAdmin));
     }
 
-    public UserAdminLiteResponse toUserAdminLiteResponse(User user) {
+    public UserAdminLiteResponse toUserAdminLiteResponse(UserLite user) {
         return UserAdminLiteResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
@@ -94,7 +94,7 @@ public class InstanceAdminApiMapper {
                 .displayName(user.getDisplayName())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
-                .avatarUrl(assetUrlFactory.avatarContentUrl(user.getAvatarAssetId()))
+                .avatarUrl(assetUrlFactory.staticAssetUrl(user.getAvatarAssetId()))
                 .dateJoined(user.getCreatedAt())
                 .build();
     }

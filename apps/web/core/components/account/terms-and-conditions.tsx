@@ -1,5 +1,6 @@
-import { FC } from "react";
+import type { FC } from "react";
 import Link from "next/link";
+// helpers
 import { EAuthModes } from "@/helpers/authentication.helper";
 
 interface ITermsAndConditions {

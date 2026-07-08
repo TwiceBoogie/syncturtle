@@ -8,14 +8,14 @@ import lombok.Getter;
 public final class MagicCodeChallenge {
 
     private final String key;
-    private final String code;
+    private final String token;
 
-    public MagicCodeChallenge(String key, String code) {
+    public MagicCodeChallenge(String key, String token) {
         Assert.hasText(key, "key is required");
-        Assert.hasText(code, "code is required");
+        Assert.hasText(token, "token is required");
 
         this.key = key;
-        this.code = code;
+        this.token = token;
     }
 
 }

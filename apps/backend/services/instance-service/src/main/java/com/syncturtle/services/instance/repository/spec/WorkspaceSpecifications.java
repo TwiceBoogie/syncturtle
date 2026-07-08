@@ -6,7 +6,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 
-import com.syncturtle.services.instance.model.Workspace;
+import com.syncturtle.services.instance.model.WorkspaceLite;
 
 public final class WorkspaceSpecifications {
 
@@ -15,12 +15,12 @@ public final class WorkspaceSpecifications {
     private WorkspaceSpecifications() {
     }
 
-    public static Specification<Workspace> active() {
+    public static Specification<WorkspaceLite> active() {
         return (root, query, cb) -> cb.and(
                 cb.isNull(root.get("deletedAt")));
     }
 
-    public static Specification<Workspace> nameOrSlugLikeLowercasePattern(String pattern) {
+    public static Specification<WorkspaceLite> nameOrSlugLikeLowercasePattern(String pattern) {
         if (!StringUtils.hasText(pattern)) {
             return (root, query, cb) -> cb.conjunction();
         }
@@ -30,7 +30,7 @@ public final class WorkspaceSpecifications {
                 cb.like(cb.lower(root.get("slug")), pattern, LIKE_ESCAPE));
     }
 
-    public static Specification<Workspace> beforeCursorDesc(Instant cursorCreatedAt, UUID cursorId) {
+    public static Specification<WorkspaceLite> beforeCursorDesc(Instant cursorCreatedAt, UUID cursorId) {
         if (cursorCreatedAt == null || cursorId == null) {
             return (root, query, cb) -> cb.conjunction();
         }

@@ -1,5 +1,5 @@
-import { cn } from "@syncturtle/utils";
-import { FC } from "react";
+import type { FC } from "react";
+import { cn } from "@heroui/react";
 
 interface ICardLayout {
   children: React.ReactNode;
