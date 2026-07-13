@@ -10,9 +10,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.syncturtle.common.contracts.email.event.EmailToSendEvent;
 import com.syncturtle.common.contracts.email.template.EmailTemplateType;
 import com.syncturtle.services.email.dto.EmailEnvelope;
@@ -22,6 +19,9 @@ import com.syncturtle.services.email.repository.EmailEventInboxRepository;
 import com.syncturtle.services.email.type.EmailEventInboxStatus;
 
 import lombok.RequiredArgsConstructor;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +34,7 @@ public class EmailEventInboxService {
 
     private final EmailEventInboxAcquireTxService acquireTxService;
     private final EmailEventInboxRepository repository;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     @Value("${app.email.retry.max-attempts:8}")
     private int maxAttempts;
@@ -85,7 +85,7 @@ public class EmailEventInboxService {
                     .model(model)
                     .correlationId(row.getCorrelationId())
                     .build();
-        } catch (JsonProcessingException exception) {
+        } catch (JacksonException exception) {
             throw EmailInboxException.payloadDeserializationFailed(row.getEventId(), exception);
         }
     }

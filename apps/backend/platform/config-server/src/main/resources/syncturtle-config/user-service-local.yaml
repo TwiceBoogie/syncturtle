@@ -1,4 +1,7 @@
 spring:
+  thymeleaf:
+    cache: false
+
   datasource:
     url: jdbc:postgresql://localhost:5432/syncturtle_user
     username: user_app
@@ -17,7 +20,18 @@ spring:
       port: 6379
       password: ${REDIS_PASSWORD:syncturtle_redis_dev_password}
 
+server:
+  error:
+    include-exception: true
+    include-message: always
+    include-stacktrace: always
+    include-binding-errors: always
+
 app:
+  dev-error:
+    base-package: com.syncturtle
+    source-roots: src/main/java,src/test/java,src/main/resources,src/test/resources
+
   services:
     instance-service:
       base-url: http://localhost:8001
@@ -27,3 +41,22 @@ app:
       base-url: http://localhost:8003
     email-service:
       base-url: http://localhost:8020
+    file-service:
+      base-url: http://localhost:8004
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - mappings
+          - conditions
+          - beans
+          - configprops
+          - loggers
+          - httpexchanges
+          - threaddump
+          - liquibase
+          - flyway

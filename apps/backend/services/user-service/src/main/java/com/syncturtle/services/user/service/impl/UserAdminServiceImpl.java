@@ -1,12 +1,10 @@
 package com.syncturtle.services.user.service.impl;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,10 +23,11 @@ import com.syncturtle.common.contracts.auth.session.IssueInstanceAdminSessionReq
 import com.syncturtle.common.contracts.auth.session.IssueSessionResponse;
 import com.syncturtle.common.contracts.instance.admin.AdminSigninRequest;
 import com.syncturtle.common.contracts.instance.admin.AdminSignupRequest;
+import com.syncturtle.services.user.messaging.kafka.factory.UserEventFactory;
+import com.syncturtle.services.user.messaging.outbox.UserOutboxWriter;
 import com.syncturtle.services.user.model.Profile;
 import com.syncturtle.services.user.model.User;
 import com.syncturtle.services.user.model.param.UserCreateParam;
-import com.syncturtle.services.user.payload.UserEventToPublish;
 import com.syncturtle.services.user.repository.ProfileRepository;
 import com.syncturtle.services.user.repository.UserRepository;
 import com.syncturtle.services.user.service.UserAdminService;
@@ -55,7 +54,8 @@ public class UserAdminServiceImpl implements UserAdminService {
     private final RefreshSessionTokenStore refreshSessionTokenStore;
     private final UserRepository userRepository;
     private final ProfileRepository profileRepository;
-    private final ApplicationEventPublisher events;
+    private final UserEventFactory userEventFactory;
+    private final UserOutboxWriter outboxWriter;
     private final PasswordEncoder passwordEncoder;
     private final Zxcvbn zxcvbn = new Zxcvbn();
     private final Clock clock;
@@ -91,8 +91,6 @@ public class UserAdminServiceImpl implements UserAdminService {
                     .with("isTelemetryEnabled", telemetryEnabled);
         }
 
-        Instant now = Instant.now(clock);
-
         UserCreateParam param = UserCreateParam.builder()
                 .username(UUID.randomUUID().toString().replace("-", ""))
                 .email(email)
@@ -110,7 +108,8 @@ public class UserAdminServiceImpl implements UserAdminService {
         User saved = userRepository.saveAndFlush(user);
         profileRepository.save(Profile.create(saved, clock, companyName));
 
-        publishUserEvent(user, UserEvent.Type.USER_CREATED, now);
+        UserEvent event = userEventFactory.created(saved);
+        outboxWriter.saveUserEvent(event);
 
         return new AdminSignupResponse(saved.getId(), saved.getAuthVersion());
     }
@@ -143,7 +142,7 @@ public class UserAdminServiceImpl implements UserAdminService {
         // to guarantee the @Version field is updated before publishing the event
         User updated = userRepository.saveAndFlush(user);
 
-        publishUserEvent(updated, UserEvent.Type.USER_UPDATED, Instant.now(clock));
+        // NOTE: no need to publish since no field thats wanted is updated
 
         return new AdminSigninResponse(updated.getId(), updated.getAuthVersion());
     }
@@ -210,31 +209,6 @@ public class UserAdminServiceImpl implements UserAdminService {
             return email;
         }
         return email.trim().toLowerCase();
-    }
-
-    private void publishUserEvent(User user, UserEvent.Type type, Instant now) {
-        UserEvent evt = UserEvent.builder()
-                .eventId(UUID.randomUUID().toString())
-                .occurredAt(now)
-                .type(type)
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .displayName(user.getDisplayName())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .active(user.isActive())
-                .emailVerified(user.isEmailVerified())
-                .passwordAutoset(user.isPasswordAutoset())
-                .userTimezone(user.getUserTimezone())
-                .principalType(PrincipalType.HUMAN)
-                .version(user.getVersion())
-                .authVersion(user.getAuthVersion())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .build();
-
-        events.publishEvent(new UserEventToPublish(evt));
     }
 
 }

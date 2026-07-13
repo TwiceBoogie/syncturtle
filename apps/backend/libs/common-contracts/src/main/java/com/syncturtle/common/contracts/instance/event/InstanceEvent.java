@@ -11,8 +11,6 @@ import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
 
 @Getter
-@Jacksonized
-@Builder(toBuilder = true)
 public final class InstanceEvent {
     public enum Type {
         INSTANCE_CREATED, INSTANCE_UPDATED, INSTANCE_SOFT_DELETED
@@ -30,6 +28,8 @@ public final class InstanceEvent {
     private final Instant updatedAt;
     private final Instant createdAt;
 
+    @Builder
+    @Jacksonized
     private InstanceEvent(
             String eventId,
             Instant occurredAt,

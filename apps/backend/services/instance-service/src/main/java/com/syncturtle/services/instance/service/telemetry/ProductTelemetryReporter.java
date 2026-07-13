@@ -3,6 +3,7 @@ package com.syncturtle.services.instance.service.telemetry;
 import java.time.Instant;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import com.syncturtle.services.instance.repository.WorkspaceRepository;
 import io.opentelemetry.api.trace.Tracer;
 
 @Component
+@Profile("!setup")
 @ConditionalOnProperty(prefix = "app.product-telemetry", name = "enabled", havingValue = "true")
 public class ProductTelemetryReporter {
 

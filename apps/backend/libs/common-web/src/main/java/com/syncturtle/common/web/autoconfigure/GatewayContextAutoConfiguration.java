@@ -53,8 +53,7 @@ public class GatewayContextAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean(name = "gatewayUserHeaderFilterRegistration")
         FilterRegistrationBean<GatewayUserHeaderFilter> gatewayUserHeaderFilterRegistration(
-                RequestUserContext requestUserContext,
-                GatewayContextProperties properties) {
+                RequestUserContext requestUserContext) {
             FilterRegistrationBean<GatewayUserHeaderFilter> registration = new FilterRegistrationBean<>();
 
             registration.setName("gatewayUserHeaderFilter");
@@ -69,8 +68,7 @@ public class GatewayContextAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean(name = "gatewayClientHeaderFilterRegistration")
         FilterRegistrationBean<GatewayClientHeaderFilter> gatewayClientHeaderFilterRegistration(
-                RequestClientContext requestClientContext,
-                GatewayContextProperties properties) {
+                RequestClientContext requestClientContext) {
             FilterRegistrationBean<GatewayClientHeaderFilter> registration = new FilterRegistrationBean<>();
 
             registration.setName("gatewayClientHeaderFilter");

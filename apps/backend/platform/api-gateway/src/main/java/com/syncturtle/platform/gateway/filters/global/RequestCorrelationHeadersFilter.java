@@ -12,26 +12,26 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.syncturtle.common.core.header.GatewayHeaders;
+import com.syncturtle.platform.gateway.filters.GatewayFilterOrders;
 
 import reactor.core.publisher.Mono;
 
 @Component
 public final class RequestCorrelationHeadersFilter implements GlobalFilter, Ordered {
 
-    private static final int ORDER = Ordered.HIGHEST_PRECEDENCE + 10;
     private static final int MAX_ID_LENGTH = 128;
     private static final Pattern SAFE_ID = Pattern.compile("[A-Za-z0-9._:-]+");
 
     @Override
     public int getOrder() {
-        return ORDER;
+        return GatewayFilterOrders.REQUEST_CORRELATION_HEADERS;
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         HttpHeaders headers = exchange.getRequest().getHeaders();
 
-        // Do not trust inbound X-Auth-User-Id from clients
+        // Accept only safe request and correlation identifiers
         String requestId = sanitizeOrNew(headers.getFirst(GatewayHeaders.HDR_REQUEST_ID));
         String correlationId = sanitizeOrNew(headers.getFirst(GatewayHeaders.HDR_CORRELATION_ID));
 

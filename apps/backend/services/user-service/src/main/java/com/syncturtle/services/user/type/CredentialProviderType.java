@@ -3,7 +3,10 @@ package com.syncturtle.services.user.type;
 public enum CredentialProviderType {
 
     EMAIL_PASSWORD("email"),
-    MAGIC_CODE("magic-code");
+    MAGIC_CODE("magic-code"),
+    GOOGLE("google"),
+    GITHUB("github"),
+    GITLAB("gitlab");
 
     private final String value;
 

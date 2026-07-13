@@ -10,7 +10,7 @@ import org.springframework.util.Assert;
 import com.syncturtle.common.contracts.messaging.KafkaTopics;
 import com.syncturtle.common.contracts.workspace.event.WorkspaceEvent;
 import com.syncturtle.services.instance.messaging.kafka.mapper.WorkspaceEventMapper;
-import com.syncturtle.services.instance.model.Workspace;
+import com.syncturtle.services.instance.model.WorkspaceLite;
 import com.syncturtle.services.instance.model.param.WorkspaceReplicaParam;
 import com.syncturtle.services.instance.repository.WorkspaceRepository;
 
@@ -38,7 +38,7 @@ public class KafkaWorkspaceEventConsumer {
                 () -> insertNew(param));
     }
 
-    private void applyToExisting(Workspace existing, WorkspaceReplicaParam param) {
+    private void applyToExisting(WorkspaceLite existing, WorkspaceReplicaParam param) {
         boolean changed = existing.applyReplicaParam(param, clock);
 
         if (!changed) {
@@ -46,7 +46,7 @@ public class KafkaWorkspaceEventConsumer {
                     "Ignored stale or uplicate workspace replica. workspaceId={} incomingVersion={} currentVersion={}",
                     param.getId(),
                     param.getSourceVersion(),
-                    existing.getVersion());
+                    existing.getSourceVersion());
 
             return;
         }
@@ -55,7 +55,7 @@ public class KafkaWorkspaceEventConsumer {
     }
 
     private void insertNew(WorkspaceReplicaParam param) {
-        Workspace workspace = Workspace.fromReplicaParam(param, clock);
+        WorkspaceLite workspace = WorkspaceLite.fromReplicaParam(param, clock);
 
         repository.save(workspace);
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import { FC } from "react";
+import type { FC } from "react";
 import Link from "next/link";
 // heroui
 import { Button, Switch } from "@heroui/react";

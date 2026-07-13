@@ -1,6 +1,8 @@
 "use client";
 
-import { FC, FormEvent, useState } from "react";
+import type { FC, SyntheticEvent } from "react";
+import { useState } from "react";
+import { Telescope } from "lucide-react";
 // heroui
 import {
   Button,
@@ -20,8 +22,7 @@ import { IntercomConfig } from "./intercom";
 // hooks
 import { useInstance } from "@/hooks/store/use-instance";
 // types
-import { IInstance, IInstanceAdmin } from "@syncturtle/types";
-import { Telescope } from "lucide-react";
+import type { IInstance, IInstanceAdmin } from "@syncturtle/types";
 
 interface IGeneralConfigurationForm {
   instance: IInstance;
@@ -65,7 +66,7 @@ export const GeneralConfigurationForm: FC<IGeneralConfigurationForm> = (props) =
     );
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
     try {
@@ -93,7 +94,7 @@ export const GeneralConfigurationForm: FC<IGeneralConfigurationForm> = (props) =
               <Label>Name of instance</Label>
               <Input placeholder="Instance name" />
             </TextField>
-            <TextField name="email" type="email" value={instanceAdmins[0].userDetail.email ?? ""} isDisabled>
+            <TextField name="email" type="email" value={instanceAdmins[0]?.userDetail.email ?? ""} isDisabled>
               <Label>Email</Label>
               <Input placeholder="Admin email" />
             </TextField>

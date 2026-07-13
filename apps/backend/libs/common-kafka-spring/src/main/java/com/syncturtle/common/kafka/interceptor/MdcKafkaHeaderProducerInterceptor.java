@@ -10,65 +10,76 @@ import org.slf4j.MDC;
 
 import com.syncturtle.common.core.header.GatewayHeaders;
 
-public class MdcKafkaHeaderProducerInterceptor implements ProducerInterceptor<String, Object> {
+public final class MdcKafkaHeaderProducerInterceptor
+        implements ProducerInterceptor<Object, Object> {
 
-    /**
-     * MDC keys.
-     * If you configure Micrometer "baggage correlation fields" using header names,
-     * the MDC keys typically match the header names
-     */
     public static final String MDC_CORRELATION_ID = GatewayHeaders.HDR_CORRELATION_ID;
+
     public static final String MDC_REQUEST_ID = GatewayHeaders.HDR_REQUEST_ID;
 
     @Override
-    public void configure(Map<String, ?> arg0) {
-        // no-op
-    }
-
-    @Override
-    public void close() {
-        // no-op
-    }
-
-    @Override
-    public void onAcknowledgement(RecordMetadata arg0, Exception arg1) {
-        // no-op
-    }
-
-    @Override
-    public ProducerRecord<String, Object> onSend(ProducerRecord<String, Object> record) {
+    public ProducerRecord<Object, Object> onSend(
+            ProducerRecord<Object, Object> record) {
         if (record == null) {
             return null;
         }
 
-        // correlation ID (end-to-end)
-        String correlationId = safeMdcGet(MDC_CORRELATION_ID);
-        if (correlationId != null) {
-            upsertHeader(record, GatewayHeaders.HDR_CORRELATION_ID, correlationId);
-        }
+        addMdcHeader(
+                record,
+                MDC_CORRELATION_ID,
+                GatewayHeaders.HDR_CORRELATION_ID);
 
-        // request id (per-hop/per-request)
-        String requestId = safeMdcGet(MDC_REQUEST_ID);
-        if (requestId != null) {
-            upsertHeader(record, GatewayHeaders.HDR_REQUEST_ID, requestId);
-        }
+        addMdcHeader(
+                record,
+                MDC_REQUEST_ID,
+                GatewayHeaders.HDR_REQUEST_ID);
 
         return record;
     }
 
-    private static String safeMdcGet(String key) {
+    @Override
+    public void onAcknowledgement(
+            RecordMetadata metadata,
+            Exception exception) {
+        // No acknowledgement handling required.
+    }
+
+    @Override
+    public void configure(Map<String, ?> configurations) {
+        // No external configuration required.
+    }
+
+    @Override
+    public void close() {
+        // No resources to close.
+    }
+
+    private static void addMdcHeader(
+            ProducerRecord<Object, Object> record,
+            String mdcKey,
+            String headerName) {
+        String value = getMdcValue(mdcKey);
+
+        if (value == null) {
+            return;
+        }
+
+        record.headers().remove(headerName);
+
+        record.headers().add(
+                headerName,
+                value.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String getMdcValue(String key) {
         String value = MDC.get(key);
+
         if (value == null) {
             return null;
         }
-        value = value.trim();
-        return value.isEmpty() ? null : value;
-    }
 
-    private static void upsertHeader(ProducerRecord<String, Object> record, String headerName, String value) {
-        // remove existing to avoid duplicates if re-used/retried in some producer flows
-        record.headers().remove(headerName);
-        record.headers().add(headerName, value.getBytes(StandardCharsets.UTF_8));
-    }
+        String trimmed = value.trim();
 
+        return trimmed.isEmpty() ? null : trimmed;
+    }
 }

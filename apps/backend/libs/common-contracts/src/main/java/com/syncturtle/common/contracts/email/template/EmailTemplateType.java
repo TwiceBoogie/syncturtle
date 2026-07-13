@@ -4,5 +4,6 @@ public enum EmailTemplateType {
     MAGIC_LINK,
     PASSWORD_RESET,
     VERIFY_EMAIL,
-    GENERIC_HTML
+    GENERIC_HTML,
+    WORKSPACE_INVITATION
 }

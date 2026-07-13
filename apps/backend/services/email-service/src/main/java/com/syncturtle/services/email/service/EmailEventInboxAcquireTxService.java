@@ -14,8 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.syncturtle.common.contracts.email.event.EmailToSendEvent;
 import com.syncturtle.services.email.exception.EmailInboxException;
 import com.syncturtle.services.email.models.EmailEventInbox;
@@ -24,6 +22,8 @@ import com.syncturtle.services.email.service.EmailEventInboxService.AcquireResul
 import com.syncturtle.services.email.type.EmailEventInboxStatus;
 
 import lombok.RequiredArgsConstructor;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +32,7 @@ public class EmailEventInboxAcquireTxService {
     private static final Duration PROCESSING_LEASE = Duration.ofMinutes(5);
 
     private final EmailEventInboxRepository repository;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
     /**
      * Fresh insert attempt in its own transaction.
@@ -144,8 +144,8 @@ public class EmailEventInboxAcquireTxService {
 
     private String writeJson(Object value) {
         try {
-            return objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException exception) {
+            return jsonMapper.writeValueAsString(value);
+        } catch (JacksonException exception) {
             throw EmailInboxException.payloadSerializationFailed(exception);
         }
     }
