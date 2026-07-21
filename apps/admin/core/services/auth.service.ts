@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "@syncturtle/constants";
 import { APIService, HttpError } from "./api.service";
-import { IApiErrorPayload, ICsrfTokenData } from "@syncturtle/types";
+import type { IApiErrorPayload, ICsrfTokenData } from "@syncturtle/types";
 
 export class AuthService extends APIService {
   constructor() {

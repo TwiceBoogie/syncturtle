@@ -53,6 +53,10 @@ public final class EmailDispatchException extends SyncturtleServiceException {
         return retryable(EmailErrorCode.EMAIL_DISPATCH_FAILED, cause);
     }
 
+    public static EmailDispatchException dispatchFailed() {
+        return retryable(EmailErrorCode.EMAIL_DISPATCH_FAILED, null);
+    }
+
     public static EmailDispatchException recipientsRefused(Throwable cause) {
         return permanent(EmailErrorCode.EMAIL_SMTP_RECIPIENTS_REFUSED, cause);
     }

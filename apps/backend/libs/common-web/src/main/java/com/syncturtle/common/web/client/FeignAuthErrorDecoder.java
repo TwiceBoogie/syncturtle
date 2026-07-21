@@ -2,7 +2,6 @@ package com.syncturtle.common.web.client;
 
 import java.io.InputStream;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
 import com.syncturtle.common.web.dto.response.AuthExceptionResponse;
@@ -10,11 +9,12 @@ import com.syncturtle.common.web.dto.response.AuthExceptionResponse;
 import feign.Response;
 import feign.codec.ErrorDecoder;
 import lombok.RequiredArgsConstructor;
+import tools.jackson.databind.json.JsonMapper;
 
 @RequiredArgsConstructor
 public class FeignAuthErrorDecoder implements ErrorDecoder {
 
-    private final ObjectMapper mapper;
+    private final JsonMapper mapper;
     private final ErrorDecoder defaultDecoder = new Default();
 
     @Override

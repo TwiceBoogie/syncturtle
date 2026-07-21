@@ -12,7 +12,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.syncturtle.common.contracts.workspace.error.WorkspaceErrorCode;
 import com.syncturtle.common.contracts.workspace.event.WorkspaceEvent;
+import com.syncturtle.common.contracts.workspace.event.WorkspaceMemberEvent;
 import com.syncturtle.common.contracts.workspace.exception.WorkspaceException;
+import com.syncturtle.common.contracts.workspace.type.WorkspaceRole;
 import com.syncturtle.services.workspace.dto.request.WorkspaceCreateRequest;
 import com.syncturtle.services.workspace.dto.response.WorkspaceResponse;
 import com.syncturtle.services.workspace.dto.response.WorkspaceSlugCheckResponse;
@@ -24,11 +26,10 @@ import com.syncturtle.services.workspace.model.param.WorkspaceCreateParam;
 import com.syncturtle.services.workspace.model.param.WorkspaceMemberCreateParam;
 import com.syncturtle.services.workspace.repository.WorkspaceMemberRepository;
 import com.syncturtle.services.workspace.repository.WorkspaceRepository;
-import com.syncturtle.services.workspace.repository.projection.WorkspaceProjection;
+import com.syncturtle.services.workspace.repository.projection.CurrentUserWorkspaceProjection;
 import com.syncturtle.services.workspace.service.WorkspaceAdminService;
 import com.syncturtle.services.workspace.service.mapper.WorkspaceApiMapper;
 import com.syncturtle.services.workspace.service.workspace.WorkspaceSlugPolicy;
-import com.syncturtle.services.workspace.type.WorkspaceRole;
 
 import lombok.RequiredArgsConstructor;
 
@@ -91,16 +92,19 @@ public class WorkspaceAdminServiceImpl implements WorkspaceAdminService {
                     .companyRole(request.getCompanyRole())
                     .build();
 
-            workspaceMemberRepository.save(WorkspaceMember.create(memberParam));
+            WorkspaceMember member = workspaceMemberRepository.saveAndFlush(WorkspaceMember.create(memberParam));
 
-            WorkspaceProjection projection = workspaceRepository.findWorkspaceById(workspace.getId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            CurrentUserWorkspaceProjection projection = workspaceMemberRepository
+                    .findCurrentUserWorkspaceById(currentUserId, workspace.getId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
                             "Workspace was created but could not be loaded."));
 
-            WorkspaceEvent workspaceEvent = workspaceEventFactory.created(workspace,
-                    workspaceMemberRepository.countByWorkspace_Id(workspace.getId()));
+            WorkspaceEvent workspaceEvent = workspaceEventFactory.created(workspace);
+            WorkspaceMemberEvent workspaceMemberEvent = workspaceEventFactory.memberCreated(member, workspace.getId());
 
             outboxWriter.saveWorkspaceEvent(workspaceEvent);
+            outboxWriter.saveWorkspaceMemberEvent(workspaceMemberEvent);
 
             return mapper.toWorkspaceResponse(projection);
         } catch (DataIntegrityViolationException exception) {

@@ -3,8 +3,9 @@ package com.syncturtle.services.user.configuration.kafka;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
+import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -13,70 +14,125 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
+import org.springframework.util.Assert;
 
 import com.syncturtle.common.contracts.instance.event.InstanceConfigurationEvent;
 import com.syncturtle.common.contracts.instance.event.InstanceEvent;
+import com.syncturtle.common.contracts.workspace.event.WorkspaceEvent;
+import com.syncturtle.common.contracts.workspace.event.WorkspaceMemberEvent;
+import com.syncturtle.common.contracts.workspace.event.WorkspaceMemberInviteEvent;
+
+import tools.jackson.databind.json.JsonMapper;
 
 @Configuration(proxyBeanMethods = false)
 public class KafkaListenerFactoryConfiguration {
 
-    @Bean
-    ConsumerFactory<String, InstanceConfigurationEvent> instanceConfigurationEventConsumerFactory(
-            KafkaProperties kafkaProperties) {
-        return typedConsumerFactory(kafkaProperties, InstanceConfigurationEvent.class);
+    private final KafkaProperties kafkaProperties;
+    private final JsonMapper jsonMapper;
+    private final CommonErrorHandler kafkaErrorHandler;
+
+    public KafkaListenerFactoryConfiguration(KafkaProperties kafkaProperties, JsonMapper jsonMapper,
+            CommonErrorHandler kafkaErrorHandler) {
+        Assert.notNull(kafkaProperties, "kafkaProperties is required");
+        Assert.notNull(jsonMapper, "jsonMapper is required");
+        Assert.notNull(kafkaErrorHandler, "kafkaErrorHandler is required");
+
+        this.kafkaProperties = kafkaProperties;
+        this.jsonMapper = jsonMapper;
+        this.kafkaErrorHandler = kafkaErrorHandler;
     }
 
     @Bean
-    ConsumerFactory<String, InstanceEvent> instanceEventConsumerFactory(KafkaProperties kafkaProperties) {
-        return typedConsumerFactory(kafkaProperties, InstanceEvent.class);
+    ConsumerFactory<String, InstanceConfigurationEvent> instanceConfigurationEventConsumerFactory() {
+        return typedConsumerFactory(InstanceConfigurationEvent.class);
+    }
+
+    @Bean
+    ConsumerFactory<String, InstanceEvent> instanceEventConsumerFactory() {
+        return typedConsumerFactory(InstanceEvent.class);
+    }
+
+    @Bean
+    ConsumerFactory<String, WorkspaceEvent> workspaceEventConsumerFactory() {
+        return typedConsumerFactory(WorkspaceEvent.class);
+    }
+
+    @Bean
+    ConsumerFactory<String, WorkspaceMemberEvent> workspaceMemberEventConsumerFactory() {
+        return typedConsumerFactory(WorkspaceMemberEvent.class);
+    }
+
+    @Bean
+    ConsumerFactory<String, WorkspaceMemberInviteEvent> workspaceMemberInviteConsumerFactory() {
+        return typedConsumerFactory(WorkspaceMemberInviteEvent.class);
     }
 
     @Bean
     ConcurrentKafkaListenerContainerFactory<String, InstanceConfigurationEvent> instanceConfigurationKafkaListenerFactory(
-            ConsumerFactory<String, InstanceConfigurationEvent> instanceConfigurationConsumerFactory,
-            CommonErrorHandler kafkaErrorHandler) {
-        return buildFactory(instanceConfigurationConsumerFactory, kafkaErrorHandler);
+            ConsumerFactory<String, InstanceConfigurationEvent> instanceConfigurationConsumerFactory) {
+        return buildFactory(instanceConfigurationConsumerFactory);
     }
 
     @Bean
     ConcurrentKafkaListenerContainerFactory<String, InstanceEvent> instanceKafkaListenerFactory(
-            ConsumerFactory<String, InstanceEvent> instanceConsumerFactory,
-            CommonErrorHandler kafkaErrorHandler) {
-        return buildFactory(instanceConsumerFactory, kafkaErrorHandler);
+            ConsumerFactory<String, InstanceEvent> instanceConsumerFactory) {
+        return buildFactory(instanceConsumerFactory);
     }
 
-    private <T> ConsumerFactory<String, T> typedConsumerFactory(KafkaProperties kafkaProperties, Class<T> valueType) {
-        Map<String, Object> props = new HashMap<>(kafkaProperties.buildConsumerProperties());
+    @Bean
+    ConcurrentKafkaListenerContainerFactory<String, WorkspaceEvent> workspaceKafkaListenerFactory(
+            ConsumerFactory<String, WorkspaceEvent> workspaceConsumerFactory) {
+        return buildFactory(workspaceConsumerFactory);
+    }
 
-        removeJsonDeserializerProperties(props);
-        JsonDeserializer<T> delegate = new JsonDeserializer<>(valueType);
-        delegate.addTrustedPackages("com.syncturtle.*");
-        delegate.setUseTypeHeaders(false);
+    @Bean
+    ConcurrentKafkaListenerContainerFactory<String, WorkspaceMemberEvent> workspaceMemberKafkaListenerFactory(
+            ConsumerFactory<String, WorkspaceMemberEvent> workspaceMemberConsumerFactory) {
+        return buildFactory(workspaceMemberConsumerFactory);
+    }
 
-        ErrorHandlingDeserializer<T> valueDeserializer = new ErrorHandlingDeserializer<>(delegate);
+    @Bean
+    ConcurrentKafkaListenerContainerFactory<String, WorkspaceMemberInviteEvent> workspaceMemberInviteKafkaListenerFactory(
+            ConsumerFactory<String, WorkspaceMemberInviteEvent> workspaceMemberInviteConsumerFactory) {
+        return buildFactory(workspaceMemberInviteConsumerFactory);
+    }
+
+    private <T> ConsumerFactory<String, T> typedConsumerFactory(Class<T> valueType) {
+        Assert.notNull(valueType, "valueType is required");
+
+        Map<String, Object> consumerProperties = new HashMap<>(kafkaProperties.buildConsumerProperties());
+
+        removeProgrammaticDeserializerProperties(consumerProperties);
 
         return new DefaultKafkaConsumerFactory<>(
-                props,
-                new StringDeserializer(),
-                valueDeserializer);
+                consumerProperties,
+                StringDeserializer::new,
+                () -> createValueDeserializer(valueType),
+                false);
     }
 
-    private static void removeJsonDeserializerProperties(Map<String, Object> props) {
-        props.remove(JsonDeserializer.TRUSTED_PACKAGES);
-        props.remove(JsonDeserializer.USE_TYPE_INFO_HEADERS);
-        props.remove(JsonDeserializer.VALUE_DEFAULT_TYPE);
-        props.remove(JsonDeserializer.KEY_DEFAULT_TYPE);
-        props.remove(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS);
-        props.remove(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS);
+    private <T> ErrorHandlingDeserializer<T> createValueDeserializer(Class<T> valueType) {
+        Assert.notNull(valueType, "valueType is required");
 
-        props.keySet().removeIf(key -> key instanceof String stringKey
-                && stringKey.startsWith("spring.json."));
+        JacksonJsonDeserializer<T> delegate = new JacksonJsonDeserializer<>(valueType, jsonMapper, false);
+
+        return new ErrorHandlingDeserializer<>(delegate);
+    }
+
+    private static void removeProgrammaticDeserializerProperties(Map<String, Object> consumerProperties) {
+        Assert.notNull(consumerProperties, "consumerProperties is required");
+
+        consumerProperties.remove(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG);
+        consumerProperties.remove(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG);
+        consumerProperties.remove(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS);
+        consumerProperties.remove(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS);
+
+        consumerProperties.keySet().removeIf(key -> key.startsWith("spring.json."));
     }
 
     private <T> ConcurrentKafkaListenerContainerFactory<String, T> buildFactory(
-            ConsumerFactory<String, T> consumerFactory,
-            CommonErrorHandler kafkaErrorHandler) {
+            ConsumerFactory<String, T> consumerFactory) {
         ConcurrentKafkaListenerContainerFactory<String, T> factory = new ConcurrentKafkaListenerContainerFactory<>();
 
         factory.setConsumerFactory(consumerFactory);

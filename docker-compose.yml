@@ -6,7 +6,7 @@ x-backend-build: &backend-build
   args:
     JAVA_VERSION: "21"
 
-x-app-security: &app-security
+x-backend-security: &backend-security
   security_opt:
     - no-new-privileges:true
   cap_drop:
@@ -15,12 +15,18 @@ x-app-security: &app-security
   tmpfs:
     - /tmp
 
-x-spring-platform-env: &spring-platform-env
+x-backend-environment: &backend-environment
   SPRING_PROFILES_ACTIVE: docker
+
   CONFIG_SERVER_URL: http://config-server:8888
   SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+
   MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+
+  OTLP_TRACES_ENDPOINT: http://syncturtle-otel:4317
+  OTLP_LOGS_ENDPOINT: http://syncturtle-otel:4317
+  OTLP_METRICS_URL: http://syncturtle-otel:4318/v1/metrics
 # x-common-env: &common-env
 #   SPRING_PROFILES_ACTIVE: docker
 #   SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
@@ -156,70 +162,75 @@ services:
       start_period: 40s
     restart: unless-stopped
 
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: syncturtle-minio
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-syncturtle_minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-syncturtle_minio_dev_password}
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9000/minio/health/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
+  minio-init:
+    image: quay.io/minio/mc:latest
+    container_name: syncturtle-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-syncturtle_minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-syncturtle_minio_dev_password}
+      APP_STORAGE_BUCKET: ${APP_STORAGE_BUCKET:-syncturtle}
+    networks:
+      - internal
+    entrypoint:
+      [
+        "/bin/sh",
+        "-c",
+        'mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}" && mc mb --ignore-existing local/"$${APP_STORAGE_BUCKET}"',
+      ]
+    restart: "no"
+
   # config-server:
   #   build:
   #     <<: *backend-build
   #     args:
   #       JAVA_VERSION: "21"
   #       MODULE_PATH: platform/config-server
-  #       APP_PORT: 8888
-  #   image: syncturtle/config-server:dev
+  #       APP_PORT: "8888"
   #   container_name: syncturtle-config-server
   #   environment:
   #     SPRING_PROFILES_ACTIVE: docker
   #     SERVER_PORT: 8888
-  #     MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
-  #   ports:
-  #     - "8888:8888"
+  #   <<: *backend-security
   #   networks:
   #     - internal
+  #   ports:
+  #     - "8888:8888"
   #   healthcheck:
   #     test:
-  #       [
-  #         "CMD-SHELL",
-  #         "curl -fsS http://localhost:8888/actuator/health || exit 1",
-  #       ]
+  #       - CMD
+  #       - curl
+  #       - --fail
+  #       - http://localhost:8888/actuator/health/readiness
   #     interval: 10s
   #     timeout: 5s
   #     retries: 12
   #     start_period: 30s
   #   restart: unless-stopped
-  #   <<: *app-security
-
-  # discovery-server:
-  #   build:
-  #     <<: *backend-build
-  #     args:
-  #       JAVA_VERSION: "21"
-  #       MODULE_PATH: platform/discovery-server
-  #       APP_PORT: 8761
-  #   image: syncturtle/discovery-server:dev
-  #   container_name: syncturtle-discovery-server
-  #   environment:
-  #     <<: *spring-platform-env
-  #     SERVER_PORT: 8761
-  #     EUREKA_HOST: discovery-server
-  #     EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
-  #     EUREKA_CLIENT_FETCH_REGISTRY: "false"
-  #   ports:
-  #     - "8761:8761"
-  #   depends_on:
-  #     config-server:
-  #       condition: service_healthy
-  #   networks:
-  #     - internal
-  #   healthcheck:
-  #     test:
-  #       [
-  #         "CMD-SHELL",
-  #         "curl -fsS http://localhost:8761/actuator/health || exit 1",
-  #       ]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 12
-  #     start_period: 45s
-  #   restart: unless-stopped
-  #   <<: *app-security
 
   # api-gateway:
   #   build:
@@ -227,27 +238,65 @@ services:
   #     args:
   #       JAVA_VERSION: "21"
   #       MODULE_PATH: platform/api-gateway
-  #       APP_PORT: 8000
-  #   image: syncturtle/api-gateway:dev
+  #       APP_PORT: "8000"
   #   container_name: syncturtle-api-gateway
   #   environment:
-  #     <<: *spring-platform-env
+  #     <<: *backend-environment
   #     SERVER_PORT: 8000
-
-  #     # EUREKA
-  #     EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
-  #     EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
-  #     EUREKA_INSTANCE_HOSTNAME: api-gateway
-
   #     # REDIS
   #     REDIS_HOST: redis
   #     REDIS_PORT: 6579
+  #   <<: *backend-security
+  #   networks:
+  #     - internal
+  #     - observability
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     config-server:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+  # instance-service:
+  #   build:
+  #     <<: *backend-build
+  #     args:
+  #       JAVA_VERSION: "21"
+  #       MODULE_PATH: services/instance-service
+  #       APP_PORT: "8001"
+  #   container_name: syncturtle-instance-service
+  #   environment:
+  #     <<: *backend-environment
+  #     SERVER_PORT: 8001
+  #     SYNCTURTLE_AUTO_SETUP: "true"
+  #     SYNCTURTLE_SETUP_PROFILES: setup,docker
+  #   <<: *backend-security
+  #   networks:
+  #     - internal
+  #     - observability
+  #   ports:
+  #     - "8001:8001"
+  #   depends_on:
+  #     config-server:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test:
+  #       - CMD
+  #       - curl
+  #       - --fail
+  #       - http://localhost:8001/actuator/health/readiness
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 12
+  #     start_period: 30s
+  #   restart: unless-stopped
 
 volumes:
   postgres-data:
   redis-data:
   kafka-data:
   obs-data:
+  minio-data:
 
 networks:
   edge:

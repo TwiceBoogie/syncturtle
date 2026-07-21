@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title th:text="${pageTitle ?: '500 - Internal Server Error'}">
+      500 - Internal Server Error
+    </title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <style type="text/tailwindcss">
+      @theme {
+        --font-mono:
+          "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono",
+          monospace;
+      }
+
+      .debug-grid {
+        background-image:
+          linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.035) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.035) 1px,
+            transparent 1px
+          );
+        background-size: 22rem 22rem;
+      }
+
+      .debug-card {
+        @apply rounded-2xl border border-zinc-800/90 bg-zinc-950/80 shadow-2xl shadow-black/30;
+      }
+
+      .debug-row {
+        @apply grid grid-cols-[9rem_1fr_auto] items-center gap-4 border-b border-dashed border-zinc-800 py-3 last:border-b-0;
+      }
+
+      .debug-label {
+        @apply font-mono text-xs uppercase tracking-wider text-zinc-500;
+      }
+
+      .debug-value {
+        @apply min-w-0 truncate font-mono text-sm text-zinc-200;
+      }
+
+      .pill {
+        @apply inline-flex items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-xs font-semibold;
+      }
+
+      .tab-button {
+        @apply rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-zinc-100;
+      }
+
+      .tab-button.active {
+        @apply bg-rose-600 text-white shadow-lg shadow-rose-950/40;
+      }
+
+      .code-line {
+        @apply grid grid-cols-[4rem_1fr] border-b border-zinc-900/80 font-mono text-sm;
+      }
+
+      .code-line-number {
+        @apply select-none border-r border-zinc-800 bg-zinc-950 px-4 py-2 text-right text-xs text-zinc-600;
+      }
+
+      .code-line-text {
+        @apply overflow-x-auto whitespace-pre px-4 py-2 text-zinc-300;
+      }
+
+      .code-line-active .code-line-number {
+        @apply bg-rose-950/60 text-rose-300;
+      }
+
+      .code-line-active .code-line-text {
+        @apply bg-rose-950/40 text-rose-100;
+      }
+
+      .flow-shell {
+        @apply overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950;
+      }
+
+      .flow-toolbar {
+        @apply flex flex-col gap-3 border-b border-zinc-800 bg-zinc-900/80 px-4 py-3 lg:flex-row lg:items-center lg:justify-between;
+      }
+
+      .flow-canvas {
+        @apply relative min-h-[44rem] min-w-[96rem] bg-zinc-950 p-6;
+        background-image:
+          radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+          linear-gradient(135deg, rgba(244, 63, 94, 0.07), transparent 28rem),
+          linear-gradient(315deg, rgba(16, 185, 129, 0.06), transparent 32rem);
+        background-size:
+          18px 18px,
+          100% 100%,
+          100% 100%;
+      }
+
+      .flow-lanes {
+        @apply grid grid-cols-[17rem_17rem_18rem_17rem_17rem] gap-5;
+      }
+
+      .flow-lane {
+        @apply min-w-0 space-y-4;
+      }
+
+      .flow-lane-label {
+        @apply rounded-full border border-zinc-800 bg-zinc-950/90 px-3 py-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-zinc-500 shadow-lg shadow-black/20;
+      }
+
+      .flow-node {
+        @apply relative min-w-0 cursor-pointer rounded-xl border p-4 text-left shadow-xl shadow-black/30 outline-none transition hover:-translate-y-0.5 hover:border-zinc-600 focus-visible:ring-2 focus-visible:ring-sky-400/60;
+      }
+
+      .flow-node-selected {
+        @apply ring-2 ring-sky-400/70;
+      }
+
+      .flow-node-completed {
+        @apply border-emerald-500/30 bg-emerald-950/25;
+      }
+
+      .flow-node-failed {
+        @apply border-rose-500/50 bg-rose-950/30 shadow-rose-950/20;
+      }
+
+      .flow-node-muted {
+        @apply border-zinc-800 bg-zinc-950/80 opacity-60;
+      }
+
+      .flow-node-external {
+        @apply border-sky-500/30 bg-sky-950/25 shadow-sky-950/10;
+      }
+
+      .flow-index {
+        @apply inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-950 px-2 font-mono text-xs font-bold text-zinc-300;
+      }
+
+      .flow-card-title {
+        @apply min-w-0 break-all font-mono text-sm leading-5 text-zinc-100;
+      }
+
+      .flow-card-subtitle {
+        @apply mt-1 min-w-0 break-words font-mono text-xs leading-5 text-zinc-500;
+      }
+
+      .method-chain {
+        @apply relative mt-3 space-y-2 pl-4 font-mono text-xs;
+      }
+
+      .method-chain::before {
+        position: absolute;
+        top: 0.5rem;
+        bottom: 0.5rem;
+        left: 0.375rem;
+        width: 1px;
+        background-color: rgb(39 39 42);
+        content: "";
+      }
+
+      .method-node {
+        @apply relative flex min-w-0 items-start gap-2 rounded-md border border-zinc-800 bg-zinc-950/60 px-2.5 py-2 text-left outline-none transition hover:border-zinc-700 focus-visible:ring-2 focus-visible:ring-sky-400/60;
+      }
+
+      .method-node::before {
+        position: absolute;
+        top: 0.75rem;
+        left: -14px;
+        height: 0.625rem;
+        width: 0.625rem;
+        border-radius: 9999px;
+        border: 2px solid rgb(9 9 11);
+        background-color: rgb(82 82 91);
+        content: "";
+      }
+
+      .method-node-completed::before {
+        @apply bg-emerald-400;
+      }
+
+      .method-node-failed::before {
+        @apply bg-rose-400;
+      }
+
+      .method-node-external {
+        @apply border-sky-500/20 bg-sky-950/20 text-sky-200;
+      }
+
+      .method-node-external::before {
+        @apply bg-sky-400;
+      }
+
+      .method-node-muted::before {
+        @apply bg-zinc-600;
+      }
+
+      .method-index {
+        @apply shrink-0 rounded border border-zinc-800 bg-zinc-950 px-1.5 py-0.5 text-[10px] font-bold text-zinc-500;
+      }
+
+      .method-name {
+        @apply min-w-0 break-all leading-5;
+      }
+
+      .flow-drawer-backdrop {
+        @apply fixed inset-0 z-40 bg-black/50 backdrop-blur-sm;
+      }
+
+      .flow-drawer {
+        @apply fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-zinc-800 bg-zinc-950 shadow-2xl shadow-black;
+      }
+
+      .flow-drawer[hidden],
+      .flow-drawer-backdrop[hidden] {
+        display: none !important;
+      }
+    </style>
+  </head>
+
+  <body class="debug-grid min-h-screen bg-[#111111] text-zinc-100 antialiased">
+    <main
+      id="dev-error-root"
+      class="mx-auto max-w-7xl px-6 py-10 lg:px-8"
+      th:data-status="${statusCode}"
+      th:data-error="${errorTitle}"
+      th:data-message="${displayMessage}"
+      th:data-path="${requestUri}"
+      th:data-exception-type="${exceptionType}"
+      th:data-method="${method}"
+      th:data-timestamp="${timestamp}"
+      th:data-request-id="${requestId}"
+    >
+      <div th:replace="~{dev-error/fragments :: topBar}"></div>
+      <div th:replace="~{dev-error/fragments :: hero}"></div>
+      <div th:replace="~{dev-error/fragments :: requestBar}"></div>
+      <div th:replace="~{dev-error/fragments :: overview}"></div>
+      <div th:replace="~{dev-error/fragments :: debugPanels}"></div>
+
+      <footer
+        class="mt-8 rounded-xl border border-amber-500/20 bg-amber-950/20 p-4 text-sm text-amber-200"
+      >
+        <strong>Dev only:</strong>
+        this page can expose stack traces, request headers, config details,
+        source paths, and application internals. Keep it behind the
+        <code class="font-mono">dev</code> profile.
+      </footer>
+    </main>
+
+    <script src="/dev-error/dev-error.js"></script>
+  </body>
+</html>

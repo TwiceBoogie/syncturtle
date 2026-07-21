@@ -1,0 +1,1368 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <body>
+    <header
+      th:fragment="topBar"
+      class="mb-12 flex items-center justify-between"
+    >
+      <div class="flex items-center gap-3">
+        <div
+          class="flex h-6 w-6 items-center justify-center rounded-md bg-rose-600 text-xs font-black text-white"
+        >
+          !
+        </div>
+
+        <div
+          class="font-medium text-zinc-200"
+          th:text="${errorTitle ?: 'Internal Server Error'}"
+        >
+          Internal Server Error
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onclick="copyDebugMarkdown()"
+        class="rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-sm font-medium text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white"
+      >
+        Copy as Markdown
+      </button>
+    </header>
+
+    <section th:fragment="hero" class="mb-12">
+      <div class="mb-6 flex flex-wrap items-center gap-2">
+        <span class="pill border-zinc-800 bg-zinc-900 text-zinc-300">
+          SPRING BOOT
+          <span class="text-zinc-500" th:text="${springBootVersion ?: 'dev'}"
+            >dev</span
+          >
+        </span>
+
+        <span class="pill border-zinc-800 bg-zinc-900 text-zinc-300">
+          JAVA
+          <span class="text-zinc-500" th:text="${javaVersion ?: 'unknown'}"
+            >21</span
+          >
+        </span>
+
+        <span
+          class="pill border-rose-500/40 bg-rose-950/60 text-rose-200"
+          th:text="${errorKind ?: 'HTTP ERROR'}"
+        >
+          HTTP ERROR
+        </span>
+
+        <span class="pill border-rose-500/40 bg-rose-600 text-white">
+          CODE
+          <span th:text="${status ?: 500}">500</span>
+        </span>
+
+        <span
+          th:if="${activeProfiles != null and !#strings.isEmpty(activeProfiles)}"
+          class="pill border-emerald-500/30 bg-emerald-950/40 text-emerald-200"
+        >
+          PROFILE
+          <span th:text="${activeProfiles}">dev</span>
+        </span>
+      </div>
+
+      <h1
+        class="mb-4 text-4xl font-bold tracking-tight text-white md:text-5xl"
+        th:text="${pageTitle ?: '500 - Internal Server Error'}"
+      >
+        500 - Internal Server Error
+      </h1>
+
+      <p
+        class="max-w-5xl text-xl leading-8 text-zinc-300"
+        th:text="${displayMessage ?: exceptionType ?: 'An unexpected error occurred.'}"
+      >
+        current user id is required
+      </p>
+    </section>
+
+    <section th:fragment="requestBar" class="debug-card mb-10 overflow-hidden">
+      <div
+        class="flex flex-col gap-3 border-b border-zinc-800 p-4 md:flex-row md:items-center"
+      >
+        <div
+          class="inline-flex w-fit items-center rounded-md bg-rose-600 px-2.5 py-1 text-xs font-bold text-white"
+        >
+          <span th:text="${method ?: 'GET'}">GET</span>
+        </div>
+
+        <div class="min-w-0 flex-1 font-mono text-sm text-zinc-300">
+          <span th:text="${requestUri ?: path ?: '/'}">/</span>
+          <span
+            class="text-zinc-500"
+            th:if="${queryString != null}"
+            th:text="'?' + ${queryString}"
+          >
+            ?debug=true
+          </span>
+        </div>
+
+        <div class="font-mono text-xs text-zinc-500" th:text="${timestamp}">
+          2026-07-09T13:20:00Z
+        </div>
+      </div>
+    </section>
+
+    <section th:fragment="overview" class="mb-10">
+      <h2 class="mb-4 text-lg font-semibold text-zinc-100">Overview</h2>
+
+      <div class="debug-card p-5">
+        <div class="debug-row">
+          <div class="debug-label">Date</div>
+          <div class="debug-value" th:text="${timestamp}">
+            2026-07-09T13:20:00Z
+          </div>
+          <div></div>
+        </div>
+
+        <div class="debug-row">
+          <div class="debug-label">Status Code</div>
+          <div class="debug-value" th:text="${statusCode}">500</div>
+          <div
+            class="pill border-rose-500/40 bg-rose-600 text-white"
+            th:text="${statusCode}"
+          >
+            500
+          </div>
+        </div>
+
+        <div class="debug-row">
+          <div class="debug-label">Method</div>
+          <div class="debug-value" th:text="${method}">GET</div>
+          <div
+            class="pill border-zinc-700 bg-zinc-900 text-zinc-300"
+            th:text="${method}"
+          >
+            GET
+          </div>
+        </div>
+
+        <div class="debug-row">
+          <div class="debug-label">Path</div>
+          <div class="debug-value" th:text="${path ?: requestUri}">
+            /api/users/current
+          </div>
+          <div></div>
+        </div>
+
+        <div class="debug-row" th:if="${exceptionType != null}">
+          <div class="debug-label">Exception</div>
+          <div class="debug-value text-rose-200" th:text="${exceptionType}">
+            java.lang.IllegalArgumentException
+          </div>
+          <div></div>
+        </div>
+
+        <div class="debug-row" th:if="${requestId != null}">
+          <div class="debug-label">Request ID</div>
+          <div class="debug-value" th:text="${requestId}">abc-123</div>
+          <div></div>
+        </div>
+      </div>
+    </section>
+
+    <section th:fragment="debugPanels" class="debug-card overflow-hidden">
+      <nav
+        class="flex flex-wrap gap-2 border-b border-zinc-800 bg-zinc-950/90 p-3"
+      >
+        <button
+          type="button"
+          class="tab-button active"
+          data-tab-button="trace"
+          onclick="showTab('trace')"
+        >
+          Exception Trace
+        </button>
+
+        <button
+          type="button"
+          class="tab-button"
+          data-tab-button="flow"
+          onclick="showTab('flow')"
+        >
+          Request Flow
+        </button>
+
+        <button
+          type="button"
+          class="tab-button"
+          data-tab-button="source"
+          onclick="showTab('source')"
+        >
+          Source
+        </button>
+
+        <button
+          type="button"
+          class="tab-button"
+          data-tab-button="request"
+          onclick="showTab('request')"
+        >
+          Request
+        </button>
+
+        <button
+          type="button"
+          class="tab-button"
+          data-tab-button="validation"
+          onclick="showTab('validation')"
+        >
+          Validation
+        </button>
+
+        <button
+          type="button"
+          class="tab-button"
+          data-tab-button="actuator"
+          onclick="showTab('actuator')"
+        >
+          Actuator Links
+        </button>
+      </nav>
+
+      <section data-tab-panel="trace" class="p-5">
+        <div class="mb-4 flex items-center gap-3">
+          <div
+            class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-950 text-emerald-300"
+          >
+            ▲
+          </div>
+
+          <h3 class="font-semibold text-zinc-100">Exception trace</h3>
+        </div>
+
+        <div class="overflow-hidden rounded-xl border border-zinc-800">
+          <div
+            class="border-b border-zinc-800 bg-zinc-900/80 px-4 py-3 font-mono text-xs text-zinc-400"
+          >
+            <span th:text="${exceptionType ?: 'Exception'}"
+              >java.lang.IllegalArgumentException</span
+            >
+          </div>
+
+          <div th:if="${stackFrames != null and !stackFrames.isEmpty()}">
+            <div
+              th:each="frame, iter : ${stackFrames}"
+              class="grid grid-cols-[2rem_1fr_auto] items-center gap-3 border-b border-zinc-900 px-4 py-3 font-mono text-xs last:border-b-0"
+              th:classappend="${iter.index == 0} ? 'bg-rose-950/30' : 'bg-zinc-950'"
+            >
+              <div
+                class="h-2 w-2 rounded-full"
+                th:classappend="${iter.index == 0} ? 'bg-rose-400' : 'bg-zinc-600'"
+              ></div>
+
+              <div class="min-w-0">
+                <div
+                  class="truncate text-zinc-200"
+                  th:text="${frame.className + '.' + frame.methodName + '()'}"
+                >
+                  com.syncturtle.UserService.getCurrentUser()
+                </div>
+
+                <div
+                  class="truncate text-zinc-500"
+                  th:text="${frame.fileName + ':' + frame.lineNumber}"
+                >
+                  UserService.java:42
+                </div>
+              </div>
+
+              <div
+                class="rounded-md border border-zinc-800 bg-zinc-900 px-2 py-1 text-zinc-500"
+                th:text="${frame.lineNumber}"
+              >
+                42
+              </div>
+            </div>
+          </div>
+
+          <pre
+            th:if="${(stackFrames == null or stackFrames.isEmpty()) and trace != null}"
+            class="max-h-[38rem] overflow-auto whitespace-pre-wrap bg-zinc-950 p-4 font-mono text-xs leading-6 text-zinc-300"
+            th:text="${trace}"
+          >
+                java.lang.IllegalArgumentException: current user id is required
+            </pre>
+        </div>
+      </section>
+
+      <section id="request-flow-panel" data-tab-panel="flow" class="hidden p-5">
+        <div
+          class="mb-5 flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between"
+        >
+          <div>
+            <h3 class="font-semibold text-zinc-100">Request flow</h3>
+            <p class="mt-1 max-w-4xl text-sm leading-6 text-zinc-500">
+              A local-only workflow view of the application classes this request
+              moved through. The main flow is ordered by index instead of drawn
+              connectors, and external calls inside a card are indexed as nested
+              nodes.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <span
+              class="pill border-emerald-500/30 bg-emerald-950/40 text-emerald-200"
+            >
+              COMPLETED
+              <span class="text-emerald-300">5</span>
+            </span>
+
+            <span class="pill border-rose-500/40 bg-rose-950/60 text-rose-200">
+              FAILED
+              <span class="text-rose-300">1</span>
+            </span>
+
+            <span class="pill border-sky-500/30 bg-sky-950/40 text-sky-200">
+              EXTERNAL CALLS
+              <span class="text-sky-300">2</span>
+            </span>
+
+            <span class="pill border-zinc-700 bg-zinc-900 text-zinc-300">
+              NOT REACHED
+              <span class="text-zinc-500">2</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="flow-shell">
+          <div class="flow-toolbar">
+            <div class="min-w-0 font-mono text-xs text-zinc-400">
+              <span th:text="${method ?: 'POST'}">POST</span>
+              <span class="text-zinc-600">→</span>
+              <span
+                class="break-all"
+                th:text="${requestUri ?: '/api/auth/login'}"
+                >/api/auth/login</span
+              >
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-mono text-xs text-zinc-500">
+                Click any indexed card or method to open the drawer.
+              </span>
+
+              <button
+                type="button"
+                onclick="openFlowNode('flow-node-05')"
+                class="rounded-md border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200"
+              >
+                Open failed node
+              </button>
+
+              <button
+                type="button"
+                onclick="copyFlowNodeSummary()"
+                class="rounded-md border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200"
+              >
+                Copy selected node
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto bg-zinc-950">
+            <div class="flow-canvas">
+              <div class="flow-lanes">
+                <div class="flow-lane">
+                  <div class="flow-lane-label">Filters</div>
+
+                  <div
+                    id="flow-node-01"
+                    role="button"
+                    tabindex="0"
+                    class="flow-node flow-node-completed"
+                    data-flow-node
+                    data-flow-index="01"
+                    data-flow-kind="Filter"
+                    data-flow-class="GatewayClientHeaderFilter1.java"
+                    data-flow-method="doFilterInternal()"
+                    data-flow-status="completed"
+                    data-flow-caller="Servlet filter chain"
+                    data-flow-summary="The first application filter read gateway/client headers and attached normalized request metadata."
+                    data-flow-root=""
+                    data-flow-next="Next node: #02 GatewayClientHeaderFilter2.doFilterInternal()"
+                  >
+                    <div
+                      class="mb-3 flex min-w-0 items-center justify-between gap-3"
+                    >
+                      <span class="flow-index">01</span>
+                      <span
+                        class="pill border-emerald-500/30 bg-emerald-950/60 text-emerald-200"
+                      >
+                        FILTER
+                      </span>
+                    </div>
+
+                    <div class="flow-card-title">
+                      GatewayClientHeaderFilter1.java
+                    </div>
+                    <div class="flow-card-subtitle">doFilterInternal()</div>
+
+                    <details
+                      class="mt-4 rounded-lg border border-zinc-800 bg-zinc-950/70 p-3"
+                    >
+                      <summary
+                        class="cursor-pointer text-xs font-medium text-zinc-400"
+                      >
+                        Internal methods
+                      </summary>
+
+                      <div class="method-chain text-zinc-500">
+                        <button
+                          type="button"
+                          class="method-node method-node-completed text-emerald-300"
+                          data-flow-node
+                          data-flow-index="01.1"
+                          data-flow-kind="Internal method"
+                          data-flow-class="GatewayClientHeaderFilter1.java"
+                          data-flow-method="extractGatewayHeaders()"
+                          data-flow-status="completed"
+                          data-flow-caller="GatewayClientHeaderFilter1.doFilterInternal()"
+                          data-flow-summary="Extracted trusted gateway headers from the incoming request."
+                          data-flow-root=""
+                          data-flow-next="Next method: #01.2 attachRequestContext()"
+                        >
+                          <span class="method-index">01.1</span>
+                          <span class="method-name"
+                            >extractGatewayHeaders()</span
+                          >
+                        </button>
+
+                        <button
+                          type="button"
+                          class="method-node method-node-completed text-emerald-300"
+                          data-flow-node
+                          data-flow-index="01.2"
+                          data-flow-kind="Internal method"
+                          data-flow-class="GatewayClientHeaderFilter1.java"
+                          data-flow-method="attachRequestContext()"
+                          data-flow-status="completed"
+                          data-flow-caller="GatewayClientHeaderFilter1.doFilterInternal()"
+                          data-flow-summary="Attached the request context before continuing the filter chain."
+                          data-flow-root=""
+                          data-flow-next="Next node: #02 GatewayClientHeaderFilter2.doFilterInternal()"
+                        >
+                          <span class="method-index">01.2</span>
+                          <span class="method-name"
+                            >attachRequestContext()</span
+                          >
+                        </button>
+                      </div>
+                    </details>
+
+                    <div
+                      class="mt-4 flex items-center gap-2 text-xs text-emerald-300"
+                    >
+                      <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                      completed
+                    </div>
+                  </div>
+
+                  <div
+                    id="flow-node-02"
+                    role="button"
+                    tabindex="0"
+                    class="flow-node flow-node-completed"
+                    data-flow-node
+                    data-flow-index="02"
+                    data-flow-kind="Filter"
+                    data-flow-class="GatewayClientHeaderFilter2.java"
+                    data-flow-method="doFilterInternal()"
+                    data-flow-status="completed"
+                    data-flow-caller="GatewayClientHeaderFilter1.doFilterInternal()"
+                    data-flow-summary="The second filter finished its request checks and allowed the request to continue to Spring MVC."
+                    data-flow-root=""
+                    data-flow-next="Next node: #03 AuthenticationController.login()"
+                  >
+                    <div
+                      class="mb-3 flex min-w-0 items-center justify-between gap-3"
+                    >
+                      <span class="flow-index">02</span>
+                      <span
+                        class="pill border-emerald-500/30 bg-emerald-950/60 text-emerald-200"
+                      >
+                        FILTER
+                      </span>
+                    </div>
+
+                    <div class="flow-card-title">
+                      GatewayClientHeaderFilter2.java
+                    </div>
+                    <div class="flow-card-subtitle">doFilterInternal()</div>
+
+                    <div
+                      class="mt-4 flex items-center gap-2 text-xs text-emerald-300"
+                    >
+                      <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                      completed
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flow-lane">
+                  <div class="flow-lane-label">Controller</div>
+
+                  <div
+                    id="flow-node-03"
+                    role="button"
+                    tabindex="0"
+                    class="flow-node flow-node-completed"
+                    data-flow-node
+                    data-flow-index="03"
+                    data-flow-kind="Controller"
+                    data-flow-class="AuthenticationController.java"
+                    data-flow-method="login()"
+                    data-flow-status="completed"
+                    data-flow-caller="Spring MVC DispatcherServlet"
+                    data-flow-summary="The controller accepted the request, completed binding/validation, and delegated to the authentication service."
+                    data-flow-root=""
+                    data-flow-next="Next node: #04 AuthenticationService.authenticate()"
+                  >
+                    <div
+                      class="mb-3 flex min-w-0 items-center justify-between gap-3"
+                    >
+                      <span class="flow-index">03</span>
+                      <span
+                        class="pill border-emerald-500/30 bg-emerald-950/60 text-emerald-200"
+                      >
+                        CONTROLLER
+                      </span>
+                    </div>
+
+                    <div class="flow-card-title">
+                      AuthenticationController.java
+                    </div>
+                    <div class="flow-card-subtitle">login()</div>
+
+                    <details
+                      class="mt-4 rounded-lg border border-zinc-800 bg-zinc-950/70 p-3"
+                    >
+                      <summary
+                        class="cursor-pointer text-xs font-medium text-zinc-400"
+                      >
+                        Request binding
+                      </summary>
+
+                      <div class="method-chain text-zinc-500">
+                        <button
+                          type="button"
+                          class="method-node method-node-completed text-emerald-300"
+                          data-flow-node
+                          data-flow-index="03.1"
+                          data-flow-kind="Binding"
+                          data-flow-class="AuthenticationController.java"
+                          data-flow-method="LoginRequest validation"
+                          data-flow-status="completed"
+                          data-flow-caller="AuthenticationController.login()"
+                          data-flow-summary="Jakarta validation completed before the service call."
+                          data-flow-root=""
+                          data-flow-next="Next method: #03.2 AuthenticationService.authenticate()"
+                        >
+                          <span class="method-index">03.1</span>
+                          <span class="method-name"
+                            >LoginRequest validated</span
+                          >
+                        </button>
+
+                        <button
+                          type="button"
+                          class="method-node method-node-external"
+                          data-flow-node
+                          data-flow-index="03.2"
+                          data-flow-kind="External call"
+                          data-flow-class="AuthenticationService.java"
+                          data-flow-method="authenticate()"
+                          data-flow-status="delegated to #04"
+                          data-flow-caller="AuthenticationController.login()"
+                          data-flow-summary="This leaves the controller and enters the service boundary. The target card is indexed as #04."
+                          data-flow-root=""
+                          data-flow-next="Target node: #04 AuthenticationService.authenticate()"
+                        >
+                          <span class="method-index">03.2</span>
+                          <span class="method-name">
+                            ↗ AuthenticationService.authenticate()
+                          </span>
+                        </button>
+                      </div>
+                    </details>
+
+                    <div
+                      class="mt-4 flex items-center gap-2 text-xs text-emerald-300"
+                    >
+                      <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                      completed
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flow-lane">
+                  <div class="flow-lane-label">Service boundary</div>
+
+                  <div
+                    id="flow-node-04"
+                    role="button"
+                    tabindex="0"
+                    class="flow-node flow-node-completed"
+                    data-flow-node
+                    data-flow-index="04"
+                    data-flow-kind="Service"
+                    data-flow-class="AuthenticationService.java"
+                    data-flow-method="authenticate()"
+                    data-flow-status="stopped by downstream failure"
+                    data-flow-caller="AuthenticationController.login()"
+                    data-flow-summary="The service executed its internal chain until the repository lookup failed downstream."
+                    data-flow-root=""
+                    data-flow-next="Failed target: #05 UserRepository.findByEmail()"
+                  >
+                    <div
+                      class="mb-3 flex min-w-0 items-center justify-between gap-3"
+                    >
+                      <span class="flow-index">04</span>
+                      <span
+                        class="pill border-emerald-500/30 bg-emerald-950/60 text-emerald-200"
+                      >
+                        SERVICE
+                      </span>
+                    </div>
+
+                    <div class="flow-card-title">
+                      AuthenticationService.java
+                    </div>
+                    <div class="flow-card-subtitle">authenticate()</div>
+
+                    <details
+                      open
+                      class="mt-4 rounded-lg border border-zinc-800 bg-zinc-950/70 p-3"
+                    >
+                      <summary
+                        class="cursor-pointer text-xs font-medium text-zinc-400"
+                      >
+                        Internal method chain
+                      </summary>
+
+                      <div class="method-chain">
+                        <button
+                          type="button"
+                          class="method-node method-node-completed text-emerald-300"
+                          data-flow-node
+                          data-flow-index="04.1"
+                          data-flow-kind="Internal method"
+                          data-flow-class="AuthenticationService.java"
+                          data-flow-method="validateLoginAttempt()"
+                          data-flow-status="completed"
+                          data-flow-caller="AuthenticationService.authenticate()"
+                          data-flow-summary="Checked service-level developer invariants and login preconditions."
+                          data-flow-root=""
+                          data-flow-next="Next method: #04.2 findUserForLogin()"
+                        >
+                          <span class="method-index">04.1</span>
+                          <span class="method-name"
+                            >validateLoginAttempt()</span
+                          >
+                        </button>
+
+                        <button
+                          type="button"
+                          class="method-node method-node-completed text-emerald-300"
+                          data-flow-node
+                          data-flow-index="04.2"
+                          data-flow-kind="Internal method"
+                          data-flow-class="AuthenticationService.java"
+                          data-flow-method="findUserForLogin()"
+                          data-flow-status="completed before downstream call"
+                          data-flow-caller="AuthenticationService.authenticate()"
+                          data-flow-summary="Prepared the lookup and called the repository from inside the service boundary."
+                          data-flow-root=""
+                          data-flow-next="External call: #04.3 UserRepository.findByEmail()"
+                        >
+                          <span class="method-index">04.2</span>
+                          <span class="method-name">findUserForLogin()</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          class="method-node method-node-external"
+                          data-flow-node
+                          data-flow-index="04.3"
+                          data-flow-kind="External call"
+                          data-flow-class="UserRepository.java"
+                          data-flow-method="findByEmail()"
+                          data-flow-status="failed at #05"
+                          data-flow-caller="AuthenticationService.findUserForLogin()"
+                          data-flow-summary="This is an external method call from inside AuthenticationService. Instead of drawing a fragile SVG line from this nested row, the target node is indexed as #05."
+                          data-flow-root="UserNotFoundException"
+                          data-flow-next="Target node: #05 UserRepository.findByEmail()"
+                        >
+                          <span class="method-index">04.3</span>
+                          <span class="method-name">
+                            ↗ UserRepository.findByEmail()
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          class="method-node method-node-muted text-zinc-600"
+                          data-flow-node
+                          data-flow-index="04.4"
+                          data-flow-kind="Internal method"
+                          data-flow-class="AuthenticationService.java"
+                          data-flow-method="verifyPassword()"
+                          data-flow-status="not reached"
+                          data-flow-caller="AuthenticationService.authenticate()"
+                          data-flow-summary="This method was skipped because the repository lookup failed first."
+                          data-flow-root=""
+                          data-flow-next="Blocked by: #05 UserRepository.findByEmail()"
+                        >
+                          <span class="method-index">04.4</span>
+                          <span class="method-name">verifyPassword()</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          class="method-node method-node-muted text-zinc-600"
+                          data-flow-node
+                          data-flow-index="04.5"
+                          data-flow-kind="Internal method"
+                          data-flow-class="AuthenticationService.java"
+                          data-flow-method="createSession()"
+                          data-flow-status="not reached"
+                          data-flow-caller="AuthenticationService.authenticate()"
+                          data-flow-summary="Session creation did not run because authentication stopped earlier."
+                          data-flow-root=""
+                          data-flow-next="Blocked by: #05 UserRepository.findByEmail()"
+                        >
+                          <span class="method-index">04.5</span>
+                          <span class="method-name">createSession()</span>
+                        </button>
+                      </div>
+                    </details>
+
+                    <div
+                      class="mt-4 flex items-center gap-2 text-xs text-emerald-300"
+                    >
+                      <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                      reached; downstream failed
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flow-lane">
+                  <div class="flow-lane-label">Repositories</div>
+
+                  <div
+                    id="flow-node-05"
+                    role="button"
+                    tabindex="0"
+                    class="flow-node flow-node-failed ring-1 ring-rose-500/20"
+                    data-flow-node
+                    data-flow-index="05"
+                    data-flow-kind="Repository"
+                    data-flow-class="UserRepository.java"
+                    data-flow-method="findByEmail()"
+                    data-flow-status="failed here"
+                    data-flow-caller="AuthenticationService.findUserForLogin()"
+                    data-flow-summary="This is the first failed application node captured for the request."
+                    data-flow-root="UserNotFoundException: user was not found for the provided email"
+                    data-flow-next="Compare this node with the Exception Trace tab."
+                  >
+                    <div
+                      class="mb-3 flex min-w-0 items-center justify-between gap-3"
+                    >
+                      <span class="flow-index">05</span>
+                      <span
+                        class="pill border-rose-500/40 bg-rose-950/60 text-rose-200"
+                      >
+                        REPOSITORY
+                      </span>
+                    </div>
+
+                    <div class="flow-card-title text-rose-100">
+                      UserRepository.java
+                    </div>
+                    <div class="flow-card-subtitle text-rose-300/80">
+                      findByEmail()
+                    </div>
+
+                    <details
+                      open
+                      class="mt-4 rounded-lg border border-rose-500/20 bg-zinc-950/70 p-3"
+                    >
+                      <summary
+                        class="cursor-pointer text-xs font-medium text-rose-200"
+                      >
+                        Failure details
+                      </summary>
+
+                      <div
+                        class="mt-3 space-y-2 text-xs leading-5 text-rose-200/80"
+                      >
+                        <div class="break-words font-mono">
+                          User lookup failed while authenticating request.
+                        </div>
+
+                        <div
+                          class="rounded-md border border-rose-500/20 bg-rose-950/30 p-2 font-mono text-[11px] text-rose-100"
+                        >
+                          Root cause: UserNotFoundException
+                        </div>
+                      </div>
+                    </details>
+
+                    <div
+                      class="mt-4 flex items-center gap-2 text-xs text-rose-300"
+                    >
+                      <span class="h-2 w-2 rounded-full bg-rose-400"></span>
+                      failed here
+                    </div>
+                  </div>
+
+                  <div
+                    id="flow-node-06"
+                    role="button"
+                    tabindex="0"
+                    class="flow-node flow-node-completed"
+                    data-flow-node
+                    data-flow-index="06"
+                    data-flow-kind="Repository"
+                    data-flow-class="LoginAttemptRepository.java"
+                    data-flow-method="save()"
+                    data-flow-status="completed"
+                    data-flow-caller="AuthenticationService.validateLoginAttempt()"
+                    data-flow-summary="The audit/login-attempt row was persisted before authentication stopped."
+                    data-flow-root=""
+                    data-flow-next="Independent repository side effect completed before #05 failed."
+                  >
+                    <div
+                      class="mb-3 flex min-w-0 items-center justify-between gap-3"
+                    >
+                      <span class="flow-index">06</span>
+                      <span
+                        class="pill border-emerald-500/30 bg-emerald-950/60 text-emerald-200"
+                      >
+                        REPOSITORY
+                      </span>
+                    </div>
+
+                    <div class="flow-card-title">
+                      LoginAttemptRepository.java
+                    </div>
+                    <div class="flow-card-subtitle">save()</div>
+
+                    <div
+                      class="mt-4 flex items-center gap-2 text-xs text-emerald-300"
+                    >
+                      <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                      completed
+                    </div>
+                  </div>
+
+                  <div
+                    id="flow-node-07"
+                    role="button"
+                    tabindex="0"
+                    class="flow-node flow-node-muted"
+                    data-flow-node
+                    data-flow-index="07"
+                    data-flow-kind="Repository"
+                    data-flow-class="SessionRepository.java"
+                    data-flow-method="save()"
+                    data-flow-status="not reached"
+                    data-flow-caller="AuthenticationService.createSession()"
+                    data-flow-summary="Session persistence did not run because the user lookup failed first."
+                    data-flow-root=""
+                    data-flow-next="Blocked by: #05 UserRepository.findByEmail()"
+                  >
+                    <div
+                      class="mb-3 flex min-w-0 items-center justify-between gap-3"
+                    >
+                      <span class="flow-index">07</span>
+                      <span
+                        class="pill border-zinc-700 bg-zinc-900 text-zinc-400"
+                      >
+                        REPOSITORY
+                      </span>
+                    </div>
+
+                    <div class="flow-card-title text-zinc-400">
+                      SessionRepository.java
+                    </div>
+                    <div class="flow-card-subtitle text-zinc-600">save()</div>
+
+                    <div
+                      class="mt-4 flex items-center gap-2 text-xs text-zinc-500"
+                    >
+                      <span class="h-2 w-2 rounded-full bg-zinc-600"></span>
+                      not reached
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flow-lane">
+                  <div class="flow-lane-label">Mapper</div>
+
+                  <div
+                    id="flow-node-08"
+                    role="button"
+                    tabindex="0"
+                    class="flow-node flow-node-muted"
+                    data-flow-node
+                    data-flow-index="08"
+                    data-flow-kind="Mapper"
+                    data-flow-class="AuthResponseMapper.java"
+                    data-flow-method="toResponse()"
+                    data-flow-status="not reached"
+                    data-flow-caller="AuthenticationService.authenticate()"
+                    data-flow-summary="Response mapping did not run because authentication failed before a response object was created."
+                    data-flow-root=""
+                    data-flow-next="Blocked by: #05 UserRepository.findByEmail()"
+                  >
+                    <div
+                      class="mb-3 flex min-w-0 items-center justify-between gap-3"
+                    >
+                      <span class="flow-index">08</span>
+                      <span
+                        class="pill border-zinc-700 bg-zinc-900 text-zinc-400"
+                      >
+                        MAPPER
+                      </span>
+                    </div>
+
+                    <div class="flow-card-title text-zinc-400">
+                      AuthResponseMapper.java
+                    </div>
+                    <div class="flow-card-subtitle text-zinc-600">
+                      toResponse()
+                    </div>
+
+                    <details
+                      class="mt-4 rounded-lg border border-zinc-800 bg-zinc-950/70 p-3"
+                    >
+                      <summary
+                        class="cursor-pointer text-xs font-medium text-zinc-500"
+                      >
+                        Expected next calls
+                      </summary>
+
+                      <div class="method-chain text-zinc-600">
+                        <button
+                          type="button"
+                          class="method-node method-node-muted"
+                          data-flow-node
+                          data-flow-index="08.1"
+                          data-flow-kind="Mapper method"
+                          data-flow-class="AuthResponseMapper.java"
+                          data-flow-method="mapUser()"
+                          data-flow-status="not reached"
+                          data-flow-caller="AuthResponseMapper.toResponse()"
+                          data-flow-summary="User mapping was expected after authentication but did not run."
+                          data-flow-root=""
+                          data-flow-next="Blocked by: #05 UserRepository.findByEmail()"
+                        >
+                          <span class="method-index">08.1</span>
+                          <span class="method-name">mapUser()</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          class="method-node method-node-muted"
+                          data-flow-node
+                          data-flow-index="08.2"
+                          data-flow-kind="Mapper method"
+                          data-flow-class="AuthResponseMapper.java"
+                          data-flow-method="mapSession()"
+                          data-flow-status="not reached"
+                          data-flow-caller="AuthResponseMapper.toResponse()"
+                          data-flow-summary="Session mapping was expected after authentication but did not run."
+                          data-flow-root=""
+                          data-flow-next="Blocked by: #05 UserRepository.findByEmail()"
+                        >
+                          <span class="method-index">08.2</span>
+                          <span class="method-name">mapSession()</span>
+                        </button>
+                      </div>
+                    </details>
+
+                    <div
+                      class="mt-4 flex items-center gap-2 text-xs text-zinc-500"
+                    >
+                      <span class="h-2 w-2 rounded-full bg-zinc-600"></span>
+                      not reached
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="flow-drawer-backdrop"
+          class="flow-drawer-backdrop"
+          data-flow-drawer-close
+          hidden
+        ></div>
+
+        <aside id="flow-drawer" class="flow-drawer" aria-live="polite" aria-hidden="true" hidden>
+          <div
+            class="flex items-start justify-between gap-3 border-b border-zinc-800 bg-zinc-900/80 px-5 py-4"
+          >
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <span id="flow-selected-index" class="flow-index">--</span>
+                <span
+                  id="flow-selected-kind"
+                  class="pill border-sky-500/30 bg-sky-950/40 text-sky-200"
+                >
+                  NODE
+                </span>
+              </div>
+              <h4 class="mt-3 font-semibold text-zinc-100">Selected node</h4>
+            </div>
+
+            <button
+              type="button"
+              data-flow-drawer-close
+              class="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm font-medium text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-100"
+            >
+              Close
+            </button>
+          </div>
+
+          <div class="flex-1 space-y-5 overflow-y-auto p-5">
+            <div>
+              <div class="debug-label">Class</div>
+              <div
+                id="flow-selected-class"
+                class="mt-1 break-all font-mono text-sm text-zinc-200"
+              >
+                Select a node
+              </div>
+            </div>
+
+            <div>
+              <div class="debug-label">Method</div>
+              <div
+                id="flow-selected-method"
+                class="mt-1 break-all font-mono text-sm text-zinc-200"
+              >
+                --
+              </div>
+            </div>
+
+            <div>
+              <div class="debug-label">Called by</div>
+              <div
+                id="flow-selected-caller"
+                class="mt-1 break-all font-mono text-sm text-zinc-200"
+              >
+                --
+              </div>
+            </div>
+
+            <div>
+              <div class="debug-label">Status</div>
+              <div
+                id="flow-selected-status"
+                class="mt-1 text-sm leading-6 text-zinc-300"
+              >
+                --
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+              <div class="debug-label">What happened</div>
+              <div
+                id="flow-selected-summary"
+                class="mt-2 text-sm leading-6 text-zinc-300"
+              >
+                Click a card or nested method in the flow.
+              </div>
+            </div>
+
+            <div
+              id="flow-selected-root-wrap"
+              class="hidden rounded-xl border border-rose-500/20 bg-rose-950/20 p-4"
+            >
+              <div
+                class="font-mono text-xs uppercase tracking-wider text-rose-300"
+              >
+                Root cause
+              </div>
+              <div
+                id="flow-selected-root"
+                class="mt-2 break-words font-mono text-xs leading-6 text-rose-100"
+              ></div>
+            </div>
+
+            <div>
+              <div class="debug-label">Next debugging step</div>
+              <div
+                id="flow-selected-next"
+                class="mt-1 text-sm leading-6 text-zinc-300"
+              >
+                Pick the first red node, then compare it with the Exception
+                Trace tab.
+              </div>
+            </div>
+          </div>
+
+          <div class="grid gap-2 border-t border-zinc-800 p-5">
+            <button
+              type="button"
+              onclick="copyFlowNodeSummary()"
+              class="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white"
+            >
+              Copy node summary
+            </button>
+
+            <button
+              type="button"
+              onclick="showTab('trace')"
+              class="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm font-medium text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200"
+            >
+              Jump to exception trace
+            </button>
+          </div>
+        </aside>
+      </section>
+      <section data-tab-panel="source" class="hidden p-5">
+        <div class="mb-4">
+          <h3 class="font-semibold text-zinc-100">Source preview</h3>
+          <p class="mt-1 text-sm text-zinc-500">
+            The source preview is resolved from the first stack frame inside
+            your configured base package.
+          </p>
+        </div>
+
+        <div class="overflow-hidden rounded-xl border border-zinc-800">
+          <div
+            class="flex items-center justify-between border-b border-zinc-800 bg-zinc-900/80 px-4 py-3"
+          >
+            <div
+              class="font-mono text-xs text-zinc-400"
+              th:text="${sourceFile ?: 'No source file resolved'}"
+            >
+              src/main/java/com/syncturtle/UserService.java
+            </div>
+
+            <div
+              class="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-1 font-mono text-xs text-zinc-500"
+              th:text="${sourceLine != null ? 'line ' + sourceLine : 'line unknown'}"
+            >
+              line 42
+            </div>
+          </div>
+
+          <div th:if="${sourceSnippet != null and !sourceSnippet.isEmpty()}">
+            <div
+              th:each="line : ${sourceSnippet}"
+              class="code-line"
+              th:classappend="${line.active} ? 'code-line-active' : ''"
+            >
+              <div class="code-line-number" th:text="${line.number}">42</div>
+              <div class="code-line-text" th:text="${line.text}">
+                Assert.notNull(currentUserId, "current user id is required");
+              </div>
+            </div>
+          </div>
+
+          <div
+            th:if="${sourceSnippet == null or sourceSnippet.isEmpty()}"
+            class="bg-zinc-950 p-6 text-sm text-zinc-500"
+          >
+            No source snippet found. Check
+            <code class="font-mono">app.dev-error.base-package</code> and
+            <code class="font-mono">app.dev-error.source-roots</code>.
+          </div>
+        </div>
+      </section>
+
+      <section data-tab-panel="request" class="hidden p-5">
+        <div class="grid gap-5 lg:grid-cols-2">
+          <div class="rounded-xl border border-zinc-800 bg-zinc-950">
+            <div
+              class="border-b border-zinc-800 px-4 py-3 font-semibold text-zinc-100"
+            >
+              Request headers
+            </div>
+
+            <div th:if="${headers != null and !headers.isEmpty()}">
+              <div
+                th:each="header : ${headers}"
+                class="grid grid-cols-[11rem_1fr] gap-4 border-b border-zinc-900 px-4 py-3 text-sm last:border-b-0"
+              >
+                <div
+                  class="font-mono text-xs uppercase tracking-wide text-zinc-500"
+                  th:text="${header.key}"
+                >
+                  accept
+                </div>
+
+                <div
+                  class="min-w-0 break-words font-mono text-xs text-zinc-300"
+                  th:text="${header.value}"
+                >
+                  text/html
+                </div>
+              </div>
+            </div>
+
+            <div
+              th:if="${headers == null or headers.isEmpty()}"
+              class="p-4 text-sm text-zinc-500"
+            >
+              No headers provided.
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-zinc-800 bg-zinc-950">
+            <div
+              class="border-b border-zinc-800 px-4 py-3 font-semibold text-zinc-100"
+            >
+              Query parameters
+            </div>
+
+            <div th:if="${parameters != null and !parameters.isEmpty()}">
+              <div
+                th:each="parameter : ${parameters}"
+                class="grid grid-cols-[11rem_1fr] gap-4 border-b border-zinc-900 px-4 py-3 text-sm last:border-b-0"
+              >
+                <div
+                  class="font-mono text-xs uppercase tracking-wide text-zinc-500"
+                  th:text="${parameter.key}"
+                >
+                  page
+                </div>
+
+                <div
+                  class="min-w-0 break-words font-mono text-xs text-zinc-300"
+                  th:text="${parameter.value}"
+                >
+                  1
+                </div>
+              </div>
+            </div>
+
+            <div
+              th:if="${parameters == null or parameters.isEmpty()}"
+              class="p-4 text-sm text-zinc-500"
+            >
+              No query parameters.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section data-tab-panel="validation" class="hidden p-5">
+        <div class="mb-4">
+          <h3 class="font-semibold text-zinc-100">
+            Validation / binding errors
+          </h3>
+          <p class="mt-1 text-sm text-zinc-500">
+            Useful when a request DTO fails Jakarta validation.
+          </p>
+        </div>
+
+        <div
+          class="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950"
+        >
+          <div th:if="${errors != null and !errors.isEmpty()}">
+            <div
+              th:each="bindingError : ${errors}"
+              class="border-b border-zinc-900 p-4 last:border-b-0"
+            >
+              <div
+                class="font-mono text-sm text-rose-200"
+                th:text="${bindingError}"
+              >
+                email must be a well-formed email address
+              </div>
+            </div>
+          </div>
+
+          <div
+            th:if="${errors == null or errors.isEmpty()}"
+            class="p-6 text-sm text-zinc-500"
+          >
+            No validation errors attached to this exception.
+          </div>
+        </div>
+      </section>
+
+      <section data-tab-panel="actuator" class="hidden p-5">
+        <div class="mb-4">
+          <h3 class="font-semibold text-zinc-100">Helpful dev links</h3>
+          <p class="mt-1 text-sm text-zinc-500">
+            Use these when debugging mappings, beans, config, logs, and request
+            history.
+          </p>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <a
+            href="/actuator/mappings"
+            class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition hover:border-zinc-700 hover:bg-zinc-900"
+          >
+            <div class="font-semibold text-zinc-100">Mappings</div>
+            <div class="mt-1 text-sm text-zinc-500">
+              Controller routes and handlers.
+            </div>
+          </a>
+
+          <a
+            href="/actuator/conditions"
+            class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition hover:border-zinc-700 hover:bg-zinc-900"
+          >
+            <div class="font-semibold text-zinc-100">Conditions</div>
+            <div class="mt-1 text-sm text-zinc-500">
+              Auto-configuration matches.
+            </div>
+          </a>
+
+          <a
+            href="/actuator/beans"
+            class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition hover:border-zinc-700 hover:bg-zinc-900"
+          >
+            <div class="font-semibold text-zinc-100">Beans</div>
+            <div class="mt-1 text-sm text-zinc-500">
+              Registered Spring beans.
+            </div>
+          </a>
+
+          <a
+            href="/actuator/configprops"
+            class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition hover:border-zinc-700 hover:bg-zinc-900"
+          >
+            <div class="font-semibold text-zinc-100">Config Props</div>
+            <div class="mt-1 text-sm text-zinc-500">
+              Bound configuration properties.
+            </div>
+          </a>
+
+          <a
+            href="/actuator/loggers"
+            class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition hover:border-zinc-700 hover:bg-zinc-900"
+          >
+            <div class="font-semibold text-zinc-100">Loggers</div>
+            <div class="mt-1 text-sm text-zinc-500">Logger levels.</div>
+          </a>
+
+          <a
+            href="/actuator/httpexchanges"
+            class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition hover:border-zinc-700 hover:bg-zinc-900"
+          >
+            <div class="font-semibold text-zinc-100">HTTP Exchanges</div>
+            <div class="mt-1 text-sm text-zinc-500">
+              Recent HTTP request/response data.
+            </div>
+          </a>
+        </div>
+      </section>
+    </section>
+  </body>
+</html>
