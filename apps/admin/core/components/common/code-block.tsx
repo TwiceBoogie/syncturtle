@@ -1,6 +1,5 @@
-import { ReactNode } from "react";
-
-import { cn } from "@syncturtle/utils";
+import type { ReactNode } from "react";
+import { cn } from "@syncturtle/ui";
 
 interface ICodeBlockProps {
   children: ReactNode;

@@ -7,7 +7,7 @@ import lombok.extern.jackson.Jacksonized;
 @Value
 @Builder
 @Jacksonized
-public final class AdminSignupRequest {
+public class AdminSignupRequest {
     String firstName;
     String lastName;
     String email;

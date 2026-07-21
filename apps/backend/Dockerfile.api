@@ -13,18 +13,22 @@ COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 
 # 1.2: copy module poms (cache-friendly)
+COPY libs/common-cache-spring/pom.xml libs/common-cache-spring/pom.xml
 COPY libs/common-contracts/pom.xml libs/common-contracts/pom.xml
 COPY libs/common-core/pom.xml libs/common-core/pom.xml
 COPY libs/common-data-jpa/pom.xml libs/common-data-jpa/pom.xml
-COPY libs/common-spring/pom.xml libs/common-spring/pom.xml
+COPY libs/common-kafka-spring/pom.xml libs/common-kafka-spring/pom.xml
+COPY libs/common-observability-spring/pom.xml libs/common-observability-spring/pom.xml
+COPY libs/common-security-spring/pom.xml libs/common-security-spring/pom.xml
 COPY libs/common-web/pom.xml libs/common-web/pom.xml
 COPY libs/test-support/pom.xml libs/test-support/pom.xml
 
 COPY platform/api-gateway/pom.xml platform/api-gateway/pom.xml
 COPY platform/config-server/pom.xml platform/config-server/pom.xml
-COPY platform/discovery-server/pom.xml platform/discovery-server/pom.xml
+# COPY platform/discovery-server/pom.xml platform/discovery-server/pom.xml
 
 COPY services/email-service/pom.xml services/email-service/pom.xml
+COPY services/file-service/pom.xml services/file-service/pom.xml
 COPY services/instance-service/pom.xml services/instance-service/pom.xml
 COPY services/user-service/pom.xml services/user-service/pom.xml
 COPY services/workspace-service/pom.xml services/workspace-service/pom.xml
@@ -42,18 +46,40 @@ COPY services/ services/
 
 # 1.5: build the jar
 RUN --mount=type=cache,target=/root/.m2 \
-    ./mvnw -B -ntp -pl "${MODULE_PATH}" -am -DskipTests package
+    ./mvnw \
+    -B \
+    -ntp \
+    -pl "${MODULE_PATH}" \
+    -am \
+    -DskipTests \
+    dependency:go-offline
 
-# 1.6: extract layered jar
-RUN JAR_FILE="$(find "${MODULE_PATH}/target" -maxdepth 1 -type f \
+# 1.6: copy source only after dependency resolution
+COPY libs/ libs/
+COPY platform/ platform/
+COPY services/ services/
+
+RUN --mount=type=cache,target=/root/.m2 \
+    ./mvnw \
+    -B \
+    -ntp \
+    -pl "${MODULE_PATH}" \
+    -am \
+    -DskipTests \
+    package
+
+# 1.7: extract layered jar
+RUN JAR_FILE="$(find "${MODULE_PATH}/target" \
+    -maxdepth 1 \
+    -type f \
     -name '*.jar' \
     ! -name '*sources.jar' \
     ! -name '*javadoc.jar' \
     ! -name 'original-*.jar' \
     | head -n 1)" && \
-    test -n "$JAR_FILE" && \
+    test -n "${JAR_FILE}" && \
     mkdir -p /layers && \
-    cp "$JAR_FILE" /layers/app.jar && \
+    cp "${JAR_FILE}" /layers/app.jar && \
     java -Djarmode=layertools -jar /layers/app.jar extract --destination /layers/extracted
 
 # 2: RUNTIME STAGE
@@ -82,10 +108,14 @@ COPY --from=build --chown=10001:10001 /layers/extracted/snapshot-dependencies/ .
 COPY --from=build --chown=10001:10001 /layers/extracted/spring-boot-loader/ ./
 COPY --from=build --chown=10001:10001 /layers/extracted/application/ ./
 
+COPY --chown=10001:10001 --chmod=0755 \
+    bin/docker-entrypoint.sh \
+    /app/bin/docker-entrypoint.sh
+
 USER 10001:10001
 
 EXPOSE ${APP_PORT}
 
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError"
 
-ENTRYPOINT [ "java", "org.springframework.boot.loader.launch.JarLauncher" ]
+ENTRYPOINT [ "/app/bin/docker-entrypoint.sh" ]

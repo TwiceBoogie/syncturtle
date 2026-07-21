@@ -1,2 +1,2 @@
-declare const config: any;
+declare const config: unknown;
 export default config;

@@ -70,8 +70,11 @@ public class InstanceWorkspaceAdminServiceImpl implements InstanceWorkspaceAdmin
         // 2: build pattern to avoid db side concatenation
         String pattern = toSearchPattern(search);
 
-        List<InstanceWorkspaceProjection> workspaces = workspaceRepository.findWorkspacePageDesc(pattern,
-                cursorPosition, perPage + 1);
+        List<InstanceWorkspaceProjection> workspaces = workspaceRepository.findWorkspacePageDesc(
+                pattern,
+                cursorPosition == null ? null : cursorPosition.getCreatedAt(),
+                cursorPosition == null ? null : cursorPosition.getId(),
+                perPage + 1);
 
         return pageMapper.mapToPageResponse(workspaces, perPage);
     }

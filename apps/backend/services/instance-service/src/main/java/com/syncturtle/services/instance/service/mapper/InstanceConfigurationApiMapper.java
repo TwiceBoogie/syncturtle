@@ -8,11 +8,15 @@ import com.syncturtle.common.contracts.instance.config.InstanceConfigurationKey;
 import com.syncturtle.common.web.properties.PublicUrlProperties;
 import com.syncturtle.services.instance.dto.response.InstanceSetupConfigResponse;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Component
 public final class InstanceConfigurationApiMapper {
 
     public InstanceSetupConfigResponse toResponse(Map<InstanceConfigurationKey, String> config,
             PublicUrlProperties props) {
+        log.info(props.getUserApp().getOrigin());
         return InstanceSetupConfigResponse.builder()
                 .enableSignup(isOn(config, InstanceConfigurationKey.ENABLE_SIGNUP))
                 .workspaceCreationDisabled(isOn(config, InstanceConfigurationKey.DISABLE_WORKSPACE_CREATION))

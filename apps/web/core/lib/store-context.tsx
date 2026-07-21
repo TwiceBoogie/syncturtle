@@ -1,25 +1,29 @@
 "use client";
 
+import type { ReactNode } from "react";
+import { createContext, useState } from "react";
 import { RootStore } from "@/syncturtle-web/store/root.store";
-import { createContext, ReactElement } from "react";
 
 let rootStore: RootStore | null = null;
 
+const createRootStore = (): RootStore => new RootStore();
+
 const initializeStore = () => {
-  // create new store instance on first access
-  const newRootStore = rootStore ?? new RootStore();
-  // on server always return a fresh instance (avoid cross request sharing)
-  if (typeof window === "undefined") return newRootStore;
+  if (typeof window === "undefined") {
+    return createRootStore();
+  }
 
-  // on the client persist the singleton
-  if (!rootStore) rootStore = newRootStore;
+  if (!rootStore) {
+    rootStore = createRootStore();
+  }
 
-  return newRootStore;
+  return rootStore;
 };
 
-export const store = initializeStore();
 export const StoreContext = createContext<RootStore | null>(null);
 
-export const StoreProvider = ({ children }: { children: ReactElement }) => (
-  <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
-);
+export const StoreProvider = ({ children }: { children: ReactNode }) => {
+  const [store] = useState<RootStore>(() => initializeStore());
+
+  return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
+};

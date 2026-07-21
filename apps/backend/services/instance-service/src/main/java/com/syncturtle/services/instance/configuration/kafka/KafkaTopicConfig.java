@@ -41,6 +41,16 @@ public class KafkaTopicConfig {
     }
 
     @Bean
+    NewTopic workspaceMemberEventsTopic() {
+        return topic(KafkaTopics.WORKSPACE_MEMBER_EVENTS_V1);
+    }
+
+    @Bean
+    NewTopic workspaceMemberInviteEventsTopic() {
+        return topic(KafkaTopics.WORKSPACE_MEMBER_INVITE_EVENTS_V1);
+    }
+
+    @Bean
     NewTopic passwordEventsTopic() {
         return topic(KafkaTopics.PASSWORD_EVENTS_V1);
     }
@@ -48,6 +58,11 @@ public class KafkaTopicConfig {
     @Bean
     NewTopic emailEventsTopic() {
         return topic(KafkaTopics.EMAIL_EVENTS_V1);
+    }
+
+    @Bean
+    NewTopic userAuthenticatedEventsTopic() {
+        return topic(KafkaTopics.USER_AUTHENTICATED_EVENTS_V1);
     }
 
     // DLT topics
@@ -72,6 +87,16 @@ public class KafkaTopicConfig {
     }
 
     @Bean
+    NewTopic workspaceMemberEventsDltTopic() {
+        return dlt(KafkaTopics.WORKSPACE_MEMBER_EVENTS_V1);
+    }
+
+    @Bean
+    NewTopic workspaceMemberInviteEventsDltTopic() {
+        return dlt(KafkaTopics.WORKSPACE_MEMBER_INVITE_EVENTS_V1);
+    }
+
+    @Bean
     NewTopic passwordEventsDltTopic() {
         return dlt(KafkaTopics.PASSWORD_EVENTS_V1);
     }
@@ -79,6 +104,11 @@ public class KafkaTopicConfig {
     @Bean
     NewTopic emailEventsDltTopic() {
         return dlt(KafkaTopics.EMAIL_EVENTS_V1);
+    }
+
+    @Bean
+    NewTopic userAuthenticatedEventsDltTopic() {
+        return dlt(KafkaTopics.USER_AUTHENTICATED_EVENTS_V1);
     }
 
     private NewTopic topic(String name) {

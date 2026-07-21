@@ -14,8 +14,6 @@ import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
 
 @Getter
-@Jacksonized
-@Builder(toBuilder = true)
 public final class InstanceConfigurationEvent {
     private final String eventId;
     private final String correlationId;
@@ -26,6 +24,8 @@ public final class InstanceConfigurationEvent {
     private final Long globalVersion;
     private final Set<InstanceConfigurationKey> changedKeys;
 
+    @Builder
+    @Jacksonized
     private InstanceConfigurationEvent(
             String eventId,
             String correlationId,

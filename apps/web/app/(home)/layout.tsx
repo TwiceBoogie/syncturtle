@@ -1,5 +1,5 @@
-import { Metadata, Viewport } from "next";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
+import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
   robots: {

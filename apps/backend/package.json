@@ -4,8 +4,11 @@
   "version": "0.0.1",
   "scripts": {
     "mvn": "./mvnw -f pom.xml",
-    "build": "node -e \"const v=require('../../package.json').version; console.log('version', v); require('child_process').execSync(`./mvnw -f pom.xml -Drevision=${v} -DskipTests package`, { stdio: 'inherit' });\"",
+    "build": "node ./scripts/build.mjs",
     "test": "./mvnw -f pom.xml test",
+    "test:it": "./mvnw -f pom.xml -Pit verify",
+    "test:system": "./mvnw -f pom.xml -Psystem verify",
+    "verify": "./mvnw -f pom.xml verify",
     "clean": "./mvnw -f pom.xml clean"
   }
 }

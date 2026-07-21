@@ -1,11 +1,13 @@
 "use client";
 
-import { useAppTheme } from "@/hooks/store/use-app-theme";
-import { Button, Tooltip } from "@heroui/react";
-import { WEB_BASE_URL } from "@syncturtle/constants";
-import { cn } from "@syncturtle/utils";
-import { ExternalLink, MoveLeft } from "lucide-react";
 import Link from "next/link";
+import { ExternalLink, MoveLeft } from "lucide-react";
+// heroui
+import { Button, Tooltip } from "@heroui/react";
+// syncturtle imports
+import { WEB_BASE_URL } from "@syncturtle/constants";
+import { cn } from "@syncturtle/ui";
+import { useAppTheme } from "@/hooks/store/use-app-theme";
 
 export const AdminSidebarHelpSection = () => {
   // store hooks
