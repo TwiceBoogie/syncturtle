@@ -5,6 +5,13 @@ spring:
   application:
     name: user-service
 
+  http:
+    clients:
+      connect-timeout: 5s
+      read-timeout: 10s
+      imperative:
+        factory: jdk
+
   data:
     redis:
       repositories:
@@ -35,16 +42,15 @@ spring:
       auto-startup: ${app.kafka.enabled:true}
     producer:
       acks: all
+      batch-size: 32768
+      compression.type: zstd
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
       properties:
         enable.idempotence: true
         linger.ms: 5
-        batch.size: 32768
-        compression.type: zstd
         max.in.flight.requests.per.connection: 5
         spring.json.add.type.headers: false # JsonSerializer.ADD_TYPE_INFO_HEADERS
-        interceptor.classes: com.syncturtle.common.kafka.interceptor.MdcKafkaHeaderProducerInterceptor
     consumer:
       auto-offset-reset: earliest
 
@@ -64,7 +70,7 @@ app:
       max-elapsed-time: 8s
       dlt-suffix: ".DLT"
       ack-after-handle: true
-      commit-recovered: true
+      commit-recovered: false
       log-retries: true
   security:
     csrf:
@@ -81,16 +87,39 @@ app:
       access-same-site: Lax
       refresh-same-site: Lax
       csrf-same-site: Lax
-      csrf-max-age: 30m
+      csrf-max-age: 3h
 
-  base-urls:
-    web-url: ${APP_BASE_URL_WEB:http://localhost:3000}
-    admin-base-url: ${APP_BASE_URL_ADMIN:http://localhost:3001}
-    app-base-url: ${APP_BASE_URL_APP:http://localhost:3000}
-    admin-base-path: ${APP_BASE_PATH_ADMIN:/god-mode/}
+  gateway:
+    context:
+      enabled: true
+
+  web:
+    errors:
+      include-path: true
+      include-trace-id: true
+      include-debug: false
+      include-stack-trace: false
+      max-stack-trace-lines: 30
+    access-logging:
+      enabled: true
+
+  public:
+    api:
+      origin: ${APP_PUBLIC_API_ORIGIN:http://localhost:8000}
+      base-path: ${APP_PUBLIC_API_BASE_PATH:/}
+    user-app:
+      origin: ${APP_PUBLIC_WEB_ORIGIN:http://localhost:3000}
+      base-path: ${APP_PUBLIC_WEB_BASE_PATH:/}
+    admin:
+      origin: ${APP_PUBLIC_ADMIN_ORIGIN:http://localhost:3001}
+      base-path: ${APP_PUBLIC_ADMIN_BASE_PATH:/god-mode/}
+
   passport:
     issuer: "https://api.syncturtle.com/auth"
     audience: "syncturtle-api"
     kid: "auth-key-2026-04"
     private-key-location: "classpath:keys/jwt-private-key.pem"
     public-key-location: "classpath:keys/jwt-public-key.pem"
+
+  dev-error:
+    enabled: true

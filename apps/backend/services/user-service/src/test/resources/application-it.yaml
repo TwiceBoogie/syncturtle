@@ -5,5 +5,18 @@ spring:
     discovery:
       enabled: false
 
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  kafka:
+    listener:
+      auto-startup: false
+
 server:
   port: 0

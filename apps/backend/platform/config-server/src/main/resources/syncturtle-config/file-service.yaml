@@ -1,0 +1,104 @@
+server:
+  port: ${SERVER_PORT:8004}
+
+spring:
+  application:
+    name: file-service
+
+  datasource:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-timeout: 2000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+
+  kafka:
+    template:
+      observation-enabled: true
+    listener:
+      observation-enabled: true
+      auto-startup: ${app.kafka.enabled:true}
+    producer:
+      acks: all
+      batch-size: 32768
+      compression.type: zstd
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      properties:
+        enable.idempotence: true
+        linger.ms: 5
+        max.in.flight.requests.per.connection: 5
+        spring.json.add.type.headers: false # JsonSerializer.ADD_TYPE_INFO_HEADERS
+    consumer:
+      auto-offset-reset: earliest
+
+jdbc:
+  datasource-proxy:
+    enabled: true
+    include-parameter-values: false
+  includes: QUERY
+
+app:
+  kafka:
+    enabled: true
+    error-handling:
+      initial-interval: 500ms
+      multiplier: 2.0
+      max-elapsed-time: 8s
+      dlt-suffix: ".DLT"
+      ack-after-handle: true
+      commit-recovered: false
+      log-retries: true
+
+  storage:
+    access-key: ${APP_STORAGE_ACCESS_KEY:syncturtle_minio}
+    secret-key: ${APP_STORAGE_SECRET_KEY:syncturtle_minio_dev_password}
+    region: ${APP_STORAGE_REGION:us-east-1}
+    bucket: ${APP_STORAGE_BUCKET:syncturtle}
+    endpoint: ${APP_STORAGE_ENDPOINT:http://localhost:9000}
+    public-endpoint: ${APP_STORAGE_PUBLIC_ENDPOINT:http://localhost}
+    use-path-style: ${APP_STORAGE_USE_PATH_STYLE:true}
+    presign-expiration: ${APP_STORAGE_PRESIGN_EXPIRATION:1h}
+
+  security:
+    csrf:
+      enabled: false
+      signing-key: ${APP_SECURITY_CSRF_SIGNING_KEY}
+      form:
+        enabled: false
+
+    cookies:
+      secure: ${APP_SECURITY_COOKIES_SECURE:false}
+      host-prefix-enabled: ${APP_SECURITY_COOKIES_HOST_PREFIX_ENABLED:false}
+      domain: ${APP_SECURITY_COOKIES_DOMAIN:}
+      path: /
+      access-same-site: Lax
+      refresh-same-site: Lax
+      csrf-same-site: Lax
+      csrf-max-age: 30m
+
+  web:
+    errors:
+      include-path: true
+      include-trace-id: true
+      include-debug: false
+      include-stack-trace: false
+      max-stack-trace-lines: 30
+
+    access-logging:
+      enabled: true
+
+  data:
+    jpa:
+      auditing:
+        enabled: true

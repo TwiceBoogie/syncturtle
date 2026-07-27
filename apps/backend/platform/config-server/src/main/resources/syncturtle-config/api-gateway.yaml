@@ -33,10 +33,10 @@ spring:
             compression: true
             pool:
               type: fixed
-              maxConnections: 200
+              max-connections: 200
               acquire-timeout: 2000
-              maxIdleTime: 5m
-              maxLifeTime: 5m
+              max-idle-time: 5m
+              max-life-time: 5m
               eviction-interval: 2m
               leasing-strategy: lifo
               metrics: true
@@ -146,6 +146,47 @@ spring:
                 - name: PassportAuthentication
                   args:
                     validate-admin-session-version: true
+
+            - id: user-workspace-get
+              uri: ${app.services.workspace-service.base-url}
+              predicates:
+                - Path=/api/users/me/workspaces/**
+                - Method=GET,OPTIONS,HEAD
+              filters:
+                - name: PassportAuthentication
+                  args:
+                    validate-session: true
+                    validate-user-auth-version: true
+                    validate-admin-session-version: false
+                    require-session-id: true
+                    require-instance-id: true
+
+            - id: workspace-protected
+              uri: ${app.services.workspace-service.base-url}
+              predicates:
+                - Path=/api/workspaces/**
+              filters:
+                - name: PassportAuthentication
+                  args:
+                    validate-admin-session-version: false
+
+            - id: user-protected
+              uri: ${app.services.user-service.base-url}
+              predicates:
+                - Path=/api/users/**
+              filters:
+                - name: PassportAuthentication
+                  args:
+                    validate-admin-session-version: false
+
+            - id: file-service-protected
+              uri: ${app.services.file-service.base-url}
+              predicates:
+                - Path=/api/assets/**
+              filters:
+                - name: PassportAuthentication
+                  args:
+                    validate-admin-session-version: false
 
 resilience4j:
   circuitbreaker:

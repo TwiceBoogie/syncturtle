@@ -9,6 +9,10 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
+import com.syncturtle.common.core.header.GatewayHeaders;
+import com.syncturtle.platform.gateway.filters.GatewayExchangeAttributes;
+import com.syncturtle.platform.gateway.filters.GatewayFilterOrders;
+
 import reactor.core.publisher.Mono;
 
 /**
@@ -37,13 +41,16 @@ public class StripInboundAuthHeadersFilter implements GlobalFilter, Ordered {
      * Target header used by downstream services for user identification.
      */
     private static final Set<String> BLOCKED = Set.of(
-            "X-Auth-User-Id",
-            "X-Auth-Session-Id",
-            "X-Auth-Instance-Id",
-            "X-Auth-Roles",
-            "X-Auth-User-Auth-Version",
-            "X-Auth-Admin-Session-Version",
-            "X-Auth-Issuer");
+            GatewayHeaders.HDR_AUTH_USER_ID,
+            GatewayHeaders.HDR_AUTH_SESSION_ID,
+            GatewayHeaders.HDR_AUTH_INSTANCE_ID,
+            GatewayHeaders.HDR_AUTH_ROLES,
+            GatewayHeaders.HDR_AUTH_USER_AUTH_VERSION,
+            GatewayHeaders.HDR_AUTH_ADMIN_SESSION_VERSION,
+            GatewayHeaders.HDR_AUTH_ISSUER,
+            GatewayHeaders.HDR_AUTH_WORKSPACE_ID,
+            GatewayHeaders.HDR_INTERNAL_LOGIN_CONTEXT,
+            GatewayHeaders.HDR_INTERNAL_LOGOUT_CONTEXT);
 
     /**
      * Defines the execution priority.
@@ -56,7 +63,7 @@ public class StripInboundAuthHeadersFilter implements GlobalFilter, Ordered {
      */
     @Override
     public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE;
+        return GatewayFilterOrders.STRIP_INBOUND_AUTH_HEADERS;
     }
 
     /**
@@ -78,6 +85,8 @@ public class StripInboundAuthHeadersFilter implements GlobalFilter, Ordered {
      */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        exchange.getAttributes().put(GatewayExchangeAttributes.REQUEST_START_NANOS, System.nanoTime());
+
         ServerHttpRequest request = exchange.getRequest()
                 .mutate()
                 .headers(headers -> BLOCKED.forEach(headers::remove))

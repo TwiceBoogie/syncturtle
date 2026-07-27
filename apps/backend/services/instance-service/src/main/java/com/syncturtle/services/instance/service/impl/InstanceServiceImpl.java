@@ -1,12 +1,8 @@
 package com.syncturtle.services.instance.service.impl;
 
-import java.time.Clock;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,12 +11,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.syncturtle.common.contracts.instance.config.InstanceConfigurationKey;
 import com.syncturtle.common.contracts.instance.event.InstanceEvent;
-import com.syncturtle.common.contracts.instance.event.InstanceEvent.Type;
 import com.syncturtle.common.web.properties.PublicUrlProperties;
 import com.syncturtle.services.instance.dto.request.InstanceUpdateRequest;
 import com.syncturtle.services.instance.dto.response.InstanceResponse;
 import com.syncturtle.services.instance.dto.response.InstanceSetupResponse;
-import com.syncturtle.services.instance.messaging.db.event.InstanceEventToPublish;
+import com.syncturtle.services.instance.event.InstanceEventFactory;
+import com.syncturtle.services.instance.messaging.outbox.InstanceOutboxWriter;
 import com.syncturtle.services.instance.model.Instance;
 import com.syncturtle.services.instance.repository.InstanceRepository;
 import com.syncturtle.services.instance.repository.UserRepository;
@@ -55,12 +51,12 @@ public class InstanceServiceImpl implements InstanceService {
     private final InstanceRepository instanceRepository;
     private final UserRepository userRepository;
     private final WorkspaceRepository workspaceRepository;
-    private final ApplicationEventPublisher events;
+    private final InstanceOutboxWriter outboxWriter;
+    private final InstanceEventFactory eventFactory;
     private final InstanceConfigurationResolver resolver;
     private final InstanceApiMapper instanceApiMapper;
     private final InstanceConfigurationApiMapper configurationApiMapper;
     private final PublicUrlProperties properties;
-    private final Clock clock;
 
     @Override
     @Transactional(readOnly = true)
@@ -125,20 +121,8 @@ public class InstanceServiceImpl implements InstanceService {
     }
 
     private void publishInstanceUpdate(Instance instance) {
-        InstanceEvent event = InstanceEvent.builder()
-                .eventId(UUID.randomUUID().toString())
-                .occurredAt(Instant.now(clock))
-                .type(Type.INSTANCE_UPDATED)
-                .id(instance.getId())
-                .setupDone(instance.isSetupDone())
-                .edition(instance.getEdition())
-                .version(instance.getVersion())
-                .test(instance.isTest())
-                .createdAt(instance.getCreatedAt())
-                .updatedAt(instance.getUpdatedAt())
-                .build();
-
-        events.publishEvent(new InstanceEventToPublish(event));
+        InstanceEvent event = eventFactory.updated(instance);
+        outboxWriter.saveInstanceEvent(event);
     }
 
 }

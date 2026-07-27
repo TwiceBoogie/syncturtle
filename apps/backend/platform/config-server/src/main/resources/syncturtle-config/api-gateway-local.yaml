@@ -19,9 +19,6 @@ spring:
                   - OPTIONS
                   - HEAD
                 allowedHeaders: "*"
-                exposedHeaders:
-                  - X-Request-Id
-                  - X-Correlation-Id
                 allowCredentials: true
 
   data:
@@ -42,3 +39,5 @@ app:
       base-url: http://localhost:8003
     email-service:
       base-url: http://localhost:8020
+    file-service:
+      base-url: http://localhost:8004

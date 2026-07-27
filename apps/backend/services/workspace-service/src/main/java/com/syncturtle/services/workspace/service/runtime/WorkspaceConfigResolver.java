@@ -16,7 +16,7 @@ public class WorkspaceConfigResolver {
 
     private final InstanceClient instanceClient;
 
-    @Cacheable(cacheNames = WorkspaceFlagsRuntimeCacheNames.WORKSPACE_FLAGS_RUNTIME, key = WorkspaceFlagsRuntimeCacheNames.CURRENT_SPEL_KEY, unless = "#result == null", sync = true)
+    @Cacheable(cacheNames = WorkspaceFlagsRuntimeCacheNames.WORKSPACE_FLAGS_RUNTIME, key = WorkspaceFlagsRuntimeCacheNames.CURRENT_SPEL_KEY, sync = true)
     public WorkspaceFlagRuntimeSnapshot getInstanceConfigurations() {
         WorkspaceRuntimeConfigResponse response = instanceClient.getWorkspaceRuntimeConfigResponse();
 

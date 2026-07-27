@@ -5,36 +5,52 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.Instant;
+import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.syncturtle.common.contracts.instance.config.InstanceConfigurationKey;
+import com.syncturtle.common.web.properties.PublicUrlProperties;
 import com.syncturtle.common.web.url.PublicUrlResolver;
 import com.syncturtle.services.instance.client.UserClient;
 import com.syncturtle.services.instance.dto.response.InstanceSetupResponse;
+import com.syncturtle.services.instance.event.InstanceEventFactory;
+import com.syncturtle.services.instance.messaging.outbox.InstanceOutboxWriter;
 import com.syncturtle.services.instance.model.Instance;
-import com.syncturtle.services.instance.model.param.InstanceBinaryParam;
-import com.syncturtle.services.instance.model.param.InstanceRegistrationParam;
-import com.syncturtle.services.instance.model.param.InstanceRuntimeParam;
 import com.syncturtle.services.instance.repository.InstanceAdminRepository;
 import com.syncturtle.services.instance.repository.InstanceRepository;
 import com.syncturtle.services.instance.repository.UserRepository;
 import com.syncturtle.services.instance.service.InstanceService;
 import com.syncturtle.services.instance.service.configuration.InstanceConfigurationResolver;
 import com.syncturtle.services.instance.service.configuration.param.RequestedKeyParam;
-import com.syncturtle.testing.annotations.IntegrationTest;
+import com.syncturtle.services.instance.service.impl.InstanceServiceImpl;
+import com.syncturtle.services.instance.service.mapper.InstanceApiMapper;
+import com.syncturtle.services.instance.service.mapper.InstanceConfigurationApiMapper;
+import com.syncturtle.services.instance.support.clock.TestClocks;
+import com.syncturtle.services.instance.support.fixture.InstanceFixtures;
+import com.syncturtle.testing.annotations.JpaIntegrationTest;
 import com.syncturtle.testing.annotations.UsePostgresDb;
 
-@IntegrationTest
+@JpaIntegrationTest
 @UsePostgresDb("instance_service_it")
+@Import({ InstanceServiceImpl.class, InstanceEventFactory.class,
+        InstanceApiMapper.class,
+        InstanceConfigurationApiMapper.class,
+        InstanceServiceIT.ServiceTestConfiguration.class })
+@DisplayName("InstanceService")
 public class InstanceServiceIT {
 
     @Autowired
@@ -45,6 +61,18 @@ public class InstanceServiceIT {
 
     @Autowired
     InstanceAdminRepository instanceAdminRepository;
+
+    @Autowired
+    InstanceEventFactory eventFactory;
+
+    @Autowired
+    InstanceApiMapper instanceApiMapper;
+
+    @Autowired
+    InstanceConfigurationApiMapper instanceConfigurationApiMapper;
+
+    @Autowired
+    PublicUrlProperties properties;
 
     @Autowired
     UserRepository userRepository;
@@ -58,6 +86,9 @@ public class InstanceServiceIT {
     @MockitoBean
     InstanceConfigurationResolver resolver;
 
+    @MockitoBean
+    InstanceOutboxWriter outboxWriter;
+
     @AfterEach
     void cleanup() {
         userRepository.deleteAll();
@@ -70,7 +101,7 @@ public class InstanceServiceIT {
         @Test
         void whenInstanceExists_returnsAggregate_fromDb_andConfigurations() {
             // Arrange
-            Instance instance = generateInstance();
+            Instance instance = InstanceFixtures.activeInstance("Syncturtle");
             instanceRepository.save(instance);
 
             @SuppressWarnings("unchecked")
@@ -90,22 +121,32 @@ public class InstanceServiceIT {
             assertThat(requested).extracting(item -> item.getKey())
                     .containsExactlyInAnyOrder(
                             InstanceConfigurationKey.ENABLE_SIGNUP,
+                            InstanceConfigurationKey.DISABLE_WORKSPACE_CREATION,
+                            InstanceConfigurationKey.IS_GOOGLE_ENABLED,
+                            InstanceConfigurationKey.IS_GITHUB_ENABLED,
+                            InstanceConfigurationKey.GITHUB_APP_NAME,
+                            InstanceConfigurationKey.IS_GITLAB_ENABLED,
+                            InstanceConfigurationKey.EMAIL_HOST,
+                            InstanceConfigurationKey.ENABLE_MAGIC_LINK_LOGIN,
+                            InstanceConfigurationKey.ENABLE_EMAIL_PASSWORD,
+                            InstanceConfigurationKey.POSTHOG_API_KEY,
                             InstanceConfigurationKey.POSTHOG_HOST,
-                            InstanceConfigurationKey.ENABLE_MAGIC_LINK_LOGIN);
+                            InstanceConfigurationKey.IS_INTERCOM_ENABLED,
+                            InstanceConfigurationKey.INTERCOM_APP_ID);
         }
 
     }
 
-    private static Instance generateInstance() {
-        Instant now = Instant.now();
-        InstanceRuntimeParam runtimeMetadata = InstanceRuntimeParam.empty();
-        InstanceBinaryParam binaryMetadata = InstanceBinaryParam.from(null, now);
-        InstanceRegistrationParam param = InstanceRegistrationParam.builder()
-                .runtime(runtimeMetadata)
-                .binary(binaryMetadata)
-                .build();
+    @EnableJpaAuditing
+    @TestConfiguration(proxyBeanMethods = false)
+    @EnableConfigurationProperties(PublicUrlProperties.class)
+    static class ServiceTestConfiguration {
 
-        return Instance.register(param);
+        @Bean
+        Clock clock() {
+            return TestClocks.fixedUtc();
+        }
+
     }
 
 }

@@ -41,21 +41,17 @@ spring:
     listener:
       observation-enabled: true
       auto-startup: ${app.kafka.enabled:true}
-      concurrency: 2
-      ack-mode: record
-      missing-topics-fatal: false
     producer:
       acks: all
+      batch-size: 32768
+      compression.type: zstd
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
       properties:
         enable.idempotence: true
         linger.ms: 5
-        batch.size: 32768
-        compression.type: zstd
         max.in.flight.requests.per.connection: 5
         spring.json.add.type.headers: false # JsonSerializer.ADD_TYPE_INFO_HEADERS
-        interceptor.classes: com.syncturtle.common.kafka.interceptor.MdcKafkaHeaderProducerInterceptor
     consumer:
       auto-offset-reset: earliest
 
@@ -70,7 +66,7 @@ app:
       max-elapsed-time: 8s
       dlt-suffix: ".DLT"
       ack-after-handle: true
-      commit-recovered: true
+      commit-recovered: false
       log-retries: true
 
   security:

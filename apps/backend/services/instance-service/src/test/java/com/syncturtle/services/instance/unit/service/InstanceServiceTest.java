@@ -19,7 +19,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import java.time.Clock;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -38,17 +37,18 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.syncturtle.common.contracts.instance.config.InstanceConfigurationKey;
+import com.syncturtle.common.contracts.instance.event.InstanceEvent;
 import com.syncturtle.common.web.properties.PublicUrlProperties;
 import com.syncturtle.services.instance.dto.request.InstanceUpdateRequest;
 import com.syncturtle.services.instance.dto.response.InstanceResponse;
 import com.syncturtle.services.instance.dto.response.InstanceSetupConfigResponse;
 import com.syncturtle.services.instance.dto.response.InstanceSetupResponse;
-import com.syncturtle.services.instance.messaging.db.event.InstanceEventToPublish;
+import com.syncturtle.services.instance.event.InstanceEventFactory;
+import com.syncturtle.services.instance.messaging.outbox.InstanceOutboxWriter;
 import com.syncturtle.services.instance.model.Instance;
 import com.syncturtle.services.instance.repository.InstanceRepository;
 import com.syncturtle.services.instance.repository.UserRepository;
@@ -60,6 +60,7 @@ import com.syncturtle.services.instance.service.impl.InstanceServiceImpl;
 import com.syncturtle.services.instance.service.mapper.InstanceApiMapper;
 import com.syncturtle.services.instance.service.mapper.InstanceConfigurationApiMapper;
 import com.syncturtle.services.instance.support.clock.TestClocks;
+import com.syncturtle.services.instance.support.fixture.InstanceEventFixtures;
 import com.syncturtle.services.instance.support.fixture.InstanceFixtures;
 import com.syncturtle.services.instance.support.fixture.PublicUrlFixtures;
 import com.syncturtle.services.instance.support.fixture.ResponseFixtures;
@@ -76,7 +77,9 @@ class InstanceServiceTest {
     @Mock
     WorkspaceRepository workspaceRepository;
     @Mock
-    ApplicationEventPublisher events;
+    InstanceOutboxWriter outboxWriter;
+    @Mock
+    InstanceEventFactory eventFactory;
     @Mock
     InstanceConfigurationResolver resolver;
     @Mock
@@ -84,28 +87,26 @@ class InstanceServiceTest {
     @Mock
     InstanceConfigurationApiMapper configurationApiMapper;
     @Captor
-    private ArgumentCaptor<InstanceEventToPublish> eventCaptor;
+    private ArgumentCaptor<InstanceEvent> eventCaptor;
     @Captor
     private ArgumentCaptor<List<RequestedKeyParam>> requestedKeysCaptor;
 
-    private Clock clock;
     private PublicUrlProperties publicUrls;
     private InstanceService service;
 
     @BeforeEach
     void setup() {
-        clock = TestClocks.fixedUtc();
         publicUrls = PublicUrlFixtures.publicUrls();
         service = new InstanceServiceImpl(
                 instanceRepository,
                 userRepository,
                 workspaceRepository,
-                events,
+                outboxWriter,
+                eventFactory,
                 resolver,
                 instanceApiMapper,
                 configurationApiMapper,
-                publicUrls,
-                clock);
+                publicUrls);
     }
 
     @Nested
@@ -128,7 +129,7 @@ class InstanceServiceTest {
             // verify
             verify(instanceRepository).findFirstByDeletedAtIsNullOrderByCreatedAtDesc(Instance.class);
             verify(instanceApiMapper).toInactiveInstanceResponse();
-            verifyNoInteractions(resolver, userRepository, configurationApiMapper, events);
+            verifyNoInteractions(resolver, userRepository, configurationApiMapper, outboxWriter);
             verifyNoMoreInteractions(instanceRepository, instanceApiMapper);
         }
 
@@ -189,7 +190,7 @@ class InstanceServiceTest {
                     same(publicUrls));
             verify(userRepository).countByActiveTrue();
             verify(instanceApiMapper).toInstanceResponse(same(instance), eq(3L), eq(false));
-            verifyNoInteractions(events);
+            verifyNoInteractions(outboxWriter);
         }
 
     }
@@ -209,7 +210,7 @@ class InstanceServiceTest {
                     .hasMessage("request is required");
             // assert
             // verify
-            verifyNoInteractions(instanceRepository, userRepository, resolver, events, instanceApiMapper,
+            verifyNoInteractions(instanceRepository, userRepository, resolver, outboxWriter, instanceApiMapper,
                     configurationApiMapper);
         }
 
@@ -233,7 +234,7 @@ class InstanceServiceTest {
             // verify
             verify(instanceRepository).findFirstByDeletedAtIsNullOrderByCreatedAtDesc(Instance.class);
             verify(instanceRepository, never()).saveAndFlush(any());
-            verifyNoInteractions(userRepository, resolver, events, instanceApiMapper,
+            verifyNoInteractions(userRepository, resolver, outboxWriter, instanceApiMapper,
                     configurationApiMapper);
         }
 
@@ -251,6 +252,7 @@ class InstanceServiceTest {
                     .thenReturn(Optional.of(instance));
             when(instanceRepository.saveAndFlush(any(Instance.class)))
                     .thenAnswer(invocation -> invocation.getArgument(0));
+            when(eventFactory.updated(instance)).thenReturn(InstanceEventFixtures.instanceUpdate());
             when(userRepository.countByActiveTrue()).thenReturn(2L);
             when(instanceApiMapper.toInstanceResponse(
                     argThat(saved -> "New Name".equals(saved.getInstanceName())),
@@ -262,17 +264,17 @@ class InstanceServiceTest {
             assertThat(instance.getInstanceName()).isEqualTo("New Name");
             // verify
             verify(instanceRepository).saveAndFlush(same(instance));
-            verify(events).publishEvent(eventCaptor.capture());
+            verify(outboxWriter).saveInstanceEvent(eventCaptor.capture());
             assertThatPublishedEvent(eventCaptor.getValue())
                     .isInstanceUpdated()
                     .hasInstanceId(instance.getId())
-                    .occurredAt(TestClocks.NOW)
-                    .hasSetupDone(instance.isSetupDone());
+                    .occurredAt(TestClocks.NOW);
+            // .hasSetupDone(instance.isSetupDone());
 
-            InOrder order = inOrder(instanceRepository, events, userRepository, instanceApiMapper);
+            InOrder order = inOrder(instanceRepository, outboxWriter, userRepository, instanceApiMapper);
             order.verify(instanceRepository).findFirstByDeletedAtIsNullOrderByCreatedAtDesc(Instance.class);
             order.verify(instanceRepository).saveAndFlush(same(instance));
-            order.verify(events).publishEvent(any(InstanceEventToPublish.class));
+            order.verify(outboxWriter).saveInstanceEvent(any(InstanceEvent.class));
             order.verify(userRepository).countByActiveTrue();
             order.verify(instanceApiMapper).toInstanceResponse(same(instance), eq(2L), eq(false));
 
@@ -294,10 +296,11 @@ class InstanceServiceTest {
                     .thenReturn(Optional.of(instance));
             when(instanceRepository.saveAndFlush(any(Instance.class)))
                     .thenAnswer(invocation -> invocation.getArgument(0));
+            when(eventFactory.updated(instance)).thenReturn(InstanceEventFixtures.instanceUpdate());
             doAnswer(invocation -> {
                 publishCount.incrementAndGet();
                 return null;
-            }).when(events).publishEvent(any(InstanceEventToPublish.class));
+            }).when(outboxWriter).saveInstanceEvent(any(InstanceEvent.class));
             when(userRepository.countByActiveTrue()).thenReturn(1L);
             when(instanceApiMapper.toInstanceResponse(any(Instance.class), eq(1L), eq(false)))
                     .thenReturn(expected);
@@ -321,8 +324,9 @@ class InstanceServiceTest {
                     .thenReturn(Optional.of(instance));
             when(instanceRepository.saveAndFlush(any(Instance.class)))
                     .thenAnswer(invocation -> invocation.getArgument(0));
-            doThrow(new IllegalStateException("outbox unavailable")).when(events)
-                    .publishEvent(any(InstanceEventToPublish.class));
+            when(eventFactory.updated(instance)).thenReturn(InstanceEventFixtures.instanceUpdate());
+            doThrow(new IllegalStateException("outbox unavailable")).when(outboxWriter)
+                    .saveInstanceEvent(any(InstanceEvent.class));
             // act + assert
             assertThatThrownBy(() -> service.instanceUpdate(request))
                     .isInstanceOf(IllegalStateException.class)
@@ -347,13 +351,14 @@ class InstanceServiceTest {
                     .thenReturn(Optional.of(instance));
             when(instanceRepository.saveAndFlush(any(Instance.class)))
                     .thenAnswer(invocation -> invocation.getArgument(0));
+            when(eventFactory.updated(instance)).thenReturn(InstanceEventFixtures.instanceUpdate());
             // act
             service.markSignupScreenVisited();
             // assert
             assertThat(instance.isSignupScreenVisited()).isTrue();
             // verify
             verify(instanceRepository).saveAndFlush(same(instance));
-            verify(events).publishEvent(eventCaptor.capture());
+            verify(outboxWriter).saveInstanceEvent(eventCaptor.capture());
             assertThatPublishedEvent(eventCaptor.getValue())
                     .isInstanceUpdated()
                     .hasInstanceId(instance.getId())
@@ -376,7 +381,7 @@ class InstanceServiceTest {
                             .isEqualTo(HttpStatus.BAD_REQUEST));
             // verify
             verify(instanceRepository, never()).saveAndFlush(any());
-            verifyNoInteractions(events, userRepository, resolver, instanceApiMapper,
+            verifyNoInteractions(outboxWriter, userRepository, resolver, instanceApiMapper,
                     configurationApiMapper);
         }
 

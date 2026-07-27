@@ -28,11 +28,12 @@ CREATE TABLE workspace_member_invites (
     token                   VARCHAR(255) NOT NULL,
     message                 TEXT,
     responded_at            TIMESTAMPTZ,
-    role                    SMALLINT NOT NULL,
+    role                    INTEGER NOT NULL,
     workspace_id            UUID NOT NULL,
     created_by_id           UUID,
     updated_by_id           UUID,
-    deleted_at              TIMESTAMPTZ
+    deleted_at              TIMESTAMPTZ,
+    version                 BIGINT NOT NULL
 );
 --rollback DROP TABLE IF EXISTS workspace_member_invites;
 
@@ -41,7 +42,7 @@ CREATE TABLE workspace_members (
     created_at              TIMESTAMPTZ NOT NULL,
     updated_at              TIMESTAMPTZ NOT NULL,
     id                      UUID PRIMARY KEY,
-    role                    SMALLINT NOT NULL,
+    role                    INTEGER NOT NULL,
     member_id               UUID NOT NULL, -- logical fk to user-service:users.id
     workspace_id            UUID NOT NULL,
     company_role            TEXT,
@@ -49,6 +50,7 @@ CREATE TABLE workspace_members (
     created_by_id           UUID,
     updated_by_id           UUID,
     deleted_at              TIMESTAMPTZ,
+    version                 BIGINT NOT NULL,
     CONSTRAINT workspace_member_role_check CHECK ((role >= 0))
 );
 --rollback DROP TABLE IF EXISTS workspace_members;

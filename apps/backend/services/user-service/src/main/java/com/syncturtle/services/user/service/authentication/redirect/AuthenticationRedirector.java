@@ -1,5 +1,8 @@
 package com.syncturtle.services.user.service.authentication.redirect;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -20,6 +23,7 @@ public class AuthenticationRedirector {
     private static final String SIGN_IN_PATH = "/sign-in";
     private static final String SIGN_UP_PATH = "/sign-up";
     private static final String DEFAULT_AUTH_REDIRECT_PATH = "/";
+    private static final String RESET_PASSWORD_PAGE = "/accounts/reset-password/";
 
     private final PublicUrlResolver hostResolver;
 
@@ -43,6 +47,22 @@ public class AuthenticationRedirector {
                 : hostResolver.userApp(SIGN_IN_PATH);
 
         return SignOutResponse.redirect(location);
+    }
+
+    public String passwordResetSuccess() {
+        return hostResolver.userApp(SIGN_IN_PATH);
+    }
+
+    public String passwordResetFailure(String uidb64, String token, AuthException exception) {
+        Assert.hasText(uidb64, "uidb64 is required");
+        Assert.hasText(token, "token is required");
+        Assert.notNull(exception, "exception is required");
+
+        Map<String, Object> queryParams = new LinkedHashMap<>(exception.getErrorMap());
+        queryParams.put("uidb64", uidb64);
+        queryParams.put("token", token);
+
+        return hostResolver.userAppWithQuery(RESET_PASSWORD_PAGE, queryParams);
     }
 
     private IssueTokenResponse redirectTo(String path, AuthException exception, String nextPath) {

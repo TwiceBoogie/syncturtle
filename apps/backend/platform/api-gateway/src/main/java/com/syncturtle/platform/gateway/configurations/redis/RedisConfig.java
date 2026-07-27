@@ -2,7 +2,7 @@ package com.syncturtle.platform.gateway.configurations.redis;
 
 import java.time.Duration;
 
-import org.springframework.boot.autoconfigure.data.redis.LettuceClientConfigurationBuilderCustomizer;
+import org.springframework.boot.data.redis.autoconfigure.LettuceClientConfigurationBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

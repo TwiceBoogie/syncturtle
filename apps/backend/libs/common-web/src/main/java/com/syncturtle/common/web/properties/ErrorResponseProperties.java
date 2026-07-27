@@ -13,9 +13,9 @@ public class ErrorResponseProperties {
      */
     private final boolean includePath;
     /**
-     * Include trace_id, request_id, and correlation_id in error response.
+     * Include the active OpenTelemetry trace ID in the error response.
      */
-    private final boolean includeRequestIds;
+    private final boolean includeTraceId;
     /**
      * Include debug object. Keep false in production.
      */
@@ -32,12 +32,12 @@ public class ErrorResponseProperties {
 
     public ErrorResponseProperties(
             @DefaultValue("true") boolean includePath,
-            @DefaultValue("true") boolean includeRequestIds,
+            @DefaultValue("true") boolean includeTraceId,
             @DefaultValue("false") boolean includeDebug,
             @DefaultValue("false") boolean includeStackTrace,
             @DefaultValue("30") int maxStackTraceLines) {
         this.includePath = includePath;
-        this.includeRequestIds = includeRequestIds;
+        this.includeTraceId = includeTraceId;
         this.includeDebug = includeDebug;
         this.includeStackTrace = includeStackTrace;
         this.maxStackTraceLines = requirePositive(maxStackTraceLines, "max-stack-trace-lines");

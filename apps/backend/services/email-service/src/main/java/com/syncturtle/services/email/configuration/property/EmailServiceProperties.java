@@ -4,7 +4,13 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration;
 
 @Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties(SyncturtleConfig.class)
+@EnableConfigurationProperties({
+        EmailInboxProperties.class,
+        EmailKafkaProperties.class,
+        EmailRuntimeConfigCacheProperties.class,
+        EmailTransportProperties.class,
+        InstanceServiceClientProperties.class
+})
 public class EmailServiceProperties {
 
 }
