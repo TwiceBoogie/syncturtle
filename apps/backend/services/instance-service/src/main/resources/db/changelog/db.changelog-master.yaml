@@ -19,5 +19,8 @@ databaseChangeLog:
       file: releases/0004_add_workspace_lite.sql
       relativeToChangelogFile: true
   - include:
+      file: releases/0005_add_outbox_messages.sql
+      relativeToChangelogFile: true
+  - include:
       file: env/test/db.changelog-test.yaml
       relativeToChangelogFile: true

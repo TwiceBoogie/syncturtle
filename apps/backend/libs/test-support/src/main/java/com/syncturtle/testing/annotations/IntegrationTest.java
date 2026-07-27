@@ -8,6 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.annotation.AliasFor;
 import org.springframework.test.context.ActiveProfiles;
 
 @Inherited
@@ -17,5 +18,9 @@ import org.springframework.test.context.ActiveProfiles;
 @Retention(RetentionPolicy.RUNTIME)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public @interface IntegrationTest {
+    @AliasFor(annotation = SpringBootTest.class, attribute = "classes")
+    Class<?>[] classes() default {};
 
+    @AliasFor(annotation = SpringBootTest.class, attribute = "properties")
+    String[] properties() default {};
 }

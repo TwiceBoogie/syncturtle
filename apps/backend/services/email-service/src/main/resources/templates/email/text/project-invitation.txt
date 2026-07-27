@@ -1,0 +1,11 @@
+Join [[${projectName}]] on Syncturtle
+
+[[${inviterName}]] invited you to collaborate on [[${projectName}]].
+
+Accept the project invitation:
+[[${projectInvitationUrl != null ? projectInvitationUrl : 'https://syncturtle.com'}]]
+
+If you were not expecting this project invitation, you can safely ignore this email.
+
+This email was sent to [[${email}]].
+Please delete it if you are not the intended recipient.

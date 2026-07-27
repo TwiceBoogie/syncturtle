@@ -25,7 +25,7 @@ public final class SecurityCookieProperties {
 
     public SecurityCookieProperties(
             @DefaultValue("false") boolean secure,
-            @DefaultValue("true") boolean hostPrefixEnabled,
+            @DefaultValue("false") boolean hostPrefixEnabled,
             @DefaultValue("") String domain,
             @DefaultValue("/") String path,
             @DefaultValue("Lax") String accessSameSite,

@@ -1,5 +1,5 @@
-import { FC, ReactNode } from "react";
-import { cn } from "@syncturtle/utils";
+import type { FC, ReactNode } from "react";
+import { cn } from "@syncturtle/ui";
 
 interface IDefaultLayoutProps {
   children: ReactNode;

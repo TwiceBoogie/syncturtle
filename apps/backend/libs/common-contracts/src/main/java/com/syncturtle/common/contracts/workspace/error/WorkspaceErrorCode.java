@@ -39,6 +39,60 @@ public enum WorkspaceErrorCode implements ErrorCode {
             404,
             "Workspace owner was not found."),
 
+    WORKSPACE_LOGO_ASSET_INVALID(
+            4005,
+            "WORKSPACE_LOGO_ASSET_INVALID",
+            400,
+            "Workspace logo asset is invalid."),
+
+    WORKSPACE_LOGO_ASSET_NOT_UPLOADED(
+            4006,
+            "WORKSPACE_LOGO_ASSET_NOT_UPLOADED",
+            409,
+            "Workspace logo asset has not been uploaded."),
+
+    WORKSPACE_LOGO_ASSET_FORBIDDEN(
+            4007,
+            "WORKSPACE_LOGO_ASSET_FORBIDDEN",
+            403,
+            "Workspace logo cannot be used for this workspace."),
+
+    WORKSPACE_INVITATION_FORBIDDEN(
+            4010,
+            "WORKSPACE_INVITATION_FORBIDDEN",
+            403,
+            "You cannot invite users to this workspace."),
+
+    WORKSPACE_INVITATION_ROLE_TOO_HIGH(
+            4011,
+            "WORKSPACE_INVITATION_ROLE_TOO_HIGH",
+            400,
+            "You cannot invite a user with a higher role."),
+
+    WORKSPACE_INVITATION_USER_ALREADY_MEMBER(
+            4012,
+            "WORKSPACE_INVITATION_USER_ALREADY_MEMBER",
+            400,
+            "Some users are already members of this workspace."),
+
+    WORKSPACE_INVITATION_CREATE_FAILED(
+            4013,
+            "WORKSPACE_INVITATION_CREATE_FAILED",
+            500,
+            "Could not create workspace invitations."),
+
+    WORKSPACE_INVITATION_DUPLICATE_EMAIL(
+            4014,
+            "WORKSPACE_INVITATION_DUPLICATE_EMAIL",
+            400,
+            "Duplicate invitation email."),
+
+    WORKSPACE_CREATION_DISABLED(
+            4015,
+            "WORKSPACE_CREATION_DISABLED",
+            403,
+            "Workspace creation is not allowed"),
+
     WORKSPACE_CREATE_FAILED(
             4099,
             "WORKSPACE_CREATE_FAILED",

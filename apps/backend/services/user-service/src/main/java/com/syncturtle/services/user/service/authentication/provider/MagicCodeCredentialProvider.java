@@ -2,6 +2,7 @@ package com.syncturtle.services.user.service.authentication.provider;
 
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
@@ -37,32 +38,30 @@ public class MagicCodeCredentialProvider implements CredentialProvider {
         requireMagicLinkEnabled(email);
         requireSmtpConfigured(email);
 
-        return magicCodeStore.createOrRotate(email);
+        boolean existingUser = userRepository.existsByEmailIgnoreCase(email);
+
+        AuthErrorCode attemptExhaustedErrorCode = existingUser
+                ? AuthErrorCode.EMAIL_CODE_ATTEMPT_EXHAUSTED_SIGN_IN
+                : AuthErrorCode.EMAIL_CODE_ATTEMPT_EXHAUSTED_SIGN_UP;
+        return magicCodeStore.createOrRotate(email, attemptExhaustedErrorCode);
     }
 
     @Override
     public CredentialAuthenticationReceipt authenticate(CredentialAuthenticationSpec param) {
         Assert.notNull(param, "credential authentication param is required");
 
+        requireSubmittedCode(param);
         requireMagicLinkEnabled(param.getEmail());
         requireSmtpConfigured(param.getEmail());
+
+        boolean existingUser = userRepository.existsByEmailIgnoreCase(param.getEmail());
+
+        requireRequestedFlowMatchesUserState(param, param.getEmail(), existingUser);
 
         MagicCodeStore.VerificationResult verification = magicCodeStore.verify(param.getEmail(), param.getSecret());
 
         if (!verification.isVerified()) {
-            throwMagicCodeFailure(param.getEmail(), verification.getFailureReason());
-        }
-
-        boolean existingUser = userRepository.existsByEmailIgnoreCase(param.getEmail());
-
-        if (param.isSignup() && existingUser) {
-            throw AuthException.of(AuthErrorCode.USER_ALREADY_EXISTS)
-                    .with("email", param.getEmail());
-        }
-
-        if (!param.isSignup() && !existingUser) {
-            throw AuthException.of(AuthErrorCode.USER_DOES_NOT_EXIST)
-                    .with("email", param.getEmail());
+            throwMagicCodeFailure(param.getEmail(), verification.getFailureReason(), existingUser);
         }
 
         User user = workflow.completeLoginOrSignup(CredentialCompletionSpec.builder()
@@ -85,6 +84,28 @@ public class MagicCodeCredentialProvider implements CredentialProvider {
                 : CredentialAuthenticationReceipt.createdUser(user);
     }
 
+    private void requireRequestedFlowMatchesUserState(CredentialAuthenticationSpec param, String email,
+            boolean existingUser) {
+        if (param.isSignup() && existingUser) {
+            throw AuthException.of(AuthErrorCode.USER_ALREADY_EXISTS);
+        }
+        if (!param.isSignup() && !existingUser) {
+            throw AuthException.of(AuthErrorCode.USER_DOES_NOT_EXIST).with("email", email);
+        }
+    }
+
+    private void requireSubmittedCode(CredentialAuthenticationSpec param) {
+        if (StringUtils.hasText(param.getSecret())) {
+            return;
+        }
+
+        AuthErrorCode errorCode = param.isSignup()
+                ? AuthErrorCode.MAGIC_SIGN_UP_EMAIL_CODE_REQUIRED
+                : AuthErrorCode.MAGIC_SIGN_IN_EMAIL_CODE_REQUIRED;
+
+        throw AuthException.of(errorCode).with("email", param.getEmail());
+    }
+
     private void requireMagicLinkEnabled(String email) {
         boolean enabled = configFlagResolver.getInstanceConfigurations().isMagicLinkEnabled();
 
@@ -103,19 +124,17 @@ public class MagicCodeCredentialProvider implements CredentialProvider {
         }
     }
 
-    private void throwMagicCodeFailure(String email, MagicCodeStore.FailureReason reason) {
-        boolean existingUser = userRepository.existsByEmailIgnoreCase(email);
-
+    private void throwMagicCodeFailure(String email, MagicCodeStore.FailureReason reason, boolean existingUser) {
         if (reason == MagicCodeStore.FailureReason.EXPIRED) {
-            throw AuthException.of(
-                    existingUser ? AuthErrorCode.EXPIRED_MAGIC_CODE_SIGN_IN
-                            : AuthErrorCode.EXPIRED_MAGIC_CODE_SIGN_UP)
+            throw AuthException.of(existingUser
+                    ? AuthErrorCode.EXPIRED_MAGIC_CODE_SIGN_IN
+                    : AuthErrorCode.EXPIRED_MAGIC_CODE_SIGN_UP)
                     .with("email", email);
         }
 
-        throw AuthException.of(
-                existingUser ? AuthErrorCode.INVALID_MAGIC_CODE_SIGN_IN
-                        : AuthErrorCode.INVALID_MAGIC_CODE_SIGN_UP)
+        throw AuthException.of(existingUser
+                ? AuthErrorCode.INVALID_MAGIC_CODE_SIGN_IN
+                : AuthErrorCode.INVALID_MAGIC_CODE_SIGN_UP)
                 .with("email", email);
     }
 

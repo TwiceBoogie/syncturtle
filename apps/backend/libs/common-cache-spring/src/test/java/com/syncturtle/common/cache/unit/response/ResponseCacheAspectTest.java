@@ -36,7 +36,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.syncturtle.common.cache.payload.CachedResponsePayload;
 import com.syncturtle.common.cache.properties.ResponseCacheProperties;
 import com.syncturtle.common.cache.response.ResponseCacheAspect;
@@ -44,6 +43,8 @@ import com.syncturtle.common.cache.response.ResponseCacheKeyBuilder;
 import com.syncturtle.common.cache.response.annotation.CacheResponse;
 import com.syncturtle.common.cache.response.annotation.InvalidateCache;
 import com.syncturtle.common.web.context.RequestUserContext;
+
+import tools.jackson.databind.json.JsonMapper;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.STRICT_STUBS)
@@ -70,12 +71,12 @@ class ResponseCacheAspectTest {
     @Captor
     ArgumentCaptor<String> jsonCaptor;
 
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
     private ResponseCacheAspect aspect;
 
     @BeforeEach
     void setup() {
-        objectMapper = new ObjectMapper();
+        objectMapper = new JsonMapper();
 
         aspect = new ResponseCacheAspect(redis, objectMapper, props, new ResponseCacheKeyBuilder(), userContext,
                 SERVICE_NAME);

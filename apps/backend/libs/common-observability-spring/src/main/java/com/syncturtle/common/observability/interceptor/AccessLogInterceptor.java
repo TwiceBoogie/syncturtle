@@ -1,10 +1,7 @@
 package com.syncturtle.common.observability.interceptor;
 
-import java.net.InetAddress;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import org.slf4j.MDC;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import com.syncturtle.common.core.header.GatewayHeaders;
@@ -14,9 +11,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j(topic = "access")
-public class AccessLogInterceptor implements HandlerInterceptor {
+public final class AccessLogInterceptor implements HandlerInterceptor {
 
     private static final String ATTR_START_NANOS = AccessLogInterceptor.class.getName() + ".startNanos";
+    private static final int MAX_LOG_VALUE_LENGTH = 1_024;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
@@ -27,109 +25,89 @@ public class AccessLogInterceptor implements HandlerInterceptor {
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler,
             Exception exception) {
-        long start = (request.getAttribute(ATTR_START_NANOS) instanceof Long l)
-                ? l
-                : System.nanoTime();
-        long durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+        long durationMillis = durationMillis(request);
 
-        int status = response.getStatus();
-        // if something bad happen and status not set, log it as 500
-        if (exception != null && status < 400) {
-            status = 500;
-        }
+        int status = resolveStatus(response, exception);
 
-        String method = request.getMethod();
-        String path = request.getRequestURI();
-
-        String ua = firstNonBlank(
+        String userAgent = firstNonBlank(
                 request.getHeader(GatewayHeaders.HDR_CLIENT_UA),
-                nullToDash(request.getHeader("User-Agent")));
-        String ip = firstNonBlank(
+                request.getHeader("User-Agent"));
+
+        String clientIp = firstNonBlank(
                 request.getHeader(GatewayHeaders.HDR_CLIENT_IP),
-                resolveClientIp(request));
+                request.getRemoteAddr());
 
-        String userId = header(request, GatewayHeaders.HDR_AUTH_USER_ID);
-        String workspaceId = header(request, GatewayHeaders.HDR_AUTH_WORKSPACE_ID);
+        String userId = request.getHeader(GatewayHeaders.HDR_AUTH_USER_ID);
 
-        String corrId = firstNonBlank(
-                response.getHeader(GatewayHeaders.HDR_CORRELATION_ID),
-                request.getHeader(GatewayHeaders.HDR_CORRELATION_ID));
-        String reqId = firstNonBlank(
-                response.getHeader(GatewayHeaders.HDR_REQUEST_ID),
-                request.getHeader(GatewayHeaders.HDR_REQUEST_ID));
+        String workspaceId = request.getHeader(GatewayHeaders.HDR_AUTH_WORKSPACE_ID);
 
-        try {
-            putMdcForOneLogLine(corrId, reqId);
+        String exceptionType = exception == null ? null : exception.getClass().getName();
 
-            log.info("{} {} {} {}ms userId={} workspaceId={} ip={} ua=\"{}\" reqId={} corrId={}",
-                    method,
-                    path,
-                    status,
-                    durationMs,
-                    nullToDash(userId),
-                    nullToDash(workspaceId),
-                    nullToDash(ip),
-                    ua,
-                    nullToDash(reqId),
-                    nullToDash(corrId));
-        } finally {
-            clearMdcForOneLogLine();
-        }
+        log.info(
+                "method={} path={} status={} durationMs={} "
+                        + "userId={} workspaceId={} ip={} "
+                        + "ua=\"{}\" exception={}",
+                logValue(request.getMethod()),
+                logValue(request.getRequestURI()),
+                status,
+                durationMillis,
+                logValue(userId),
+                logValue(workspaceId),
+                logValue(clientIp),
+                logValue(userAgent),
+                logValue(exceptionType));
     }
 
-    private static String resolveClientIp(HttpServletRequest request) {
-        String xff = request.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) {
-            // first ip
-            int comma = xff.indexOf(',');
-            return (comma > 0 ? xff.substring(0, comma) : xff).trim();
+    private static long durationMillis(HttpServletRequest request) {
+        Object startAttribute = request.getAttribute(ATTR_START_NANOS);
+
+        if (!(startAttribute instanceof Long startNanos)) {
+            return 0L;
         }
-        String xReal = request.getHeader("X-Real-IP");
-        if (xReal != null && !xReal.isBlank()) {
-            return xReal.trim();
-        }
-        return Optional.ofNullable(request.getRemoteAddr())
-                .or(() -> Optional.ofNullable(request.getRemoteHost()))
-                .orElseGet(() -> {
-                    try {
-                        return InetAddress.getLocalHost().getHostAddress();
-                    } catch (Exception e) {
-                        return "unknown";
-                    }
-                });
+
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
     }
 
-    private static void putMdcForOneLogLine(String corrId, String reqId) {
-        if (corrId != null && !corrId.isBlank()) {
-            MDC.put("X-Correlation-Id", corrId);
+    private static int resolveStatus(HttpServletResponse response, Exception exception) {
+        int status = response.getStatus();
+
+        if (exception != null && status < 400) {
+            return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
         }
-        if (reqId != null && !reqId.isBlank()) {
-            MDC.put("X-Request-Id", reqId);
-        }
+
+        return status;
     }
 
-    private static void clearMdcForOneLogLine() {
-        MDC.remove(GatewayHeaders.HDR_CORRELATION_ID);
-        MDC.remove(GatewayHeaders.HDR_REQUEST_ID);
-    }
-
-    private static String header(HttpServletRequest request, String name) {
-        String value = request.getHeader(name);
-        return (value == null || value.isBlank()) ? null : value;
-    }
-
-    private static String firstNonBlank(String a, String b) {
-        if (a != null && !a.isBlank()) {
-            return a;
+    private static String firstNonBlank(String first, String second) {
+        if (hasText(first)) {
+            return first;
         }
-        if (b != null && !b.isBlank()) {
-            return b;
+
+        if (hasText(second)) {
+            return second;
         }
+
         return null;
     }
 
-    private static String nullToDash(String s) {
-        return (s == null || s.isBlank()) ? "-" : s;
+    private static boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
+    private static String logValue(String value) {
+        if (!hasText(value)) {
+            return "-";
+        }
+
+        String sanitized = value
+                .replace('\r', '_')
+                .replace('\n', '_')
+                .replace('\t', ' ');
+
+        if (sanitized.length() <= MAX_LOG_VALUE_LENGTH) {
+            return sanitized;
+        }
+
+        return sanitized.substring(0, MAX_LOG_VALUE_LENGTH);
+    }
 }

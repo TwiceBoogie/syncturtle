@@ -3,6 +3,7 @@ package com.syncturtle.services.user.controller.client;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.syncturtle.common.cache.response.annotation.InvalidateCache;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
 import com.syncturtle.common.contracts.auth.flow.AuthFlow;
 import com.syncturtle.common.core.endpoint.EndpointPaths;
@@ -11,10 +12,16 @@ import com.syncturtle.common.security.cookie.ServletAuthCookieWriter;
 import com.syncturtle.common.web.annotation.CurrentUser;
 import com.syncturtle.common.web.url.PublicUrlResolver;
 import com.syncturtle.services.user.dto.request.EmailCheckRequest;
+import com.syncturtle.services.user.dto.request.MagicSignInRequest;
+import com.syncturtle.services.user.dto.request.MagicSignUpRequest;
+import com.syncturtle.services.user.dto.request.SetPasswordRequest;
 import com.syncturtle.services.user.dto.request.SignInRequest;
 import com.syncturtle.services.user.dto.request.SignUpRequest;
 import com.syncturtle.services.user.dto.response.EmailCheckResponse;
 import com.syncturtle.services.user.dto.response.IssueTokenResponse;
+import com.syncturtle.services.user.dto.response.IssueTokenWithUserResponse;
+import com.syncturtle.services.user.dto.response.MagicCodeResponse;
+import com.syncturtle.services.user.dto.response.UserMeResponse;
 import com.syncturtle.services.user.service.AuthenticationService;
 import com.syncturtle.services.user.service.RefreshSessionService;
 import com.syncturtle.services.user.util.AuthFormValidator;
@@ -59,6 +66,11 @@ public class AuthenticationController {
         return ResponseEntity.ok(authenticationService.emailCheck(request.getEmail()));
     }
 
+    @PostMapping("/magic-generate")
+    public ResponseEntity<MagicCodeResponse> generateMagicCode(@Valid @RequestBody EmailCheckRequest request) {
+        return ResponseEntity.ok(authenticationService.generateMagicCode(request.getEmail()));
+    }
+
     @PostMapping("/sign-in")
     public ResponseEntity<Void> signin(
             @Valid @ModelAttribute SignInRequest request,
@@ -99,6 +111,28 @@ public class AuthenticationController {
         return redirect(response.getLocation());
     }
 
+    @PostMapping("/magic-sign-in")
+    public ResponseEntity<Void> magicSignin(@ModelAttribute MagicSignInRequest request,
+            HttpServletResponse servletResponse) {
+        IssueTokenResponse response = authenticationService.magicCodeSignIn(request.getEmail(), request.getCode(),
+                request.getNextPath());
+
+        writeSessionCookiesIfPresent(servletResponse, response);
+
+        return redirect(response.getLocation());
+    }
+
+    @PostMapping("/magic-sign-up")
+    public ResponseEntity<Void> magicSignup(@ModelAttribute MagicSignUpRequest request,
+            HttpServletResponse servletResponse) {
+        IssueTokenResponse response = authenticationService.magicCodeSignUp(request.getEmail(), request.getCode(),
+                request.getNextPath());
+
+        writeSessionCookiesIfPresent(servletResponse, response);
+
+        return redirect(response.getLocation());
+    }
+
     @PostMapping("/refresh")
     public ResponseEntity<Void> refresh(
             HttpServletResponse servletResponse,
@@ -124,6 +158,19 @@ public class AuthenticationController {
         return ResponseEntity.status(HttpStatus.SEE_OTHER)
                 .location(URI.create(authenticationService.signOut(currentUserId, logoutContext, sessionId)))
                 .build();
+    }
+
+    @PostMapping("/set-password")
+    @InvalidateCache(group = "user-me.v1")
+    public ResponseEntity<UserMeResponse> setPassword(@CurrentUser UUID currentUserId,
+            @RequestHeader(name = "X-Auth-Session-Id", required = false) String sessionId,
+            @Valid @RequestBody SetPasswordRequest request,
+            HttpServletResponse servletResponse) {
+        IssueTokenWithUserResponse response = authenticationService.setPassword(currentUserId, sessionId,
+                request.getPassword());
+        cookieWriter.clearAuthCookies(servletResponse);
+        writeSessionCookiesIfPresent(servletResponse, response.getTokens());
+        return ResponseEntity.ok(response.getUser());
     }
 
     private void writeSessionCookiesIfPresent(HttpServletResponse response, IssueTokenResponse session) {

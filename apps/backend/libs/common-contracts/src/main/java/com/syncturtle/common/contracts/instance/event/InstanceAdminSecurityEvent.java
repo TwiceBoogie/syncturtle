@@ -5,14 +5,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import com.syncturtle.common.contracts.messaging.OutboxEvent;
+
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
 
 @Getter
-@Jacksonized
-@Builder(toBuilder = true)
-public final class InstanceAdminSecurityEvent {
+public final class InstanceAdminSecurityEvent implements OutboxEvent {
 
     public enum Type {
         ADMIN_GRANTED,
@@ -31,6 +31,8 @@ public final class InstanceAdminSecurityEvent {
     private final boolean active;
     private final List<String> roles;
 
+    @Builder
+    @Jacksonized
     private InstanceAdminSecurityEvent(
             String eventId,
             Instant occurredAt,
@@ -48,6 +50,11 @@ public final class InstanceAdminSecurityEvent {
         this.sessionVersion = requirePositive(sessionVersion, "sessionVersion must be greater than zero");
         this.active = active;
         this.roles = requireNotEmpty(roles, "admin roles list cannot be null or empty");
+    }
+
+    @Override
+    public String eventTypeName() {
+        return type.name();
     }
 
     private static String requireText(String value, String message) {

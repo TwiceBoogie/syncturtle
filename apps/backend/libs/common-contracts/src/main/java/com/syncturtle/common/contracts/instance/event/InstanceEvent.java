@@ -5,15 +5,14 @@ import java.util.Objects;
 import java.util.UUID;
 
 import com.syncturtle.common.contracts.instance.model.InstanceEdition;
+import com.syncturtle.common.contracts.messaging.OutboxEvent;
 
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
 
 @Getter
-@Jacksonized
-@Builder(toBuilder = true)
-public final class InstanceEvent {
+public final class InstanceEvent implements OutboxEvent {
     public enum Type {
         INSTANCE_CREATED, INSTANCE_UPDATED, INSTANCE_SOFT_DELETED
     }
@@ -30,6 +29,8 @@ public final class InstanceEvent {
     private final Instant updatedAt;
     private final Instant createdAt;
 
+    @Builder
+    @Jacksonized
     private InstanceEvent(
             String eventId,
             Instant occurredAt,
@@ -53,6 +54,11 @@ public final class InstanceEvent {
         this.test = test;
         this.updatedAt = updatedAt;
         this.createdAt = createdAt;
+    }
+
+    @Override
+    public String eventTypeName() {
+        return type.name();
     }
 
     private static String requireText(String value, String message) {

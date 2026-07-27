@@ -1,11 +1,8 @@
 package com.syncturtle.services.instance.service.impl;
 
-import java.time.Clock;
-import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
@@ -13,7 +10,6 @@ import org.springframework.util.Assert;
 import com.syncturtle.common.contracts.instance.admin.AdminSigninResponse;
 import com.syncturtle.common.contracts.instance.admin.AdminSignupResponse;
 import com.syncturtle.common.contracts.instance.event.InstanceEvent;
-import com.syncturtle.common.contracts.instance.event.InstanceEvent.Type;
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
 import com.syncturtle.common.contracts.auth.session.IssueInstanceAdminSessionRequest;
@@ -26,7 +22,8 @@ import com.syncturtle.services.instance.client.UserClient;
 import com.syncturtle.services.instance.dto.request.InstanceAdminSigninForm;
 import com.syncturtle.services.instance.dto.request.InstanceAdminSignupForm;
 import com.syncturtle.services.instance.dto.response.InstanceAdminAuthResponse;
-import com.syncturtle.services.instance.messaging.db.event.InstanceEventToPublish;
+import com.syncturtle.services.instance.event.InstanceEventFactory;
+import com.syncturtle.services.instance.messaging.outbox.InstanceOutboxWriter;
 import com.syncturtle.services.instance.model.Instance;
 import com.syncturtle.services.instance.model.InstanceAdmin;
 import com.syncturtle.services.instance.model.param.InstanceSetupCompletionParam;
@@ -47,11 +44,11 @@ public class InstanceAdminAuthenticationServiceImpl implements InstanceAdminAuth
     private final InstanceRepository instanceRepository;
     private final InstanceAdminRepository instanceAdminRepository;
     private final UserClient userClient;
-    private final ApplicationEventPublisher events;
+    private final InstanceOutboxWriter outboxWriter;
+    private final InstanceEventFactory eventFactory;
     private final PublicUrlResolver hostResolver;
     private final TransactionTemplate transactionTemplate;
     private final RequestClientContext requestClientContext;
-    private final Clock clock;
 
     @Override
     public InstanceAdminAuthResponse instanceAdminSignup(InstanceAdminSignupForm form) {
@@ -66,7 +63,7 @@ public class InstanceAdminAuthenticationServiceImpl implements InstanceAdminAuth
             String password = form.getPassword();
             String companyName = form.getCompanyName().trim();
             boolean telemetryEnabled = form.isTelemetryEnabled();
-            log.info("This should be the user request Ip address: {}", requestClientContext.getClientIp());
+
             AdminSignupResponse userResponse = userClient.adminSignupPost(
                     AdminSignupRequest.builder()
                             .firstName(firstName)
@@ -227,22 +224,8 @@ public class InstanceAdminAuthenticationServiceImpl implements InstanceAdminAuth
     }
 
     private void publishInstanceUpdate(Instance instance) {
-        Instant now = Instant.now(clock);
-
-        InstanceEvent event = InstanceEvent.builder()
-                .eventId(UUID.randomUUID().toString())
-                .occurredAt(now)
-                .type(Type.INSTANCE_UPDATED)
-                .id(instance.getId())
-                .setupDone(instance.isSetupDone())
-                .edition(instance.getEdition())
-                .version(instance.getVersion())
-                .test(instance.isTest())
-                .createdAt(instance.getCreatedAt())
-                .updatedAt(instance.getUpdatedAt())
-                .build();
-
-        events.publishEvent(new InstanceEventToPublish(event));
+        InstanceEvent event = eventFactory.updated(instance);
+        outboxWriter.saveInstanceEvent(event);
     }
 
     private static String normalizeEmail(String email) {

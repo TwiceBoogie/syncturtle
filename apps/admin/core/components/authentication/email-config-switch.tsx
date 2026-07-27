@@ -1,7 +1,9 @@
-import { useInstance } from "@/hooks/store/use-instance";
+import type { FC } from "react";
+// heroui
 import { Switch } from "@heroui/react";
-import { TInstanceAuthenticationMethodKeys } from "@syncturtle/types";
-import { FC } from "react";
+// store hooks
+import { useInstance } from "@/hooks/store/use-instance";
+import type { TInstanceAuthenticationMethodKeys } from "@syncturtle/types";
 
 interface IEmailCodesConfigurationProps {
   disabled: boolean;

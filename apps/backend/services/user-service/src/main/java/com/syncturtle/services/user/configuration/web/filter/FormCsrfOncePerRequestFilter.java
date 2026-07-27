@@ -3,22 +3,23 @@ package com.syncturtle.services.user.configuration.web.filter;
 import static com.syncturtle.common.core.cookie.CsrfConstants.CSRF_FORM_FIELD_NAME;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.syncturtle.common.contracts.api.error.ApiErrorResponse;
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
 import com.syncturtle.common.security.cookie.ServletAuthCookieWriter;
 import com.syncturtle.common.security.csrf.CsrfTokenService;
+import com.syncturtle.common.web.error.ApiErrorResponseFactory;
 import com.syncturtle.common.web.url.PublicUrlResolver;
 
 import jakarta.servlet.FilterChain;
@@ -29,29 +30,39 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public final class FormCsrfOncePerRequestFilter extends OncePerRequestFilter {
 
+    public static final String CSRF_ERROR_ATTRIBUTE = "syncturtle.csrf.error";
+    public static final String CSRF_HOME_URL_ATTRIBUTE = "syncturtle.csrf.homeUrl";
+
     private final Set<String> protectedFormEndpoints;
     private final CsrfTokenService csrfTokenService;
     private final ServletAuthCookieWriter cookieWriter;
     private final PublicUrlResolver hostResolver;
+    private final ApiErrorResponseFactory responseFactory;
 
     public FormCsrfOncePerRequestFilter(
             Collection<String> protectedFormEndpoints,
             CsrfTokenService csrfTokenService,
             ServletAuthCookieWriter cookieWriter,
-            PublicUrlResolver hostResolver) {
+            PublicUrlResolver hostResolver,
+            ApiErrorResponseFactory responseFactory) {
         Assert.notEmpty(protectedFormEndpoints, "protectedFormEndpoints must not be empty");
+        Assert.notNull(csrfTokenService, "csrfTokenService is required");
+        Assert.notNull(cookieWriter, "cookieWriter is required");
+        Assert.notNull(hostResolver, "publicUrlResolver is required");
+        Assert.notNull(responseFactory, "responseFactory is required");
 
         this.protectedFormEndpoints = Set.copyOf(protectedFormEndpoints);
         this.csrfTokenService = csrfTokenService;
         this.cookieWriter = cookieWriter;
         this.hostResolver = hostResolver;
+        this.responseFactory = responseFactory;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         if (!hasValidCsrfPair(request)) {
-            denyWithCsrfError(response);
+            renderCsrfFailurePage(request, response);
             return;
         }
 
@@ -123,15 +134,21 @@ public final class FormCsrfOncePerRequestFilter extends OncePerRequestFilter {
                 .orElse(null);
     }
 
-    private void denyWithCsrfError(HttpServletResponse response) throws IOException {
+    private void renderCsrfFailurePage(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         AuthException exception = AuthException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
+        ApiErrorResponse error = responseFactory.fromSyncturtleException(exception,
+                HttpStatusCode.valueOf(exception.getHttpStatusCode()), request);
+
         cookieWriter.clearCsrfCookie(response);
 
-        String location = hostResolver.userAppWithQuery("/sign-in", exception.getErrorMap());
+        request.setAttribute(CSRF_ERROR_ATTRIBUTE, error);
+        request.setAttribute(CSRF_HOME_URL_ATTRIBUTE, hostResolver.userApp(""));
 
-        response.setStatus(HttpServletResponse.SC_SEE_OTHER);
-        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        response.setHeader(HttpHeaders.LOCATION, response.encodeRedirectURL(location));
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setContentType(MediaType.TEXT_HTML_VALUE);
+
+        request.getRequestDispatcher("/csrf-failure").forward(request, response);
     }
 
 }

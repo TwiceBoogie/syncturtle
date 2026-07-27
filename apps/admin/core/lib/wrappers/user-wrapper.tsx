@@ -1,6 +1,7 @@
 "use client";
 
-import { FC, ReactNode, useEffect } from "react";
+import type { FC, ReactNode } from "react";
+import { useEffect } from "react";
 // hooks
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useUser } from "@/hooks/store/use-user";

@@ -1,14 +1,15 @@
 package com.syncturtle.services.user.service.authentication.magic;
 
+import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
+
 public interface MagicCodeStore {
-    MagicCodeChallenge createOrRotate(String email);
+    MagicCodeChallenge createOrRotate(String email, AuthErrorCode attemptExhaustedErrorCode);
 
     VerificationResult verify(String email, String submittedCode);
 
     enum FailureReason {
         INVALID,
-        EXPIRED,
-        ATTEMPT_EXHAUSTED
+        EXPIRED
     }
 
     final class VerificationResult {

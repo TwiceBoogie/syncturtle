@@ -13,13 +13,11 @@ public final class WorkspaceReplicaParam {
 
     private final UUID id;
     private final String name;
-    private final String logo;
     private final UUID logoAssetId;
     private final String slug;
     private final String organizationSize;
     private final UUID ownerId;
     private final String timezone;
-    private final Long totalMembers;
     private final UUID createdById;
     private final UUID updatedById;
     private final Instant createdAt;
@@ -30,13 +28,11 @@ public final class WorkspaceReplicaParam {
     private WorkspaceReplicaParam(
             UUID id,
             String name,
-            String logo,
             UUID logoAssetId,
             String slug,
             String organizationSize,
             UUID ownerId,
             String timezone,
-            Long totalMembers,
             UUID createdById,
             UUID updatedById,
             Instant createdAt,
@@ -48,20 +44,17 @@ public final class WorkspaceReplicaParam {
         Assert.hasText(slug, "slug is required");
         Assert.notNull(ownerId, "ownerId is required");
         Assert.hasText(timezone, "timezone is required");
-        Assert.isTrue(totalMembers >= 0, "totalMembers must be greater than or equal to 0");
         Assert.notNull(createdAt, "createdAt is required");
         Assert.notNull(updatedAt, "updatedAt is required");
         Assert.notNull(sourceVersion, "sourceVersion is required");
 
         this.id = id;
         this.name = name.trim();
-        this.logo = normalizeNullable(logo);
         this.logoAssetId = logoAssetId;
         this.slug = slug.trim().toLowerCase();
         this.organizationSize = normalizeNullable(organizationSize);
         this.ownerId = ownerId;
         this.timezone = timezone.trim();
-        this.totalMembers = totalMembers;
         this.createdById = createdById;
         this.updatedById = updatedById;
         this.createdAt = createdAt;
@@ -73,13 +66,11 @@ public final class WorkspaceReplicaParam {
     public static WorkspaceReplicaParam of(
             UUID id,
             String name,
-            String logo,
             UUID logoAssetId,
             String slug,
             String organizationSize,
             UUID ownerId,
             String timezone,
-            long totalMembers,
             UUID createdById,
             UUID updatedById,
             Instant createdAt,
@@ -89,13 +80,11 @@ public final class WorkspaceReplicaParam {
         return new WorkspaceReplicaParam(
                 id,
                 name,
-                logo,
                 logoAssetId,
                 slug,
                 organizationSize,
                 ownerId,
                 timezone,
-                totalMembers,
                 createdById,
                 updatedById,
                 createdAt,

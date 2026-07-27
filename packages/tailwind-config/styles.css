@@ -1,7 +1,12 @@
 @import "tailwindcss";
-/* tell tailwind to scan shared workspaces */
-@source "../ui/src/**/*.{ts,tsx}";
+
+/* Shared package sources */
+@source "../ui/src/**/*.{ts,tsx,mdx}";
+@source "../hooks/src/**/*.{ts,tsx}";
 @source "../utils/src/**/*.{ts,tsx}";
-@source "../types/src/**/*.{ts,tsx}";
 @source "../constants/src/**/*.{ts,tsx}";
 @source "../i18n/src/**/*.{ts,tsx}";
+
+/* App sources when imported from apps/web or apps/admin */
+@source "../../apps/web/**/*.{ts,tsx}";
+@source "../../apps/admin/**/*.{ts,tsx}";

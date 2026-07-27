@@ -8,11 +8,10 @@ import java.util.UUID;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -21,7 +20,7 @@ public class CursorCodec {
     private static final Base64.Encoder B64URL_ENCODER = Base64.getUrlEncoder().withoutPadding();
     private static final Base64.Decoder B64URL_DECODER = Base64.getUrlDecoder();
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     public String encode(UUID id, Instant createdAt) {
         Assert.notNull(id, "id is required");
@@ -54,8 +53,8 @@ public class CursorCodec {
                 return null;
             }
 
-            Instant createdAt = Instant.parse(node.get("createdAt").asText());
-            UUID id = UUID.fromString(node.get("id").asText());
+            Instant createdAt = Instant.parse(node.get("createdAt").asString());
+            UUID id = UUID.fromString(node.get("id").asString());
 
             return new DecodedCursor(id, createdAt);
         } catch (Exception exception) {

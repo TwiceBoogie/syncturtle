@@ -40,8 +40,6 @@ import reactor.core.publisher.Mono;
 public final class PassportAuthenticationGatewayFilterFactory
         extends AbstractGatewayFilterFactory<PassportAuthenticationGatewayFilterFactory.Config> {
 
-    private static final long DEFAULT_VERSION = 0L;
-
     private final ReactiveStringRedisTemplate redis;
     private final PassportRedisKeys redisKeys;
 
@@ -171,8 +169,9 @@ public final class PassportAuthenticationGatewayFilterFactory
     private Mono<Long> readVersion(String key) {
         return redis.opsForValue()
                 .get(key)
-                .map(this::parseLong)
-                .defaultIfEmpty(DEFAULT_VERSION);
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .map(Long::parseLong);
     }
 
     private ServerHttpRequest addAuthenticatedHeaders(
@@ -225,13 +224,6 @@ public final class PassportAuthenticationGatewayFilterFactory
 
         byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
         return exchange.getResponse().writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(bytes)));
-    }
-
-    private long parseLong(String value) {
-        if (!StringUtils.hasText(value)) {
-            return DEFAULT_VERSION;
-        }
-        return Long.parseLong(value.trim());
     }
 
     private static String longToString(Long value) {

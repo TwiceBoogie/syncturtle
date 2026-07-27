@@ -4,8 +4,8 @@ import java.util.UUID;
 
 import org.springframework.util.Assert;
 
+import com.syncturtle.common.contracts.workspace.type.WorkspaceRole;
 import com.syncturtle.services.workspace.model.Workspace;
-import com.syncturtle.services.workspace.type.WorkspaceRole;
 
 import lombok.Builder;
 import lombok.Getter;

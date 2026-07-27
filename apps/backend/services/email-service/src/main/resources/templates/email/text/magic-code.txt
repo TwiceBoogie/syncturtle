@@ -1,0 +1,12 @@
+Your Syncturtle sign-in code
+
+The code below is valid for [[${expiresInMinutes != null ? expiresInMinutes : 10}]] minutes.
+
+Sign-in code: [[${code != null ? code : '123456'}]]
+
+Copy and paste this code on the screen where you requested it.
+
+If you did not request this code, you can safely ignore this email.
+
+This email was sent to [[${email}]].
+Please delete it if you are not the intended recipient.
