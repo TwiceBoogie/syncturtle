@@ -19,9 +19,6 @@ public final class GatewayHeaders {
     public static final String HDR_AUTH_ADMIN_SESSION_VERSION = "X-Auth-Admin-Session-Version";
     public static final String HDR_AUTH_ISSUER = "X-Auth-Issuer";
     public static final String HDR_AUTH_WORKSPACE_ID = "X-Auth-Workspace-Id";
-    // client -> api-gateway
-    public static final String HDR_REQUEST_ID = "X-Request-Id";
-    public static final String HDR_CORRELATION_ID = "X-Correlation-Id";
     // client metadata
     public static final String HDR_CLIENT_IP = "X-ST-Client-Ip";
     public static final String HDR_CLIENT_UA = "X-ST-Client-User-Agent";

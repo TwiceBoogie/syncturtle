@@ -1,0 +1,11 @@
+Your Syncturtle account is active
+
+Hi [[${firstName}]],
+
+Your Syncturtle account has been activated. You can now sign in and start using your workspace.
+
+Go to Syncturtle:
+[[${websiteUrl != null ? websiteUrl : 'https://syncturtle.com/sign-in'}]]
+
+This email was sent to [[${email}]].
+Please delete it if you are not the intended recipient.

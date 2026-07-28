@@ -1,10 +1,11 @@
-import coreEn from "../locales/en/core.json";
-import { Listener, Unsubscribe } from "@syncturtle/types";
-import { FALLBACK_LANGUAGE, STORAGE_KEY, SUPPORTED_LANGUAGES } from "../constants";
-import { ILanguageOption, ITranslation, TLanguage } from "../types";
-import { Emitter } from "@syncturtle/utils";
-import IntlMessageFormat, { PrimitiveType } from "intl-messageformat";
+import IntlMessageFormat from "intl-messageformat";
+import type { PrimitiveType } from "intl-messageformat";
 import { get, merge } from "lodash";
+import coreEn from "../locales/en/core.json";
+import type { Listener, Unsubscribe } from "@syncturtle/types";
+import { FALLBACK_LANGUAGE, STORAGE_KEY, SUPPORTED_LANGUAGES } from "../constants";
+import type { ILanguageOption, ITranslation, TLanguage } from "../types";
+import { Emitter } from "@syncturtle/utils";
 
 export type TTranslationSnapshot = {
   currentLocale: TLanguage;

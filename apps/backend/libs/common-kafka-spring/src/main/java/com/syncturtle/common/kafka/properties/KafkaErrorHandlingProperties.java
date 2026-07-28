@@ -11,7 +11,7 @@ import lombok.Getter;
 
 @Getter
 @ConfigurationProperties(prefix = "app.kafka.error-handling")
-public class KafkaErrorHandlingProperties {
+public final class KafkaErrorHandlingProperties {
 
     private final Duration initialInterval;
     private final double multiplier;

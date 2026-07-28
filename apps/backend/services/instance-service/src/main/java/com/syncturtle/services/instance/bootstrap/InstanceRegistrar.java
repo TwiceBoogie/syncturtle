@@ -18,7 +18,7 @@ import com.syncturtle.common.core.text.Strings;
 import com.syncturtle.services.instance.configuration.property.InstanceServiceProperties;
 import com.syncturtle.services.instance.event.InstanceEventFactory;
 import com.syncturtle.services.instance.event.InstanceRegisteredEvent;
-import com.syncturtle.services.instance.messaging.db.event.InstanceEventToPublish;
+import com.syncturtle.services.instance.messaging.outbox.InstanceOutboxWriter;
 import com.syncturtle.services.instance.model.Instance;
 import com.syncturtle.services.instance.model.param.InstanceBinaryParam;
 import com.syncturtle.services.instance.model.param.InstanceRegistrationFlagsParam;
@@ -38,6 +38,7 @@ public class InstanceRegistrar {
     private final InstanceRepository instanceRepository;
     private final InstanceServiceProperties properties;
     private final ApplicationEventPublisher events;
+    private final InstanceOutboxWriter outboxWriter;
     private final ObjectProvider<BuildProperties> buildPropertiesProvider;
     private final InstanceEventFactory eventFactory;
     private final Clock clock;
@@ -123,11 +124,11 @@ public class InstanceRegistrar {
     }
 
     private void publishCreated(Instance instance) {
-        events.publishEvent(new InstanceEventToPublish(eventFactory.created(instance)));
+        outboxWriter.saveInstanceEvent(eventFactory.created(instance));
     }
 
     private void publishUpdated(Instance instance) {
-        events.publishEvent(new InstanceEventToPublish(eventFactory.updated(instance)));
+        outboxWriter.saveInstanceEvent(eventFactory.updated(instance));
     }
 
     private void publishRegistered(Instance instance) {

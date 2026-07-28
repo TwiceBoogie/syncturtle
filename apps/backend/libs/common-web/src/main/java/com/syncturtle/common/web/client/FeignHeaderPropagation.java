@@ -26,10 +26,6 @@ public class FeignHeaderPropagation {
             copyIfPresent(req, template, GatewayHeaders.HDR_AUTH_USER_ID);
             copyIfPresent(req, template, GatewayHeaders.HDR_AUTH_WORKSPACE_ID);
 
-            // tracing
-            copyIfPresent(req, template, GatewayHeaders.HDR_REQUEST_ID);
-            copyIfPresent(req, template, GatewayHeaders.HDR_CORRELATION_ID);
-
             // client metadata
             copyIfPresent(req, template, GatewayHeaders.HDR_CLIENT_IP);
             copyIfPresent(req, template, GatewayHeaders.HDR_CLIENT_UA);

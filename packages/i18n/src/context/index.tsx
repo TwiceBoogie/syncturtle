@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useEffect, useState, PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
+import { createContext, useEffect, useState } from "react";
 import { TranslationStore } from "../store";
 
 export const TranslationContext = createContext<TranslationStore | null>(null);

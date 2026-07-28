@@ -74,10 +74,8 @@ public class ApiErrorResponseFactory {
                 .code(errorCode.getCode())
                 .key(errorCode.getKey());
 
-        if (properties.isIncludeRequestIds()) {
-            builder.traceId(RequestCorrelationIds.resolveTraceId(request));
-            builder.requestId(RequestCorrelationIds.resolveRequestId(request));
-            builder.correlationId(RequestCorrelationIds.resolveCorrelationId(request));
+        if (properties.isIncludeTraceId()) {
+            builder.traceId(TraceIds.resolve());
         }
 
         if (properties.isIncludePath() && request != null) {

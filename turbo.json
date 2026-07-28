@@ -1,17 +1,23 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalEnv": [
-    "NODE_ENV",
-    "SYNCTURTLE_VERSION",
-    "NEXT_PUBLIC_API_BASE_URL",
-    "NEXT_PUBLIC_WEB_BASE_URL",
-    "NEXT_PUBLIC_ADMIN_BASE_URL",
-    "NEXT_PUBLIC_ADMIN_BASE_PATH"
+  "globalDependencies": [
+    ".yarnrc.yml",
+    "package.json",
+    "yarn.lock",
+    "packages/typescript-config/*.json",
+    "packages/tailwind-config/*.css"
   ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "dist/**", "**/target/**", "out/**"]
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.stories.ts", "!**/*.stories.tsx", "!**/*.stories.mdx", "!.storybook/**"],
+      "env": ["SYNCTURTLE_VERSION", "NEXT_PUBLIC_*"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "out/**", "target/**", "**/target/**"]
+    },
+    "build:storybook": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "**/*.stories.@(ts|tsx|mdx)", ".storybook/**"],
+      "outputs": ["storybook-static/**"]
     },
     "dev": {
       "dependsOn": ["^build"],
@@ -22,14 +28,31 @@
       "cache": false
     },
     "lint": {
-      "dependsOn": ["^lint"],
       "outputs": []
     },
     "typecheck": {
-      "dependsOn": ["^build", "^typecheck"],
+      "dependsOn": ["^build"],
       "outputs": []
     },
     "test": {
+      "dependsOn": ["^build"],
+      "outputs": [
+        "coverage/**",
+        "target/surefire-reports/**",
+        "**/target/surefire-reports/**",
+        "**/target/failsafe-reports/**"
+      ]
+    },
+    "test:it": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "test:system": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "verify": {
+      "dependsOn": ["^build"],
       "cache": false
     },
     "clean": {

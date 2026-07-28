@@ -7,37 +7,37 @@ import lombok.Getter;
 
 @Getter
 @ConfigurationProperties(prefix = "app.web.errors")
-public class ErrorResponseProperties {
+public final class ErrorResponseProperties {
     /**
      * Include request path in error message.
      */
     private final boolean includePath;
     /**
-     * Include trace_id, request_id, and correlation_id in error response.
+     * Include the active OpenTelemetry trace ID in the error response.
      */
-    private final boolean includeRequestIds;
+    private final boolean includeTraceId;
     /**
      * Include debug object. Keep false in production.
      */
     private final boolean includeDebug;
     /**
      * Include stack trace lines inside debug.
-     * Keep false in production unless troubleshooiting in private environment.
+     * Keep false in production unless troubleshooting in private environment.
      */
     private final boolean includeStackTrace;
     /**
-     * Max stack trace lines returned when incldueStackTrace=true
+     * Max stack trace lines returned when incldue-stack-trace is true
      */
     private final int maxStackTraceLines;
 
     public ErrorResponseProperties(
             @DefaultValue("true") boolean includePath,
-            @DefaultValue("true") boolean includeRequestIds,
+            @DefaultValue("true") boolean includeTraceId,
             @DefaultValue("false") boolean includeDebug,
             @DefaultValue("false") boolean includeStackTrace,
             @DefaultValue("30") int maxStackTraceLines) {
         this.includePath = includePath;
-        this.includeRequestIds = includeRequestIds;
+        this.includeTraceId = includeTraceId;
         this.includeDebug = includeDebug;
         this.includeStackTrace = includeStackTrace;
         this.maxStackTraceLines = requirePositive(maxStackTraceLines, "max-stack-trace-lines");

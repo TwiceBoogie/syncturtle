@@ -19,7 +19,7 @@ public class SyncturtleException extends RuntimeException {
     }
 
     public SyncturtleException(ErrorCode errorCode, Throwable cause) {
-        this(errorCode, errorCode.getHttpStatusCode(), errorCode.getPublicMessage(), Map.of(), null);
+        this(errorCode, errorCode.getHttpStatusCode(), errorCode.getPublicMessage(), Map.of(), cause);
     }
 
     public SyncturtleException(ErrorCode errorCode, Map<String, Object> payload) {

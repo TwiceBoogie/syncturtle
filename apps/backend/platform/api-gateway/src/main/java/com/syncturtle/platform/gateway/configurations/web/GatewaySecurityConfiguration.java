@@ -33,6 +33,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.server.ServerWebExchange;
 
+import com.syncturtle.platform.gateway.configurations.properties.GatewayClientMetadataProperties;
 import com.syncturtle.platform.gateway.configurations.properties.GatewayPassportProperties;
 import com.syncturtle.platform.gateway.support.CookieOrBearerServerAuthenticationConverter;
 
@@ -40,7 +41,7 @@ import reactor.core.publisher.Mono;
 
 @EnableWebFluxSecurity
 @Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties(GatewayPassportProperties.class)
+@EnableConfigurationProperties({ GatewayPassportProperties.class, GatewayClientMetadataProperties.class })
 public class GatewaySecurityConfiguration {
 
     @Bean

@@ -9,6 +9,15 @@ server:
   port: 0
 
 app:
+  auth:
+    access-token-ttl: 30m
+    refresh-token-ttl: 30d
+    password-reset-token-ttl: 30m
+    password-reset-token-bytes: 48
+  passport:
+    issuer: https://api.syncturtle.test/auth
+    audience: syncturtle-test
+    kid: test-key
   data:
     jpa:
       auditing:

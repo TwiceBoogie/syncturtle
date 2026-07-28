@@ -13,29 +13,36 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.syncturtle.common.core.header.GatewayHeaders;
+import com.syncturtle.platform.gateway.configurations.properties.GatewayClientMetadataProperties;
+import com.syncturtle.platform.gateway.filters.GatewayFilterOrders;
 
 import reactor.core.publisher.Mono;
 
 @Component
 public class ClientMetadataHeadersFilter implements GlobalFilter, Ordered {
 
-    private static final int ORDER = Ordered.HIGHEST_PRECEDENCE + 5;
-    private static final int MAX_TRUSTED_INDEX = 1;
+    private final RemoteAddressResolver remoteAddressResolver;
 
-    private final RemoteAddressResolver remoteAddressResolver = XForwardedRemoteAddressResolver
-            .maxTrustedIndex(MAX_TRUSTED_INDEX);
+    public ClientMetadataHeadersFilter(GatewayClientMetadataProperties properties) {
+        int trustedProxyCount = properties.getTrustedProxyCount();
+
+        this.remoteAddressResolver = trustedProxyCount == 0
+                ? null
+                : XForwardedRemoteAddressResolver.maxTrustedIndex(trustedProxyCount);
+    }
 
     @Override
     public int getOrder() {
-        return ORDER;
+        return GatewayFilterOrders.CLIENT_METADATA_HEADERS;
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String clientIp = resolveClientIp(exchange);
-        String userAgent = blankToNull(exchange.getRequest()
-                .getHeaders()
-                .getFirst(HttpHeaders.USER_AGENT));
+        String userAgent = blankToNull(
+                exchange.getRequest()
+                        .getHeaders()
+                        .getFirst(HttpHeaders.USER_AGENT));
 
         ServerHttpRequest request = exchange.getRequest()
                 .mutate()
@@ -56,22 +63,20 @@ public class ClientMetadataHeadersFilter implements GlobalFilter, Ordered {
     }
 
     private String resolveClientIp(ServerWebExchange exchange) {
-        String forwardedIp = resolveForwardedIp(exchange);
+        if (remoteAddressResolver != null) {
+            InetSocketAddress forwardedAddress = remoteAddressResolver.resolve(exchange);
 
-        if (forwardedIp != null) {
-            return forwardedIp;
+            String forwardedIp = addressValue(forwardedAddress);
+
+            if (forwardedIp != null) {
+                return forwardedIp;
+            }
         }
 
-        InetSocketAddress remoteAddress = exchange.getRequest().getRemoteAddress();
-        if (remoteAddress != null && remoteAddress.getAddress() != null) {
-            return remoteAddress.getAddress().getHostAddress();
-        }
-
-        return null;
+        return addressValue(exchange.getRequest().getRemoteAddress());
     }
 
-    private String resolveForwardedIp(ServerWebExchange exchange) {
-        InetSocketAddress address = remoteAddressResolver.resolve(exchange);
+    private static String addressValue(InetSocketAddress address) {
         if (address == null || address.getAddress() == null) {
             return null;
         }

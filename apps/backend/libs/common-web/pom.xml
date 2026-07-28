@@ -30,6 +30,13 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-autoconfigure</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-jackson</artifactId>
+      <optional>true</optional>
+    </dependency>
+
     <!-- WEB CORE -->
     <dependency>
       <groupId>org.springframework</groupId>
@@ -42,8 +49,8 @@
 
     <!-- SERVLET MVC: optional because reactive/gateway apps may consume only few pieces -->
     <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-webmvc</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-webmvc</artifactId>
       <optional>true</optional>
     </dependency>
 
@@ -69,10 +76,19 @@
       <artifactId>feign-core</artifactId>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>io.github.openfeign</groupId>
+      <artifactId>feign-micrometer</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.syncturtle</groupId>
+      <artifactId>test-support</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

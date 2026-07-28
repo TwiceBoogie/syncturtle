@@ -1,2 +1,3 @@
 com.syncturtle.common.observability.autoconfigure.AccessLoggingAutoConfiguration
 com.syncturtle.common.observability.autoconfigure.OpenTelemetryLogbackAutoConfiguration
+com.syncturtle.common.observability.autoconfigure.TraceContextAutoConfiguration

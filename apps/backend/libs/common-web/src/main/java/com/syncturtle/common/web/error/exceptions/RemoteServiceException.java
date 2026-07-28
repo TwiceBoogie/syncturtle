@@ -29,8 +29,6 @@ public class RemoteServiceException extends SyncturtleServiceException {
         putIfPresent(payload, "remote_code", remoteCode);
         putIfHasText(payload, "remote_key", remoteKey);
         putIfHasText(payload, "remote_trace_id", remoteTraceId);
-        putIfHasText(payload, "remote_request_id", remoteRequestId);
-        putIfHasText(payload, "remote_correlation_id", remoteCorrelationId);
 
         return new RemoteServiceException(resolveCode(remoteStatus), payload, cause);
     }

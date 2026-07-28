@@ -16,6 +16,7 @@ import com.syncturtle.common.security.properties.SecurityCookieProperties;
 import jakarta.servlet.http.HttpServletResponse;
 
 @AutoConfiguration
+@ConditionalOnWebApplication
 @EnableConfigurationProperties(SecurityCookieProperties.class)
 public class CookieAutoConfiguration {
 

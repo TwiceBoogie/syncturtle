@@ -1,6 +1,7 @@
 "use client";
 
-import { FC, FormEvent, useMemo, useRef, useState } from "react";
+import type { FC, FormEvent } from "react";
+import { useMemo, useRef, useState } from "react";
 // heroui
 import {
   Button,
@@ -19,7 +20,7 @@ import { checkEmailValidity } from "@syncturtle/utils";
 // hooks
 import { useTranslation } from "@syncturtle/i18n";
 // types
-import { IEmailCheckData } from "@syncturtle/types";
+import type { IEmailCheckData } from "@syncturtle/types";
 
 interface IAuthEmailForm {
   defaultEmail: string;
@@ -70,6 +71,7 @@ export const AuthEmailForm: FC<IAuthEmailForm> = (props) => {
             isRequired
             name="email"
             type="email"
+            variant="secondary"
             isInvalid={showEmailError}
             onChange={(value: string) => setEmail(value)}
             value={email}
@@ -93,7 +95,7 @@ export const AuthEmailForm: FC<IAuthEmailForm> = (props) => {
           </TextField>
         </FieldGroup>
         <Fieldset.Actions>
-          <Button type="submit" isDisabled={isButtonDisabled} isPending={isSubmitting}>
+          <Button type="submit" fullWidth isDisabled={isButtonDisabled} isPending={isSubmitting}>
             {({ isPending }) => (
               <>
                 {isPending ? <Spinner /> : null}

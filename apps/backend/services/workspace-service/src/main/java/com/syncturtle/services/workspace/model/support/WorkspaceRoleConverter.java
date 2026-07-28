@@ -1,21 +1,21 @@
 package com.syncturtle.services.workspace.model.support;
 
-import com.syncturtle.services.workspace.type.WorkspaceRole;
+import com.syncturtle.common.contracts.workspace.type.WorkspaceRole;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
 @Converter(autoApply = true)
-public class WorkspaceRoleConverter implements AttributeConverter<WorkspaceRole, Short> {
+public class WorkspaceRoleConverter implements AttributeConverter<WorkspaceRole, Integer> {
 
     @Override
-    public Short convertToDatabaseColumn(WorkspaceRole attribute) {
-        return (attribute == null) ? null : (short) attribute.code;
+    public Integer convertToDatabaseColumn(WorkspaceRole attribute) {
+        return (attribute == null) ? null : attribute.getCode();
     }
 
     @Override
-    public WorkspaceRole convertToEntityAttribute(Short dbData) {
-        return (dbData == null) ? null : WorkspaceRole.from(dbData);
+    public WorkspaceRole convertToEntityAttribute(Integer dbData) {
+        return (dbData == null) ? null : WorkspaceRole.requireFromCode(dbData);
     }
 
 }

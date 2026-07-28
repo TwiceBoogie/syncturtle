@@ -9,7 +9,7 @@ import org.springframework.util.StringUtils;
 import lombok.Getter;
 
 @Getter
-@ConfigurationProperties(prefix = "app.passport.gateway")
+@ConfigurationProperties(prefix = "app.passport.gateway", ignoreUnknownFields = false)
 public final class GatewayPassportProperties {
     private final String issuer;
     private final String audience;

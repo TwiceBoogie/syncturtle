@@ -16,6 +16,20 @@ eureka:
 app:
   kafka:
     enabled: false
+    consumer-group: email-service-test
+    config-broadcast-group: email-service-test-config
+  email:
+    inbox:
+      scheduler:
+        enabled: false
+        poll-delay: 10s
+    runtime-config-cache:
+      ttl: 30m
+  clients:
+    instance-service:
+      base-url: http://localhost:8001
+      connect-timeout: 2s
+      read-timeout: 5s
   observability:
     otel:
       logback:

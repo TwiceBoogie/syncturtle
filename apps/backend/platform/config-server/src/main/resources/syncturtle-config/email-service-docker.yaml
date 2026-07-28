@@ -12,6 +12,8 @@ spring:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
 
 app:
-  services:
+  clients:
     instance-service:
       base-url: http://instance-service:8080
+      connect-timeout: 2s
+      read-timeout: 5s
