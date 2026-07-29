@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.syncturtle.services.user.service.runtime.UserAuthRuntimeSecretConfig;
+import com.syncturtle.services.user.service.collaborator.runtime.UserAuthRuntimeSecretConfig;
 
 @Configuration(proxyBeanMethods = false)
 public class UserAuthRuntimeSecretCacheConfiguration {

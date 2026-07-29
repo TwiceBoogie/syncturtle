@@ -5,8 +5,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import lombok.Getter;
 
 @Getter
-@ConfigurationProperties(prefix = "app.kafka.topics")
-public class KafkaTopicProperties {
+@ConfigurationProperties(prefix = "app.kafka.topics", ignoreUnknownFields = false)
+public final class KafkaTopicProperties {
     private final int partitions;
     private final int replicas;
 

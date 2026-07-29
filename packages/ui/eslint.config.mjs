@@ -1,2 +1,3 @@
-import config from "@syncturtle/eslint-config/library";
-export default config;
+import library from "@syncturtle/eslint-config/library";
+
+export default library;

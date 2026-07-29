@@ -5,9 +5,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.syncturtle.common.contracts.instance.config.InstanceConfigurationKey;
-import com.syncturtle.services.instance.service.configuration.InstanceConfigurationResolver;
-import com.syncturtle.services.instance.service.configuration.InstanceConfigurationWriter;
-import com.syncturtle.services.instance.service.configuration.param.DerivedFlagParam;
+import com.syncturtle.services.instance.service.collaborator.configuration.InstanceConfigurationResolver;
+import com.syncturtle.services.instance.service.collaborator.configuration.InstanceConfigurationWriter;
+import com.syncturtle.services.instance.service.param.DerivedFlagParam;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

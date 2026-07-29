@@ -6,12 +6,12 @@ import java.util.Set;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-import com.syncturtle.common.contracts.instance.config.InstanceConfigurationScopeNames;
+import com.syncturtle.common.contracts.instance.config.InstanceConfigurationScope;
 import com.syncturtle.common.contracts.instance.config.InstanceConfigurationKey;
 import com.syncturtle.common.contracts.instance.event.InstanceConfigurationEvent;
 import com.syncturtle.common.contracts.messaging.KafkaTopics;
-import com.syncturtle.services.user.service.runtime.UserAuthRuntimeConfigResolver;
-import com.syncturtle.services.user.service.runtime.UserAuthRuntimeSecretResolver;
+import com.syncturtle.services.user.service.collaborator.runtime.UserAuthRuntimeConfigResolver;
+import com.syncturtle.services.user.service.collaborator.runtime.UserAuthRuntimeSecretResolver;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +45,7 @@ public class KafkaInstanceConfigChangedEventListener {
 
     @KafkaListener(topics = KafkaTopics.INSTANCE_CONFIG_EVENTS_V1, groupId = "${app.kafka.config-broadcast-group}", containerFactory = "instanceConfigurationKafkaListenerFactory")
     public void onInstanceConfigurationChanged(InstanceConfigurationEvent event) {
-        if (event.getScope() != InstanceConfigurationScopeNames.AUTH) {
+        if (event.getScope() != InstanceConfigurationScope.AUTH) {
             log.debug("Ignoring instance config event for non-auth scope. scope={}, eventId={}", event.getScope(),
                     event.getEventId());
             return;

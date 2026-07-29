@@ -16,18 +16,18 @@
   <name>common-observability-spring</name>
 
   <dependencies>
+    <!-- INTERNAL -->
     <dependency>
       <groupId>com.syncturtle</groupId>
       <artifactId>common-core</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.syncturtle</groupId>
-      <artifactId>common-web</artifactId>
-    </dependency>
+
+    <!-- SPRING BOOT AUTO-CONFIGURATION -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-autoconfigure</artifactId>
     </dependency>
+
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-webmvc</artifactId>
@@ -38,24 +38,33 @@
       <artifactId>jakarta.servlet-api</artifactId>
       <optional>true</optional>
     </dependency>
+
     <dependency>
       <groupId>io.opentelemetry</groupId>
       <artifactId>opentelemetry-api</artifactId>
-      <optional>true</optional>
     </dependency>
+
     <dependency>
       <groupId>io.opentelemetry.instrumentation</groupId>
       <artifactId>opentelemetry-logback-appender-1.0</artifactId>
-      <optional>true</optional>
     </dependency>
+
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <optional>true</optional>
     </dependency>
+
+    <!-- LOGGING API -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.syncturtle</groupId>
+      <artifactId>test-support</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

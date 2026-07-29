@@ -1,34 +1,32 @@
 package com.syncturtle.services.instance.service.impl;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.syncturtle.common.contracts.instance.config.InstanceConfigurationScopeNames;
+import com.syncturtle.common.contracts.instance.config.InstanceConfigurationScope;
 import com.syncturtle.common.contracts.instance.config.InstanceConfigurationKey;
 import com.syncturtle.common.contracts.instance.event.InstanceConfigurationEvent;
 import com.syncturtle.services.instance.dto.response.InstanceConfigurationResponse;
-import com.syncturtle.services.instance.dto.result.InstanceConfigResult;
-import com.syncturtle.services.instance.messaging.db.event.InstanceConfigurationEventToPublish;
+import com.syncturtle.services.instance.messaging.kafka.factory.InstanceConfigurationEventFactory;
 import com.syncturtle.services.instance.model.Instance;
 import com.syncturtle.services.instance.model.InstanceConfiguration;
 import com.syncturtle.services.instance.repository.InstanceConfigurationRepository;
 import com.syncturtle.services.instance.repository.InstanceRepository;
 import com.syncturtle.services.instance.service.InstanceConfigurationService;
-import com.syncturtle.services.instance.service.configuration.InstanceConfigurationCrypto;
-import com.syncturtle.services.instance.service.configuration.InstanceConfigurationResolver;
-import com.syncturtle.services.instance.service.configuration.param.RequestedKeyParam;
-import com.syncturtle.services.instance.util.InstanceConfigurationScope;
+import com.syncturtle.services.instance.service.collaborator.configuration.InstanceConfigurationCrypto;
+import com.syncturtle.services.instance.service.collaborator.configuration.InstanceConfigurationResolver;
+import com.syncturtle.services.instance.service.collaborator.configuration.InstanceConfigurationScopeResolver;
+import com.syncturtle.services.instance.service.collaborator.outbox.InstanceOutboxWriter;
+import com.syncturtle.services.instance.service.param.RequestedKeyParam;
+import com.syncturtle.services.instance.service.result.InstanceConfigResult;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -67,8 +65,9 @@ public class InstanceConfigurationServiceImpl implements InstanceConfigurationSe
     private final InstanceConfigurationRepository configurationRepository;
     private final InstanceRepository instanceRepository;
     private final InstanceConfigurationResolver configurationResolver;
+    private final InstanceOutboxWriter outboxWriter;
+    private final InstanceConfigurationEventFactory eventFactory;
     private final InstanceConfigurationCrypto crypto;
-    private final ApplicationEventPublisher publisher;
     private final Clock clock;
 
     @Override
@@ -121,7 +120,7 @@ public class InstanceConfigurationServiceImpl implements InstanceConfigurationSe
                 changedKeys.add(configuration.getKey());
             }
         }
-        log.info("changedKeys: {}", changedKeys);
+
         if (changedKeys.isEmpty()) {
             return List.of();
         }
@@ -191,27 +190,17 @@ public class InstanceConfigurationServiceImpl implements InstanceConfigurationSe
     }
 
     private void publishEvents(Instance instance, Set<InstanceConfigurationKey> changedKeys) {
-        Instant now = Instant.now();
-        String correlationId = UUID.randomUUID().toString();
+        EnumSet<InstanceConfigurationScope> changedScopes = InstanceConfigurationScopeResolver
+                .scopesOf(changedKeys);
 
-        EnumSet<InstanceConfigurationScopeNames> changedScopes = InstanceConfigurationScope.scopesOf(changedKeys);
-
-        for (InstanceConfigurationScopeNames scope : changedScopes) {
+        for (InstanceConfigurationScope scope : changedScopes) {
             Set<InstanceConfigurationKey> scopedKeys = changedKeys.stream()
-                    .filter(key -> InstanceConfigurationScope.scopeOf(key) == scope)
+                    .filter(key -> InstanceConfigurationScopeResolver.scopeOf(key) == scope)
                     .collect(Collectors.toSet());
 
-            InstanceConfigurationEvent event = InstanceConfigurationEvent.builder()
-                    .eventId(UUID.randomUUID().toString())
-                    .correlationId(correlationId)
-                    .occurredAt(now)
-                    .instanceId(instance.getId())
-                    .scope(scope)
-                    .changedKeys(scopedKeys)
-                    .globalVersion(instance.getConfig().getVersion())
-                    .build();
+            InstanceConfigurationEvent event = eventFactory.event(instance, scopedKeys, scope);
 
-            publisher.publishEvent(new InstanceConfigurationEventToPublish(event));
+            outboxWriter.saveInstanceConfigurationEvent(event);
         }
     }
 

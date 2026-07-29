@@ -41,21 +41,17 @@ spring:
     listener:
       observation-enabled: true
       auto-startup: ${app.kafka.enabled:true}
-      concurrency: 2
-      ack-mode: record
-      missing-topics-fatal: false
     producer:
       acks: all
+      batch-size: 32768
+      compression.type: zstd
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
       properties:
         enable.idempotence: true
         linger.ms: 5
-        batch.size: 32768
-        compression.type: zstd
         max.in.flight.requests.per.connection: 5
         spring.json.add.type.headers: false # JsonSerializer.ADD_TYPE_INFO_HEADERS
-        interceptor.classes: com.syncturtle.common.kafka.interceptor.MdcKafkaHeaderProducerInterceptor
     consumer:
       auto-offset-reset: earliest
 
@@ -70,7 +66,7 @@ app:
       max-elapsed-time: 8s
       dlt-suffix: ".DLT"
       ack-after-handle: true
-      commit-recovered: true
+      commit-recovered: false
       log-retries: true
 
   security:
@@ -85,25 +81,25 @@ app:
       csrf-max-age: 30m
 
   email:
-    cache-name: emailRuntimeConfig
-    cache-ttl: 10m
-
-    retry:
-      batch-size: 25
-      max-attempts: 8
-      initial-delay-ms: 30000
-      max-delay-ms: 900000
+    inbox:
+      processing:
+        lease: 5m
+        batch-size: 25
+      retry:
+        max-attempts: 8
+        initial-delay: 30s
+        max-delay: 15m
       scheduler:
         enabled: true
-        poll-delay-ms: 10000
+        poll-delay: 10s
 
-    topics:
-      email-to-send: ${APP_TOPIC_EMAIL_TO_SEND:email.events.v1}
-      email-config-changed: ${APP_TOPIC_EMAIL_CONFIG_CHANGED:instance-config.events.v1}
-    sender:
-      connection-timeout-ms: 5000
-      timeout-ms: 3000
-      write-timeout-ms: 5000
+    runtime-config-cache:
+      ttl: 10m
+
+    transport:
+      connection-timeout: 5s
+      read-timeout: 10s
+      write-timeout: 10s
 
   clients:
     instance-service:

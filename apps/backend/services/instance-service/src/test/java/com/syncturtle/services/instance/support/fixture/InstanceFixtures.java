@@ -16,6 +16,11 @@ public final class InstanceFixtures {
 
     public static final Instant REGISTERED_AT = Instant.parse("2026-05-23T13:00:00Z");
     public static final Instant UPDATED_AT = Instant.parse("2026-05-23T13:30:00Z");
+    public static final UUID INSTANCE_ID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    public static final String MACHINE_SIG = "instance-001";
+    public static final InstanceEdition COMMUNITY_EDITION = InstanceEdition.COMMUNITY;
+    public static final Long GLOBAL_CONFIG_VERSION = 10L;
+    public static final Long VERSION = 7L;
 
     private InstanceFixtures() {
     }
@@ -30,7 +35,7 @@ public final class InstanceFixtures {
 
     public static Instance persistedInstance(String name) {
         Instance instance = activeInstance(name);
-        markPersisted(instance, UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"));
+        markPersisted(instance, INSTANCE_ID);
         return instance;
     }
 
@@ -42,9 +47,9 @@ public final class InstanceFixtures {
 
     public static InstanceRegistrationParam registrationParam(String name) {
         return InstanceRegistrationParam.builder()
-                .instanceId(" instance-001 ")
+                .instanceId(MACHINE_SIG)
                 .instanceName(name)
-                .edition(firstEdition())
+                .edition(COMMUNITY_EDITION)
                 .flags(InstanceRegistrationFlagsParam.builder()
                         .telemetryEnabled(true)
                         .supportRequired(false)
@@ -67,10 +72,6 @@ public final class InstanceFixtures {
         ReflectionTestUtils.setField(instance, "updatedAt", UPDATED_AT);
         ReflectionTestUtils.setField(instance, "createdById", UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"));
         ReflectionTestUtils.setField(instance, "updatedById", UUID.fromString("cccccccc-cccc-cccc-cccc-cccccccccccc"));
-    }
-
-    private static InstanceEdition firstEdition() {
-        return InstanceEdition.values()[0];
     }
 
 }

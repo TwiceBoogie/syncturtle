@@ -4,7 +4,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
 
-import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -17,6 +16,7 @@ import jakarta.persistence.AccessType;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import lombok.AccessLevel;
@@ -31,8 +31,7 @@ import lombok.NoArgsConstructor;
 public abstract class AuditedEntity {
 
     @Id
-    @GeneratedValue
-    @UuidGenerator
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
@@ -70,11 +69,13 @@ public abstract class AuditedEntity {
             return;
         }
 
-        this.deletedAt = Instant.now(clock);
+        deletedAt = Instant.now(clock);
     }
 
     protected final void softDelete(Instant deletedAt) {
-        Assert.notNull(deletedAt, "deletedAt is required");
+        Assert.notNull(
+                deletedAt,
+                "deletedAt is required");
 
         if (isDeleted()) {
             return;
@@ -84,17 +85,28 @@ public abstract class AuditedEntity {
     }
 
     protected final void restore() {
-        this.deletedAt = null;
+        deletedAt = null;
     }
 
-    protected final void requireActive(String aggregateName) {
-        Assert.hasText(aggregateName, "aggregateName is required");
-        Assert.state(isActive(), aggregateName + " is deleted");
+    protected final void requireActive(
+            String aggregateName) {
+        Assert.hasText(
+                aggregateName,
+                "aggregateName is required");
+
+        Assert.state(
+                isActive(),
+                aggregateName + " is deleted");
     }
 
-    protected final void requirePersisted(String aggregateName) {
-        Assert.hasText(aggregateName, "aggregateName is required");
-        Assert.state(id != null, aggregateName + " must be persisted");
-    }
+    protected final void requirePersisted(
+            String aggregateName) {
+        Assert.hasText(
+                aggregateName,
+                "aggregateName is required");
 
+        Assert.state(
+                id != null,
+                aggregateName + " must be persisted");
+    }
 }

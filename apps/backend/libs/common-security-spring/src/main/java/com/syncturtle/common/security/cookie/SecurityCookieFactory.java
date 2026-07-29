@@ -10,7 +10,7 @@ import java.util.List;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseCookie.ResponseCookieBuilder;
 
-import com.syncturtle.common.security.properties.SecurityCookieProperties;
+import com.syncturtle.common.security.property.SecurityCookieProperties;
 
 import lombok.RequiredArgsConstructor;
 

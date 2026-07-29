@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
-import com.syncturtle.common.web.properties.PublicUrlProperties;
+import com.syncturtle.common.web.property.PublicUrlProperties;
 import com.syncturtle.common.web.url.PublicUrlResolver;
 
 @AutoConfiguration

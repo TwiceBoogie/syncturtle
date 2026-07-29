@@ -3,39 +3,56 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "files": [
     "dist"
   ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
+    },
+    "./loader": {
+      "types": "./dist/loader.d.ts",
+      "import": "./dist/loader.js"
     }
   },
   "scripts": {
     "dev": "tsup --watch",
+    "storybook": "storybook dev -p 6006",
     "build": "tsup",
+    "build:storybook": "storybook build",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "clean": "rm -rf .turbo && rm -rf dist"
+    "clean": "rm -rf .turbo dist storybook-static"
   },
   "peerDependencies": {
-    "react": "^19",
-    "react-dom": "^19"
+    "@heroui/react": "^3.2.1",
+    "react": ">=19 <20",
+    "react-dom": ">=19 <20"
   },
   "dependencies": {
-    "clsx": "2.1.1",
-    "tailwind-merge": "3.5.0"
+    "clsx": "catalog:",
+    "tailwind-merge": "catalog:"
   },
   "devDependencies": {
+    "@heroui/react": "catalog:heroui3",
+    "@heroui/styles": "catalog:heroui3",
+    "@storybook/addon-docs": "catalog:storybook10",
+    "@storybook/react-vite": "catalog:storybook10",
     "@syncturtle/eslint-config": "workspace:*",
+    "@syncturtle/tailwind-config": "workspace:*",
     "@syncturtle/typescript-config": "workspace:*",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "eslint": "^9.39.4",
-    "tsup": "8.5.1",
-    "typescript": "^5.9.3"
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "eslint": "catalog:",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19",
+    "storybook": "catalog:storybook10",
+    "tsup": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
   }
 }

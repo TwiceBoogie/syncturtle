@@ -7,10 +7,10 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 import com.syncturtle.common.contracts.instance.config.InstanceConfigurationKey;
-import com.syncturtle.common.contracts.instance.config.InstanceConfigurationScopeNames;
+import com.syncturtle.common.contracts.instance.config.InstanceConfigurationScope;
 import com.syncturtle.common.contracts.instance.event.InstanceConfigurationEvent;
 import com.syncturtle.common.contracts.messaging.KafkaTopics;
-import com.syncturtle.services.workspace.service.runtime.WorkspaceConfigResolver;
+import com.syncturtle.services.workspace.service.collaborator.runtime.WorkspaceConfigResolver;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ public class KafkaInstanceConfigChangeEventListener {
 
     @KafkaListener(topics = KafkaTopics.INSTANCE_CONFIG_EVENTS_V1, groupId = "${app.kafka.config-broadcast-group}", containerFactory = "instanceConfigurationKafkaListenerFactory")
     public void onInstanceConfigurationChanged(InstanceConfigurationEvent event) {
-        if (event.getScope() != InstanceConfigurationScopeNames.WORKSPACE) {
+        if (event.getScope() != InstanceConfigurationScope.WORKSPACE) {
             log.debug("Ignoring instance config event for non-workspace scope. scope={}, eventId={}",
                     event.getScope(), event.getEventId());
             return;

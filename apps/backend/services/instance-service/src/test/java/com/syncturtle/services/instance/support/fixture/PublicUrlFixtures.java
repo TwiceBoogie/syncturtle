@@ -1,6 +1,6 @@
 package com.syncturtle.services.instance.support.fixture;
 
-import com.syncturtle.common.web.properties.PublicUrlProperties;
+import com.syncturtle.common.web.property.PublicUrlProperties;
 
 public final class PublicUrlFixtures {
 

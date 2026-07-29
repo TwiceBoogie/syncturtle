@@ -1,8 +1,23 @@
 package com.syncturtle.services.user.service.impl;
 
-import com.syncturtle.services.user.service.authentication.redirect.AuthenticationRedirector;
+import com.syncturtle.services.user.service.collaborator.authentication.magic.MagicCodeChallenge;
+import com.syncturtle.services.user.service.collaborator.authentication.provider.CredentialAuthenticationReceipt;
+import com.syncturtle.services.user.service.collaborator.authentication.provider.EmailPasswordCredentialProvider;
+import com.syncturtle.services.user.service.collaborator.authentication.provider.MagicCodeCredentialProvider;
+import com.syncturtle.services.user.service.collaborator.authentication.redirect.AuthenticationRedirector;
+import com.syncturtle.services.user.service.collaborator.outbox.EmailOutboxWriter;
+import com.syncturtle.services.user.service.collaborator.outbox.UserOutboxWriter;
+import com.syncturtle.services.user.service.collaborator.runtime.UserAuthRuntimeConfigResolver;
+import com.syncturtle.services.user.service.collaborator.runtime.UserAuthRuntimeSnapshot;
+import com.syncturtle.services.user.service.collaborator.session.AuthenticatedSessionIssuer;
+import com.syncturtle.services.user.service.collaborator.session.AuthenticatedSessionReceipt;
+import com.syncturtle.services.user.service.collaborator.session.RefreshSessionTokenStore;
+import com.syncturtle.services.user.service.param.AuthenticatedSessionIssueParam;
+import com.syncturtle.services.user.service.param.CredentialAuthenticationParam;
+
 import java.util.UUID;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -10,25 +25,23 @@ import org.springframework.util.StringUtils;
 
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
+import com.syncturtle.common.contracts.email.event.EmailToSendEvent;
+import com.syncturtle.common.contracts.user.event.UserEvent;
+import com.syncturtle.common.contracts.user.exception.UserException;
 import com.syncturtle.common.web.context.RequestClientContext;
 import com.syncturtle.services.user.dto.response.EmailCheckResponse;
 import com.syncturtle.services.user.dto.response.IssueTokenResponse;
-import com.syncturtle.services.user.model.Instance;
+import com.syncturtle.services.user.dto.response.IssueTokenWithUserResponse;
+import com.syncturtle.services.user.dto.response.MagicCodeResponse;
+import com.syncturtle.services.user.mapper.UserApiMapper;
+import com.syncturtle.services.user.messaging.kafka.factory.AuthenticationEmailEventFactory;
+import com.syncturtle.services.user.messaging.kafka.factory.UserEventFactory;
+import com.syncturtle.services.user.model.InstanceLite;
 import com.syncturtle.services.user.model.User;
-import com.syncturtle.services.user.repository.InstanceRepository;
+import com.syncturtle.services.user.repository.InstanceLiteRepository;
 import com.syncturtle.services.user.repository.UserRepository;
 import com.syncturtle.services.user.repository.projection.UserPasswordAutosetProjection;
 import com.syncturtle.services.user.service.AuthenticationService;
-import com.syncturtle.services.user.service.authentication.provider.CredentialAuthenticationSpec;
-import com.syncturtle.services.user.service.authentication.provider.CredentialAuthenticationReceipt;
-import com.syncturtle.services.user.service.authentication.provider.EmailPasswordCredentialProvider;
-import com.syncturtle.services.user.service.authentication.provider.MagicCodeCredentialProvider;
-import com.syncturtle.services.user.service.runtime.UserAuthRuntimeConfigResolver;
-import com.syncturtle.services.user.service.runtime.UserAuthRuntimeSnapshot;
-import com.syncturtle.services.user.service.session.AuthenticatedSessionIssueSpec;
-import com.syncturtle.services.user.service.session.AuthenticatedSessionIssuer;
-import com.syncturtle.services.user.service.session.AuthenticatedSessionReceipt;
-import com.syncturtle.services.user.service.session.RefreshSessionTokenStore;
 import com.syncturtle.services.user.type.AuthenticationFlowType;
 
 import lombok.RequiredArgsConstructor;
@@ -39,8 +52,10 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AuthenticationServiceImpl implements AuthenticationService {
 
+    private static final int MIN_PASSWORD_LENGTH = 8;
+
     private final AuthenticationRedirector authenticationRedirector;
-    private final InstanceRepository instanceRepository;
+    private final InstanceLiteRepository instanceRepository;
     private final UserRepository userRepository;
     private final RequestClientContext clientContext;
     private final UserAuthRuntimeConfigResolver configFlagResolver;
@@ -48,6 +63,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final MagicCodeCredentialProvider magicCodeProvider;
     private final AuthenticatedSessionIssuer authenticatedSessionIssuer;
     private final RefreshSessionTokenStore refreshSessionTokenStore;
+    private final PasswordEncoder passwordEncoder;
+    private final UserEventFactory userEventFactory;
+    private final UserOutboxWriter userOutboxWriter;
+    private final AuthenticationEmailEventFactory emailEventFactory;
+    private final EmailOutboxWriter emailOutboxWriter;
+    private final UserApiMapper userApiMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -59,17 +80,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         UserAuthRuntimeSnapshot configurations = configFlagResolver.getInstanceConfigurations();
         Assert.notNull(configurations, "user auth runtime config is required");
 
-        boolean magicCodeAvailable = configurations.isSignupEnabled() && configurations.isMagicLinkEnabled();
+        boolean magicLoginAvailable = configurations.isMagicLinkEnabled() && configurations.isSmtpEnabled();
 
         return userRepository.findByEmailIgnoreCase(normalizedEmail, UserPasswordAutosetProjection.class)
                 .map(user -> {
-                    AuthenticationFlowType authenticationFlow = user.isPasswordAutoset() && magicCodeAvailable
+                    AuthenticationFlowType authenticationFlow = user.isPasswordAutoset() && magicLoginAvailable
                             ? AuthenticationFlowType.MAGIC_CODE
                             : AuthenticationFlowType.CREDENTIAL;
                     return EmailCheckResponse.forExistingUser(authenticationFlow);
                 })
                 .orElseGet(() -> {
-                    AuthenticationFlowType authenticationFlow = magicCodeAvailable
+                    boolean magicSignupAvailable = configurations.isSignupEnabled() && magicLoginAvailable;
+                    AuthenticationFlowType authenticationFlow = magicSignupAvailable
                             ? AuthenticationFlowType.MAGIC_CODE
                             : AuthenticationFlowType.CREDENTIAL;
                     return EmailCheckResponse.forNewUser(authenticationFlow);
@@ -78,14 +100,29 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     @Transactional
+    public MagicCodeResponse generateMagicCode(String email) {
+        Assert.hasText(email, "email is required");
+
+        requireInstanceSetup();
+        String normalizedEmail = normalizeEmailForLookup(email);
+        MagicCodeChallenge challenge = magicCodeProvider.initiate(normalizedEmail);
+
+        EmailToSendEvent event = emailEventFactory.magicCode(email, challenge.getToken(), challenge.getExpiresIn());
+        emailOutboxWriter.saveEmailToSendEvent(event, null);
+
+        return new MagicCodeResponse(challenge.getKey());
+    }
+
+    @Override
+    @Transactional
     public IssueTokenResponse emailPasswordSignIn(String email, String password, String nextPath) {
         try {
-            Instance instance = requireInstanceSetup();
+            InstanceLite instance = requireInstanceSetup();
 
             requireEmailPasswordInput(email, password, AuthErrorCode.REQUIRED_EMAIL_PASSWORD_SIGN_IN);
 
             CredentialAuthenticationReceipt result = emailPasswordProvider.authenticate(
-                    CredentialAuthenticationSpec.builder()
+                    CredentialAuthenticationParam.builder()
                             .email(email)
                             .secret(password)
                             .signup(false)
@@ -103,12 +140,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Transactional
     public IssueTokenResponse emailPasswordSignUp(String email, String password, String nextPath) {
         try {
-            Instance instance = requireInstanceSetup();
+            InstanceLite instance = requireInstanceSetup();
 
             requireEmailPasswordInput(email, password, AuthErrorCode.REQUIRED_EMAIL_PASSWORD_SIGN_UP);
 
             CredentialAuthenticationReceipt result = emailPasswordProvider.authenticate(
-                    CredentialAuthenticationSpec.builder()
+                    CredentialAuthenticationParam.builder()
                             .email(email)
                             .secret(password)
                             .signup(true)
@@ -126,13 +163,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Transactional
     public IssueTokenResponse magicCodeSignIn(String email, String code, String nextPath) {
         try {
-            Instance instance = requireInstanceSetup();
+            InstanceLite instance = requireInstanceSetup();
 
             // requireMagicCodeInput(email, code,
             // AuthErrorCode.MAGIC_SIGN_IN_EMAIL_CODE_REQUIRED);
 
             CredentialAuthenticationReceipt result = magicCodeProvider.authenticate(
-                    CredentialAuthenticationSpec.builder()
+                    CredentialAuthenticationParam.builder()
                             .email(email)
                             .secret(code)
                             .signup(false)
@@ -150,13 +187,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Transactional
     public IssueTokenResponse magicCodeSignUp(String email, String code, String nextPath) {
         try {
-            Instance instance = requireInstanceSetup();
+            InstanceLite instance = requireInstanceSetup();
 
             // requireMagicCodeInput(email, code,
             // AuthErrorCode.MAGIC_SIGN_UP_EMAIL_CODE_REQUIRED);
 
             CredentialAuthenticationReceipt result = magicCodeProvider.authenticate(
-                    CredentialAuthenticationSpec.builder()
+                    CredentialAuthenticationParam.builder()
                             .email(email)
                             .secret(code)
                             .signup(true)
@@ -181,8 +218,41 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return authenticationRedirector.signOutRedirect(logoutContext).getRedirection();
     }
 
-    private Instance requireInstanceSetup() {
-        Instance instance = instanceRepository.findFirstByOrderByCreatedAtAsc().orElse(null);
+    @Override
+    @Transactional
+    public IssueTokenWithUserResponse setPassword(UUID currentUserId, String sessionId, String password) {
+        Assert.notNull(currentUserId, "currentUserId is required");
+        Assert.notNull(sessionId, "sessionId is required");
+
+        InstanceLite instance = requireInstanceSetup();
+
+        User user = userRepository.findById(currentUserId).orElseThrow(() -> UserException.userNotFound(currentUserId));
+
+        // If user password is not autoset then return error
+        if (!user.isPasswordAutoset()) {
+            throw AuthException.of(AuthErrorCode.PASSWORD_ALREADY_SET)
+                    .with("error", "Your password is already set please change your password from profile");
+        }
+
+        requireAcceptablePassword(password);
+
+        String passwordhash = passwordEncoder.encode(password);
+        user.markPasswordChanged(passwordhash, false);
+        userRepository.flush();
+
+        refreshSessionTokenStore.revokeUserSessions(currentUserId.toString());
+
+        UserEvent event = userEventFactory.updated(user);
+        userOutboxWriter.saveUserEvent(event);
+
+        return IssueTokenWithUserResponse.builder()
+                .tokens(issueTokenResponse(user, instance.getId(), null))
+                .user(userApiMapper.toMe(user))
+                .build();
+    }
+
+    private InstanceLite requireInstanceSetup() {
+        InstanceLite instance = instanceRepository.findFirstByOrderByCreatedAtAsc().orElse(null);
 
         if (instance == null || !instance.isSetupDone()) {
             throw AuthException.of(AuthErrorCode.INSTANCE_NOT_CONFIGURED);
@@ -191,7 +261,34 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return instance;
     }
 
-    private void requireEmailPasswordInput(String email, String password, AuthErrorCode errorCode) {
+    private void requireAcceptablePassword(String password) {
+        if (!StringUtils.hasText(password)) {
+            throw AuthException.of(AuthErrorCode.INVALID_PASSWORD);
+        }
+
+        if (password.length() < MIN_PASSWORD_LENGTH) {
+            throw AuthException.of(AuthErrorCode.INVALID_PASSWORD);
+        }
+
+        // TODO: plug zxcvbn4j later
+    }
+
+    private IssueTokenResponse issueTokenResponse(User user, UUID instanceId, String nextPath) {
+        Assert.notNull(user, "user is required");
+        Assert.notNull(instanceId, "instanceId is required");
+
+        AuthenticatedSessionReceipt session = authenticatedSessionIssuer.issueNewSession(
+                AuthenticatedSessionIssueParam.builder()
+                        .user(user)
+                        .instanceId(instanceId)
+                        .ipAddress(clientContext.getClientIp())
+                        .userAgent(clientContext.getUserAgent())
+                        .build());
+
+        return IssueTokenResponse.issued(session, authenticationRedirector.successLocation(nextPath));
+    }
+
+    private static void requireEmailPasswordInput(String email, String password, AuthErrorCode errorCode) {
         Assert.notNull(errorCode, "errorCode is required");
 
         if (!StringUtils.hasText(email) || !StringUtils.hasText(password)) {
@@ -199,7 +296,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
-    private String normalizeEmailForLookup(String email) {
+    private static String normalizeEmailForLookup(String email) {
         if (!StringUtils.hasText(email)) {
             throw AuthException.of(AuthErrorCode.INVALID_EMAIL);
         }
@@ -212,21 +309,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         return normalized;
-    }
-
-    private IssueTokenResponse issueTokenResponse(User user, UUID instanceId, String nextPath) {
-        Assert.notNull(user, "user is required");
-        Assert.notNull(instanceId, "instanceId is required");
-
-        AuthenticatedSessionReceipt session = authenticatedSessionIssuer.issueNewSession(
-                AuthenticatedSessionIssueSpec.builder()
-                        .user(user)
-                        .instanceId(instanceId)
-                        .ipAddress(clientContext.getClientIp())
-                        .userAgent(clientContext.getUserAgent())
-                        .build());
-
-        return IssueTokenResponse.issued(session, authenticationRedirector.successLocation(nextPath));
     }
 
 }

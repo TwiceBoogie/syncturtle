@@ -1,7 +1,7 @@
 package com.syncturtle.services.instance.service.impl;
 
-import static com.syncturtle.services.instance.service.configuration.InstanceConfigurationResolver.isOn;
-import static com.syncturtle.services.instance.service.configuration.InstanceConfigurationResolver.parseIntOr;
+import static com.syncturtle.services.instance.service.collaborator.configuration.InstanceConfigurationResolver.isOn;
+import static com.syncturtle.services.instance.service.collaborator.configuration.InstanceConfigurationResolver.parseIntOr;
 
 import java.util.List;
 import java.util.Map;
@@ -17,8 +17,8 @@ import com.syncturtle.common.contracts.workspace.config.WorkspaceRuntimeConfigRe
 import com.syncturtle.services.instance.model.Instance;
 import com.syncturtle.services.instance.repository.InstanceRepository;
 import com.syncturtle.services.instance.service.InstanceConfigurationInternalService;
-import com.syncturtle.services.instance.service.configuration.InstanceConfigurationResolver;
-import com.syncturtle.services.instance.service.configuration.param.RequestedKeyParam;
+import com.syncturtle.services.instance.service.collaborator.configuration.InstanceConfigurationResolver;
+import com.syncturtle.services.instance.service.param.RequestedKeyParam;
 
 import lombok.RequiredArgsConstructor;
 

@@ -15,13 +15,11 @@ public final class WorkspaceEventMapper {
         return WorkspaceReplicaParam.of(
                 event.getId(),
                 event.getName(),
-                event.getLogo(),
                 event.getLogoAssetId(),
                 event.getSlug(),
                 event.getOrganizationSize(),
                 event.getOwnerId(),
                 event.getTimezone(),
-                event.getTotalMembers(),
                 event.getCreatedById(),
                 event.getUpdatedById(),
                 event.getCreatedAt(),

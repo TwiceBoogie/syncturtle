@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
-import com.syncturtle.common.core.exceptions.SyncturtleServiceException;
+import com.syncturtle.common.core.exception.SyncturtleServiceException;
 
 public final class AuthException extends SyncturtleServiceException {
 

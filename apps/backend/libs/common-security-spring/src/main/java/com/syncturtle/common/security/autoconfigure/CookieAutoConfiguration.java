@@ -11,11 +11,12 @@ import org.springframework.http.server.reactive.ServerHttpResponse;
 import com.syncturtle.common.security.cookie.ReactiveCsrfCookieWriter;
 import com.syncturtle.common.security.cookie.SecurityCookieFactory;
 import com.syncturtle.common.security.cookie.ServletAuthCookieWriter;
-import com.syncturtle.common.security.properties.SecurityCookieProperties;
+import com.syncturtle.common.security.property.SecurityCookieProperties;
 
 import jakarta.servlet.http.HttpServletResponse;
 
 @AutoConfiguration
+@ConditionalOnWebApplication
 @EnableConfigurationProperties(SecurityCookieProperties.class)
 public class CookieAutoConfiguration {
 

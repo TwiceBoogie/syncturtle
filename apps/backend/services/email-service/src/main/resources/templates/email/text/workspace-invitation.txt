@@ -1,0 +1,11 @@
+Join [[${workspaceName}]] on Syncturtle
+
+[[${inviterName}]] invited you to collaborate in [[${workspaceName}]].
+
+Accept the invitation:
+[[${invitationUrl != null ? invitationUrl : 'https://syncturtle.com'}]]
+
+If you were not expecting this invitation, you can safely ignore this email.
+
+This email was sent to [[${email}]].
+Please delete it if you are not the intended recipient.

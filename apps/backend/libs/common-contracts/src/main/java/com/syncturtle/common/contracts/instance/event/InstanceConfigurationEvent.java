@@ -6,7 +6,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-import com.syncturtle.common.contracts.instance.config.InstanceConfigurationScopeNames;
+import com.syncturtle.common.contracts.instance.config.InstanceConfigurationScope;
+import com.syncturtle.common.contracts.messaging.OutboxEvent;
 import com.syncturtle.common.contracts.instance.config.InstanceConfigurationKey;
 
 import lombok.Builder;
@@ -14,24 +15,27 @@ import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
 
 @Getter
-@Jacksonized
-@Builder(toBuilder = true)
-public final class InstanceConfigurationEvent {
+public final class InstanceConfigurationEvent implements OutboxEvent {
+
+    public static final String EVENT_TYPE = "INSTANCE_CONFIGURATION_CHANGED";
+
     private final String eventId;
     private final String correlationId;
     private final Instant occurredAt;
     private final UUID instanceId;
-    private final InstanceConfigurationScopeNames scope;
+    private final InstanceConfigurationScope scope;
     private final Long scopeVersion;
     private final Long globalVersion;
     private final Set<InstanceConfigurationKey> changedKeys;
 
+    @Builder
+    @Jacksonized
     private InstanceConfigurationEvent(
             String eventId,
             String correlationId,
             Instant occurredAt,
             UUID instanceId,
-            InstanceConfigurationScopeNames scope,
+            InstanceConfigurationScope scope,
             Long scopeVersion,
             Long globalVersion,
             Set<InstanceConfigurationKey> changedKeys) {
@@ -43,6 +47,11 @@ public final class InstanceConfigurationEvent {
         this.scopeVersion = scopeVersion;
         this.globalVersion = Objects.requireNonNull(globalVersion, "globalVersion is required");
         this.changedKeys = immutableChangedKeys(changedKeys);
+    }
+
+    @Override
+    public String eventTypeName() {
+        return EVENT_TYPE;
     }
 
     private static Set<InstanceConfigurationKey> immutableChangedKeys(Set<InstanceConfigurationKey> changedKeys) {

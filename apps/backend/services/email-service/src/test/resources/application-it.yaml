@@ -28,6 +28,9 @@ spring:
       missing-topics-fatal: false
     consumer:
       auto-offset-reset: earliest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
 
 server:
   port: 0
@@ -55,10 +58,20 @@ app:
     config-broadcast-group: email-service-it-config
 
   email:
-    retry:
+    inbox:
       scheduler:
         enabled: false
+        poll-delay: 10s
+
+    runtime-config-cache:
+      ttl: 30m
 
   web:
     access-logging:
       enabled: false
+
+  clients:
+    instance-service:
+      base-url: http://localhost:8001
+      connect-timeout: 2s
+      read-timeout: 5s

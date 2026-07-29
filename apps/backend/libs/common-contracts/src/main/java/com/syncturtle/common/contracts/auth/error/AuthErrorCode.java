@@ -351,6 +351,48 @@ public enum AuthErrorCode implements ErrorCode {
             403,
             "Admin user is deactivated."),
 
+    AUTHENTICATION_REQUIRED(
+            5400,
+            "AUTHENTICATION_REQUIRED",
+            401,
+            "Authentication credentials were not provided."),
+
+    ACCESS_DENIED(
+            5405,
+            "ACCESS_DENIED",
+            403,
+            "Access denied."),
+
+    INSUFFICIENT_INSTANCE_ROLE(
+            5410,
+            "INSUFFICIENT_INSTANCE_ROLE",
+            403,
+            "You do not have permission to access this instance resource."),
+
+    INSUFFICIENT_WORKSPACE_ROLE(
+            5415,
+            "INSUFFICIENT_WORKSPACE_ROLE",
+            403,
+            "You do not have permission to access this workspace resource."),
+
+    INSUFFICIENT_PROJECT_ROLE(
+            5420,
+            "INSUFFICIENT_PROJECT_ROLE",
+            401,
+            "You do not have permission to access this project resource."),
+
+    SESSION_NO_LONGER_VALID(
+            5425,
+            "SESSION_NO_LONGER_VALID",
+            401,
+            "Session is no longer valid."),
+
+    INVALID_ACCESS_TOKEN_CLAIMS(
+            5430,
+            "INVALID_ACCESS_TOKEN_CLAIMS",
+            401,
+            "Access token is invalid"),
+
     RATE_LIMIT_EXCEEDED(
             5900,
             "RATE_LIMIT_EXCEEDED",

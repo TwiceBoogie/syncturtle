@@ -1,8 +1,7 @@
 "use client";
 
-import { FC, ReactNode } from "react";
-// utils
-import { cn } from "@syncturtle/utils";
+import type { FC, ReactNode } from "react";
+import { cn } from "@syncturtle/ui";
 
 interface IAuthenticationMethodCardProps {
   name: string;

@@ -1,4 +1,5 @@
-import { FC, useEffect, useMemo, useState } from "react";
+import type { FC } from "react";
+import { useEffect, useMemo, useState } from "react";
 // heroui
 import { Button, Description, FieldError, Input, Label, Modal, Spinner, TextField } from "@heroui/react";
 // services
