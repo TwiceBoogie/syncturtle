@@ -1,6 +1,7 @@
 "use client";
 
-import { FC, useEffect } from "react";
+import type { FC } from "react";
+import { useEffect } from "react";
 import { SerwistProvider } from "@serwist/turbopack/react";
 import { isClient } from "@syncturtle/utils";
 import { IS_DEV } from "@/config";

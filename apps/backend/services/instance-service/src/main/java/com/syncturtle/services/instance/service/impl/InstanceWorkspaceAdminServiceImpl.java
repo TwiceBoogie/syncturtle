@@ -16,12 +16,12 @@ import com.syncturtle.services.instance.client.WorkspaceClient;
 import com.syncturtle.services.instance.dto.request.InstanceWorkspaceCreateRequest;
 import com.syncturtle.services.instance.dto.response.InstanceWorkspaceResponse;
 import com.syncturtle.services.instance.dto.response.InstanceWorkspaceSlugCheckResponse;
+import com.syncturtle.services.instance.mapper.InstanceWorkspacePageMapper;
 import com.syncturtle.services.instance.repository.InstanceRepository;
 import com.syncturtle.services.instance.repository.WorkspaceRepository;
 import com.syncturtle.services.instance.repository.projection.InstanceIdProjection;
 import com.syncturtle.services.instance.repository.projection.InstanceWorkspaceProjection;
 import com.syncturtle.services.instance.service.InstanceWorkspaceAdminService;
-import com.syncturtle.services.instance.service.mapper.InstanceWorkspacePageMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -70,8 +70,11 @@ public class InstanceWorkspaceAdminServiceImpl implements InstanceWorkspaceAdmin
         // 2: build pattern to avoid db side concatenation
         String pattern = toSearchPattern(search);
 
-        List<InstanceWorkspaceProjection> workspaces = workspaceRepository.findWorkspacePageDesc(pattern,
-                cursorPosition, perPage + 1);
+        List<InstanceWorkspaceProjection> workspaces = workspaceRepository.findWorkspacePageDesc(
+                pattern,
+                cursorPosition == null ? null : cursorPosition.getCreatedAt(),
+                cursorPosition == null ? null : cursorPosition.getId(),
+                perPage + 1);
 
         return pageMapper.mapToPageResponse(workspaces, perPage);
     }

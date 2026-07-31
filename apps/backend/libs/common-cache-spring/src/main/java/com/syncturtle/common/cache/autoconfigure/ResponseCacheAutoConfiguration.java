@@ -8,32 +8,34 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
-import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration;
+import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.syncturtle.common.cache.properties.ResponseCacheProperties;
+import com.syncturtle.common.cache.property.ResponseCacheProperties;
 import com.syncturtle.common.cache.response.ResponseCacheAspect;
 import com.syncturtle.common.cache.response.ResponseCacheKeyBuilder;
 import com.syncturtle.common.web.autoconfigure.GatewayContextAutoConfiguration;
 import com.syncturtle.common.web.context.RequestUserContext;
 
+import jakarta.servlet.http.HttpServletRequest;
+import tools.jackson.databind.json.JsonMapper;
+
 @AutoConfiguration(after = {
-        RedisAutoConfiguration.class,
+        DataRedisAutoConfiguration.class,
         JacksonAutoConfiguration.class,
         AopAutoConfiguration.class,
         GatewayContextAutoConfiguration.class
 })
-@ConditionalOnWebApplication(type = Type.SERVLET)
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnClass({
         StringRedisTemplate.class,
-        ObjectMapper.class,
+        JsonMapper.class,
         Aspect.class,
+        HttpServletRequest.class,
         ResponseCacheAspect.class
 })
 @EnableConfigurationProperties(ResponseCacheProperties.class)
@@ -46,24 +48,28 @@ public class ResponseCacheAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnBean({
+            StringRedisTemplate.class,
+            JsonMapper.class
+    })
     @ConditionalOnMissingBean
-    @ConditionalOnBean({ StringRedisTemplate.class, ObjectMapper.class })
     ResponseCacheAspect responseCacheAspect(
             StringRedisTemplate redis,
-            ObjectMapper objectMapper,
-            ResponseCacheProperties props,
+            JsonMapper jsonMapper,
+            ResponseCacheProperties properties,
             ResponseCacheKeyBuilder keyBuilder,
             ObjectProvider<RequestUserContext> requestUserContextProvider,
-            Environment env) {
-        String serviceName = env.getProperty("spring.application.name", "unknown-service");
+            Environment environment) {
+        String serviceName = environment.getProperty(
+                "spring.application.name",
+                "unknown-service");
 
         return new ResponseCacheAspect(
                 redis,
-                objectMapper,
-                props,
+                jsonMapper,
+                properties,
                 keyBuilder,
                 requestUserContextProvider.getIfAvailable(),
                 serviceName);
     }
-
 }

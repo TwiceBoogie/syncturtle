@@ -1,6 +1,6 @@
 "use client";
 
-import DefaultLayout from "@/layouts/auth-layout";
+import DefaultLayout from "@/layouts/default-layout";
 import { MaintenanceMessage } from "@/syncturtle-web/components/instance";
 // import { useTheme } from "next-themes";
 

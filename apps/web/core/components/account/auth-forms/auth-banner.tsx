@@ -1,8 +1,8 @@
-import { FC } from "react";
+import type { FC } from "react";
 // heroui
 import { Alert, CloseButton } from "@heroui/react";
 // helpers
-import { TAuthErrorInfo } from "@/helpers/authentication.helper";
+import type { TAuthErrorInfo } from "@/helpers/authentication.helper";
 // i18n
 import { useTranslation } from "@syncturtle/i18n";
 

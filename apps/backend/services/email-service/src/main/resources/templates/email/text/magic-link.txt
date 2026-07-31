@@ -1,9 +1,0 @@
-Hello [[${firstName != null and !#strings.isEmpty(firstName) ? firstName : 'there'}]],
-
-Use the secure link below to sign in to Syncturtle:
-
-[[${magicLink}]]
-
-This link expires in [[${expiresInMinutes != null ? expiresInMinutes : 15}]] minutes and can only be used once.
-
-If you did not request this email, you can safely ignore it.

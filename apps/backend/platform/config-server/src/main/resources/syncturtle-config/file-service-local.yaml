@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/syncturtle_file
+    username: file_app
+    password: ${FILE_DB_PASSWORD}
+
+  liquibase:
+    user: file_migrator
+    password: ${FILE_MIGRATOR_DB_PASSWORD}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:19092}
+
+app:
+  services:
+    instance-service:
+      base-url: http://localhost:8001
+    user-service:
+      base-url: http://localhost:8002
+    workspace-service:
+      base-url: http://localhost:8003
+    email-service:
+      base-url: http://localhost:8020
+    file-service:
+      base-url: http://localhost:8004

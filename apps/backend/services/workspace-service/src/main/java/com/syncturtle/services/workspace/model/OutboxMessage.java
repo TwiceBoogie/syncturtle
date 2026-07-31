@@ -38,6 +38,8 @@ public class OutboxMessage {
     private static final int MAX_MESSAGE_KEY_LENGTH = 255;
     private static final int MAX_EVENT_TYPE_LENGTH = 120;
     private static final int MAX_AGGREGATE_TYPE_LENGTH = 120;
+    private static final int MAX_TRACEPARENT_LENGTH = 55;
+    private static final int MAX_TRACESTATE_LENGTH = 512;
     private static final int MAX_LOCKED_BY_LENGTH = 120;
     private static final int INITIAL_ATTEMPTS = 0;
 
@@ -64,6 +66,12 @@ public class OutboxMessage {
 
     @Column(name = "payload", nullable = false, columnDefinition = "text")
     private String payload;
+
+    @Column(name = "traceparent", length = MAX_TRACEPARENT_LENGTH)
+    private String traceparent;
+
+    @Column(name = "tracestate", length = MAX_TRACESTATE_LENGTH)
+    private String tracestate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
@@ -112,6 +120,8 @@ public class OutboxMessage {
         message.aggregateType = normalizeRequired(param.getAggregateType(), "aggregateType", MAX_AGGREGATE_TYPE_LENGTH);
         message.aggregateId = requireId(param.getAggregateId(), "aggregateId is required");
         message.payload = normalizeRequired(param.getPayload(), "payload", Integer.MAX_VALUE);
+        message.traceparent = normalizeNullable(param.getTraceparent());
+        message.tracestate = normalizeNullable(param.getTracestate());
         message.status = OutboxStatus.NEW;
         message.attempts = INITIAL_ATTEMPTS;
         message.maxAttempts = param.getMaxAttempts();
@@ -221,7 +231,7 @@ public class OutboxMessage {
 
     public OutboxEnvelope toEnvelope() {
         requirePersisted();
-        return new OutboxEnvelope(id, topic, messageKey, eventType, payload, attempts);
+        return new OutboxEnvelope(id, topic, messageKey, eventType, payload, traceparent, tracestate, attempts);
     }
 
     private void releaseToFailed(Clock clock) {

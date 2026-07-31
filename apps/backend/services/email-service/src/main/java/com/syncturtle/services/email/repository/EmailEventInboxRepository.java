@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.syncturtle.services.email.models.EmailEventInbox;
+import com.syncturtle.services.email.model.EmailEventInbox;
 
 import jakarta.persistence.LockModeType;
 

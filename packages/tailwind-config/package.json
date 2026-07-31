@@ -11,11 +11,14 @@
     "theme.css"
   ],
   "exports": {
+    ".": "./styles.css",
     "./styles": "./styles.css",
-    "./theme": "./theme.css",
-    ".": "./styles.css"
+    "./theme": "./theme.css"
   },
   "peerDependencies": {
     "tailwindcss": "^4"
+  },
+  "devDependencies": {
+    "tailwindcss": "catalog:"
   }
 }

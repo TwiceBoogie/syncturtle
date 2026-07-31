@@ -2,13 +2,15 @@ package com.syncturtle.services.user.configuration.cache.redis;
 
 import java.time.Duration;
 
-import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.cache.autoconfigure.RedisCacheManagerBuilderCustomizer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.RedisSerializer;
 
 import com.syncturtle.common.cache.template.RedisKeyBuilder;
 import com.syncturtle.services.user.configuration.cache.UserAuthRuntimeCacheNames;
@@ -21,27 +23,30 @@ public class UserAuthRuntimeCacheConfiguration {
     private static final String RESOURCE = "user-auth-runtime";
     private static final String SOURCE = "source";
     private static final String SOURCE_SERVICE = "instance-service";
-    private static final String CONTRACT_VERSION = "v1";
+    private static final String CONTRACT_VERSION = "v2";
 
     @Bean
-    RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer(RedisKeyBuilder redisKeyBuilder) {
-        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer();
-
-        RedisCacheConfiguration userAuthRuntimeCache = RedisCacheConfiguration.defaultCacheConfig()
+    RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer(RedisKeyBuilder redisKeyBuilder,
+            @Value("${app.auth.runtime-cache.ttl}") Duration ttl) {
+        RedisSerializer<Object> serializer = GenericJacksonJsonRedisSerializer.builder().build();
+        RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig()
                 .disableCachingNullValues()
-                .computePrefixWith(cacheName -> redisKeyBuilder.configKey(
-                        OWNER,
-                        RESOURCE,
-                        SOURCE,
-                        SOURCE_SERVICE,
-                        CONTRACT_VERSION) + ":")
-                .serializeValuesWith(
-                        RedisSerializationContext.SerializationPair.fromSerializer(serializer))
-                .entryTtl(Duration.ofHours(1));
+                .computePrefixWith(cacheName -> cachePrefix(redisKeyBuilder))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer))
+                .entryTtl(ttl);
 
         return builder -> builder.withCacheConfiguration(
                 UserAuthRuntimeCacheNames.USER_AUTH_RUNTIME,
-                userAuthRuntimeCache);
+                configuration);
+    }
+
+    private static String cachePrefix(RedisKeyBuilder redisKeyBuilder) {
+        return redisKeyBuilder.configKey(
+                OWNER,
+                RESOURCE,
+                SOURCE,
+                SOURCE_SERVICE,
+                CONTRACT_VERSION) + ":";
     }
 
 }

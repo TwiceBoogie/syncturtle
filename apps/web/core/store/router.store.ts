@@ -1,19 +1,15 @@
-import type { Listener, Unsubscribe } from "@syncturtle/types";
-import { Emitter } from "@syncturtle/utils";
-import { ParsedUrlQuery } from "node:querystring";
+import type { ParsedUrlQuery } from "node:querystring";
+import { ExternalStore } from "@syncturtle/utils";
 
 export type TRouterSnapshot = {
   query: ParsedUrlQuery;
 };
 
-const initialSnapshot: TRouterSnapshot = {
+const createInitialSnapshot = (): TRouterSnapshot => ({
   query: {},
-};
+});
 
-export interface IRouterStoreInternal {
-  _subscribe(listener: Listener): Unsubscribe;
-  _getSnapshot(): TRouterSnapshot;
-  _getServerSnapshot(): TRouterSnapshot;
+export interface IRouterStore {
   // observables
   query: ParsedUrlQuery;
   // computed
@@ -23,26 +19,23 @@ export interface IRouterStoreInternal {
   setQuery: (query: ParsedUrlQuery) => void;
 }
 
-export type TRouterStore = Omit<IRouterStoreInternal, "_subscribe" | "_getSnapshot" | "_getServerSnapshot">;
+export interface IRouterStoreInternal extends IRouterStore {
+  _subscribe: ExternalStore<TRouterSnapshot>["_subscribe"];
+  _getSnapshot: ExternalStore<TRouterSnapshot>["_getSnapshot"];
+  _getServerSnapshot: ExternalStore<TRouterSnapshot>["_getServerSnapshot"];
+}
 
 /**
  * External store for router
  */
-export class RouterStore implements IRouterStoreInternal {
-  private emitter = new Emitter();
-  private _snap: TRouterSnapshot = initialSnapshot;
-
-  // useSyncExternalStore integration
-  /** @internal */
-  public _subscribe = (listener: Listener): Unsubscribe => this.emitter.subscribe(listener);
-  /** @internal */
-  public _getSnapshot = (): TRouterSnapshot => this._snap;
-  /** @internal */
-  public _getServerSnapshot = (): TRouterSnapshot => this._snap;
+export class RouterStore extends ExternalStore<TRouterSnapshot> implements IRouterStoreInternal {
+  constructor() {
+    super(createInitialSnapshot());
+  }
 
   // raw getters for data
   get query(): ParsedUrlQuery {
-    return this._snap.query;
+    return this.state.query;
   }
 
   get workspaceSlug() {
@@ -61,37 +54,43 @@ export class RouterStore implements IRouterStoreInternal {
    * will always be different when a new object is passed
    */
   public setQuery = (query: ParsedUrlQuery) => {
-    const normalized: ParsedUrlQuery = {};
-    for (const [k, v] of Object.entries(query)) {
-      normalized[k] = Array.isArray(v) ? String(v[0] ?? "") : String(v ?? "");
+    const normalized = this.normalizeQuery(query);
+
+    if (this.areQueriesEqual(this.state.query, normalized)) {
+      return;
     }
-    this.set({ query: normalized });
+
+    this.setState({ query: normalized });
   };
 
+  private normalizeQuery(query: ParsedUrlQuery): ParsedUrlQuery {
+    const normalized: ParsedUrlQuery = {};
+
+    for (const [key, value] of Object.entries(query)) {
+      normalized[key] = Array.isArray(value) ? String(value[0] ?? "") : String(value ?? "");
+    }
+
+    return normalized;
+  }
+
+  private areQueriesEqual(a: ParsedUrlQuery, b: ParsedUrlQuery): boolean {
+    const aKeys = Object.keys(a);
+    const bKeys = Object.keys(b);
+
+    if (aKeys.length !== bKeys.length) return false;
+
+    for (const key of aKeys) {
+      if (a[key]?.toString() !== b[key]?.toString()) return false;
+    }
+
+    return true;
+  }
+
   private getQueryValue(key: keyof ParsedUrlQuery): string | undefined {
-    const value = this._snap.query?.[key];
+    const value = this.state.query?.[key];
     if (Array.isArray(value)) {
       return value[0]?.toString();
     }
     return value?.toString();
-  }
-
-  private set(patch: Partial<TRouterSnapshot>): void {
-    const prev = this._snap;
-    const next = { ...prev, ...patch };
-
-    let changed = false;
-    for (const key in next) {
-      const k = key as keyof TRouterSnapshot;
-      if (!Object.is(prev[k], next[k])) {
-        changed = true;
-        break;
-      }
-    }
-
-    if (!changed) return;
-
-    this._snap = next;
-    this.emitter.emit();
   }
 }

@@ -10,7 +10,7 @@ import org.springframework.util.Assert;
 import com.syncturtle.common.contracts.messaging.KafkaTopics;
 import com.syncturtle.common.contracts.user.event.UserEvent;
 import com.syncturtle.services.instance.messaging.kafka.mapper.UserEventMapper;
-import com.syncturtle.services.instance.model.User;
+import com.syncturtle.services.instance.model.UserLite;
 import com.syncturtle.services.instance.model.param.UserReplicaParam;
 import com.syncturtle.services.instance.repository.UserRepository;
 
@@ -39,7 +39,7 @@ public class KafkaUserEventConsumer {
 
     }
 
-    private void applyToExisting(User existing, UserReplicaParam param) {
+    private void applyToExisting(UserLite existing, UserReplicaParam param) {
         boolean changed = existing.applyReplicaParam(param, clock);
 
         if (!changed) {
@@ -55,7 +55,7 @@ public class KafkaUserEventConsumer {
     }
 
     private void insertNew(UserReplicaParam param) {
-        User user = User.fromReplicaParam(param, clock);
+        UserLite user = UserLite.fromReplicaParam(param, clock);
         repository.save(user);
     }
 

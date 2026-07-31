@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.syncturtle.common.contracts.email.error.EmailErrorCode;
-import com.syncturtle.common.core.exceptions.SyncturtleServiceException;
+import com.syncturtle.common.core.exception.SyncturtleServiceException;
 
 public final class EmailDispatchException extends SyncturtleServiceException {
 
@@ -51,6 +51,10 @@ public final class EmailDispatchException extends SyncturtleServiceException {
 
     public static EmailDispatchException sendFailed(Throwable cause) {
         return retryable(EmailErrorCode.EMAIL_DISPATCH_FAILED, cause);
+    }
+
+    public static EmailDispatchException dispatchFailed() {
+        return retryable(EmailErrorCode.EMAIL_DISPATCH_FAILED, null);
     }
 
     public static EmailDispatchException recipientsRefused(Throwable cause) {
