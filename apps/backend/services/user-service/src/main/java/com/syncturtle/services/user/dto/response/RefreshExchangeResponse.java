@@ -1,7 +1,7 @@
 package com.syncturtle.services.user.dto.response;
 
-import com.syncturtle.services.user.service.session.IssuedRefreshTokenReceipt;
-import com.syncturtle.services.user.service.token.IssuedAccessTokenReceipt;
+import com.syncturtle.services.user.service.collaborator.session.IssuedRefreshTokenReceipt;
+import com.syncturtle.services.user.service.collaborator.token.IssuedAccessTokenReceipt;
 
 import lombok.Builder;
 import lombok.Value;

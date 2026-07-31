@@ -4,18 +4,17 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
-import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 
 import com.syncturtle.common.web.error.ApiErrorResponseFactory;
 import com.syncturtle.common.web.error.ServletGlobalExceptionHandler;
-import com.syncturtle.common.web.properties.ErrorResponseProperties;
+import com.syncturtle.common.web.property.ErrorResponseProperties;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-@AutoConfiguration(after = WebMvcAutoConfiguration.class)
+@AutoConfiguration(afterName = "org.springframework.boot.webmvc.autoconfigure.WebMvcAutoConfiguration")
 @EnableConfigurationProperties(ErrorResponseProperties.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnClass({

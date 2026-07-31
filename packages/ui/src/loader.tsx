@@ -1,29 +1,31 @@
-import React from "react";
+import type { ReactNode } from "react";
 import { cn } from "./utils/classname";
 
 interface ILoaderProps {
-  children: React.ReactNode;
+  children?: ReactNode;
   className?: string;
 }
 
-const Loader = ({ children, className = "" }: ILoaderProps) => (
-  <div className={cn("animate-pulse", className)} role="status">
-    {children}
-  </div>
-);
-
-interface IItemProps {
+interface ILoaderItemProps {
   height?: string;
   width?: string;
   className?: string;
 }
 
-const Item = ({ height = "auto", width = "auto", className = "" }: IItemProps) => (
-  <div className={cn("bg-custom-background-80 rounded-md", className)} style={{ height: height, width: width }} />
+const LoaderItem = ({ height = "auto", width = "auto", className = "" }: ILoaderItemProps) => (
+  <div className={cn("bg-custom-background-80 rounded-md", className)} style={{ height, width }} />
 );
 
-Loader.Item = Item;
+type TLoaderComponent = ((props: ILoaderProps) => ReactNode) & {
+  Item: typeof LoaderItem;
+};
 
-Loader.displayName = "syncturtle-ui-loader";
+const Loader = (({ children, className = "" }: ILoaderProps) => (
+  <div className={cn("animate-pulse", className)} role="status">
+    {children}
+  </div>
+)) as TLoaderComponent;
+
+Loader.Item = LoaderItem;
 
 export { Loader };

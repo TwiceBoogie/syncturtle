@@ -1,4 +1,4 @@
-import { IApiErrorPayload, TFieldErrors } from "@syncturtle/types";
+import type { IApiErrorPayload, TFieldErrors } from "@syncturtle/types";
 
 export function isApiErrorPayload(error: unknown): error is IApiErrorPayload {
   return (

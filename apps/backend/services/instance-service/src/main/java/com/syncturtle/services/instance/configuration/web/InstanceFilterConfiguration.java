@@ -12,7 +12,7 @@ import com.syncturtle.common.security.cookie.ServletAuthCookieWriter;
 import com.syncturtle.common.security.csrf.CsrfTokenService;
 import com.syncturtle.common.web.url.PublicUrlResolver;
 import com.syncturtle.services.instance.configuration.property.FormCsrfFilterProperties;
-import com.syncturtle.services.instance.configuration.web.filters.FormCsrfOncePerRequestFilter;
+import com.syncturtle.services.instance.security.filter.FormCsrfOncePerRequestFilter;
 
 import jakarta.servlet.DispatcherType;
 

@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.syncturtle.common.contracts.instance.config.InstanceConfigurationKey;
 import com.syncturtle.services.instance.dto.response.InstanceConfigurationResponse;
-import com.syncturtle.services.instance.dto.result.InstanceConfigResult;
+import com.syncturtle.services.instance.service.result.InstanceConfigResult;
 
 public interface InstanceConfigurationService {
     InstanceConfigResult configurations();

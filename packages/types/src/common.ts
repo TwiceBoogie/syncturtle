@@ -25,8 +25,6 @@ export interface IApiErrorPayload {
   key: string;
   message: string;
   traceId?: string;
-  requestId?: string;
-  correlationId?: string;
   path?: string;
   timestamp?: string;
   fields?: IFieldViolation[];

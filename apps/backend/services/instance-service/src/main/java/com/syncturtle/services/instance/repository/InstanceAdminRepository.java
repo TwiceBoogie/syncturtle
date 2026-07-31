@@ -70,7 +70,7 @@ public interface InstanceAdminRepository extends JpaRepository<InstanceAdmin, UU
                 u.principalType AS principalType,
                 u.createdAt AS dateJoined
             FROM InstanceAdmin ia
-            JOIN User u on u.id = ia.userId
+            JOIN UserLite u on u.id = ia.userId
             WHERE ia.instance.id = :instanceId
                 AND ia.userId = :userId
                 AND ia.deletedAt IS NULL

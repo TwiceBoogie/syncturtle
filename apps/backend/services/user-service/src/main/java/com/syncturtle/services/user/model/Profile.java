@@ -7,8 +7,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.util.Assert;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.syncturtle.common.data.jpa.entity.AuditedEntity;
+import com.syncturtle.services.user.model.param.UserProfileUpdateParam;
 import com.syncturtle.services.user.model.support.JsonDefaults;
 
 import jakarta.persistence.Access;
@@ -22,6 +22,7 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import tools.jackson.databind.JsonNode;
 
 @Getter
 @Entity
@@ -102,10 +103,76 @@ public class Profile extends AuditedEntity {
         return profile;
     }
 
+    public void updateProfile(UserProfileUpdateParam param) {
+        requireActive("Profile");
+        Assert.notNull(param, "userProfileUpdateParam is required");
+
+        if (param.getRole() != null) {
+            role = param.getRole();
+        }
+
+        if (param.getLastWorkspaceId() != null) {
+            lastWorkspaceId = param.getLastWorkspaceId();
+        }
+
+        if (param.getTheme() != null) {
+            theme = param.getTheme();
+        }
+
+        if (param.getOnboardingStep() != null) {
+            onboardingStep = param.getOnboardingStep();
+        }
+
+        if (param.getUseCase() != null) {
+            useCase = param.getUseCase();
+        }
+
+        if (param.getBillingAddressCountry() != null) {
+            billingAddressCountry = param.getBillingAddressCountry();
+        }
+
+        if (param.getBillingAddress() != null) {
+            billingAddress = param.getBillingAddress();
+        }
+
+        if (param.getHasBillingAddress() != null) {
+            hasBillingAddress = param.getHasBillingAddress();
+        }
+
+        if (param.getLanguage() != null) {
+            language = param.getLanguage();
+        }
+
+        if (param.getHasMarketingEmailConsent() != null) {
+            marketingEmailConsent = param.getHasMarketingEmailConsent();
+        }
+    }
+
+    public void completeOnboarding() {
+        requireActive("Profile");
+        if (onboarded) {
+            return;
+        }
+        onboarded = true;
+    }
+
+    public void markTourCompleted() {
+        requireActive("Profile");
+        if (tourCompleted) {
+            return;
+        }
+        tourCompleted = true;
+    }
+
     private static String normalizeNullable(String value, String fieldName, int maxLength) {
-        Assert.hasText(value, fieldName + " is required");
+        if (value == null) {
+            return "";
+        }
 
         String normalized = value.trim();
+        if (normalized.isEmpty()) {
+            return "";
+        }
 
         Assert.isTrue(normalized.length() <= maxLength, fieldName + " must be " + maxLength + " characters or fewer");
 

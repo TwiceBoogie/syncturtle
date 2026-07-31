@@ -1,6 +1,4 @@
 import type { Listener, Unsubscribe } from "@syncturtle/types";
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
 
 /**
  * pub/sub emitter used by external stores.
@@ -29,5 +27,3 @@ export class Emitter {
    */
   public emit = (): void => this.listeners.forEach((listener) => listener());
 }
-
-export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));

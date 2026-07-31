@@ -6,33 +6,41 @@
   "sideEffects": false,
   "description": "i18n shared across web and admin apps",
   "files": [
-    "src"
+    "dist"
   ],
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
   "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
     "lint": "eslint . --max-warnings=0",
-    "clean": "rm -rf .turbo && rm -rf dist"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf .turbo dist"
   },
   "peerDependencies": {
-    "react": "^19",
-    "react-dom": "^19"
-  },
-  "devDependencies": {
-    "@syncturtle/eslint-config": "workspace:*",
-    "@syncturtle/typescript-config": "workspace:*",
-    "@types/lodash": "^4.17.24",
-    "eslint": "^9.39.4",
-    "typescript": "^5.9.3"
+    "react": ">=19 <20",
+    "react-dom": ">=19 <20"
   },
   "dependencies": {
     "@syncturtle/types": "workspace:*",
     "@syncturtle/utils": "workspace:*",
-    "intl-messageformat": "^11.2.0",
-    "lodash": "^4.17.23"
+    "intl-messageformat": "catalog:",
+    "lodash": "catalog:"
+  },
+  "devDependencies": {
+    "@syncturtle/eslint-config": "workspace:*",
+    "@syncturtle/typescript-config": "workspace:*",
+    "@types/lodash": "catalog:",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "eslint": "catalog:",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19",
+    "tsup": "catalog:",
+    "typescript": "catalog:"
   }
 }

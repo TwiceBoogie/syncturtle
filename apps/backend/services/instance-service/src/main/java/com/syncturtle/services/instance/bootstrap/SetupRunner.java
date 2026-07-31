@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import com.syncturtle.services.instance.service.InstanceSetupService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,8 +24,7 @@ public final class SetupRunner implements ApplicationRunner {
     private static final String MACHINE_SIGNATURE_ARG = "machine-signature";
     private static final String MACHINE_SIGNATURE_ENV = "MACHINE_SIGNATURE";
 
-    private final InstanceRegistrar registrar;
-    private final InstanceConfigurator configurator;
+    private final InstanceSetupService service;
     private final ApplicationContext context;
 
     @Override
@@ -35,16 +36,11 @@ public final class SetupRunner implements ApplicationRunner {
     int execute(ApplicationArguments args) {
         try {
             String machineSignature = resolveMachineSignature(args);
-
-            registrar.run(machineSignature);
-            configurator.run();
-
+            service.setup(machineSignature);
             log.info("Instance setup completed successfully");
-
             return 0;
         } catch (Exception exception) {
             log.error("Instance setup failed: {}", exception.getMessage(), exception);
-
             return 1;
         }
     }

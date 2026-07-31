@@ -1,2 +1,2 @@
 com.syncturtle.common.kafka.autoconfigure.KafkaErrorHandlingAutoConfiguration
-com.syncturtle.common.kafka.autoconfigure.KafkaMdcConsumerAutoConfiguration
+com.syncturtle.common.kafka.autoconfigure.InstanceConfigurationConsumerGroupAutoConfiguration

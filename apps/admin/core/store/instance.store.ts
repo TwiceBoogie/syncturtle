@@ -1,4 +1,4 @@
-import {
+import type {
   IInstance,
   IInstanceAdmin,
   IInstanceConfig,
@@ -36,10 +36,7 @@ const createInitialSnapshot = (): TInstanceSnapshot => ({
   instanceConfigVersion: 0,
 });
 
-export interface IInstanceStoreInternal {
-  _subscribe: ExternalStore<TInstanceSnapshot>["_subscribe"];
-  _getSnapshot: ExternalStore<TInstanceSnapshot>["_getSnapshot"];
-  _getServerSnapshot: ExternalStore<TInstanceSnapshot>["_getServerSnapshot"];
+export interface IInstanceStore {
   // observables
   isLoading: boolean;
   instance: IInstance | undefined;
@@ -58,7 +55,11 @@ export interface IInstanceStoreInternal {
   disableEmail: () => Promise<void>;
 }
 
-export type TInstanceStore = Omit<IInstanceStoreInternal, "_subscribe" | "_getSnapshot" | "_getServerSnapshot">;
+export interface IInstanceStoreInternal extends IInstanceStore {
+  _subscribe: ExternalStore<TInstanceSnapshot>["_subscribe"];
+  _getSnapshot: ExternalStore<TInstanceSnapshot>["_getSnapshot"];
+  _getServerSnapshot: ExternalStore<TInstanceSnapshot>["_getServerSnapshot"];
+}
 
 export class InstanceStore extends ExternalStore<TInstanceSnapshot> implements IInstanceStoreInternal {
   private readonly instanceService: InstanceService;

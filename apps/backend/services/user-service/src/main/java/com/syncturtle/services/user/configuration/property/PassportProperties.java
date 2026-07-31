@@ -7,8 +7,9 @@ import org.springframework.util.StringUtils;
 import lombok.Getter;
 
 @Getter
-@ConfigurationProperties(prefix = "app.passport")
+@ConfigurationProperties(prefix = "app.passport", ignoreUnknownFields = false)
 public class PassportProperties {
+
     private final String issuer;
     private final String audience;
     private final String kid;
@@ -16,19 +17,28 @@ public class PassportProperties {
     private final String publicKeyLocation;
 
     public PassportProperties(
-            @DefaultValue("https://api.syncturtle.com/auth") String issuer,
-            @DefaultValue("syncturtle-api") String audience,
-            @DefaultValue("auth-key-2026-04") String kid,
+            String issuer,
+            String audience,
+            String kid,
             @DefaultValue("classpath:keys/jwt-private-key.pem") String privateKeyLocation,
             @DefaultValue("classpath:keys/jwt-public-key.pem") String publicKeyLocation) {
-        this.issuer = issuer;
-        this.audience = audience;
-        this.kid = kid;
-        this.privateKeyLocation = privateKeyLocation;
-        this.publicKeyLocation = publicKeyLocation;
+        this.issuer = requireText(issuer, "issuer");
+        this.audience = requireText(audience, "audience");
+        this.kid = requireText(kid, "kid");
+        this.privateKeyLocation = requireText(privateKeyLocation, "private-key-location");
+        this.publicKeyLocation = requireText(publicKeyLocation, "public-key-location");
     }
 
     public boolean hasKid() {
         return StringUtils.hasText(kid);
     }
+
+    private static String requireText(String value, String propertyName) {
+        if (!StringUtils.hasText(value)) {
+            throw new IllegalArgumentException("app.passport." + propertyName + " is required");
+        }
+
+        return value.trim();
+    }
+
 }
