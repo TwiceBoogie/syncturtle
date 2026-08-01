@@ -5,17 +5,32 @@ spring:
   kafka:
     listener:
       auto-startup: false
-
 server:
   port: 0
-
 eureka:
   client:
     enabled: false
-
 app:
   kafka:
     enabled: false
+    consumer-group: email-service-test
+    instance-configuration:
+      enabled: true
+      deployment-id: test
+      replica-id: email-test
+      local-replica-count: 1
+  email:
+    inbox:
+      scheduler:
+        enabled: false
+        poll-delay: 10s
+    runtime-config-cache:
+      ttl: 2m
+  clients:
+    instance-service:
+      base-url: http://localhost:8001
+      connect-timeout: 2s
+      read-timeout: 5s
   observability:
     otel:
       logback:

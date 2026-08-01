@@ -15,9 +15,19 @@
   <name>user-service</name>
 
   <dependencies>
+    <!-- WEB -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
+      <artifactId>spring-boot-starter-webmvc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-thymeleaf</artifactId>
+    </dependency>
+    <!-- HTTP CLIENT -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-restclient</artifactId>
     </dependency>
 
     <!-- CACHE -->
@@ -36,8 +46,8 @@
 
     <!-- DATABASE -->
     <dependency>
-      <groupId>org.liquibase</groupId>
-      <artifactId>liquibase-core</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-liquibase</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -59,10 +69,10 @@
       <artifactId>spring-cloud-starter-openfeign</artifactId>
     </dependency>
 
-    <!--KAFKA -->
+    <!-- KAFKA -->
     <dependency>
-      <groupId>org.springframework.kafka</groupId>
-      <artifactId>spring-kafka</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-kafka</artifactId>
     </dependency>
 
     <!-- SYNCTURTLE SHARED MODULES -->
@@ -99,32 +109,26 @@
       <artifactId>common-observability-spring</artifactId>
     </dependency>
 
-    <!-- OBSERVABILITY RUNTIME -->
+    <!-- OBSERVABILITY -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
-    <!-- Traces (Micrometer -> OpenTelemetry bridge) -->
+    <!-- TRACING & OPENTELEMETRY + OTLP -->
     <dependency>
-      <groupId>io.micrometer</groupId>
-      <artifactId>micrometer-tracing-bridge-otel</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-opentelemetry</artifactId>
     </dependency>
-    <!-- Traces for DB -->
-    <dependency>
-      <groupId>net.ttddyy.observation</groupId>
-      <artifactId>datasource-micrometer-spring-boot</artifactId>
-    </dependency>
-    <!-- OTLP exporter (traces) -->
-    <dependency>
-      <groupId>io.opentelemetry</groupId>
-      <artifactId>opentelemetry-exporter-otlp</artifactId>
-    </dependency>
-    <!-- Metrics over OTLP -->
+    <!-- OTLP METRICS -->
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-registry-otlp</artifactId>
     </dependency>
-    <!-- Logback OTLP appender -->
+    <!-- DATABASE OBSERVATIONS -->
+    <dependency>
+      <groupId>net.ttddyy.observation</groupId>
+      <artifactId>datasource-micrometer-spring-boot</artifactId>
+    </dependency>
     <dependency>
       <groupId>io.opentelemetry.instrumentation</groupId>
       <artifactId>opentelemetry-logback-appender-1.0</artifactId>
@@ -134,16 +138,20 @@
     <dependency>
       <groupId>com.auth0</groupId>
       <artifactId>java-jwt</artifactId>
-      <version>4.5.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-validation</artifactId>
+      <version>${java-jwt.version}</version>
     </dependency>
     <dependency>
       <groupId>com.nulab-inc</groupId>
       <artifactId>zxcvbn</artifactId>
     </dependency>
+
+    <!-- VALIDATION -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+
+    <!-- DEVELOPMENT -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-devtools</artifactId>

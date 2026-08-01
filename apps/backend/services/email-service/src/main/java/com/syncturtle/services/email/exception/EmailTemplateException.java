@@ -5,7 +5,7 @@ import java.util.Objects;
 
 import com.syncturtle.common.contracts.email.error.EmailErrorCode;
 import com.syncturtle.common.contracts.email.template.EmailTemplateType;
-import com.syncturtle.common.core.exceptions.SyncturtleServiceException;
+import com.syncturtle.common.core.exception.SyncturtleServiceException;
 
 public final class EmailTemplateException extends SyncturtleServiceException {
 

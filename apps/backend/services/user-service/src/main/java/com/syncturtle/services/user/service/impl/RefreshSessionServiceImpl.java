@@ -15,17 +15,17 @@ import com.syncturtle.common.contracts.auth.exception.AuthException;
 import com.syncturtle.common.contracts.auth.session.RefreshSessionRecord;
 import com.syncturtle.common.web.context.RequestClientContext;
 import com.syncturtle.services.user.dto.response.IssueTokenResponse;
-import com.syncturtle.services.user.model.Instance;
+import com.syncturtle.services.user.model.InstanceLite;
 import com.syncturtle.services.user.model.User;
-import com.syncturtle.services.user.repository.InstanceRepository;
+import com.syncturtle.services.user.repository.InstanceLiteRepository;
 import com.syncturtle.services.user.repository.UserRepository;
 import com.syncturtle.services.user.service.RefreshSessionService;
-import com.syncturtle.services.user.service.authz.InstanceAuthorizationResolver;
-import com.syncturtle.services.user.service.authz.InstanceAuthorizationSnapshot;
-import com.syncturtle.services.user.service.session.AuthenticatedSessionIssueSpec;
-import com.syncturtle.services.user.service.session.AuthenticatedSessionIssuer;
-import com.syncturtle.services.user.service.session.AuthenticatedSessionReceipt;
-import com.syncturtle.services.user.service.session.RefreshSessionTokenStore;
+import com.syncturtle.services.user.service.collaborator.authorization.InstanceAuthorizationResolver;
+import com.syncturtle.services.user.service.collaborator.authorization.InstanceAuthorizationSnapshot;
+import com.syncturtle.services.user.service.collaborator.session.AuthenticatedSessionIssuer;
+import com.syncturtle.services.user.service.collaborator.session.AuthenticatedSessionReceipt;
+import com.syncturtle.services.user.service.collaborator.session.RefreshSessionTokenStore;
+import com.syncturtle.services.user.service.param.AuthenticatedSessionIssueParam;
 
 import lombok.RequiredArgsConstructor;
 
@@ -38,7 +38,7 @@ public class RefreshSessionServiceImpl implements RefreshSessionService {
     private final AuthenticatedSessionIssuer authenticatedSessionIssuer;
 
     private final UserRepository userRepository;
-    private final InstanceRepository instanceRepository;
+    private final InstanceLiteRepository instanceRepository;
     private final RequestClientContext clientContext;
     private final Clock clock;
 
@@ -57,7 +57,7 @@ public class RefreshSessionServiceImpl implements RefreshSessionService {
         validateSessionState(sessionId, session, presentedRefreshToken);
 
         User user = requireRefreshUser(sessionId, session);
-        Instance instance = requireRefreshInstance(sessionId, session);
+        InstanceLite instance = requireRefreshInstance(sessionId, session);
 
         InstanceAuthorizationSnapshot authz = authorizationResolver.resolve(user.getId(), instance.getId());
 
@@ -103,13 +103,13 @@ public class RefreshSessionServiceImpl implements RefreshSessionService {
         return user;
     }
 
-    private Instance requireRefreshInstance(String sessionId, RefreshSessionRecord session) {
+    private InstanceLite requireRefreshInstance(String sessionId, RefreshSessionRecord session) {
         Assert.hasText(sessionId, "sessionId is required");
         Assert.notNull(session, "refresh session is required");
 
         UUID instanceId = parseRefreshUuid(sessionId, session.getInstanceId(), "instanceId");
 
-        Instance instance = instanceRepository.findById(instanceId).orElse(null);
+        InstanceLite instance = instanceRepository.findById(instanceId).orElse(null);
         if (instance == null || !instance.isSetupDone()) {
             throw revokeAndInvalidRefresh(sessionId, "Instance is not available");
         }
@@ -181,7 +181,7 @@ public class RefreshSessionServiceImpl implements RefreshSessionService {
         Assert.hasText(sessionId, "sessionId is required");
 
         AuthenticatedSessionReceipt session = authenticatedSessionIssuer.rotateSession(
-                AuthenticatedSessionIssueSpec.builder()
+                AuthenticatedSessionIssueParam.builder()
                         .user(user)
                         .instanceId(instanceId)
                         .ipAddress(clientContext.getClientIp())

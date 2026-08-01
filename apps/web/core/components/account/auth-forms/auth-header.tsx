@@ -1,9 +1,16 @@
-import { EAuthModes, EAuthSteps } from "@/helpers/authentication.helper";
-import { WorkspaceService } from "@/services/workspace.service";
-import { Spinner } from "@heroui/react";
-import { useTranslation } from "@syncturtle/i18n";
-import { FC, ReactNode } from "react";
+import type { FC, ReactNode } from "react";
 import useSWR from "swr";
+// heroui
+import { Spinner } from "@heroui/react";
+// syncturtle imports
+import { useTranslation } from "@syncturtle/i18n";
+import type { IWorkspaceMemberInvitation } from "@syncturtle/types";
+// components
+import { WorkspaceLogo } from "@/components/workspace/logo";
+// helpers
+import { EAuthModes, EAuthSteps } from "@/helpers/authentication.helper";
+// services
+import { WorkspaceService } from "@/services/workspace.service";
 
 interface IAuthHeader {
   workspaceSlug: string | undefined;
@@ -61,9 +68,30 @@ export const AuthHeader: FC<IAuthHeader> = (props) => {
     }
   );
 
-  const getHeaderSubHeader = (step: EAuthSteps, mode: EAuthModes) => Titles[mode][step];
+  const getHeaderSubHeader = (
+    step: EAuthSteps,
+    mode: EAuthModes,
+    invitation: IWorkspaceMemberInvitation | undefined,
+    email: string | undefined
+  ) => {
+    if (invitation && email && invitation.email === email && invitation.workspace) {
+      const workspace = invitation.workspace;
+      return {
+        header: (
+          <div className="relative inline-flex items-center gap-2">
+            {t("common.join")}{" "}
+            <WorkspaceLogo logo={workspace.logoUrl} name={workspace.name} classNames="size-9 shrink-0" />{" "}
+            {workspace.name}
+          </div>
+        ),
+        subHeader: mode === EAuthModes.SIGN_UP ? "auth.sign_up.header.label" : "auth.sign_in.header.label",
+      };
+    }
 
-  const { header, subHeader } = getHeaderSubHeader(currentAuthStep, authMode);
+    return Titles[mode][step];
+  };
+
+  const { header, subHeader } = getHeaderSubHeader(currentAuthStep, authMode, invitation || undefined, invitationEmail);
 
   if (isLoading) {
     return (
@@ -72,12 +100,12 @@ export const AuthHeader: FC<IAuthHeader> = (props) => {
       </div>
     );
   }
-
   return (
     <>
-      {invitation} {invitationEmail}
       <div className="space-y-1 text-center">
-        <h1 className="text-3xl font-bold text-onboarding-text-100">{t(header)}</h1>
+        <h1 className="text-3xl font-bold text-onboarding-text-100">
+          {typeof header === "string" ? t(header) : header}
+        </h1>
         <p className="font-medium text-onboarding-text-400">{t(subHeader)}</p>
       </div>
       {children}

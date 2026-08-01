@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "@syncturtle/constants";
 import { APIService, HttpError } from "./api.service";
-import {
+import type {
   IApiErrorPayload,
   IInstance,
   IInstanceAdmin,

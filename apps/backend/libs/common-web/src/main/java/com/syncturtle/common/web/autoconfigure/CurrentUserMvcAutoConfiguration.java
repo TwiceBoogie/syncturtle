@@ -15,9 +15,8 @@ import com.syncturtle.common.web.mvc.CurrentUserArgumentResolver;
 
 @AutoConfiguration
 @ConditionalOnClass({
-        RequestUserContext.class,
-        CurrentUserMvcAutoConfiguration.class,
-        WebMvcConfigurer.class
+        WebMvcConfigurer.class,
+        HandlerMethodArgumentResolver.class
 })
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class CurrentUserMvcAutoConfiguration {

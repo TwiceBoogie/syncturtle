@@ -1,9 +1,9 @@
 package com.syncturtle.common.observability.autoconfigure;
 
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
@@ -22,7 +22,7 @@ import com.syncturtle.common.observability.interceptor.AccessLogInterceptor;
         WebMvcConfigurer.class,
         AccessLogInterceptor.class
 })
-@ConditionalOnProperty(prefix = "app.web.access-logging", name = "enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnBooleanProperty(prefix = "app.web.access-logging", name = "enabled")
 public class AccessLoggingAutoConfiguration {
 
     @Bean
@@ -31,7 +31,7 @@ public class AccessLoggingAutoConfiguration {
         return new AccessLogInterceptor();
     }
 
-    @Bean
+    @Bean(name = "accessLogWebMvcConfigurer")
     @ConditionalOnMissingBean(name = "accessLogWebMvcConfigurer")
     WebMvcConfigurer accessLogWebMvcConfigurer(AccessLogInterceptor interceptor) {
         return new WebMvcConfigurer() {

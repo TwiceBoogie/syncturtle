@@ -4,5 +4,19 @@
     "continue": "Continue",
     "continue_with": "Continue with {provider}",
     "or": "or"
+  },
+  "role_details": {
+    "guest": {
+      "title": "Guest",
+      "description": "External members of organizations can be invited as guests."
+    },
+    "member": {
+      "title": "Member",
+      "description": "Ability to read, write, edit, and delete entities inside projects, cycles, and modules"
+    },
+    "admin": {
+      "title": "Admin",
+      "description": "All permissions set to true within the workspace."
+    }
   }
 }

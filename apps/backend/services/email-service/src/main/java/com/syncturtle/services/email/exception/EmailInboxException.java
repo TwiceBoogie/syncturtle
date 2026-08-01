@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.syncturtle.common.contracts.email.error.EmailErrorCode;
-import com.syncturtle.common.core.exceptions.SyncturtleServiceException;
+import com.syncturtle.common.core.exception.SyncturtleServiceException;
 
 public final class EmailInboxException extends SyncturtleServiceException {
 

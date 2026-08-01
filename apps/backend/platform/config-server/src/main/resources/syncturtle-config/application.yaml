@@ -1,7 +1,17 @@
 management:
+  observations:
+    enable:
+      tasks:
+        scheduled:
+          execution: false
   endpoints:
     web:
       base-path: /actuator
+      exposure:
+        include:
+          - health
+          - info
+
   endpoint:
     health:
       probes:
@@ -9,45 +19,86 @@ management:
 
   tracing:
     sampling:
-      probability: 0.05
-    baggage:
-      remote-fields:
-        - X-Correlation-Id
-      # Optional
-      # - X-Request-Id
-      correlation:
-        fields:
-          - X-Correlation-Id
-        # Optional
-        # - X-Request-Id
-  otlp:
-    tracing:
-      endpoint: ${OTLP_TRACES_ENDPOINT:http://localhost:14317}
-      transport: grpc
-    metrics:
-      export:
-        url: ${OTLP_METRICS_URL:http://localhost:14318/v1/metrics}
-        enabled: true
-        step: 10s
-    logging:
-      endpoint: ${OTLP_LOGS_ENDPOINT:http://localhost:14317}
-      transport: grpc
+      probability: ${TRACING_SAMPLING_PROBABILITY:0.05}
+
+    export:
+      otlp:
+        enabled: ${OTLP_TRACES_ENABLED:true}
+
+  logging:
+    export:
+      enabled: ${LOG_EXPORT_ENABLED:true}
+
+      otlp:
+        enabled: ${OTLP_LOGS_ENABLED:true}
+
   opentelemetry:
+    enabled: ${OPENTELEMETRY_ENABLED:true}
+
     resource-attributes:
       "[service.name]": ${spring.application.name}
       "[service.namespace]": syncturtle
       "[deployment.environment]": ${DEPLOYMENT_ENV:local}
-      "[telemetry.mode]": "system"
+      "[telemetry.mode]": system
+
+    tracing:
+      export:
+        max-queue-size: 2048
+        max-batch-size: 512
+        schedule-delay: 5s
+        timeout: 10s
+
+        otlp:
+          endpoint: ${OTLP_TRACES_ENDPOINT:http://otel-collector:4317}
+          transport: grpc
+          connect-timeout: 10s
+          timeout: 10s
+
+    logging:
+      export:
+        max-queue-size: 2048
+        max-batch-size: 512
+        schedule-delay: 5s
+        timeout: 10s
+
+        otlp:
+          endpoint: ${OTLP_LOGS_ENDPOINT:http://otel-collector:4317}
+          transport: grpc
+          connect-timeout: 10s
+          timeout: 10s
+
+      limits:
+        max-attributes: 128
+        max-attribute-value-length: 1024
+
+  otlp:
+    metrics:
+      export:
+        enabled: ${OTLP_METRICS_ENABLED:true}
+        url: ${OTLP_METRICS_URL:http://otel-collector:4318/v1/metrics}
+        step: 10s
+        connect-timeout: 10s
+        read-timeout: 10s
 
 logging:
   pattern:
-    correlation: "[trace=%X{traceId:-},span=%X{spanId:-},corr=%X{X-Correlation-Id:-},req=%X{X-Request-Id:-}] "
+    correlation: "[trace=%X{traceId:-},span=%X{spanId:-}] "
+
+spring:
+  reactor:
+    context-propagation: auto
 
 app:
   env: ${DEPLOYMENT_ENV:local}
+
+  web:
+    access-logging:
+      enabled: ${APP_WEB_ACCESS_LOGGING_ENABLED:true}
+
   redis:
     keys:
       key-prefix: ${APP_REDIS_KEY_PREFIX:st:${app.env}:}
+
   response-cache:
     enabled: ${APP_RESPONSE_CACHE_ENABLED:true}
     key-prefix: ${APP_RESPONSE_CACHE_KEY_PREFIX:${app.redis.keys.key-prefix}rc:}

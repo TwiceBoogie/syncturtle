@@ -1,8 +1,8 @@
-import { FC } from "react";
+import type { FC } from "react";
 import { useHead } from "@syncturtle/ui";
 
 interface IPageHead {
-  title?: string;
+  title?: string | undefined;
 }
 
 export const PageHead: FC<IPageHead> = (props) => {

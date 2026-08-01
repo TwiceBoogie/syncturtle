@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import org.springframework.util.Assert;
 
+import com.syncturtle.common.observability.tracing.PersistedTraceContext;
+
 import lombok.Getter;
 
 /**
@@ -18,6 +20,8 @@ public final class OutboxEnvelope {
     private final String messageKey;
     private final String eventType;
     private final String payload;
+    private final String traceparent;
+    private final String tracestate;
     private final int attempts;
 
     public OutboxEnvelope(
@@ -26,6 +30,8 @@ public final class OutboxEnvelope {
             String messageKey,
             String eventType,
             String payload,
+            String traceparent,
+            String tracestate,
             int attempts) {
         Assert.notNull(id, "outbox id is required");
         Assert.hasText(topic, "topic is required");
@@ -39,7 +45,13 @@ public final class OutboxEnvelope {
         this.messageKey = messageKey;
         this.eventType = eventType;
         this.payload = payload;
+        this.traceparent = traceparent;
+        this.tracestate = tracestate;
         this.attempts = attempts;
+    }
+
+    public PersistedTraceContext getTraceContext() {
+        return new PersistedTraceContext(traceparent, tracestate);
     }
 
 }
