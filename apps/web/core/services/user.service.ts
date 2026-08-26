@@ -1,6 +1,14 @@
 import { API_BASE_URL } from "@syncturtle/constants";
 import { APIService, HttpError } from "./api.service";
-import { IApiErrorPayload, IUser, TUserProfile } from "@syncturtle/types";
+import type {
+  IApiErrorPayload,
+  IUser,
+  IUserAvatarUpdateRequest,
+  IUserCoverUpdateRequest,
+  IUserSettings,
+  IUserUpdateRequest,
+  TUserProfile,
+} from "@syncturtle/types";
 
 export class UserService extends APIService {
   constructor() {
@@ -9,7 +17,9 @@ export class UserService extends APIService {
 
   async currentUser(): Promise<IUser> {
     try {
-      const response = await this.get<IUser>("/api/users/me");
+      const response = await this.get<IUser>("/api/users/me", {
+        authRefresh: true,
+      });
       return response.data;
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;
@@ -17,7 +27,7 @@ export class UserService extends APIService {
     }
   }
 
-  async updateUser(data: Partial<IUser>): Promise<IUser> {
+  async updateUser(data: IUserUpdateRequest): Promise<IUser> {
     try {
       const response = await this.patch<IUser>("/api/users/me", data);
       return response.data;
@@ -27,13 +37,9 @@ export class UserService extends APIService {
     }
   }
 
-  async changePassword(token: string, data: { oldPassword?: string; newPassword: string }): Promise<IUser> {
+  async changePassword(data: { oldPassword?: string; newPassword: string }): Promise<IUser> {
     try {
-      const response = await this.post<IUser>("/auth/change-password", data, {
-        headers: {
-          "X-CSRF-TOKEN": token,
-        },
-      });
+      const response = await this.post<IUser>("/auth/change-password", data);
       return response.data;
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;
@@ -51,9 +57,85 @@ export class UserService extends APIService {
     }
   }
 
+  async currentUserSettings(bustCache: boolean = false): Promise<IUserSettings> {
+    const url = bustCache ? `/api/users/me/settings?t=${Date.now()}` : "/api/users/me/settings";
+    try {
+      const response = await this.get<IUserSettings>(url);
+      return response.data;
+    } catch (error) {
+      const err = error as HttpError<IApiErrorPayload>;
+      throw err.data ?? err;
+    }
+  }
+
+  async updateUserOnboard(): Promise<{ message: string }> {
+    try {
+      const response = await this.patch<{ message: string }>("/api/users/me/onboard", {
+        isOnboarded: true,
+      });
+
+      return response.data;
+    } catch (error) {
+      const err = error as HttpError<IApiErrorPayload>;
+      throw err.data ?? err;
+    }
+  }
+
+  async updateUserTourCompleted(): Promise<{ message: string }> {
+    try {
+      const response = await this.patch<{ message: string }>("/api/users/me/tour-completed", {
+        isTourCompleted: true,
+      });
+      return response.data;
+    } catch (error) {
+      const err = error as HttpError<IApiErrorPayload>;
+      throw err.data ?? err;
+    }
+  }
+
   async updateCurrentUserProfile(data: Partial<TUserProfile>): Promise<TUserProfile> {
     try {
       const response = await this.patch<TUserProfile>("/api/users/me/profile", data);
+      return response.data;
+    } catch (error) {
+      const err = error as HttpError<IApiErrorPayload>;
+      throw err.data ?? err;
+    }
+  }
+
+  async updateAvatar(data: IUserAvatarUpdateRequest): Promise<IUser> {
+    try {
+      const response = await this.patch<IUser>("/api/users/me/avatar", data);
+      return response.data;
+    } catch (error) {
+      const err = error as HttpError<IApiErrorPayload>;
+      throw err.data ?? err;
+    }
+  }
+
+  async clearAvatar(): Promise<IUser> {
+    try {
+      const response = await this.delete<IUser>("/api/users/me/avatar");
+      return response.data;
+    } catch (error) {
+      const err = error as HttpError<IApiErrorPayload>;
+      throw err.data ?? err;
+    }
+  }
+
+  async updateCoverImage(data: IUserCoverUpdateRequest): Promise<IUser> {
+    try {
+      const response = await this.patch<IUser>("/api/users/me/cover-image", data);
+      return response.data;
+    } catch (error) {
+      const err = error as HttpError<IApiErrorPayload>;
+      throw err.data ?? err;
+    }
+  }
+
+  async clearCoverImage(): Promise<IUser> {
+    try {
+      const response = await this.delete<IUser>("/api/users/me/cover-image");
       return response.data;
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;

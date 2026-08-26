@@ -2,6 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -16,25 +17,41 @@
   <name>common-kafka-spring</name>
 
   <dependencies>
-    <dependency>
-      <groupId>com.syncturtle</groupId>
-      <artifactId>common-core</artifactId>
-    </dependency>
+    <!-- GENERAL AUTO-CONFIGURATION APIs -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-autoconfigure</artifactId>
     </dependency>
+
+    <!-- SPRING BOOT 4 KAFKA AUTO-CONFIGURATION -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-kafka</artifactId>
+    </dependency>
+
+    <!-- DIRECTLY USED SPRING KAFKA APIs -->
     <dependency>
       <groupId>org.springframework.kafka</groupId>
       <artifactId>spring-kafka</artifactId>
     </dependency>
+
+    <!-- DIRECTLY USED APACHE KAFKA APIs -->
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
     </dependency>
+
+    <!-- DIRECTLY USED MDC AND LOGGING APIs -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>com.syncturtle</groupId>
+      <artifactId>test-support</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
+
 </project>

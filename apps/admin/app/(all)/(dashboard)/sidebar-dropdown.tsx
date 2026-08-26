@@ -11,10 +11,9 @@ import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useUser } from "@/hooks/store/use-user";
 // services
 import { AuthService } from "@/services/auth.service";
-// constants
+// syncturtle imports
 import { API_BASE_URL } from "@syncturtle/constants";
-// utils
-import { cn } from "@syncturtle/utils";
+import { cn } from "@syncturtle/ui";
 
 const authService = new AuthService();
 
@@ -89,12 +88,7 @@ export const AdminSidebarDropdown = () => {
   return (
     <div className="flex items-center gap-x-5 gap-y-2 border-b border-custom-sidebar-border-200 px-4 py-3.5">
       {/* hidden logout form (POST) */}
-      <form
-        ref={signoutFormRef}
-        method="POST"
-        action={`${API_BASE_URL}/api/instances/admins/sign-out`}
-        className="hidden"
-      >
+      <form ref={signoutFormRef} method="POST" action={`${API_BASE_URL}/auth/admin/sign-out`} className="hidden">
         <input type="hidden" name="csrfmiddlewaretoken" value={csrfToken ?? ""} />
       </form>
       <div className="h-full w-full truncate">

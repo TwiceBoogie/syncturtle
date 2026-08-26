@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.syncturtle.services.instance.dto.response.InstanceAdminMeResponse;
 import com.syncturtle.services.instance.dto.response.InstanceAdminResponse;
 import com.syncturtle.services.instance.dto.response.InstanceAdminSessionResponse;
+import com.syncturtle.services.instance.mapper.InstanceAdminApiMapper;
 import com.syncturtle.services.instance.model.Instance;
 import com.syncturtle.services.instance.model.InstanceAdmin;
 import com.syncturtle.services.instance.repository.InstanceAdminRepository;
@@ -26,7 +27,6 @@ import com.syncturtle.services.instance.repository.projection.AdminUserDetailLit
 import com.syncturtle.services.instance.repository.projection.AdminUserDetailsProjection;
 import com.syncturtle.services.instance.repository.projection.InstanceAdminProjection;
 import com.syncturtle.services.instance.service.InstanceAdminService;
-import com.syncturtle.services.instance.service.mapper.InstanceAdminApiMapper;
 import com.syncturtle.services.instance.type.InstanceAdminRole;
 
 import lombok.RequiredArgsConstructor;
@@ -153,7 +153,7 @@ public class InstanceAdminServiceImpl implements InstanceAdminService {
     @Override
     @Transactional(readOnly = true)
     public InstanceAdminSessionResponse getSession(UUID currentUserId) {
-        if (currentUserId != null) {
+        if (currentUserId == null) {
             return InstanceAdminSessionResponse.anonymous();
         }
 

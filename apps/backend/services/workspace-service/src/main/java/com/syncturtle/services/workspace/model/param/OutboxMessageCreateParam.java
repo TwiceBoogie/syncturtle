@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.util.UUID;
 
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -15,6 +16,8 @@ public final class OutboxMessageCreateParam {
     private static final int MAX_MESSAGE_KEY_LENGTH = 255;
     private static final int MAX_EVENT_TYPE_LENGTH = 120;
     private static final int MAX_AGGREGATE_TYPE_LENGTH = 120;
+    private static final int MAX_TRACEPARENT_LENGTH = 55;
+    private static final int MAX_TRACESTATE_LENGTH = 512;
 
     private final String topic;
     private final String messageKey;
@@ -22,6 +25,8 @@ public final class OutboxMessageCreateParam {
     private final String aggregateType;
     private final UUID aggregateId;
     private final String payload;
+    private final String traceparent;
+    private final String tracestate;
     private final int maxAttempts;
     private final Clock clock;
 
@@ -33,6 +38,8 @@ public final class OutboxMessageCreateParam {
             String aggregateType,
             UUID aggregateId,
             String payload,
+            String traceparent,
+            String tracestate,
             Integer maxAttempts,
             Clock clock) {
         this.topic = normalizeRequired(topic, "topic", MAX_TOPIC_LENGTH);
@@ -41,6 +48,8 @@ public final class OutboxMessageCreateParam {
         this.aggregateType = normalizeRequired(aggregateType, "aggregateType", MAX_AGGREGATE_TYPE_LENGTH);
         this.aggregateId = requireId(aggregateId, "aggregateId is required");
         this.payload = normalizeRequired(payload, "payload", Integer.MAX_VALUE);
+        this.traceparent = normalizeNullable(traceparent, "traceparent", MAX_TRACEPARENT_LENGTH);
+        this.tracestate = normalizeNullable(tracestate, "tracestate", MAX_TRACESTATE_LENGTH);
         this.maxAttempts = normalizeMaxAttempts(maxAttempts);
         this.clock = requireClock(clock);
     }
@@ -71,6 +80,17 @@ public final class OutboxMessageCreateParam {
 
         String normalized = value.trim();
 
+        Assert.isTrue(normalized.length() <= maxLength, fieldName + " must be " + maxLength + " characters or fewer");
+
+        return normalized;
+    }
+
+    private static String normalizeNullable(String value, String fieldName, int maxLength) {
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+
+        String normalized = value.trim();
         Assert.isTrue(normalized.length() <= maxLength, fieldName + " must be " + maxLength + " characters or fewer");
 
         return normalized;

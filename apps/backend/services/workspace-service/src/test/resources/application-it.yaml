@@ -1,0 +1,11 @@
+app:
+  kafka:
+    enabled: false
+    instance-configuration:
+      enabled: true
+      deployment-id: test
+      replica-id: workspace-it
+      local-replica-count: 1
+  workspace:
+    runtime-cache:
+      ttl: 1m

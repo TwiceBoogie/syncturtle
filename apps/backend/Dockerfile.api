@@ -2,85 +2,50 @@ ARG JAVA_VERSION=21
 ARG MODULE_PATH
 ARG APP_PORT=8080
 
-# 1: BUILD STAGE
 FROM maven:3.9.9-eclipse-temurin-${JAVA_VERSION} AS build
 
 ARG MODULE_PATH
 WORKDIR /workspace
 
-# 1.1: copy maven wrapper + root pom first for caching
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
+COPY . .
 
-# 1.2: copy module poms (cache-friendly)
-COPY libs/common-contracts/pom.xml libs/common-contracts/pom.xml
-COPY libs/common-core/pom.xml libs/common-core/pom.xml
-COPY libs/common-data-jpa/pom.xml libs/common-data-jpa/pom.xml
-COPY libs/common-spring/pom.xml libs/common-spring/pom.xml
-COPY libs/common-web/pom.xml libs/common-web/pom.xml
-COPY libs/test-support/pom.xml libs/test-support/pom.xml
-
-COPY platform/api-gateway/pom.xml platform/api-gateway/pom.xml
-COPY platform/config-server/pom.xml platform/config-server/pom.xml
-COPY platform/discovery-server/pom.xml platform/discovery-server/pom.xml
-
-COPY services/email-service/pom.xml services/email-service/pom.xml
-COPY services/instance-service/pom.xml services/instance-service/pom.xml
-COPY services/user-service/pom.xml services/user-service/pom.xml
-COPY services/workspace-service/pom.xml services/workspace-service/pom.xml
-
-COPY tests/system-tests/pom.xml tests/system-tests/pom.xml
-
-# 1.3: buildkit cache mount keeps maven dependencies outside for final image and be reused
-RUN --mount=type=cache,target=/root/.m2 \
-    ./mvnw -B -ntp -pl "${MODULE_PATH}" -am -DskipTests dependency:go-offline
-
-# 1.4: copy source after dependency warmup
-COPY libs/ libs/
-COPY platform/ platform/
-COPY services/ services/
-
-# 1.5: build the jar
 RUN --mount=type=cache,target=/root/.m2 \
     ./mvnw -B -ntp -pl "${MODULE_PATH}" -am -DskipTests package
 
-# 1.6: extract layered jar
-RUN JAR_FILE="$(find "${MODULE_PATH}/target" -maxdepth 1 -type f \
-    -name '*.jar' \
-    ! -name '*sources.jar' \
-    ! -name '*javadoc.jar' \
-    ! -name 'original-*.jar' \
-    | head -n 1)" && \
-    test -n "$JAR_FILE" && \
-    mkdir -p /layers && \
-    cp "$JAR_FILE" /layers/app.jar && \
-    java -Djarmode=layertools -jar /layers/app.jar extract --destination /layers/extracted
+RUN JAR_FILE="$(find "${MODULE_PATH}/target" \
+        -maxdepth 1 \
+        -type f \
+        -name '*.jar' \
+        ! -name '*sources.jar' \
+        ! -name '*javadoc.jar' \
+        ! -name 'original-*.jar' \
+        | head -n 1)" && \
+    test -n "${JAR_FILE}" && \
+    cp "${JAR_FILE}" /workspace/application.jar && \
+    java -Djarmode=tools -jar /workspace/application.jar \
+        extract --layers --destination /workspace/extracted
 
-# 2: RUNTIME STAGE
 FROM eclipse-temurin:${JAVA_VERSION}-jre
 
 ARG APP_PORT=8080
-
 WORKDIR /app
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
-    rm -rf /var/lib/apt/lists/*
-
-# 2.1: run as non-root user
-RUN groupadd --system --gid 10001 syncturtle && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd --system --gid 10001 syncturtle && \
     useradd --system \
-    --uid 10001 \
-    --gid syncturtle \
-    --home-dir /app \
-    --shell /usr/sbin/nologin \
-    syncturtle
+        --uid 10001 \
+        --gid syncturtle \
+        --home-dir /app \
+        --shell /usr/sbin/nologin \
+        syncturtle
 
-# 2.2: copy extracted layers
-COPY --from=build --chown=10001:10001 /layers/extracted/dependencies/ ./
-COPY --from=build --chown=10001:10001 /layers/extracted/snapshot-dependencies/ ./
-COPY --from=build --chown=10001:10001 /layers/extracted/spring-boot-loader/ ./
-COPY --from=build --chown=10001:10001 /layers/extracted/application/ ./
+COPY --from=build --chown=10001:10001 /workspace/extracted/dependencies/ ./
+COPY --from=build --chown=10001:10001 /workspace/extracted/spring-boot-loader/ ./
+COPY --from=build --chown=10001:10001 /workspace/extracted/snapshot-dependencies/ ./
+COPY --from=build --chown=10001:10001 /workspace/extracted/application/ ./
+COPY --chown=10001:10001 --chmod=0755 bin/docker-entrypoint.sh /app/bin/docker-entrypoint.sh
 
 USER 10001:10001
 
@@ -88,4 +53,4 @@ EXPOSE ${APP_PORT}
 
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError"
 
-ENTRYPOINT [ "java", "org.springframework.boot.loader.launch.JarLauncher" ]
+ENTRYPOINT ["/app/bin/docker-entrypoint.sh"]

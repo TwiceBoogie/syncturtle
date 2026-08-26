@@ -13,7 +13,7 @@ import lombok.Value;
 public class InstanceWorkspaceResponse implements CursorIdentifiable {
     UUID id;
     String name;
-    String logo;
+    String logoUrl;
     UUID logoAssetId;
     String slug;
     String organizationSize;

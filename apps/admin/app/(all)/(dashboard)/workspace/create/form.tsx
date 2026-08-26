@@ -1,25 +1,14 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import type { SyntheticEvent, Key } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 // heroui
-import {
-  FieldError,
-  Form,
-  Input,
-  InputGroup,
-  Label,
-  TextField,
-  Select,
-  ListBox,
-  Key,
-  Button,
-  toast,
-} from "@heroui/react";
+import { FieldError, Form, Input, InputGroup, Label, TextField, Select, ListBox, Button, toast } from "@heroui/react";
 // constants
 import { ORGANIZATION_SIZE, WEBSITE_URL } from "@syncturtle/constants";
 // types
-import { IWorkspace, TFieldErrors, TSlugStatus } from "@syncturtle/types";
+import type { IWorkspace, TFieldErrors, TSlugStatus } from "@syncturtle/types";
 import { WorkspaceService } from "@/services/workspace.service";
 import { useDebouncerValue } from "@syncturtle/hooks";
 import { useWorkspace } from "@/hooks/store/use-workspace";
@@ -97,10 +86,11 @@ export const WorkspaceCreateForm = () => {
     }
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
       await submit(formData);
+      router.push("/workspace");
     } catch (error) {
       console.error(error);
     }

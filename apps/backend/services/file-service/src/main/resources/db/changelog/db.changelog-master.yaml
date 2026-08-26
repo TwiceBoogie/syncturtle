@@ -9,3 +9,12 @@ databaseChangeLog:
   - include:
       file: releases/0001_init/db.changelog.yaml
       relativeToChangelogFile: true
+  - include:
+      file: releases/0002_add_idempotency_record_table.sql
+      relativeToChangelogFile: true
+  - include:
+      file: releases/0003_add_file_lifecycle_state.sql
+      relativeToChangelogFile: true
+  - include:
+      file: releases/0004_pin_storage_version_and_cleanup_orphans.sql
+      relativeToChangelogFile: true

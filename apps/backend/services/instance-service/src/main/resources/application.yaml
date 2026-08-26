@@ -3,7 +3,16 @@ spring:
     name: instance-service
   config:
     import:
-    - optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+      - optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+
+  profiles:
+    group:
+      setup-local:
+        - setup
+        - local
+      setup-docker:
+        - setup
+        - docker
 
   cloud:
     config:

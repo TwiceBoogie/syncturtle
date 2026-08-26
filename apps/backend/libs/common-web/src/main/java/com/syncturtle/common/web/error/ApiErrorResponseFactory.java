@@ -11,8 +11,8 @@ import com.syncturtle.common.contracts.api.error.ApiErrorResponse;
 import com.syncturtle.common.contracts.api.error.DebugErrorDetails;
 import com.syncturtle.common.contracts.api.error.FieldViolation;
 import com.syncturtle.common.core.error.ErrorCode;
-import com.syncturtle.common.core.exceptions.SyncturtleException;
-import com.syncturtle.common.web.properties.ErrorResponseProperties;
+import com.syncturtle.common.core.exception.SyncturtleException;
+import com.syncturtle.common.web.property.ErrorResponseProperties;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -74,10 +74,8 @@ public class ApiErrorResponseFactory {
                 .code(errorCode.getCode())
                 .key(errorCode.getKey());
 
-        if (properties.isIncludeRequestIds()) {
-            builder.traceId(RequestCorrelationIds.resolveTraceId(request));
-            builder.requestId(RequestCorrelationIds.resolveRequestId(request));
-            builder.correlationId(RequestCorrelationIds.resolveCorrelationId(request));
+        if (properties.isIncludeTraceId()) {
+            builder.traceId(TraceIds.resolve());
         }
 
         if (properties.isIncludePath() && request != null) {

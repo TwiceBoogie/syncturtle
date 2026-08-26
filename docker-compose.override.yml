@@ -1,0 +1,386 @@
+x-backend-runtime: &backend-runtime
+  SPRING_PROFILES_ACTIVE: docker
+  SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+  CONFIG_SERVER_URL: http://config-server:8888
+  SERVER_PORT: "8080"
+  DEPLOYMENT_ENV: "${DEPLOYMENT_ENV:-compose-local}"
+  SYNCTURTLE_DEPLOYMENT_ID: "${SYNCTURTLE_DEPLOYMENT_ID:-compose-local}"
+  SYNCTURTLE_REPLICA_ID: "${SYNCTURTLE_REPLICA_ID:-single}"
+  SYNCTURTLE_SERVICE_REPLICA_COUNT: "${SYNCTURTLE_SERVICE_REPLICA_COUNT:-1}"
+  KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  APP_KAFKA_TOPIC_PARTITIONS: "${APP_KAFKA_TOPIC_PARTITIONS:-3}"
+  APP_KAFKA_TOPIC_REPLICAS: "${APP_KAFKA_TOPIC_REPLICAS:-1}"
+  REDIS_PASSWORD: ${REDIS_PASSWORD:?Run ./scripts/init-local-env.sh first}
+  APP_SECURITY_ENCRYPTION_SECRET_KEY: ${APP_SECURITY_ENCRYPTION_SECRET_KEY:?Run ./scripts/init-local-env.sh first}
+  APP_SECURITY_CSRF_SIGNING_KEY: ${APP_SECURITY_CSRF_SIGNING_KEY:?Run ./scripts/init-local-env.sh first}
+  APP_SECURITY_CSRF_ENABLED: "${APP_SECURITY_CSRF_ENABLED:-true}"
+  APP_SECURITY_COOKIES_SECURE: "${APP_SECURITY_COOKIES_SECURE:-false}"
+  APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED: "${APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED:-false}"
+  APP_PUBLIC_API_ORIGIN: "${APP_PUBLIC_API_ORIGIN:-http://localhost}"
+  APP_PUBLIC_API_BASE_PATH: "${APP_PUBLIC_API_BASE_PATH:-/}"
+  APP_PUBLIC_WEB_ORIGIN: "${APP_PUBLIC_WEB_ORIGIN:-http://localhost}"
+  APP_PUBLIC_WEB_BASE_PATH: "${APP_PUBLIC_WEB_BASE_PATH:-/}"
+  APP_PUBLIC_ADMIN_ORIGIN: "${APP_PUBLIC_ADMIN_ORIGIN:-http://localhost}"
+  APP_PUBLIC_ADMIN_BASE_PATH: "${APP_PUBLIC_ADMIN_BASE_PATH:-/god-mode/}"
+  APP_PASSPORT_ISSUER: "${APP_PASSPORT_ISSUER:-http://localhost/auth}"
+  APP_PASSPORT_AUDIENCE: "${APP_PASSPORT_AUDIENCE:-syncturtle-api-local}"
+  APP_PASSPORT_KID: "${APP_PASSPORT_KID:?Run ./scripts/init-local-env.sh first}"
+  APP_WEB_ACCESS_LOGGING_ENABLED: "${APP_WEB_ACCESS_LOGGING_ENABLED:-true}"
+  APP_REDIS_KEY_PREFIX: "${APP_REDIS_KEY_PREFIX:-st:compose-local:}"
+  APP_RESPONSE_CACHE_ENABLED: "${APP_RESPONSE_CACHE_ENABLED:-true}"
+  APP_RESPONSE_CACHE_KEY_PREFIX: "${APP_RESPONSE_CACHE_KEY_PREFIX:-st:compose-local:rc:}"
+  APP_RESPONSE_CACHE_HASH_BYTES: "${APP_RESPONSE_CACHE_HASH_BYTES:-16}"
+  OPENTELEMETRY_ENABLED: "${OPENTELEMETRY_ENABLED:-true}"
+  TRACING_SAMPLING_PROBABILITY: "${TRACING_SAMPLING_PROBABILITY:-1.0}"
+  OTLP_TRACES_ENABLED: "${OTLP_TRACES_ENABLED:-true}"
+  OTLP_TRACES_ENDPOINT: http://syncturtle-otel:4317
+  OTLP_METRICS_ENABLED: "${OTLP_METRICS_ENABLED:-true}"
+  OTLP_METRICS_URL: http://syncturtle-otel:4318/v1/metrics
+  OTLP_LOGS_ENABLED: "${OTLP_LOGS_ENABLED:-true}"
+  OTLP_LOGS_ENDPOINT: http://syncturtle-otel:4317
+  LOG_EXPORT_ENABLED: "${LOG_EXPORT_ENABLED:-true}"
+
+x-backend-security: &backend-security
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  read_only: true
+  tmpfs:
+    - /tmp
+
+x-backend-build: &backend-build
+  context: ./apps/backend
+  dockerfile: Dockerfile.api
+  args:
+    JAVA_VERSION: "21"
+    APP_PORT: "8080"
+
+x-backend-health: &backend-health
+  test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health/readiness"]
+  interval: 10s
+  timeout: 5s
+  retries: 30
+  start_period: 45s
+
+x-core-dependencies: &core-dependencies
+  config-server:
+    condition: service_healthy
+  postgres:
+    condition: service_healthy
+  kafka:
+    condition: service_healthy
+  otel-ready:
+    condition: service_completed_successfully
+
+services:
+  config-server:
+    build:
+      <<: *backend-build
+      args:
+        JAVA_VERSION: "21"
+        MODULE_PATH: platform/config-server
+        APP_PORT: "8888"
+    environment:
+      SPRING_PROFILES_ACTIVE: "${CONFIG_SERVER_BACKEND_PROFILE:-native}"
+      SERVER_PORT: "8888"
+    <<: *backend-security
+    expose:
+      - "8888"
+    ports:
+      - "127.0.0.1:8888:8888"
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8888/actuator/health/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+
+  instance-service:
+    build:
+      <<: *backend-build
+      args:
+        JAVA_VERSION: "21"
+        MODULE_PATH: services/instance-service
+        APP_PORT: "8080"
+    environment:
+      <<: *backend-runtime
+      INSTANCE_DB_PASSWORD: ${INSTANCE_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
+      INSTANCE_MIGRATOR_DB_PASSWORD: ${INSTANCE_MIGRATOR_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
+      SYNCTURTLE_AUTO_SETUP: "true"
+      SYNCTURTLE_SETUP_PROFILES: setup,docker
+      APP_NAME: "${APP_NAME:-syncturtle}"
+      APP_EDITION: "${APP_EDITION:-COMMUNITY}"
+      APP_TEST: "${APP_TEST:-false}"
+      APP_SKIP_ENV_VAR: "${APP_SKIP_ENV_VAR:-true}"
+      APP_TELEMETRY_ENABLED: "${APP_TELEMETRY_ENABLED:-true}"
+      APP_TELEMETRY_SUPPORT_REQUIRED: "${APP_TELEMETRY_SUPPORT_REQUIRED:-false}"
+      APP_ENABLE_SIGNUP: "${APP_ENABLE_SIGNUP:-1}"
+      APP_ENABLE_EMAIL_PASSWORD: "${APP_ENABLE_EMAIL_PASSWORD:-1}"
+      APP_DISABLE_WORKSPACE_CREATION: "${APP_DISABLE_WORKSPACE_CREATION:-0}"
+      APP_ENABLE_SMTP: "${APP_ENABLE_SMTP:-0}"
+      APP_ENABLE_MAGIC_LINK_LOGIN: "${APP_ENABLE_MAGIC_LINK_LOGIN:-0}"
+      PRODUCT_TELEMETRY_ENABLED: "${PRODUCT_TELEMETRY_ENABLED:-false}"
+      PRODUCT_TELEMETRY_ENDPOINT: http://syncturtle-otel:5317
+    <<: *backend-security
+    expose:
+      - "8080"
+    networks:
+      - internal
+      - observability
+    depends_on:
+      <<: *core-dependencies
+      redis:
+        condition: service_healthy
+    healthcheck: *backend-health
+    restart: unless-stopped
+
+  user-service:
+    build:
+      <<: *backend-build
+      args:
+        JAVA_VERSION: "21"
+        MODULE_PATH: services/user-service
+        APP_PORT: "8080"
+    environment:
+      <<: *backend-runtime
+      USER_DB_PASSWORD: ${USER_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
+      USER_MIGRATOR_DB_PASSWORD: ${USER_MIGRATOR_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
+      APP_AUTH_ACCESS_TOKEN_TTL: 15m
+      APP_AUTH_REFRESH_TOKEN_TTL: 30d
+      APP_AUTH_PASSWORD_RESET_TOKEN_TTL: 30m
+      APP_AUTH_PASSWORD_RESET_TOKEN_BYTES: "48"
+      APP_CACHE_RUNTIME_CACHE_TTL: 1m
+      APP_CACHE_RUNTIME_SECRET_CACHE_TTL: 5m
+      APP_PASSPORT_PRIVATE_KEY_LOCATION: file:/run/secrets/jwt-private-key.pem
+      APP_PASSPORT_PUBLIC_KEY_LOCATION: file:/run/secrets/jwt-public-key.pem
+    volumes:
+      - ./development/secrets/jwt-private-key.pem:/run/secrets/jwt-private-key.pem:ro
+      - ./development/secrets/jwt-public-key.pem:/run/secrets/jwt-public-key.pem:ro
+    <<: *backend-security
+    expose:
+      - "8080"
+    networks:
+      - internal
+      - observability
+    depends_on:
+      <<: *core-dependencies
+      redis:
+        condition: service_healthy
+    healthcheck: *backend-health
+    restart: unless-stopped
+
+  workspace-service:
+    build:
+      <<: *backend-build
+      args:
+        JAVA_VERSION: "21"
+        MODULE_PATH: services/workspace-service
+        APP_PORT: "8080"
+    environment:
+      <<: *backend-runtime
+      WORKSPACE_DB_PASSWORD: ${WORKSPACE_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
+      WORKSPACE_MIGRATOR_DB_PASSWORD: ${WORKSPACE_MIGRATOR_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
+      APP_WORKSPACE_RUNTIME_CACHE_TTL: 10m
+    <<: *backend-security
+    expose:
+      - "8080"
+    networks:
+      - internal
+      - observability
+    depends_on:
+      <<: *core-dependencies
+      redis:
+        condition: service_healthy
+    healthcheck: *backend-health
+    restart: unless-stopped
+
+  file-service:
+    build:
+      <<: *backend-build
+      args:
+        JAVA_VERSION: "21"
+        MODULE_PATH: services/file-service
+        APP_PORT: "8080"
+    environment:
+      <<: *backend-runtime
+      FILE_DB_PASSWORD: ${FILE_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
+      FILE_MIGRATOR_DB_PASSWORD: ${FILE_MIGRATOR_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
+      APP_STORAGE_ACCESS_KEY: ${APP_STORAGE_ACCESS_KEY:?Run ./scripts/init-local-env.sh first}
+      APP_STORAGE_SECRET_KEY: ${APP_STORAGE_SECRET_KEY:?Run ./scripts/init-local-env.sh first}
+      APP_STORAGE_REGION: us-east-1
+      APP_STORAGE_BUCKET: ${APP_STORAGE_BUCKET:-syncturtle}
+      APP_STORAGE_ENDPOINT: http://minio:9000
+      APP_STORAGE_PUBLIC_ENDPOINT: "${APP_STORAGE_PUBLIC_ENDPOINT:-http://localhost}"
+      APP_STORAGE_USE_PATH_STYLE: "true"
+      APP_STORAGE_PRESIGN_EXPIRATION: 10m
+      APP_FILE_KAFKA_USER_ASSET_LINKS_GROUP_ID: file-svc-user-event-v1
+      APP_FILE_KAFKA_WORKSPACE_ASSET_LINKS_GROUP_ID: file-svc-workspace-event-v1
+      APP_FILE_UPLOAD_MAX_IMAGE_SIZE: 5MB
+      APP_FILE_UPLOAD_IDEMPOTENCY_RETENTION: 24h
+      APP_FILE_UPLOAD_IDEMPOTENCY_PROCESSING_LEASE: 1m
+      APP_FILE_CLEANUP_ENABLED: "true"
+      APP_FILE_CLEANUP_FIXED_DELAY_MS: "60000"
+      APP_FILE_CLEANUP_INITIAL_DELAY_MS: "10000"
+      APP_FILE_CLEANUP_BATCH_SIZE: "50"
+      APP_FILE_CLEANUP_CLAIM_LEASE: 5m
+      APP_FILE_CLEANUP_UNLINKED_ASSET_RETENTION: 7d
+    <<: *backend-security
+    expose:
+      - "8080"
+    networks:
+      - internal
+      - observability
+    depends_on:
+      <<: *core-dependencies
+      minio-init:
+        condition: service_completed_successfully
+    healthcheck: *backend-health
+    restart: unless-stopped
+
+  email-service:
+    build:
+      <<: *backend-build
+      args:
+        JAVA_VERSION: "21"
+        MODULE_PATH: services/email-service
+        APP_PORT: "8080"
+    environment:
+      <<: *backend-runtime
+      EMAIL_DB_PASSWORD: ${EMAIL_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
+      EMAIL_MIGRATOR_DB_PASSWORD: ${EMAIL_MIGRATOR_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
+      INSTANCE_SERVICE_BASE_URL: http://instance-service:8080
+      APP_EMAIL_RUNTIME_CONFIG_CACHE_TTL: 2m
+    <<: *backend-security
+    expose:
+      - "8080"
+    networks:
+      - internal
+      - observability
+    depends_on:
+      <<: *core-dependencies
+      instance-service:
+        condition: service_healthy
+    healthcheck: *backend-health
+    restart: unless-stopped
+
+  api-gateway:
+    build:
+      <<: *backend-build
+      args:
+        JAVA_VERSION: "21"
+        MODULE_PATH: platform/api-gateway
+        APP_PORT: "8080"
+    environment:
+      <<: *backend-runtime
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      GATEWAY_CORS_ALLOWED_ORIGINS: "${GATEWAY_CORS_ALLOWED_ORIGINS:-http://localhost}"
+      GATEWAY_TRUSTED_PROXY_COUNT: "${GATEWAY_TRUSTED_PROXY_COUNT:-1}"
+    <<: *backend-security
+    expose:
+      - "8080"
+    networks:
+      - edge
+      - internal
+      - observability
+    depends_on:
+      config-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      instance-service:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      workspace-service:
+        condition: service_healthy
+      file-service:
+        condition: service_healthy
+      email-service:
+        condition: service_healthy
+    healthcheck: *backend-health
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: deployments/frontend/Dockerfile
+      args:
+        APP_NAME: web
+        NEXT_PUBLIC_BASE_PATH: "${NEXT_PUBLIC_WEB_BASE_PATH:-}"
+        NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-http://localhost}"
+        NEXT_PUBLIC_API_BASE_PATH: "${NEXT_PUBLIC_API_BASE_PATH:-}"
+        NEXT_PUBLIC_WEB_BASE_URL: "${NEXT_PUBLIC_WEB_BASE_URL:-http://localhost}"
+        NEXT_PUBLIC_WEB_BASE_PATH: "${NEXT_PUBLIC_WEB_BASE_PATH:-}"
+        NEXT_PUBLIC_ADMIN_BASE_URL: "${NEXT_PUBLIC_ADMIN_BASE_URL:-http://localhost}"
+        NEXT_PUBLIC_ADMIN_BASE_PATH: "${NEXT_PUBLIC_ADMIN_BASE_PATH:-/god-mode}"
+    environment:
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+    expose:
+      - "3000"
+    networks:
+      - edge
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: .
+      dockerfile: deployments/frontend/Dockerfile
+      args:
+        APP_NAME: admin
+        NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-http://localhost}"
+        NEXT_PUBLIC_API_BASE_PATH: "${NEXT_PUBLIC_API_BASE_PATH:-}"
+        NEXT_PUBLIC_WEB_BASE_URL: "${NEXT_PUBLIC_WEB_BASE_URL:-http://localhost}"
+        NEXT_PUBLIC_WEB_BASE_PATH: "${NEXT_PUBLIC_WEB_BASE_PATH:-}"
+        NEXT_PUBLIC_ADMIN_BASE_URL: "${NEXT_PUBLIC_ADMIN_BASE_URL:-http://localhost}"
+        NEXT_PUBLIC_ADMIN_BASE_PATH: "${NEXT_PUBLIC_ADMIN_BASE_PATH:-/god-mode}"
+    environment:
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+    expose:
+      - "3000"
+    networks:
+      - edge
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:3000/god-mode/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.30.4-alpine
+    volumes:
+      - ./deployments/nginx/syncturtle.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "127.0.0.1:80:80"
+    networks:
+      - edge
+    depends_on:
+      web:
+        condition: service_healthy
+      admin:
+        condition: service_healthy
+      api-gateway:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost/nginx-health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped

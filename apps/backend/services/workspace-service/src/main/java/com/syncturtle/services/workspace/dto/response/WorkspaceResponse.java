@@ -13,13 +13,15 @@ import lombok.Value;
 public class WorkspaceResponse implements CursorIdentifiable {
     UUID id;
     String name;
-    String logo;
-    UUID logoAssetId;
     String slug;
+    int role;
+    long totalMembers;
     String organizationSize;
+    String logoUrl;
+    UUID logoAssetId;
     UserResponse owner;
-    Instant createdAt;
-    Instant updatedAt;
     UUID createdById;
     UUID updatedById;
+    Instant createdAt;
+    Instant updatedAt;
 }

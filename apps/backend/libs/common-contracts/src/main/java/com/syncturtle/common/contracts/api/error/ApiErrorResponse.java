@@ -9,11 +9,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
-import lombok.extern.jackson.Jacksonized;
 
 @Value
 @Builder
-@Jacksonized
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiErrorResponse {
 
@@ -24,8 +22,6 @@ public class ApiErrorResponse {
     String key;
     String message;
     String traceId;
-    String requestId;
-    String correlationId;
     String path;
     @Builder.Default
     Instant timestamp = Instant.now();

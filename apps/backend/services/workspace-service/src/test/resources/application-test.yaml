@@ -4,6 +4,16 @@ spring:
       enabled: false
     discovery:
       enabled: false
-
 server:
   port: 0
+app:
+  kafka:
+    enabled: false
+    instance-configuration:
+      enabled: true
+      deployment-id: test
+      replica-id: workspace-test
+      local-replica-count: 1
+  workspace:
+    runtime-cache:
+      ttl: 1m

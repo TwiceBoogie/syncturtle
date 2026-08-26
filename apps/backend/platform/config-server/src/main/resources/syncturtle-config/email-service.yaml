@@ -4,20 +4,17 @@ server:
 spring:
   application:
     name: email-service
-
   thymeleaf:
     prefix: classpath:/templates/
     suffix: .html
     mode: html
     cache: true
-
   cache:
     type: caffeine
     cache-names:
       - emailRuntimeConfig
     caffeine:
-      spec: maximumSize=4,expireAfterWrite=10m
-
+      spec: maximumSize=4,expireAfterWrite=2m
   datasource:
     hikari:
       maximum-pool-size: 10
@@ -25,37 +22,30 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
       connection-timeout: 2000
-
   jpa:
     hibernate:
       ddl-auto: validate
     open-in-view: false
-
   liquibase:
     enabled: true
     change-log: classpath:/db/changelog/db.changelog-master.yaml
-
   kafka:
     template:
       observation-enabled: true
     listener:
       observation-enabled: true
       auto-startup: ${app.kafka.enabled:true}
-      concurrency: 2
-      ack-mode: record
-      missing-topics-fatal: false
     producer:
       acks: all
+      batch-size: 32768
+      compression.type: zstd
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
       properties:
         enable.idempotence: true
         linger.ms: 5
-        batch.size: 32768
-        compression.type: zstd
         max.in.flight.requests.per.connection: 5
         spring.json.add.type.headers: false # JsonSerializer.ADD_TYPE_INFO_HEADERS
-        interceptor.classes: com.syncturtle.common.kafka.interceptor.MdcKafkaHeaderProducerInterceptor
     consumer:
       auto-offset-reset: earliest
 
@@ -63,67 +53,60 @@ app:
   kafka:
     enabled: true
     consumer-group: email-service
-    config-broadcast-group: ${spring.application.name}-instance-config-${HOSTNAME:${random.uuid}}
+    instance-configuration:
+      enabled: true
+      deployment-id: ${SYNCTURTLE_DEPLOYMENT_ID:compose}
+      replica-id: ${SYNCTURTLE_REPLICA_ID:${HOSTNAME:localhost}-${server.port}}
+      local-replica-count: ${SYNCTURTLE_SERVICE_REPLICA_COUNT:1}
     error-handling:
       initial-interval: 500ms
       multiplier: 2.0
       max-elapsed-time: 8s
       dlt-suffix: ".DLT"
       ack-after-handle: true
-      commit-recovered: true
+      commit-recovered: false
       log-retries: true
-
   security:
     cookies:
       secure: ${APP_SECURITY_COOKIES_SECURE:false}
-      host-prefix-enabled: ${APP_SECURITY_COOKIES_HOST_PREFIX_ENABLED:false}
-      domain: ${APP_SECURITY_COOKIES_DOMAIN:}
-      path: /
+      managed-prefix-enabled: ${APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED:false}
       access-same-site: Lax
       refresh-same-site: Lax
       csrf-same-site: Lax
       csrf-max-age: 30m
-
   email:
-    cache-name: emailRuntimeConfig
-    cache-ttl: 10m
-
-    retry:
-      batch-size: 25
-      max-attempts: 8
-      initial-delay-ms: 30000
-      max-delay-ms: 900000
+    inbox:
+      processing:
+        lease: 5m
+        batch-size: 25
+      retry:
+        max-attempts: 8
+        initial-delay: 30s
+        max-delay: 15m
       scheduler:
         enabled: true
-        poll-delay-ms: 10000
-
-    topics:
-      email-to-send: ${APP_TOPIC_EMAIL_TO_SEND:email.events.v1}
-      email-config-changed: ${APP_TOPIC_EMAIL_CONFIG_CHANGED:instance-config.events.v1}
-    sender:
-      connection-timeout-ms: 5000
-      timeout-ms: 3000
-      write-timeout-ms: 5000
-
+        poll-delay: 10s
+    runtime-config-cache:
+      ttl: ${APP_EMAIL_RUNTIME_CONFIG_CACHE_TTL:2m}
+    transport:
+      connection-timeout: 5s
+      read-timeout: 10s
+      write-timeout: 10s
   clients:
     instance-service:
       base-url: ${INSTANCE_SERVICE_BASE_URL:http://localhost:8001}
       connect-timeout: 2s
       read-timeout: 5s
-
   observability:
     otel:
       logback:
         enabled: true
-
   response-cache:
     enabled: false
-
   data:
     jpa:
       auditing:
         enabled: true
-
   web:
     access-logging:
       enabled: true

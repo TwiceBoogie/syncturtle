@@ -3,7 +3,7 @@ package com.syncturtle.common.cache.template;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import com.syncturtle.common.cache.properties.RedisKeyProperties;
+import com.syncturtle.common.cache.property.RedisKeyProperties;
 
 public final class RedisKeyBuilder {
 

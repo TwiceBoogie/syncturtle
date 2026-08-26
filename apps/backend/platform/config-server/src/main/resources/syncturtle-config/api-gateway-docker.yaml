@@ -18,9 +18,9 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
-      password: ${REDIS_PASSWORD:syncturtle_redis_dev_password}
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
       database: 0
       timeout: 3s
 
@@ -34,3 +34,5 @@ app:
       base-url: http://workspace-service:8080
     email-service:
       base-url: http://email-service:8080
+    file-service:
+      base-url: http://file-service:8080

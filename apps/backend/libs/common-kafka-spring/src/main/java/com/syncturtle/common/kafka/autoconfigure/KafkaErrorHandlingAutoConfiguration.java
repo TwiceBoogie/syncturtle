@@ -3,84 +3,104 @@ package com.syncturtle.common.kafka.autoconfigure;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
-import org.springframework.kafka.support.serializer.DeserializationException;
-import org.springframework.messaging.converter.MessageConversionException;
 import org.springframework.util.backoff.ExponentialBackOff;
 
-import com.syncturtle.common.kafka.properties.KafkaErrorHandlingProperties;
+import com.syncturtle.common.kafka.property.KafkaErrorHandlingProperties;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@AutoConfiguration(after = KafkaAutoConfiguration.class)
 @ConditionalOnClass({
         KafkaTemplate.class,
         CommonErrorHandler.class,
         DefaultErrorHandler.class,
         DeadLetterPublishingRecoverer.class
 })
-@AutoConfiguration(after = KafkaAutoConfiguration.class)
-@ConditionalOnProperty(prefix = "app.kafka", name = "enabled", havingValue = "true")
+@ConditionalOnBooleanProperty(prefix = "app.kafka", name = "enabled")
 @EnableConfigurationProperties(KafkaErrorHandlingProperties.class)
 public class KafkaErrorHandlingAutoConfiguration {
 
     @Bean
+    @ConditionalOnBean(KafkaTemplate.class)
     @ConditionalOnMissingBean(CommonErrorHandler.class)
-    CommonErrorHandler kafkaErrorHandler(
+    DefaultErrorHandler kafkaErrorHandler(
             KafkaTemplate<Object, Object> kafkaTemplate,
             KafkaErrorHandlingProperties properties) {
-        ExponentialBackOff backoff = new ExponentialBackOff(
-                properties.getInitialInterval().toMillis(),
-                properties.getMultiplier());
-
-        backoff.setMaxElapsedTime(properties.getMaxElapsedTime().toMillis());
+        ExponentialBackOff backOff = createBackOff(properties);
 
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(
                 kafkaTemplate,
-                (record, exception) -> resolveDeadLetterTopic(record, properties));
+                (record, exception) -> resolveDeadLetterTopic(
+                        record,
+                        properties));
 
-        DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, backoff);
-        handler.setAckAfterHandle(properties.isAckAfterHandle());
-        handler.setCommitRecovered(properties.isCommitRecovered());
+        DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, backOff);
 
-        // failures mean the record is structurally bad, not that kafka, postgres, redis
-        // or others is temp unavailable
-        // retrying them usually burns time and pollutes logs so send to DLT quickly
+        handler.setAckAfterHandle(
+                properties.isAckAfterHandle());
+
+        handler.setCommitRecovered(
+                properties.isCommitRecovered());
+
         handler.addNotRetryableExceptions(
-                DeserializationException.class,
-                MessageConversionException.class,
-                IllegalArgumentException.class,
-                ClassCastException.class);
+                IllegalArgumentException.class);
 
         if (properties.isLogRetries()) {
-            handler.setRetryListeners((record, exception, deliveryAttempt) -> log.warn(
-                    "Kafka listener retry attempt={} topic={} partition={} offset={} key={} error={}",
-                    deliveryAttempt,
-                    record.topic(),
-                    record.partition(),
-                    record.offset(),
-                    record.key(),
-                    exception.toString()));
+            handler.setRetryListeners(
+                    (record, exception, deliveryAttempt) -> log.warn(
+                            "Kafka listener retry "
+                                    + "attempt={} "
+                                    + "topic={} "
+                                    + "partition={} "
+                                    + "offset={} "
+                                    + "key={} "
+                                    + "error={}",
+                            deliveryAttempt,
+                            record.topic(),
+                            record.partition(),
+                            record.offset(),
+                            record.key(),
+                            exception.toString()));
         }
 
         return handler;
     }
 
+    private static ExponentialBackOff createBackOff(
+            KafkaErrorHandlingProperties properties) {
+        ExponentialBackOff backOff = new ExponentialBackOff(
+                properties
+                        .getInitialInterval()
+                        .toMillis(),
+                properties.getMultiplier());
+
+        backOff.setMaxElapsedTime(
+                properties
+                        .getMaxElapsedTime()
+                        .toMillis());
+
+        return backOff;
+    }
+
     private static TopicPartition resolveDeadLetterTopic(
             ConsumerRecord<?, ?> record,
             KafkaErrorHandlingProperties properties) {
+        String deadLetterTopic = record.topic() + properties.getDltSuffix();
+
         return new TopicPartition(
-                record.topic() + properties.getDltSuffix(),
+                deadLetterTopic,
                 record.partition());
     }
-
 }

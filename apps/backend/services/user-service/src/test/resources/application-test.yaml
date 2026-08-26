@@ -9,6 +9,23 @@ server:
   port: 0
 
 app:
+  auth:
+    token:
+      access-token-ttl: ${APP_AUTH_ACCESS_TOKEN_TTL:15m}
+      password-reset-token-ttl: ${APP_AUTH_PASSWORD_RESET_TOKEN_TTL:30m}
+      password-reset-token-bytes: ${APP_AUTH_PASSWORD_RESET_TOKEN_BYTES:48}
+    refresh-session:
+      idle-lifetime: 7d
+      absolute-lifetime: 30d
+      grace-window: 5s
+      successor-envelope:
+        encryption-key: AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA
+      client-binding:
+        hmac-key: ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8
+  passport:
+    issuer: https://api.syncturtle.test/auth
+    audience: syncturtle-test
+    kid: test-key
   data:
     jpa:
       auditing:

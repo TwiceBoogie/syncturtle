@@ -2,16 +2,18 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/syncturtle_email
     username: email_app
-    password: email_app_dev
+    password: ${EMAIL_DB_PASSWORD}
 
   liquibase:
     user: email_migrator
-    password: email_migrator_dev
+    password: ${EMAIL_MIGRATOR_DB_PASSWORD}
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:19092}
 
 app:
-  services:
+  clients:
     instance-service:
       base-url: http://localhost:8001
+      connect-timeout: 2s
+      read-timeout: 5s

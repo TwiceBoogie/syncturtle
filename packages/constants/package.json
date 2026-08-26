@@ -10,24 +10,25 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "import": "./dist/index.js"
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --sourcemap --clean --out-dir dist",
-    "dev": "tsup src/index.ts --format esm --dts --watch --sourcemap --out-dir dist",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "clean": "rm -rf .turbo && rm -rf dist"
+    "clean": "rm -rf .turbo dist"
   },
-  "dependencies": {
+  "peerDependencies": {
     "@syncturtle/types": "workspace:*"
   },
   "devDependencies": {
     "@syncturtle/eslint-config": "workspace:*",
+    "@syncturtle/types": "workspace:*",
     "@syncturtle/typescript-config": "workspace:*",
-    "eslint": "^9.39.4",
-    "tsup": "^8.5.1",
-    "typescript": "^5.9.3"
+    "eslint": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:"
   }
 }

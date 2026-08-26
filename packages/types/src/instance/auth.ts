@@ -1,9 +1,11 @@
+import type { ReactNode } from "react";
+
 export type TInstanceAuthenticationModes = {
   key: string;
   name: string;
   description: string;
-  icon: React.ReactNode;
-  config: React.ReactNode;
+  icon: ReactNode;
+  config: ReactNode;
   unavailable?: boolean;
 };
 

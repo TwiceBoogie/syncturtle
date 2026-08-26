@@ -10,7 +10,8 @@ spring:
       auto-create: true
 
 app:
-  kafka:
-    enabled: true
-    topics:
-      create: true
+  outbox:
+    relay:
+      enabled: false
+  product-telemetry:
+    enabled: false

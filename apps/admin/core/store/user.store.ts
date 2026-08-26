@@ -1,6 +1,6 @@
 import { AuthService } from "@/services/auth.service";
 import { UserService } from "@/services/user.service";
-import { IUser } from "@syncturtle/types";
+import type { IUser } from "@syncturtle/types";
 import { ExternalStore } from "@syncturtle/utils";
 import { CoreRootStore } from "./root.store";
 import { API_BASE_PATH } from "@syncturtle/constants";
@@ -24,10 +24,7 @@ const createInitialSnapshot = (): TUserSnapshot => ({
   error: undefined,
 });
 
-export interface IUserStoreInternal {
-  _subscribe: ExternalStore<TUserSnapshot>["_subscribe"];
-  _getSnapshot: ExternalStore<TUserSnapshot>["_getSnapshot"];
-  _getServerSnapshot: ExternalStore<TUserSnapshot>["_getServerSnapshot"];
+export interface IUserStore {
   // observables
   isLoading: boolean;
   isUserLoggedIn: boolean | undefined;
@@ -39,7 +36,11 @@ export interface IUserStoreInternal {
   signOut: () => void;
 }
 
-export type TUserStore = Omit<IUserStoreInternal, "_subscribe" | "_getSnapshot" | "_getServerSnapshot">;
+export interface IUserStoreInternal extends IUserStore {
+  _subscribe: ExternalStore<TUserSnapshot>["_subscribe"];
+  _getSnapshot: ExternalStore<TUserSnapshot>["_getSnapshot"];
+  _getServerSnapshot: ExternalStore<TUserSnapshot>["_getServerSnapshot"];
+}
 
 export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStoreInternal {
   private readonly userService: UserService;

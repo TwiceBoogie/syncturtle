@@ -16,15 +16,15 @@ import com.syncturtle.common.contracts.instance.model.InstanceEdition;
 import com.syncturtle.common.contracts.instance.model.InstanceEditions;
 import com.syncturtle.common.core.text.Strings;
 import com.syncturtle.services.instance.configuration.property.InstanceServiceProperties;
-import com.syncturtle.services.instance.event.InstanceEventFactory;
-import com.syncturtle.services.instance.event.InstanceRegisteredEvent;
-import com.syncturtle.services.instance.messaging.db.event.InstanceEventToPublish;
+import com.syncturtle.services.instance.messaging.event.InstanceRegisteredEvent;
+import com.syncturtle.services.instance.messaging.kafka.factory.InstanceEventFactory;
 import com.syncturtle.services.instance.model.Instance;
 import com.syncturtle.services.instance.model.param.InstanceBinaryParam;
 import com.syncturtle.services.instance.model.param.InstanceRegistrationFlagsParam;
 import com.syncturtle.services.instance.model.param.InstanceRegistrationParam;
 import com.syncturtle.services.instance.model.param.InstanceRuntimeParam;
 import com.syncturtle.services.instance.repository.InstanceRepository;
+import com.syncturtle.services.instance.service.collaborator.outbox.InstanceOutboxWriter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +38,7 @@ public class InstanceRegistrar {
     private final InstanceRepository instanceRepository;
     private final InstanceServiceProperties properties;
     private final ApplicationEventPublisher events;
+    private final InstanceOutboxWriter outboxWriter;
     private final ObjectProvider<BuildProperties> buildPropertiesProvider;
     private final InstanceEventFactory eventFactory;
     private final Clock clock;
@@ -123,11 +124,11 @@ public class InstanceRegistrar {
     }
 
     private void publishCreated(Instance instance) {
-        events.publishEvent(new InstanceEventToPublish(eventFactory.created(instance)));
+        outboxWriter.saveInstanceEvent(eventFactory.created(instance));
     }
 
     private void publishUpdated(Instance instance) {
-        events.publishEvent(new InstanceEventToPublish(eventFactory.updated(instance)));
+        outboxWriter.saveInstanceEvent(eventFactory.updated(instance));
     }
 
     private void publishRegistered(Instance instance) {

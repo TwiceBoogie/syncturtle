@@ -1,12 +1,23 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
+  outputFileTracingRoot: path.join(process.cwd(), "../.."),
   trailingSlash: true,
-  /* config options here */
-  transpilePackages: ["@t3-oss/env-core", "@t3-oss/env-nextjs", "@syncturtle/i18n"],
+  transpilePackages: [
+    "@t3-oss/env-core",
+    "@t3-oss/env-nextjs",
+    "@syncturtle/constants",
+    "@syncturtle/hooks",
+    "@syncturtle/i18n",
+    "@syncturtle/ui",
+    "@syncturtle/utils",
+  ],
   serverExternalPackages: ["esbuild"],
   async rewrites() {
     const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com";
+
     const rewrites = [
       {
         source: "/ingest/static/:path*",
@@ -17,19 +28,24 @@ const nextConfig: NextConfig = {
         destination: `${posthogHost}/:path*`,
       },
     ];
-    if (process.env.NEXT_PUBLIC_ADMIN_BASE_URL || process.env.NEXT_PUBLIC_ADMIN_BASE_PATH) {
-      const ADMIN_BASE_URL = process.env.NEXT_PUBLIC_ADMIN_BASE_URL || "";
-      const ADMIN_BASE_PATH = process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || "";
-      const GOD_MODE_BASE_URL = ADMIN_BASE_URL + ADMIN_BASE_PATH;
+
+    const adminBaseUrl = process.env.NEXT_PUBLIC_ADMIN_BASE_URL || "";
+    const adminBasePath = process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || "";
+
+    if (adminBaseUrl || adminBasePath) {
+      const godModeBaseUrl = `${adminBaseUrl}${adminBasePath}`;
+
       rewrites.push({
         source: "/god-mode",
-        destination: `${GOD_MODE_BASE_URL}/`,
+        destination: `${godModeBaseUrl}/`,
       });
+
       rewrites.push({
         source: "/god-mode/:path*",
-        destination: `${GOD_MODE_BASE_URL}/:path*`,
+        destination: `${godModeBaseUrl}/:path*`,
       });
     }
+
     return rewrites;
   },
 };

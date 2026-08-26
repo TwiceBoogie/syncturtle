@@ -1,20 +1,14 @@
 import { defineConfig, globalIgnores } from "eslint/config";
+import prettier from "eslint-config-prettier/flat";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
-import prettier from "eslint-config-prettier/flat";
 
 export default defineConfig([
   ...nextVitals,
   ...nextTs,
   prettier,
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
+
+  globalIgnores([".next/**", "out/**", "build/**", "dist/**", "coverage/**", "storybook-static/**", "next-env.d.ts"]),
 
   {
     name: "@syncturtle/next-overrides",
@@ -22,7 +16,12 @@ export default defineConfig([
       "prefer-const": "error",
       "no-irregular-whitespace": "error",
       "no-trailing-spaces": "error",
-      "no-duplicate-imports": "error",
+      "no-duplicate-imports": [
+        "error",
+        {
+          allowSeparateTypeImports: true,
+        },
+      ],
       "no-useless-catch": "warn",
       "no-case-declarations": "error",
       "no-unreachable": "error",
