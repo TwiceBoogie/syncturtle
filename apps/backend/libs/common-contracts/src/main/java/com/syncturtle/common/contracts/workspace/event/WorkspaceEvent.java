@@ -10,9 +10,7 @@ import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
 
 @Getter
-@Jacksonized
-@Builder(toBuilder = true)
-public final class WorkspaceEvent {
+public final class WorkspaceEvent implements WorkspaceOutboxEvent {
 
     public enum Type {
         WORKSPACE_CREATED,
@@ -28,13 +26,11 @@ public final class WorkspaceEvent {
 
     private final UUID id;
     private final String name;
-    private final String logo;
     private final UUID logoAssetId;
     private final String slug;
     private final String organizationSize;
     private final UUID ownerId;
     private final String timezone;
-    private final Long totalMembers;
     private final UUID createdById;
     private final UUID updatedById;
     private final Instant createdAt;
@@ -42,19 +38,19 @@ public final class WorkspaceEvent {
     private final Instant deletedAt;
     private final Long version;
 
+    @Builder
+    @Jacksonized
     private WorkspaceEvent(
             String eventId,
             Instant occurredAt,
             Type type,
             UUID id,
             String name,
-            String logo,
             UUID logoAssetId,
             String slug,
             String organizationSize,
             UUID ownerId,
             String timezone,
-            Long totalMembers,
             UUID createdById,
             UUID updatedById,
             Instant createdAt,
@@ -68,14 +64,11 @@ public final class WorkspaceEvent {
         this.id = Objects.requireNonNull(id, "id is required");
 
         this.name = requireText(name, "name is required");
-        this.logo = normalizeNullable(logo);
         this.logoAssetId = logoAssetId;
         this.slug = normalizeSlug(slug);
         this.organizationSize = normalizeNullable(organizationSize);
         this.ownerId = Objects.requireNonNull(ownerId, "ownerId is required");
         this.timezone = requireText(timezone, "timezone is required");
-
-        this.totalMembers = requireNonNegativeLong(totalMembers, "totalMembers is required");
 
         this.createdById = createdById;
         this.updatedById = updatedById;
@@ -88,18 +81,22 @@ public final class WorkspaceEvent {
         requireDeleteEventShape();
     }
 
+    @Override
     public boolean isCreateEvent() {
         return type == Type.WORKSPACE_CREATED;
     }
 
+    @Override
     public boolean isUpdateEvent() {
         return type == Type.WORKSPACE_UPDATED;
     }
 
+    @Override
     public boolean isDeleteEvent() {
         return type == Type.WORKSPACE_SOFT_DELETE;
     }
 
+    @Override
     public boolean isTombstoneEvent() {
         return isDeleteEvent();
     }
@@ -120,18 +117,6 @@ public final class WorkspaceEvent {
         }
 
         if (value < INITIAL_VERSION) {
-            throw new IllegalArgumentException(message + " and must be greater than or equal to 0");
-        }
-
-        return value;
-    }
-
-    private static Long requireNonNegativeLong(Long value, String message) {
-        if (value == null) {
-            throw new IllegalArgumentException(message);
-        }
-
-        if (value < 0) {
             throw new IllegalArgumentException(message + " and must be greater than or equal to 0");
         }
 

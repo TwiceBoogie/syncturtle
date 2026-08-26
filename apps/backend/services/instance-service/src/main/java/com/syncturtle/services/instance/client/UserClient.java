@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.syncturtle.common.contracts.instance.admin.AdminSigninResponse;
 import com.syncturtle.common.contracts.instance.admin.AdminSignupResponse;
-import com.syncturtle.common.contracts.auth.session.IssueInstanceAdminSessionRequest;
-import com.syncturtle.common.contracts.auth.session.IssueSessionResponse;
+import com.syncturtle.common.contracts.auth.session.AdminSessionHandoffResponse;
+import com.syncturtle.common.contracts.auth.session.CreateInstanceAdminSessionHandoffRequest;
 import com.syncturtle.common.contracts.instance.admin.AdminSigninRequest;
 import com.syncturtle.common.contracts.instance.admin.AdminSignupRequest;
 import com.syncturtle.common.core.service.ServiceClientNames;
@@ -21,8 +21,8 @@ public interface UserClient {
     @PostMapping("/admins/sign-in")
     AdminSigninResponse adminSigninPost(@RequestBody AdminSigninRequest request);
 
-    @PostMapping("/admins/sessions")
-    IssueSessionResponse issueInstanceAdminSessionPost(
-            @RequestBody IssueInstanceAdminSessionRequest request);
+    @PostMapping("/admins/session-handoffs")
+    AdminSessionHandoffResponse createInstanceAdminSessionHandoff(
+            @RequestBody CreateInstanceAdminSessionHandoffRequest request);
 
 }

@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "@syncturtle/constants";
 import { APIService, HttpError } from "./api.service";
-import { IApiErrorPayload, IUser, TUserProfile } from "@syncturtle/types";
+import type { IApiErrorPayload, IUser, TUserProfile } from "@syncturtle/types";
 
 export class UserService extends APIService {
   constructor() {
@@ -49,7 +49,9 @@ export class UserService extends APIService {
 
   async adminDetails(): Promise<IUser> {
     try {
-      const response = await this.get<IUser>("/api/instances/admins/me");
+      const response = await this.get<IUser>("/api/instances/admins/me", {
+        authRefresh: true,
+      });
       return response.data;
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;

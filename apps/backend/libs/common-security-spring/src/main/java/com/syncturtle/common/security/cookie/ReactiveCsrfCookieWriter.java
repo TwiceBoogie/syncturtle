@@ -18,11 +18,12 @@ public final class ReactiveCsrfCookieWriter {
     }
 
     public void setCsrfCookie(ServerHttpResponse response, String signedToken) {
+        cookieFactory.legacyCsrfCookies().forEach(response::addCookie);
         response.addCookie(cookieFactory.csrfCookie(signedToken));
     }
 
     public void clearCsrfCookie(ServerHttpResponse response) {
-        response.addCookie(cookieFactory.clearCsrfCookie());
+        cookieFactory.clearCsrfCookies().forEach(response::addCookie);
     }
 
 }

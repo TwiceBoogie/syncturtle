@@ -6,9 +6,6 @@ app:
     enabled: ${APP_TELEMETRY_ENABLED:true}
     support-required: ${APP_TELEMETRY_SUPPORT_REQUIRED:false}
   skip-env-var: ${APP_SKIP_ENV_VAR:false}
-  base-urls:
-    admin: ${APP_BASE_URL_ADMIN:http://localhost:3001/god-mode/}
-    app: ${APP_BASE_URL_APP:http://localhost:3000/}
   config-keys:
     enable-signup: ${APP_ENABLE_SIGNUP:1}
     enable-email-password: ${APP_ENABLE_EMAIL_PASSWORD:1}
@@ -54,6 +51,12 @@ app:
     key-prefix: "st:resp:"
     hash-bytes: 16
 
+  services:
+    user-service:
+      base-url: http://localhost:8002
+    workspace-service:
+      base-url: http://localhost:8003
+
 spring:
   cloud:
     config:
@@ -73,9 +76,9 @@ spring:
 
   autoconfigure:
     exclude:
-    - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
-    - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-    - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
 
 server:
   port: 0

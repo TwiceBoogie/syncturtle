@@ -4,8 +4,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.syncturtle.common.web.pagination.CursorCodec;
-import com.syncturtle.services.workspace.service.mapper.WorkspacePageMapper;
-import com.syncturtle.services.workspace.service.mapper.WorkspaceResponseMapper;
+import com.syncturtle.services.workspace.mapper.WorkspacePageMapper;
+import com.syncturtle.services.workspace.mapper.WorkspaceResponseMapper;
 
 @Configuration(proxyBeanMethods = false)
 public class WorkspaceMappingConfiguration {

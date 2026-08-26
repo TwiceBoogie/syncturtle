@@ -1,9 +1,9 @@
 package com.syncturtle.common.security.autoconfigure;
 
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
@@ -15,10 +15,10 @@ import com.syncturtle.common.security.csrf.CsrfTokenService;
 import com.syncturtle.common.security.csrf.CsrfTokenSigner;
 import com.syncturtle.common.security.csrf.impl.CsrfTokenServiceImpl;
 import com.syncturtle.common.security.csrf.impl.HmacCsrfTokenSigner;
-import com.syncturtle.common.security.properties.CsrfProperties;
+import com.syncturtle.common.security.property.CsrfProperties;
 
 @AutoConfiguration
-@ConditionalOnClass(CsrfTokenSigner.class)
+@ConditionalOnWebApplication
 @EnableConfigurationProperties(CsrfProperties.class)
 @ConditionalOnProperty(prefix = "app.security.csrf", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class CsrfTokenServiceAutoConfiguration {

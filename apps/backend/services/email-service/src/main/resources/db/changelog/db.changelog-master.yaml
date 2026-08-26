@@ -9,3 +9,7 @@ databaseChangeLog:
   - include:
       file: releases/0001_init/db.changelog.yaml
       relativeToChangelogFile: true
+
+  - include:
+      file: releases/0002_drop_correlation_id_field.sql
+      relativeToChangelogFile: true

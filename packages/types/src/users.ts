@@ -24,7 +24,8 @@ export interface IUserLite {
   email?: string;
   firstName: string;
   lastName: string;
-  avatarUrl: string;
+  avatarUrl: string | null;
+  avatarAssetId: string | null;
   isBot: boolean;
   joining_date?: string;
 }
@@ -44,8 +45,16 @@ export interface IUser extends IUserLite {
   lastLoginMedium: TLoginMediums;
   theme: IUserTheme;
   coverImageUrl: string | null;
+  coverImageAssetId: string | null;
   isTourCompleted: boolean;
   lastWorkspaceId: string;
+}
+
+export interface IUserUpdateRequest {
+  firstName: string;
+  lastName: string;
+  displayName: string;
+  avatarAssetId: string | null;
 }
 
 export type TUserProfile = {
@@ -75,3 +84,23 @@ export type TUserProfile = {
   createdAt: Date | string;
   updatedAt: Date | string;
 };
+
+export interface IUserSettings {
+  id: string | undefined;
+  email: string | undefined;
+  workspace: {
+    lastWorkspaceId: string | undefined;
+    lastWorkspaceSlug: string | undefined;
+    lastWorkspaceName: string | undefined;
+    lastWorkspaceLogo: string | undefined;
+    fallbackWorkspaceId: string | undefined;
+    fallbackWorkspaceSlug: string | undefined;
+    invites: number | undefined;
+  };
+}
+
+/**
+ * 20=ADMIN, 15=MEMBER, 5=GUEST
+ */
+export type TUserPermissions = 20 | 15 | 5;
+export type TUserPermissionKey = "ADMIN" | "MEMBER" | "GUEST";

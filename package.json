@@ -9,13 +9,18 @@
   "scripts": {
     "dev": "turbo run dev --concurrency=18",
     "build": "turbo run build",
+    "build:storybook": "turbo run build:storybook",
     "start": "turbo run start",
     "lint": "turbo run lint --continue",
     "typecheck": "turbo run typecheck --continue",
+    "test": "turbo run test --continue",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "yarn format:check && turbo run lint typecheck test --continue",
-    "clean": "turbo run clean && rm -rf .turbo && rm -rf node_modules",
+    "constraints": "yarn constraints",
+    "constraints:fix": "yarn constraints --fix",
+    "dedupe:check": "yarn dedupe --check",
+    "check": "yarn constraints && yarn dedupe --check && yarn format:check && turbo run lint typecheck test --continue",
+    "clean": "turbo run clean && rm -rf .turbo node_modules",
     "sync:versions": "node scripts/sync-versions.mjs",
     "check:versions": "node scripts/sync-versions.mjs && git diff --exit-code"
   },
@@ -24,6 +29,7 @@
   },
   "packageManager": "yarn@4.13.0",
   "devDependencies": {
+    "@yarnpkg/types": "^4.0.1",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "10.1.8",
     "lefthook": "^2.1.4",

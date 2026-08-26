@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/syncturtle_file
+    username: file_app
+    password: ${FILE_DB_PASSWORD}
+
+  liquibase:
+    user: file_migrator
+    password: ${FILE_MIGRATOR_DB_PASSWORD}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+
+app:
+  storage:
+    endpoint: http://minio:9000
+    public-endpoint: ${APP_STORAGE_PUBLIC_ENDPOINT}

@@ -1,4 +1,4 @@
 org.springframework.test.context.ContextCustomizerFactory=\
-com.syncturtle.testing.annotations.impl.UsePostgresDbContextCustomizerFactory, \
-com.syncturtle.testing.annotations.impl.UseKafkaContextCustomizerFactory, \
-com.syncturtle.testing.annotations.impl.UseRedisContextCustomizerFactory
+com.syncturtle.testing.annotation.impl.UsePostgresDbContextCustomizerFactory, \
+com.syncturtle.testing.annotation.impl.UseKafkaContextCustomizerFactory, \
+com.syncturtle.testing.annotation.impl.UseRedisContextCustomizerFactory

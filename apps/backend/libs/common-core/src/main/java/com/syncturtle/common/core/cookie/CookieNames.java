@@ -8,4 +8,5 @@ public final class CookieNames {
     public static final String COOKIE_NAME_ACCESS_TOKEN = "access_token";
     public static final String COOKIE_NAME_REFRESH_TOKEN = "refresh_token";
     public static final String COOKIE_NAME_CSRF_TOKEN = "csrf_token";
+    public static final String COOKIE_NAME_ADMIN_SESSION_HANDOFF = "admin_session_handoff";
 }

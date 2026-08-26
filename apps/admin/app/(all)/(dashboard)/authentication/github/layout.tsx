@@ -1,5 +1,5 @@
+import type { ReactNode } from "react";
 import type { Metadata } from "next";
-import { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: "GitHub Authentication - God Mode",

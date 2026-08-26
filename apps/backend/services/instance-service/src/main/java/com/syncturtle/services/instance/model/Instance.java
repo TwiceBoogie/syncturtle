@@ -6,9 +6,9 @@ import org.springframework.util.Assert;
 
 import com.syncturtle.common.contracts.instance.model.InstanceEdition;
 import com.syncturtle.common.data.jpa.entity.AuditedEntity;
-import com.syncturtle.services.instance.model.embedded.ConfigInfoEmbed;
-import com.syncturtle.services.instance.model.embedded.RuntimeInfoEmbed;
-import com.syncturtle.services.instance.model.embedded.UpdateCheckInfoEmbed;
+import com.syncturtle.services.instance.model.embedded.InstanceConfigurationInfo;
+import com.syncturtle.services.instance.model.embedded.InstanceRuntimeInfo;
+import com.syncturtle.services.instance.model.embedded.InstanceUpdateCheckInfo;
 import com.syncturtle.services.instance.model.param.InstanceRegistrationParam;
 import com.syncturtle.services.instance.model.param.InstanceSetupCompletionParam;
 import com.syncturtle.services.instance.model.param.UpdateCheckParam;
@@ -69,13 +69,13 @@ public class Instance extends AuditedEntity {
     private Long version;
 
     @Embedded
-    private UpdateCheckInfoEmbed updateCheck = UpdateCheckInfoEmbed.empty();
+    private InstanceUpdateCheckInfo updateCheck = InstanceUpdateCheckInfo.empty();
 
     @Embedded
-    private ConfigInfoEmbed config = ConfigInfoEmbed.empty();
+    private InstanceConfigurationInfo config = InstanceConfigurationInfo.empty();
 
     @Embedded
-    private RuntimeInfoEmbed runtime = RuntimeInfoEmbed.empty();
+    private InstanceRuntimeInfo runtime = InstanceRuntimeInfo.empty();
 
     public static Instance register(InstanceRegistrationParam param) {
         Assert.notNull(param, "registration is required");

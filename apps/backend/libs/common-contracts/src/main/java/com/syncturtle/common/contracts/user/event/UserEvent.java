@@ -12,9 +12,7 @@ import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
 
 @Getter
-@Jacksonized
-@Builder(toBuilder = true)
-public final class UserEvent {
+public final class UserEvent implements UserOutboxEvent {
 
     public enum Type {
         USER_CREATED, USER_UPDATED, USER_SOFT_DELETE
@@ -39,11 +37,16 @@ public final class UserEvent {
     private final boolean passwordAutoset;
     private final String userTimezone;
     private final PrincipalType principalType;
-    private final Long version;
     private final Long authVersion;
+    private final UUID updatedById;
+    private final UUID createdById;
     private final Instant createdAt;
     private final Instant updatedAt;
+    private final Instant deletedAt;
+    private final Long version;
 
+    @Builder
+    @Jacksonized
     private UserEvent(
             String eventId,
             Instant occurredAt,
@@ -61,10 +64,13 @@ public final class UserEvent {
             Boolean passwordAutoset,
             String userTimezone,
             PrincipalType principalType,
-            Long version,
             Long authVersion,
+            UUID updatedById,
+            UUID createdById,
             Instant createdAt,
-            Instant updatedAt) {
+            Instant updatedAt,
+            Instant deletedAt,
+            Long version) {
         this.eventId = requireText(eventId, "eventId is required");
         this.occurredAt = Objects.requireNonNull(occurredAt, "occurredAt is required");
         this.type = Objects.requireNonNull(type, "type is required");
@@ -87,24 +93,32 @@ public final class UserEvent {
         this.userTimezone = requireText(userTimezone, "userTimezone is required");
         this.principalType = Objects.requireNonNull(principalType, "principalType is required");
 
+        this.createdById = createdById;
+        this.updatedById = updatedById;
+        this.deletedAt = deletedAt;
+
         this.version = requireNonNegative(version, "version is required");
         this.authVersion = requireNonNegative(authVersion, "authVersion is required");
 
         requireDeleteEventShape();
     }
 
+    @Override
     public boolean isDeleteEvent() {
         return type == Type.USER_SOFT_DELETE;
     }
 
+    @Override
     public boolean isCreateEvent() {
         return type == Type.USER_CREATED;
     }
 
+    @Override
     public boolean isUpdateEvent() {
         return type == Type.USER_UPDATED;
     }
 
+    @Override
     public boolean isTombstoneEvent() {
         return isDeleteEvent();
     }

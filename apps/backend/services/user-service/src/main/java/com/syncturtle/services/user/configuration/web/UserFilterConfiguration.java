@@ -9,9 +9,10 @@ import org.springframework.context.annotation.Configuration;
 
 import com.syncturtle.common.security.cookie.ServletAuthCookieWriter;
 import com.syncturtle.common.security.csrf.CsrfTokenService;
+import com.syncturtle.common.web.error.ApiErrorResponseFactory;
 import com.syncturtle.common.web.url.PublicUrlResolver;
 import com.syncturtle.services.user.configuration.property.FormCsrfFilterProperties;
-import com.syncturtle.services.user.configuration.web.filter.FormCsrfOncePerRequestFilter;
+import com.syncturtle.services.user.security.filter.FormCsrfOncePerRequestFilter;
 
 import jakarta.servlet.DispatcherType;
 
@@ -26,12 +27,14 @@ public class UserFilterConfiguration {
             FormCsrfFilterProperties properties,
             CsrfTokenService csrfTokenService,
             ServletAuthCookieWriter cookieWriter,
-            PublicUrlResolver hostResolver) {
+            PublicUrlResolver hostResolver,
+            ApiErrorResponseFactory responseFactory) {
         FormCsrfOncePerRequestFilter filter = new FormCsrfOncePerRequestFilter(
                 properties.getProtectedEndpoints(),
                 csrfTokenService,
                 cookieWriter,
-                hostResolver);
+                hostResolver,
+                responseFactory);
 
         FilterRegistrationBean<FormCsrfOncePerRequestFilter> registration = new FilterRegistrationBean<>();
 

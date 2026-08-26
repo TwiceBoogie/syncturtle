@@ -1,0 +1,11 @@
+Your Syncturtle account has been deactivated
+
+Hi [[${firstName}]],
+
+Your Syncturtle account has been deactivated. You will no longer be able to access your account or its related workspaces and projects.
+
+Contact support:
+[[${supportUrl != null ? supportUrl : 'https://syncturtle.com'}]]
+
+This email was sent to [[${email}]].
+Please delete it if you are not the intended recipient.

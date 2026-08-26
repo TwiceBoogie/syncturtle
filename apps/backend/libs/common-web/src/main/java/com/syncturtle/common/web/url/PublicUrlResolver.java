@@ -9,7 +9,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.syncturtle.common.web.properties.PublicUrlProperties;
+import com.syncturtle.common.web.property.PublicUrlProperties;
 
 import lombok.RequiredArgsConstructor;
 

@@ -1,6 +1,11 @@
 spring:
   application:
     name: user-service
+  jpa:
+    properties:
+      hibernate:
+        type:
+          json_format_mapper: jackson3
   config:
     import:
       - optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}

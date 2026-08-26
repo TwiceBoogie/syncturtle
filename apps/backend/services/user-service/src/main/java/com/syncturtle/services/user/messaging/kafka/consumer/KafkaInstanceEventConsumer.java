@@ -8,8 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.syncturtle.common.contracts.instance.event.InstanceEvent;
 import com.syncturtle.common.contracts.messaging.KafkaTopics;
-import com.syncturtle.services.user.model.Instance;
-import com.syncturtle.services.user.repository.InstanceRepository;
+import com.syncturtle.services.user.model.InstanceLite;
+import com.syncturtle.services.user.repository.InstanceLiteRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class KafkaInstanceEventConsumer {
 
-    private final InstanceRepository instanceRepository;
+    private final InstanceLiteRepository instanceRepository;
 
     @Transactional
     @KafkaListener(topics = KafkaTopics.INSTANCE_EVENTS_V1, groupId = "user-svc-instance-event-v1", containerFactory = "instanceKafkaListenerFactory")
@@ -38,7 +38,7 @@ public class KafkaInstanceEventConsumer {
             existing.setUpdatedAt(event.getUpdatedAt());
             existing.setVersion(event.getVersion());
         }, () -> {
-            Instance instance = new Instance();
+            InstanceLite instance = new InstanceLite();
             instance.setId(instanceId);
             instance.setEdition(event.getEdition());
             instance.setSetupDone(event.isSetupDone());

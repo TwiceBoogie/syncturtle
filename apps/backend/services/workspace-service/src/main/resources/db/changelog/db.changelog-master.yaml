@@ -12,3 +12,9 @@ databaseChangeLog:
   - include:
       file: releases/0002_add_outbox_messages.sql
       relativeToChangelogFile: true
+  - include:
+      file: releases/0003_adjust_workspace_member_invites_for_post_auth.sql
+      relativeToChangelogFile: true
+  - include:
+      file: releases/0004_add_outbox_trace_context.sql
+      relativeToChangelogFile: true

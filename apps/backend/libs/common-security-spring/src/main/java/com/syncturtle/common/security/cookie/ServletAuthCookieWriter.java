@@ -25,11 +25,17 @@ public final class ServletAuthCookieWriter {
         return cookieFactory.csrfCookieName();
     }
 
+    public String adminSessionHandoffCookieName() {
+        return cookieFactory.adminSessionHandoffCookieName();
+    }
+
     public void setAccessTokenCookie(HttpServletResponse response, String token, Duration maxAge) {
+        cookieFactory.legacyAccessTokenCookies().forEach(cookie -> addCookie(response, cookie));
         addCookie(response, cookieFactory.accessTokenCookie(token, maxAge));
     }
 
     public void setRefreshTokenCookie(HttpServletResponse response, String token, Duration maxAge) {
+        cookieFactory.legacyRefreshTokenCookies().forEach(cookie -> addCookie(response, cookie));
         addCookie(response, cookieFactory.refreshTokenCookie(token, maxAge));
     }
 
@@ -43,24 +49,34 @@ public final class ServletAuthCookieWriter {
         setRefreshTokenCookie(response, refreshToken, refreshMaxAge);
     }
 
+    public void setAdminSessionHandoffCookie(HttpServletResponse response, String completionCode, Duration maxAge) {
+        addCookie(response, cookieFactory.adminSessionHandoffCookie(completionCode, maxAge));
+    }
+
     public void clearAccessTokenCookie(HttpServletResponse response) {
-        addCookie(response, cookieFactory.clearAccessTokenCookie());
+        cookieFactory.clearAccessTokenCookies().forEach(cookie -> addCookie(response, cookie));
     }
 
     public void clearRefreshTokenCookie(HttpServletResponse response) {
-        addCookie(response, cookieFactory.clearRefreshTokenCookie());
+        cookieFactory.clearRefreshTokenCookies().forEach(cookie -> addCookie(response, cookie));
     }
 
     public void clearCsrfCookie(HttpServletResponse response) {
-        addCookie(response, cookieFactory.clearCsrfCookie());
+        cookieFactory.clearCsrfCookies().forEach(cookie -> addCookie(response, cookie));
+    }
+
+    public void clearAdminSessionHandoffCookie(HttpServletResponse response) {
+        addCookie(response, cookieFactory.clearAdminSessionHandoffCookie());
     }
 
     public void clearAuthCookies(HttpServletResponse response) {
-        cookieFactory.clearAuthCookies().forEach(cookie -> addCookie(response, cookie));
+        clearAccessTokenCookie(response);
+        clearRefreshTokenCookie(response);
     }
 
     public void clearAllSecurityCookies(HttpServletResponse response) {
-        cookieFactory.clearAllSecurityCookies().forEach(cookie -> addCookie(response, cookie));
+        clearAuthCookies(response);
+        clearCsrfCookie(response);
     }
 
     private void addCookie(HttpServletResponse response, ResponseCookie cookie) {

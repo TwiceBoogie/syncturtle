@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "@syncturtle/constants";
 import { APIService, HttpError } from "./api.service";
-import { IApiErrorPayload, ICsrfTokenData } from "@syncturtle/types";
+import type { IApiErrorPayload, ICsrfTokenData } from "@syncturtle/types";
 
 export class AuthService extends APIService {
   constructor() {
@@ -19,7 +19,7 @@ export class AuthService extends APIService {
 
   async signOut(): Promise<void> {
     try {
-      await this.post<void>("/api/auth/sign-out", undefined, {
+      await this.post<void>("/auth/admin/sign-out", undefined, {
         validateStatus: (s) => s >= 200 && s < 500,
       });
     } catch (error) {

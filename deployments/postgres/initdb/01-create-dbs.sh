@@ -1,8 +1,31 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
+: "${INSTANCE_DB_PASSWORD:?INSTANCE_DB_PASSWORD is required}"
+: "${INSTANCE_MIGRATOR_DB_PASSWORD:?INSTANCE_MIGRATOR_DB_PASSWORD is required}"
+: "${USER_DB_PASSWORD:?USER_DB_PASSWORD is required}"
+: "${USER_MIGRATOR_DB_PASSWORD:?USER_MIGRATOR_DB_PASSWORD is required}"
+: "${WORKSPACE_DB_PASSWORD:?WORKSPACE_DB_PASSWORD is required}"
+: "${WORKSPACE_MIGRATOR_DB_PASSWORD:?WORKSPACE_MIGRATOR_DB_PASSWORD is required}"
+: "${FILE_DB_PASSWORD:?FILE_DB_PASSWORD is required}"
+: "${FILE_MIGRATOR_DB_PASSWORD:?FILE_MIGRATOR_DB_PASSWORD is required}"
+: "${EMAIL_DB_PASSWORD:?EMAIL_DB_PASSWORD is required}"
+: "${EMAIL_MIGRATOR_DB_PASSWORD:?EMAIL_MIGRATOR_DB_PASSWORD is required}"
+
 psql -v ON_ERROR_STOP=1 \
-  --username "$POSTGRES_USER" \
-  --dbname "$POSTGRES_DB" <<'SQL'
+  --username "${POSTGRES_USER}" \
+  --dbname "${POSTGRES_DB}" \
+  --set=instance_app_password="${INSTANCE_DB_PASSWORD}" \
+  --set=instance_migrator_password="${INSTANCE_MIGRATOR_DB_PASSWORD}" \
+  --set=user_app_password="${USER_DB_PASSWORD}" \
+  --set=user_migrator_password="${USER_MIGRATOR_DB_PASSWORD}" \
+  --set=workspace_app_password="${WORKSPACE_DB_PASSWORD}" \
+  --set=workspace_migrator_password="${WORKSPACE_MIGRATOR_DB_PASSWORD}" \
+  --set=file_app_password="${FILE_DB_PASSWORD}" \
+  --set=file_migrator_password="${FILE_MIGRATOR_DB_PASSWORD}" \
+  --set=email_app_password="${EMAIL_DB_PASSWORD}" \
+  --set=email_migrator_password="${EMAIL_MIGRATOR_DB_PASSWORD}" <<'SQL'
 
 -- prevent public object creation in default db
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
@@ -10,8 +33,8 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 -- ================
 -- INSTANCE-SERVICE
 -- ================
-CREATE ROLE instance_migrator LOGIN PASSWORD 'instance_migrator_dev';
-CREATE ROLE instance_app LOGIN PASSWORD 'instance_app_dev';
+CREATE ROLE instance_migrator LOGIN PASSWORD :'instance_migrator_password';
+CREATE ROLE instance_app LOGIN PASSWORD :'instance_app_password';
 
 CREATE DATABASE syncturtle_instance OWNER instance_migrator;
 
@@ -35,8 +58,8 @@ ALTER DEFAULT PRIVILEGES FOR ROLE instance_migrator IN SCHEMA public
 
 \connect postgres
 
-CREATE ROLE user_migrator LOGIN PASSWORD 'user_migrator_dev';
-CREATE ROLE user_app LOGIN PASSWORD 'user_app_dev';
+CREATE ROLE user_migrator LOGIN PASSWORD :'user_migrator_password';
+CREATE ROLE user_app LOGIN PASSWORD :'user_app_password';
 
 CREATE DATABASE syncturtle_user OWNER user_migrator;
 
@@ -60,8 +83,8 @@ ALTER DEFAULT PRIVILEGES FOR ROLE user_migrator IN SCHEMA public
 
 \connect postgres
 
-CREATE ROLE workspace_migrator LOGIN PASSWORD 'workspace_migrator_dev';
-CREATE ROLE workspace_app LOGIN PASSWORD 'workspace_app_dev';
+CREATE ROLE workspace_migrator LOGIN PASSWORD :'workspace_migrator_password';
+CREATE ROLE workspace_app LOGIN PASSWORD :'workspace_app_password';
 
 CREATE DATABASE syncturtle_workspace OWNER workspace_migrator;
 
@@ -85,8 +108,8 @@ ALTER DEFAULT PRIVILEGES FOR ROLE workspace_migrator IN SCHEMA public
 
 \connect postgres
 
-CREATE ROLE email_migrator LOGIN PASSWORD 'email_migrator_dev';
-CREATE ROLE email_app LOGIN PASSWORD 'email_app_dev';
+CREATE ROLE email_migrator LOGIN PASSWORD :'email_migrator_password';
+CREATE ROLE email_app LOGIN PASSWORD :'email_app_password';
 
 CREATE DATABASE syncturtle_email OWNER email_migrator;
 
@@ -103,5 +126,30 @@ ALTER DEFAULT PRIVILEGES FOR ROLE email_migrator IN SCHEMA public
 
 ALTER DEFAULT PRIVILEGES FOR ROLE email_migrator IN SCHEMA public
   GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO email_app;
+
+-- ============
+-- FILE-SERVICE
+-- ============
+
+\connect postgres
+
+CREATE ROLE file_migrator LOGIN PASSWORD :'file_migrator_password';
+CREATE ROLE file_app LOGIN PASSWORD :'file_app_password';
+
+CREATE DATABASE syncturtle_file OWNER file_migrator;
+
+\connect syncturtle_file
+
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON DATABASE syncturtle_file FROM PUBLIC;
+
+GRANT CONNECT ON DATABASE syncturtle_file TO file_app;
+GRANT USAGE ON SCHEMA public TO file_app;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE file_migrator IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO file_app;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE file_migrator IN SCHEMA public
+  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO file_app;
 
 SQL

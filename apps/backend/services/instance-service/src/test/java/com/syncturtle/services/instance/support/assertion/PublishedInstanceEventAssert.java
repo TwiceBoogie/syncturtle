@@ -4,27 +4,23 @@ import java.time.Instant;
 import java.util.UUID;
 
 import org.assertj.core.api.AbstractAssert;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.syncturtle.common.contracts.instance.event.InstanceEvent;
 import com.syncturtle.common.contracts.instance.event.InstanceEvent.Type;
-import com.syncturtle.services.instance.messaging.db.event.InstanceEventToPublish;
 
-public final class PublishedInstanceEventAssert
-        extends AbstractAssert<PublishedInstanceEventAssert, InstanceEventToPublish> {
+public final class PublishedInstanceEventAssert extends AbstractAssert<PublishedInstanceEventAssert, InstanceEvent> {
 
-    private PublishedInstanceEventAssert(InstanceEventToPublish actual) {
+    private PublishedInstanceEventAssert(InstanceEvent actual) {
         super(actual, PublishedInstanceEventAssert.class);
     }
 
-    public static PublishedInstanceEventAssert assertThatPublishedEvent(InstanceEventToPublish actual) {
+    public static PublishedInstanceEventAssert assertThatPublishedEvent(InstanceEvent actual) {
         return new PublishedInstanceEventAssert(actual);
     }
 
     public PublishedInstanceEventAssert isInstanceUpdated() {
         isNotNull();
-        Object event = event();
-        Object type = ReflectionTestUtils.getField(event, "type");
+        Type type = actual.getType();
         if (type != Type.INSTANCE_UPDATED) {
             failWithMessage("Expected event type <%s> but was <%s>", Type.INSTANCE_UPDATED, type);
         }
@@ -33,7 +29,7 @@ public final class PublishedInstanceEventAssert
 
     public PublishedInstanceEventAssert hasInstanceId(UUID expectedId) {
         isNotNull();
-        Object actualId = ReflectionTestUtils.getField(event(), "id");
+        UUID actualId = actual.getId();
         if (!expectedId.equals(actualId)) {
             failWithMessage("Expected instance id <%s> but was <%s>", expectedId, actualId);
         }
@@ -42,7 +38,7 @@ public final class PublishedInstanceEventAssert
 
     public PublishedInstanceEventAssert occurredAt(Instant expected) {
         isNotNull();
-        Object occurredAt = ReflectionTestUtils.getField(event(), "occurredAt");
+        Instant occurredAt = actual.getOccurredAt();
         if (!expected.equals(occurredAt)) {
             failWithMessage("Expected occurredAt <%s> but was <%s>", expected, occurredAt);
         }
@@ -51,19 +47,11 @@ public final class PublishedInstanceEventAssert
 
     public PublishedInstanceEventAssert hasSetupDone(boolean expected) {
         isNotNull();
-        Object setupDone = ReflectionTestUtils.getField(event(), "setupDone");
+        boolean setupDone = actual.isSetupDone();
         if (!Boolean.valueOf(expected).equals(setupDone)) {
             failWithMessage("Expected setupDone <%s> but was <%s>", expected, setupDone);
         }
         return this;
-    }
-
-    private InstanceEvent event() {
-        Object event = ReflectionTestUtils.getField(actual, "event");
-        if (!(event instanceof InstanceEvent)) {
-            failWithMessage("Expected wrapper to contain InstanceEvent in field 'event' but was <%s>", event);
-        }
-        return (InstanceEvent) event;
     }
 
 }

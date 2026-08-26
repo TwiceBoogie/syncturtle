@@ -85,8 +85,8 @@ export abstract class APIService {
       APIService.refreshPromise = this.request<void>("POST", "/auth/refresh", {
         // keep refresh from recursively trying to refresh itself
         skipAuthRefresh: true,
-        csrf: false,
-        // accept 401/403 as parsed responess so we can convert them into a normal "refresh failed" error
+        // CSRF remains enabled for the cookie-authenticated refresh request.
+        // accept 401/403 as parsed responses so we can convert them into a normal "refresh failed" error
         validateStatus: (status) => status === 200 || status === 204 || status === 401 || status === 403,
       })
         .then((res) => {

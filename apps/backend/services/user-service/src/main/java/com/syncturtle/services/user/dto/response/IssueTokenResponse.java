@@ -2,7 +2,7 @@ package com.syncturtle.services.user.dto.response;
 
 import java.time.Instant;
 
-import com.syncturtle.services.user.service.session.AuthenticatedSessionReceipt;
+import com.syncturtle.services.user.service.collaborator.session.AuthenticatedSessionReceipt;
 
 import lombok.Builder;
 import lombok.Value;

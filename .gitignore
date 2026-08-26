@@ -29,6 +29,8 @@ dist/
 .turbo/
 **/.turbo/
 
+storybook-static
+
 coverage/
 **/coverage/
 
@@ -48,10 +50,14 @@ coverage/
 .env
 .env.local
 .env.*.local
+development/environment/.env.host-nginx
+development/environment/.env.host-direct
+development/secrets/
 
 # allow examples
 !.env.example
 !.env.*.example
+!development/environment/.env.*.example
 
 # ignore env files inside workspaces
 apps/**/.env
@@ -74,5 +80,4 @@ target/
 /data/
 
 tmp-keys/
-
 keys/

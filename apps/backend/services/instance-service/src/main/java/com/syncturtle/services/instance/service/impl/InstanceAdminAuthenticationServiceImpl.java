@@ -1,11 +1,8 @@
 package com.syncturtle.services.instance.service.impl;
 
-import java.time.Clock;
-import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
@@ -13,11 +10,11 @@ import org.springframework.util.Assert;
 import com.syncturtle.common.contracts.instance.admin.AdminSigninResponse;
 import com.syncturtle.common.contracts.instance.admin.AdminSignupResponse;
 import com.syncturtle.common.contracts.instance.event.InstanceEvent;
-import com.syncturtle.common.contracts.instance.event.InstanceEvent.Type;
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
-import com.syncturtle.common.contracts.auth.session.IssueInstanceAdminSessionRequest;
-import com.syncturtle.common.contracts.auth.session.IssueSessionResponse;
+import com.syncturtle.common.contracts.auth.session.AdminSessionHandoffResponse;
+import com.syncturtle.common.contracts.auth.session.CreateInstanceAdminSessionHandoffRequest;
+import com.syncturtle.common.contracts.auth.session.PreAuthTransactionBinding;
 import com.syncturtle.common.contracts.instance.admin.AdminSigninRequest;
 import com.syncturtle.common.contracts.instance.admin.AdminSignupRequest;
 import com.syncturtle.common.web.context.RequestClientContext;
@@ -26,20 +23,19 @@ import com.syncturtle.services.instance.client.UserClient;
 import com.syncturtle.services.instance.dto.request.InstanceAdminSigninForm;
 import com.syncturtle.services.instance.dto.request.InstanceAdminSignupForm;
 import com.syncturtle.services.instance.dto.response.InstanceAdminAuthResponse;
-import com.syncturtle.services.instance.messaging.db.event.InstanceEventToPublish;
+import com.syncturtle.services.instance.messaging.kafka.factory.InstanceEventFactory;
 import com.syncturtle.services.instance.model.Instance;
 import com.syncturtle.services.instance.model.InstanceAdmin;
 import com.syncturtle.services.instance.model.param.InstanceSetupCompletionParam;
 import com.syncturtle.services.instance.repository.InstanceAdminRepository;
 import com.syncturtle.services.instance.repository.InstanceRepository;
 import com.syncturtle.services.instance.service.InstanceAdminAuthenticationService;
+import com.syncturtle.services.instance.service.collaborator.outbox.InstanceOutboxWriter;
 
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InstanceAdminAuthenticationServiceImpl implements InstanceAdminAuthenticationService {
@@ -47,15 +43,18 @@ public class InstanceAdminAuthenticationServiceImpl implements InstanceAdminAuth
     private final InstanceRepository instanceRepository;
     private final InstanceAdminRepository instanceAdminRepository;
     private final UserClient userClient;
-    private final ApplicationEventPublisher events;
+    private final InstanceOutboxWriter outboxWriter;
+    private final InstanceEventFactory eventFactory;
     private final PublicUrlResolver hostResolver;
     private final TransactionTemplate transactionTemplate;
     private final RequestClientContext requestClientContext;
-    private final Clock clock;
 
     @Override
-    public InstanceAdminAuthResponse instanceAdminSignup(InstanceAdminSignupForm form) {
+    public InstanceAdminAuthResponse instanceAdminSignup(
+            InstanceAdminSignupForm form,
+            PreAuthTransactionBinding preAuthBinding) {
         Assert.notNull(form, "signup form is required");
+        Assert.notNull(preAuthBinding, "preAuthBinding is required");
 
         try {
             InstancePreflight preflight = runSignupPreflight();
@@ -66,7 +65,7 @@ public class InstanceAdminAuthenticationServiceImpl implements InstanceAdminAuth
             String password = form.getPassword();
             String companyName = form.getCompanyName().trim();
             boolean telemetryEnabled = form.isTelemetryEnabled();
-            log.info("This should be the user request Ip address: {}", requestClientContext.getClientIp());
+
             AdminSignupResponse userResponse = userClient.adminSignupPost(
                     AdminSignupRequest.builder()
                             .firstName(firstName)
@@ -88,27 +87,21 @@ public class InstanceAdminAuthenticationServiceImpl implements InstanceAdminAuth
                             telemetryEnabled)),
                     "pending admin session is required");
 
-            IssueSessionResponse session = issueInstanceAdminSession(pending);
-
-            return InstanceAdminAuthResponse.builder()
-                    .redirection(adminSuccessRedirect())
-                    .session(session)
-                    .build();
+            return success(createHandoff(pending, preAuthBinding));
         } catch (AuthException exception) {
-            return InstanceAdminAuthResponse.builder()
-                    .redirection(hostResolver.adminWithQuery("", exception.getErrorMap()))
-                    .session(null)
-                    .build();
+            return failure(exception);
         }
     }
 
     @Override
-    public InstanceAdminAuthResponse instanceAdminSignin(InstanceAdminSigninForm form) {
+    public InstanceAdminAuthResponse instanceAdminSignin(
+            InstanceAdminSigninForm form,
+            PreAuthTransactionBinding preAuthBinding) {
         Assert.notNull(form, "signin form is required");
+        Assert.notNull(preAuthBinding, "preAuthBinding is required");
 
         try {
             Instance instance = requireConfiguredInstance();
-
             String email = normalizeEmail(form.getEmail());
             String password = form.getPassword();
 
@@ -137,18 +130,39 @@ public class InstanceAdminAuthenticationServiceImpl implements InstanceAdminAuth
                     }),
                     "pending admin session is required");
 
-            IssueSessionResponse session = issueInstanceAdminSession(pending);
-
-            return InstanceAdminAuthResponse.builder()
-                    .redirection(adminSuccessRedirect())
-                    .session(session)
-                    .build();
+            return success(createHandoff(pending, preAuthBinding));
         } catch (AuthException exception) {
-            return InstanceAdminAuthResponse.builder()
-                    .redirection(hostResolver.adminWithQuery("", exception.getErrorMap()))
-                    .session(null)
-                    .build();
+            return failure(exception);
         }
+    }
+
+    private AdminSessionHandoffResponse createHandoff(PendingAdminSession pending,
+            PreAuthTransactionBinding preAuthBinding) {
+        return userClient.createInstanceAdminSessionHandoff(CreateInstanceAdminSessionHandoffRequest.builder()
+                .userId(pending.getUserId())
+                .instanceId(pending.getInstanceId())
+                .userAuthVersion(pending.getUserAuthVersion())
+                .adminSessionVersion(pending.getAdminSessionVersion())
+                .preAuthBinding(preAuthBinding)
+                .clientIp(requestClientContext.getClientIp())
+                .userAgent(requestClientContext.getUserAgent())
+                .build());
+    }
+
+    private InstanceAdminAuthResponse success(AdminSessionHandoffResponse handoff) {
+        Assert.notNull(handoff, "handoff is required");
+
+        return InstanceAdminAuthResponse.builder()
+                .redirection(hostResolver.api("/auth/admin/session"))
+                .handoff(handoff)
+                .build();
+    }
+
+    private InstanceAdminAuthResponse failure(AuthException exception) {
+        return InstanceAdminAuthResponse.builder()
+                .redirection(hostResolver.adminWithQuery("", exception.getErrorMap()))
+                .handoff(null)
+                .build();
     }
 
     private InstancePreflight runSignupPreflight() {
@@ -197,20 +211,6 @@ public class InstanceAdminAuthenticationServiceImpl implements InstanceAdminAuth
                 .build();
     }
 
-    private IssueSessionResponse issueInstanceAdminSession(PendingAdminSession pending) {
-        Assert.notNull(pending, "pending session is required");
-
-        return userClient.issueInstanceAdminSessionPost(
-                IssueInstanceAdminSessionRequest.builder()
-                        .userId(pending.getUserId())
-                        .instanceId(pending.getInstanceId())
-                        .userAuthVersion(pending.getUserAuthVersion())
-                        .adminSessionVersion(pending.getAdminSessionVersion())
-                        .clientIp(requestClientContext.getClientIp())
-                        .userAgent(requestClientContext.getUserAgent())
-                        .build());
-    }
-
     private Instance requireConfiguredInstance() {
         return instanceRepository.findFirstByDeletedAtIsNullOrderByCreatedAtDesc(Instance.class)
                 .orElseThrow(() -> AuthException.of(AuthErrorCode.INSTANCE_NOT_CONFIGURED));
@@ -222,27 +222,9 @@ public class InstanceAdminAuthenticationServiceImpl implements InstanceAdminAuth
         }
     }
 
-    private String adminSuccessRedirect() {
-        return hostResolver.admin("/general");
-    }
-
     private void publishInstanceUpdate(Instance instance) {
-        Instant now = Instant.now(clock);
-
-        InstanceEvent event = InstanceEvent.builder()
-                .eventId(UUID.randomUUID().toString())
-                .occurredAt(now)
-                .type(Type.INSTANCE_UPDATED)
-                .id(instance.getId())
-                .setupDone(instance.isSetupDone())
-                .edition(instance.getEdition())
-                .version(instance.getVersion())
-                .test(instance.isTest())
-                .createdAt(instance.getCreatedAt())
-                .updatedAt(instance.getUpdatedAt())
-                .build();
-
-        events.publishEvent(new InstanceEventToPublish(event));
+        InstanceEvent event = eventFactory.updated(instance);
+        outboxWriter.saveInstanceEvent(event);
     }
 
     private static String normalizeEmail(String email) {

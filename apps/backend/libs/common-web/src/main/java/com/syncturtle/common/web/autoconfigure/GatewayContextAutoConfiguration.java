@@ -15,7 +15,7 @@ import com.syncturtle.common.web.context.RequestClientContext;
 import com.syncturtle.common.web.context.RequestUserContext;
 import com.syncturtle.common.web.filter.GatewayClientHeaderFilter;
 import com.syncturtle.common.web.filter.GatewayUserHeaderFilter;
-import com.syncturtle.common.web.properties.GatewayContextProperties;
+import com.syncturtle.common.web.property.GatewayContextProperties;
 
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
@@ -53,8 +53,7 @@ public class GatewayContextAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean(name = "gatewayUserHeaderFilterRegistration")
         FilterRegistrationBean<GatewayUserHeaderFilter> gatewayUserHeaderFilterRegistration(
-                RequestUserContext requestUserContext,
-                GatewayContextProperties properties) {
+                RequestUserContext requestUserContext) {
             FilterRegistrationBean<GatewayUserHeaderFilter> registration = new FilterRegistrationBean<>();
 
             registration.setName("gatewayUserHeaderFilter");
@@ -69,8 +68,7 @@ public class GatewayContextAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean(name = "gatewayClientHeaderFilterRegistration")
         FilterRegistrationBean<GatewayClientHeaderFilter> gatewayClientHeaderFilterRegistration(
-                RequestClientContext requestClientContext,
-                GatewayContextProperties properties) {
+                RequestClientContext requestClientContext) {
             FilterRegistrationBean<GatewayClientHeaderFilter> registration = new FilterRegistrationBean<>();
 
             registration.setName("gatewayClientHeaderFilter");

@@ -33,25 +33,70 @@ spring:
             compression: true
             pool:
               type: fixed
-              maxConnections: 200
+              max-connections: 200
               acquire-timeout: 2000
-              maxIdleTime: 5m
-              maxLifeTime: 5m
+              max-idle-time: 5m
+              max-life-time: 5m
               eviction-interval: 2m
               leasing-strategy: lifo
               metrics: true
 
           routes:
-            - id: auth-endpoints
+            - id: auth-public-credential-endpoints
               uri: ${app.services.user-service.base-url}
               predicates:
-                - Path=/auth/**
+                - Path=/auth/email-check,/auth/magic-generate,/auth/sign-in,/auth/sign-up,/auth/magic-sign-in,/auth/magic-sign-up,/auth/forgot-password,/auth/reset-password/**
+                - Method=POST,OPTIONS
+              metadata:
+                security: PUBLIC
+
+            - id: auth-public-oauth-endpoints
+              uri: ${app.services.user-service.base-url}
+              predicates:
+                - Path=/auth/google,/auth/google/callback,/auth/github,/auth/github/callback,/auth/gitlab,/auth/gitlab/callback
+                - Method=GET,OPTIONS,HEAD
+              metadata:
+                security: PUBLIC
+
+            - id: auth-refresh-public
+              uri: ${app.services.user-service.base-url}
+              predicates:
+                - Path=/auth/refresh,/auth/refresh/
+                - Method=POST,OPTIONS
+              metadata:
+                security: PUBLIC
+
+            - id: auth-admin-session-completion-public
+              uri: ${app.services.user-service.base-url}
+              predicates:
+                - Path=/auth/admin/session,/auth/admin/session/
+                - Method=GET,OPTIONS
+              metadata:
+                security: PUBLIC
+
+            - id: auth-sign-out-public
+              uri: ${app.services.user-service.base-url}
+              predicates:
+                - Path=/auth/sign-out,/auth/sign-out/
+                - Method=POST,OPTIONS
+              metadata:
+                security: PUBLIC
+
+            - id: auth-set-password-protected
+              uri: ${app.services.user-service.base-url}
+              predicates:
+                - Path=/auth/set-password,/auth/set-password/
+                - Method=POST,OPTIONS
+              metadata:
+                security: PROTECTED
 
             - id: instance-root-public
               uri: ${app.services.instance-service.base-url}
               predicates:
                 - Path=/api/instances,/api/instances/
                 - Method=GET,OPTIONS,HEAD
+              metadata:
+                security: PUBLIC
               filters:
                 - name: CircuitBreaker
                   args:
@@ -62,90 +107,110 @@ spring:
                       - 503
                       - 504
 
-            - id: instance-admin-session
+            - id: instance-admin-session-optional-auth
               uri: ${app.services.instance-service.base-url}
               predicates:
                 - Path=/api/instances/admins/session,/api/instances/admins/session/
                 - Method=GET,OPTIONS,HEAD
+              metadata:
+                security: OPTIONAL_AUTH
 
-            - id: instance-admin-sign-in
+            - id: instance-admin-sign-in-public
               uri: ${app.services.instance-service.base-url}
               predicates:
                 - Path=/api/instances/admins/sign-in,/api/instances/admins/sign-in/
                 - Method=POST,OPTIONS
+              metadata:
+                security: PUBLIC
 
-            - id: instance-admin-sign-up
+            - id: instance-admin-sign-up-public
               uri: ${app.services.instance-service.base-url}
               predicates:
                 - Path=/api/instances/admins/sign-up,/api/instances/admins/sign-up/
                 - Method=POST,OPTIONS
+              metadata:
+                security: PUBLIC
 
-            # INSTANCE: PROTECTED
-            - id: instance-admin-sign-out-rewrite
+            - id: auth-admin-sign-out-public-rewrite
               uri: ${app.services.user-service.base-url}
               predicates:
-                - Path=/api/instances/admins/sign-out/**
+                - Path=/auth/admin/sign-out,/auth/admin/sign-out/
                 - Method=POST,OPTIONS
+              metadata:
+                security: PUBLIC
               filters:
-                - RewritePath=/api/instances/admins/sign-out, /auth/sign-out
+                - RewritePath=^/auth/admin/sign-out/?$, /auth/sign-out
                 - AddRequestHeader=X-ST-Internal-Logout-CTX, ADMIN
-                - name: PassportAuthentication
-                  args:
-                    validate-session: true
-                    validate-user-auth-version: true
-                    validate-admin-session-version: true
-                    require-session-id: true
-                    require-instance-id: true
 
             - id: instance-workspace-protected
               uri: ${app.services.instance-service.base-url}
               predicates:
                 - Path=/api/instances/workspaces/**
-              filters:
-                - name: PassportAuthentication
+              metadata:
+                security: PROTECTED
 
-            - id: instance-email-credentials-check
+            - id: instance-email-credentials-check-protected
               uri: ${app.services.email-service.base-url}
               predicates:
                 - Path=/api/instances/email-credentials-check/**
                 - Method=POST
               metadata:
+                security: PROTECTED
                 response-timeout: 15000
                 connect-timeout: 5000
-              filters:
-                - name: PassportAuthentication
-                  args:
-                    validate-admin-session-version: true
 
             - id: instance-protected
               uri: ${app.services.instance-service.base-url}
               predicates:
-                - Path=/api/instances/admins/**, /api/instances/configurations/**
+                - Path=/api/instances/admins/**,/api/instances/configurations/**
                 - Method=GET,OPTIONS,HEAD,DELETE
-              filters:
-                - name: PassportAuthentication
-                  args:
-                    validate-admin-session-version: true
+              metadata:
+                security: PROTECTED
 
-            - id: instance-admin-post
+            - id: instance-admin-post-protected
               uri: ${app.services.instance-service.base-url}
               predicates:
                 - Path=/api/instances/**
                 - Method=POST
-              filters:
-                - name: PassportAuthentication
-                  args:
-                    validate-admin-session-version: true
+              metadata:
+                security: PROTECTED
 
-            - id: instance-admin-patch
+            - id: instance-admin-patch-protected
               uri: ${app.services.instance-service.base-url}
               predicates:
                 - Path=/api/instances/**
                 - Method=PATCH
-              filters:
-                - name: PassportAuthentication
-                  args:
-                    validate-admin-session-version: true
+              metadata:
+                security: PROTECTED
+
+            - id: user-workspace-get-protected
+              uri: ${app.services.workspace-service.base-url}
+              predicates:
+                - Path=/api/users/me/workspaces/**
+                - Method=GET,OPTIONS,HEAD
+              metadata:
+                security: PROTECTED
+
+            - id: workspace-protected
+              uri: ${app.services.workspace-service.base-url}
+              predicates:
+                - Path=/api/workspaces/**
+              metadata:
+                security: PROTECTED
+
+            - id: user-protected
+              uri: ${app.services.user-service.base-url}
+              predicates:
+                - Path=/api/users/**
+              metadata:
+                security: PROTECTED
+
+            - id: file-service-protected
+              uri: ${app.services.file-service.base-url}
+              predicates:
+                - Path=/api/assets/**
+              metadata:
+                security: PROTECTED
 
 resilience4j:
   circuitbreaker:
@@ -165,25 +230,12 @@ resilience4j:
 app:
   passport:
     gateway:
-      issuer: ${APP_PASSPORT_ISSUER:https://api.syncturtle.com/auth}
-      audience: ${APP_PASSPORT_AUDIENCE:syncturtle-api}
+      issuer: ${APP_PASSPORT_ISSUER}
+      audience: ${APP_PASSPORT_AUDIENCE}
       auth-header-prefix: X-Auth-
-      redis:
-        session-key-prefix: "auth:session:"
-        user-version-key-prefix: "auth:user-version:"
-        admin-session-version-key-prefix: "auth:admin-session-version:"
   gateway:
-    session:
-      redisKeyPrefix: st
-      sessionTtl: 30m
-      absoluteTtl: 30d
-      renewWhenRemainingFraction: 0.25
-      cookie:
-        httpOnly: true
-        secure: false
-        sameSite: Lax
-        path: /
-        domain: ""
+    client-metadata:
+      trusted-proxy-count: ${GATEWAY_TRUSTED_PROXY_COUNT:0}
   security:
     encryption:
       secret-key: ${APP_SECURITY_ENCRYPTION_SECRET_KEY}
@@ -192,9 +244,7 @@ app:
       signing-key: ${APP_SECURITY_CSRF_SIGNING_KEY}
     cookies:
       secure: ${APP_SECURITY_COOKIES_SECURE:false}
-      host-prefix-enabled: ${APP_SECURITY_COOKIES_HOST_PREFIX_ENABLED:false}
-      domain: ${APP_SECURITY_COOKIES_DOMAIN:}
-      path: /
+      managed-prefix-enabled: ${APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED:false}
       access-same-site: Lax
       refresh-same-site: Lax
       csrf-same-site: Lax

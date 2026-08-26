@@ -1,4 +1,5 @@
-import { FC, useEffect, useMemo, useState } from "react";
+import type { FC } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 // heroui
 import {
@@ -19,6 +20,7 @@ import { Eye, EyeOff, Mail } from "lucide-react";
 // components
 import { AuthHeader } from "../common/auth-header";
 import { Banner } from "../common/banner";
+import { createSetupCsrfLoader, isSetupSubmitDisabled } from "./setup-csrf-loader";
 // constants
 import { API_BASE_URL, E_PASSWORD_STRENGTH } from "@syncturtle/constants";
 // services
@@ -61,6 +63,8 @@ type TError = {
   message: string | undefined;
 };
 
+type TCsrfStatus = "loading" | "ready" | "error";
+
 const parseBool = (value: string | null, defaultValue: boolean) => {
   if (value == null) return defaultValue;
   const v = value.toLowerCase();
@@ -96,10 +100,13 @@ export const InstanceSetupFrom: FC = (props) => {
   }));
 
   const [csrfToken, setCsrfToken] = useState<string | undefined>(undefined);
+  const [csrfStatus, setCsrfStatus] = useState<TCsrfStatus>("loading");
   const [isPasswordInputFocused, setIsPasswordInputFocused] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRetryPasswordInputFocused, setIsRetryPasswordInputFocus] = useState(false);
   const [confirmTouched, setConfirmTouched] = useState(false);
+
+  const loadCsrfToken = useMemo(() => createSetupCsrfLoader(() => authService.requestCSRFToken()), []);
 
   const handleShowPassword = (key: keyof typeof showPassword) =>
     setShowPassword((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -107,11 +114,26 @@ export const InstanceSetupFrom: FC = (props) => {
   const handleFormChange = (key: keyof TFormData, value: string | boolean) =>
     setFormData((prev) => ({ ...prev, [key]: value }));
 
+  const requestCsrfToken = useCallback(async () => {
+    void loadCsrfToken()
+      .then((token) => {
+        setCsrfToken(token);
+        setCsrfStatus("ready");
+      })
+      .catch(() => {
+        setCsrfStatus("error");
+      });
+  }, [loadCsrfToken]);
+
+  const retryCsrfToken = useCallback(() => {
+    setCsrfStatus("loading");
+    setCsrfToken(undefined);
+    requestCsrfToken();
+  }, [requestCsrfToken]);
+
   useEffect(() => {
-    if (csrfToken === undefined) {
-      authService.requestCSRFToken().then((data) => data?.csrfToken && setCsrfToken(data.csrfToken));
-    }
-  });
+    requestCsrfToken();
+  }, [requestCsrfToken]);
 
   // derived values
   const errorData: TError = useMemo(() => {
@@ -135,19 +157,18 @@ export const InstanceSetupFrom: FC = (props) => {
     } else return { type: undefined, message: undefined };
   }, [errorCode, errorMessage]);
 
-  const isButtonDisabled = useMemo(
-    () =>
-      !isSubmitting &&
+  const isButtonDisabled = useMemo(() => {
+    const hasValidFormData = Boolean(
       formData.firstName &&
       formData.lastName &&
       formData.email &&
       formData.password &&
       getPasswordStrength(formData.password) === E_PASSWORD_STRENGTH.STRENGTH_VALID &&
       formData.password === formData.confirmPassword
-        ? false
-        : true,
-    [isSubmitting, formData.firstName, formData.lastName, formData.password, formData.confirmPassword, formData.email]
-  );
+    );
+
+    return isSetupSubmitDisabled({ csrfToken, hasValidFormData, isSubmitting });
+  }, [csrfToken, isSubmitting, formData]);
 
   return (
     <>
@@ -169,6 +190,14 @@ export const InstanceSetupFrom: FC = (props) => {
                 ![EErrorCodes.INVALID_EMAIL, EErrorCodes.INVALID_PASSWORD].includes(errorData.type) && (
                   <Banner type="error" message={errorData?.message} />
                 )}
+              {csrfStatus === "error" && (
+                <div className="flex flex-col items-center gap-2" role="alert">
+                  <Banner type="error" message="Unable to prepare secure setup. Try again." />
+                  <Button type="button" onPress={retryCsrfToken}>
+                    Retry secure setup
+                  </Button>
+                </div>
+              )}
               <FieldGroup>
                 <Input type="hidden" name="csrfmiddlewaretoken" value={csrfToken ?? ""} />
                 <Input type="hidden" name="isTelemetryEnabled" value={formData.isTelemetryEnabled ? "True" : "False"} />

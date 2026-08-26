@@ -7,17 +7,22 @@ import org.springframework.context.annotation.Configuration;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.syncturtle.services.email.configuration.property.SyncturtleConfig;
-import com.syncturtle.services.email.dto.EmailRuntimeConfig;
+import com.syncturtle.services.email.configuration.property.EmailRuntimeConfigCacheProperties;
+import com.syncturtle.services.email.service.collaborator.EmailRuntimeConfigSnapshot;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration(proxyBeanMethods = false)
+@RequiredArgsConstructor
 public class EmailRuntimeConfigCacheConfiguration {
 
+    private final EmailRuntimeConfigCacheProperties properties;
+
     @Bean
-    Cache<String, EmailRuntimeConfig> emailRuntimeConfigCache(SyncturtleConfig syncturtleConfig) {
+    Cache<String, EmailRuntimeConfigSnapshot> emailRuntimeConfigCache() {
         return Caffeine.newBuilder()
                 .maximumSize(1)
-                .expireAfterWrite(syncturtleConfig.getEmail().getCacheTtl().toMillis(), TimeUnit.MILLISECONDS)
+                .expireAfterWrite(properties.getTtl().toMillis(), TimeUnit.MILLISECONDS)
                 .build();
     }
 

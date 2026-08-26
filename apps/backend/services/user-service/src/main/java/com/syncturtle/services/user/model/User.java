@@ -9,6 +9,7 @@ import org.springframework.util.Assert;
 import com.syncturtle.common.core.actor.PrincipalType;
 import com.syncturtle.common.data.jpa.entity.AuditedEntity;
 import com.syncturtle.services.user.model.param.UserCreateParam;
+import com.syncturtle.services.user.model.param.UserUpdateParam;
 import com.syncturtle.services.user.model.support.ValidTimeZone;
 
 import jakarta.persistence.Access;
@@ -119,6 +120,18 @@ public class User extends AuditedEntity {
         User user = new User();
         user.initializeForCreate(param, clock);
         return user;
+    }
+
+    public void update(UserUpdateParam param) {
+        this.firstName = param.getFirstName();
+        this.lastName = param.getLastName();
+        this.displayName = param.getDisplayName();
+
+        if (param.getAvatarAssetId() != null) {
+            assignAvatar(param.getAvatarAssetId());
+        } else {
+            clearAvatar();
+        }
     }
 
     public void markEmailVerified() {
