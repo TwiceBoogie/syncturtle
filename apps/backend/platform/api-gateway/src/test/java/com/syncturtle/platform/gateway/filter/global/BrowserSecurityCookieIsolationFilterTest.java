@@ -1,5 +1,8 @@
 package com.syncturtle.platform.gateway.filter.global;
 
+import static com.syncturtle.common.core.header.GatewayHeaders.HDR_AUTH_SESSION_ID;
+import static com.syncturtle.common.core.header.GatewayHeaders.HDR_AUTH_USER_ID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -192,6 +195,40 @@ class BrowserSecurityCookieIsolationFilterTest {
             // assert
             assertThat(downstreamCookie).hasValue("admin_session_handoff=handoff; csrf_token=csrf");
             // assert
+        }
+
+        @Test
+        @DisplayName("strips browser credentials but preserves trusted identity for session revocation")
+        void stripsBrowserCredentialsButPreservesTrustedIdentityForSessionRevocation() {
+            // arrange
+            String userId = "11111111-1111-1111-1111-111111111111";
+            String sessionId = "22222222-2222-2222-2222-222222222222";
+            MockServerHttpRequest request = MockServerHttpRequest.delete("/api/users/me/sessions/others")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer access")
+                    .header("X-CSRF-Token", "raw-csrf")
+                    .header(HDR_AUTH_USER_ID, userId)
+                    .header(HDR_AUTH_SESSION_ID, sessionId)
+                    .cookie(
+                            new HttpCookie("access_token", "access"),
+                            new HttpCookie("refresh_token", "refresh"),
+                            new HttpCookie("csrf_token", "signed-csrf"))
+                    .build();
+            MockServerWebExchange exchange = MockServerWebExchange.from(request);
+            AtomicReference<HttpHeaders> downstreamHeaders = new AtomicReference<>();
+            GatewayFilterChain chain = current -> {
+                downstreamHeaders.set(current.getRequest().getHeaders());
+                return Mono.empty();
+            };
+            // conditions
+            // act
+            filter.filter(exchange, chain).block();
+            // assert
+            assertThat(downstreamHeaders.get().containsHeader(HttpHeaders.COOKIE)).isFalse();
+            assertThat(downstreamHeaders.get().containsHeader(HttpHeaders.AUTHORIZATION)).isFalse();
+            assertThat(downstreamHeaders.get().containsHeader("X-CSRF-Token")).isFalse();
+            assertThat(downstreamHeaders.get().getFirst(HDR_AUTH_USER_ID)).isEqualTo(userId);
+            assertThat(downstreamHeaders.get().getFirst(HDR_AUTH_SESSION_ID)).isEqualTo(sessionId);
+            // verify
         }
 
     }

@@ -273,6 +273,30 @@ class BrowserSecurityCookiePolicyTest {
             // verify
         }
 
+        @Test
+        @DisplayName("forwards no cookies to session inventory or revocation routes")
+        void forwardsNoCookiesToSessionInventoryOrRevocationRoutes() {
+            // arrange
+            HttpCookie accessToken = new HttpCookie("access_token", "access");
+            HttpCookie refreshToken = new HttpCookie("refresh_token", "refresh");
+            HttpCookie csrfToken = new HttpCookie("csrf_token", "csrf");
+            MockServerHttpRequest inventory = MockServerHttpRequest.get("/api/users/me/sessions")
+                    .cookie(accessToken, refreshToken, csrfToken)
+                    .build();
+            MockServerHttpRequest revocation = MockServerHttpRequest
+                    .delete("/api/users/me/sessions/others")
+                    .cookie(accessToken, refreshToken, csrfToken)
+                    .build();
+            // conditions
+            // act
+            Decision inventoryDecision = policy.decide(inventory);
+            Decision revocationDecision = policy.decide(revocation);
+            // assert
+            assertThat(inventoryDecision.getDownstreamCookies()).isEmpty();
+            assertThat(revocationDecision.getDownstreamCookies()).isEmpty();
+            // verify
+        }
+
     }
 
     private static MockServerHttpRequest.BodyBuilder post(String path) {

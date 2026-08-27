@@ -58,7 +58,7 @@ class CsrfMiddlewareFilterTest {
         void permitsSafeRequestWithoutCsrfPair() {
             // arrange
             MockServerWebExchange exchange = MockServerWebExchange.from(
-                    MockServerHttpRequest.get("/api/users/me").build());
+                    MockServerHttpRequest.get("/api/users/me/sessions").build());
             AtomicBoolean forwarded = new AtomicBoolean();
             GatewayFilterChain chain = current -> {
                 forwarded.set(true);
@@ -181,8 +181,9 @@ class CsrfMiddlewareFilterTest {
         }
 
         @Test
+        @DisplayName("permits form logout with matching form field and cookie")
         void permitsFormLogoutWithMatchingFormFieldAndCookie() {
-            when(tokenService.matches(SIGNED_TOKEN, RAW_TOKEN)).thenReturn(true);
+            // arrange
             MockServerHttpRequest request = MockServerHttpRequest.post("/api/instances/admins/sign-out")
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .cookie(new HttpCookie(COOKIE_NAME, SIGNED_TOKEN))
@@ -193,13 +194,17 @@ class CsrfMiddlewareFilterTest {
                     .doOnNext(formData -> forwarded.set(
                             RAW_TOKEN.equals(formData.getFirst("csrfmiddlewaretoken"))))
                     .then();
-
+            // conditions
+            when(tokenService.matches(SIGNED_TOKEN, RAW_TOKEN)).thenReturn(true);
+            // act
             filter.filter(exchange, chain).block();
-
+            // assert
             assertThat(forwarded).isTrue();
+            // verify
         }
 
         @Test
+        @DisplayName("permits form with one shot body and preserves body for forwarding")
         void permitsFormWithOneShotBodyAndPreservesBodyForForwarding() {
             // arrange
             String requestBody = "csrfmiddlewaretoken=" + RAW_TOKEN + "&firstName=Luna";
@@ -211,7 +216,6 @@ class CsrfMiddlewareFilterTest {
                 byte[] bodyBytes = requestBody.getBytes(StandardCharsets.UTF_8);
                 return Flux.just(DefaultDataBufferFactory.sharedInstance.wrap(bodyBytes));
             });
-            when(tokenService.matches(SIGNED_TOKEN, RAW_TOKEN)).thenReturn(true);
             MockServerHttpRequest request = MockServerHttpRequest.post("/api/instances/admins/sign-up")
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .cookie(new HttpCookie(COOKIE_NAME, SIGNED_TOKEN))
@@ -224,7 +228,8 @@ class CsrfMiddlewareFilterTest {
                         DataBufferUtils.release(buffer);
                     })
                     .then();
-
+            // conditions
+            when(tokenService.matches(SIGNED_TOKEN, RAW_TOKEN)).thenReturn(true);
             // act
             filter.filter(exchange, chain).block();
 

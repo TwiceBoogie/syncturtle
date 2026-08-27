@@ -535,6 +535,301 @@ class RefreshSessionFamilyStoreIT {
     }
 
     @Nested
+    @DisplayName("inventory(String, String, Instant)")
+    class InventoryTests {
+
+        @Test
+        @DisplayName("returns owned families and repairs base and elevated index drift")
+        void returnsOwnedFamiliesAndRepairsIndexDrift() {
+            // arrange
+            RefreshSessionLifecycleResult normal = store.create(baseCreateParam("normal"));
+            clock.advance(Duration.ofSeconds(1));
+            RefreshSessionLifecycleResult current = store.create(adminCreateParam("current-admin"));
+            redis.opsForZSet().remove(keys.baseIndex(USER_ID), normal.getSessionId());
+            redis.opsForZSet().remove(keys.baseIndex(USER_ID), current.getSessionId());
+            redis.opsForZSet().remove(keys.elevatedIndex(USER_ID), current.getSessionId());
+            redis.opsForZSet().add(
+                    keys.elevatedIndex(USER_ID),
+                    normal.getSessionId(),
+                    normal.getFamily().getLastUsedAt().toEpochMilli());
+            // conditions
+            // act
+            List<RefreshSessionFamilySnapshot> result = store.inventory(
+                    USER_ID,
+                    current.getSessionId(),
+                    clock.instant());
+            // assert
+            assertThat(result)
+                    .extracting(snapshot -> snapshot.getSessionId().toString())
+                    .containsExactlyInAnyOrder(normal.getSessionId(), current.getSessionId());
+            assertThat(redis.opsForZSet().score(keys.baseIndex(USER_ID), current.getSessionId()))
+                    .isEqualTo((double) current.getFamily().getLastUsedAt().toEpochMilli());
+            assertThat(redis.opsForZSet().score(keys.baseIndex(USER_ID), normal.getSessionId()))
+                    .isEqualTo((double) normal.getFamily().getLastUsedAt().toEpochMilli());
+            assertThat(redis.opsForZSet().score(keys.elevatedIndex(USER_ID), current.getSessionId()))
+                    .isEqualTo((double) current.getFamily().getLastUsedAt().toEpochMilli());
+            assertThat(redis.opsForZSet().score(keys.elevatedIndex(USER_ID), normal.getSessionId())).isNull();
+            // verify
+        }
+
+        @Test
+        @DisplayName("cleans missing indexed family and unusable grace state")
+        void cleansMissingIndexedFamilyAndGraceState() {
+            // arrange
+            RefreshSessionLifecycleResult current = store.create(baseCreateParam("current"));
+            RefreshSessionLifecycleResult missing = store.create(baseCreateParam("missing"));
+            redis.opsForValue().set(keys.grace(missing.getSessionId()), "unusable-grace");
+            redis.delete(keys.session(missing.getSessionId()));
+            // conditions
+            // act
+            List<RefreshSessionFamilySnapshot> result = store.inventory(
+                    USER_ID,
+                    current.getSessionId(),
+                    clock.instant());
+            // assert
+            assertThat(result)
+                    .extracting(snapshot -> snapshot.getSessionId().toString())
+                    .containsExactly(current.getSessionId());
+            assertFamilyCompletelyAbsent(missing.getSessionId());
+            // verify
+        }
+
+        @Test
+        @DisplayName("omits and compare deletes expired non current family")
+        void omitsAndCompareDeletesExpiredNonCurrentFamily() {
+            // arrange
+            RefreshSessionLifecycleResult expired = store.create(baseCreateParam("expired"));
+            clock.advance(Duration.ofDays(6));
+            RefreshSessionLifecycleResult current = store.create(baseCreateParam("current"));
+            clock.advance(Duration.ofDays(1));
+            // conditions
+            // act
+            List<RefreshSessionFamilySnapshot> result = store.inventory(
+                    USER_ID,
+                    current.getSessionId(),
+                    clock.instant());
+            // assert
+            assertThat(result)
+                    .extracting(snapshot -> snapshot.getSessionId().toString())
+                    .containsExactly(current.getSessionId());
+            assertFamilyCompletelyAbsent(expired.getSessionId());
+            // verify
+        }
+
+        @Test
+        @DisplayName("missing or expired current family fails authentication state")
+        void missingOrExpiredCurrentFamilyFailsAuthenticationState() {
+            // arrange
+            RefreshSessionLifecycleResult missing = store.create(baseCreateParam("missing-current"));
+            redis.delete(keys.session(missing.getSessionId()));
+            // conditions
+            // act
+            RefreshSessionLifecycleException missingFailure = catchThrowableOfType(
+                    RefreshSessionLifecycleException.class,
+                    () -> store.inventory(USER_ID, missing.getSessionId(), clock.instant()));
+            // assert
+            assertThat(missingFailure.getReason()).isEqualTo(RefreshSessionLifecycleException.Reason.MISSING_FAMILY);
+            // arrange
+            RefreshSessionLifecycleResult expired = store.create(baseCreateParam("expired-current"));
+            clock.advance(Duration.ofDays(7));
+            // conditions
+            // act
+            RefreshSessionLifecycleException expiredFailure = catchThrowableOfType(
+                    RefreshSessionLifecycleException.class,
+                    () -> store.inventory(USER_ID, expired.getSessionId(), clock.instant()));
+            // assert
+            assertThat(expiredFailure.getReason()).isEqualTo(RefreshSessionLifecycleException.Reason.EXPIRED_FAMILY);
+            assertFamilyCompletelyAbsent(expired.getSessionId());
+            // verify
+        }
+
+        @Test
+        @DisplayName("malformed or cross owner state fails without partial inventory or foreign deletion")
+        void malformedOrCrossOwnerStateFailsWithoutPartialInventoryOrForeignDeletion() {
+            // arrange
+            RefreshSessionLifecycleResult malformedCurrent = store.create(baseCreateParam("current"));
+            RefreshSessionLifecycleResult malformed = store.create(baseCreateParam("malformed"));
+            redis.opsForValue().set(keys.session(malformed.getSessionId()), "{}");
+            // conditions
+            // act
+            RefreshSessionLifecycleException malformedFailure = catchThrowableOfType(
+                    RefreshSessionLifecycleException.class,
+                    () -> store.inventory(USER_ID, malformedCurrent.getSessionId(), clock.instant()));
+            // assert
+            assertThat(malformedFailure.getReason()).isEqualTo(RefreshSessionLifecycleException.Reason.MALFORMED_STATE);
+            assertThat(redis.hasKey(keys.session(malformedCurrent.getSessionId()))).isTrue();
+            assertThat(redis.hasKey(keys.session(malformed.getSessionId()))).isTrue();
+            // arrange
+            deleteProposalTestKeys();
+            RefreshSessionLifecycleResult foreignCurrent = store.create(baseCreateParam("current"));
+            RefreshSessionLifecycleResult foreign = store.create(foreignCreateParam("foreign"));
+            redis.opsForZSet().add(
+                    keys.baseIndex(USER_ID),
+                    foreign.getSessionId(),
+                    foreign.getFamily().getLastUsedAt().toEpochMilli());
+            String currentSessionId = foreignCurrent.getSessionId();
+            // conditions
+            // act
+            RefreshSessionLifecycleException foreignFailure = catchThrowableOfType(
+                    RefreshSessionLifecycleException.class,
+                    () -> store.inventory(USER_ID, currentSessionId, clock.instant()));
+            // assert
+            assertThat(foreignFailure.getReason()).isEqualTo(RefreshSessionLifecycleException.Reason.MALFORMED_STATE);
+            assertThat(redis.hasKey(keys.session(foreign.getSessionId()))).isTrue();
+            assertThat(redis.opsForZSet().score(keys.baseIndex(FOREIGN_USER_ID), foreign.getSessionId())).isNotNull();
+            // verify
+        }
+
+        @Test
+        @DisplayName("unsupported record fails complete inventory without deleting family")
+        void unsupportedRecordFailsCompleteInventoryWithoutDeletingFamily() throws Exception {
+            // arrange
+            RefreshSessionLifecycleResult current = store.create(baseCreateParam("current"));
+            RefreshSessionLifecycleResult unsupported = store.create(baseCreateParam("unsupported"));
+            ObjectNode json = (ObjectNode) jsonMapper.readTree(
+                    redis.opsForValue().get(keys.session(unsupported.getSessionId())));
+            json.put("recordVersion", 99);
+            redis.opsForValue().set(keys.session(unsupported.getSessionId()), jsonMapper.writeValueAsString(json));
+            // conditions
+            // act
+            RefreshSessionLifecycleException failure = catchThrowableOfType(
+                    RefreshSessionLifecycleException.class,
+                    () -> store.inventory(USER_ID, current.getSessionId(), clock.instant()));
+            // assert
+            assertThat(failure.getReason())
+                    .isEqualTo(RefreshSessionLifecycleException.Reason.UNSUPPORTED_RECORD_VERSION);
+            assertThat(redis.hasKey(keys.session(unsupported.getSessionId()))).isTrue();
+            assertThat(redis.hasKey(keys.session(current.getSessionId()))).isTrue();
+            // verify
+        }
+
+        @Test
+        @DisplayName("wrong index type and over capacity state fail before inventory work")
+        void wrongIndexTypeAndOverCapacityStateFailBeforeInventoryWork() {
+            // arrange
+            RefreshSessionLifecycleResult wrongTypeCurrent = store.create(baseCreateParam("current"));
+            redis.delete(keys.baseIndex(USER_ID));
+            redis.opsForValue().set(keys.baseIndex(USER_ID), "wrong-type");
+            // conditons
+            // act
+            RefreshSessionLifecycleException typeFailure = catchThrowableOfType(
+                    RefreshSessionLifecycleException.class,
+                    () -> store.inventory(USER_ID, wrongTypeCurrent.getSessionId(), clock.instant()));
+            // assert
+            assertThat(typeFailure.getReason()).isEqualTo(RefreshSessionLifecycleException.Reason.WRONG_REDIS_TYPE);
+            // arrange
+            deleteProposalTestKeys();
+            RefreshSessionLifecycleResult capacityCurrent = store.create(baseCreateParam("current"));
+            for (int i = 0; i < 10; i++) {
+                redis.opsForZSet().add(
+                        keys.baseIndex(USER_ID),
+                        String.format("00000000-0000-0000-0000-%012d", i),
+                        i);
+            }
+            String currentSessionId = capacityCurrent.getSessionId();
+            // condtions
+            // act
+            RefreshSessionLifecycleException capacityFailure = catchThrowableOfType(
+                    RefreshSessionLifecycleException.class,
+                    () -> store.inventory(USER_ID, currentSessionId, clock.instant()));
+            // assert
+            assertThat(capacityFailure.getReason()).isEqualTo(RefreshSessionLifecycleException.Reason.MALFORMED_STATE);
+            // verify
+        }
+
+        @Test
+        @DisplayName("inventory racing rotation returns one valid linearized snapshot")
+        void inventoryRacingRotationReturnsOneValidLinearizedSnapshot() throws Exception {
+            // arrange
+            RefreshSessionLifecycleResult current = store.create(baseCreateParam("current"));
+            CyclicBarrier barrier = new CyclicBarrier(3);
+            ExecutorService executor = newExecutor(2);
+            Future<List<RefreshSessionFamilySnapshot>> inventory = executor.submit(() -> {
+                barrier.await();
+                return store.inventory(USER_ID, current.getSessionId(), clock.instant());
+            });
+            Future<RefreshSessionLifecycleResult> rotation = executor.submit(() -> {
+                barrier.await();
+                return store.rotate(baseRotateParam(current.getRefreshToken()));
+            });
+            // conditions
+            // act
+            barrier.await();
+            List<RefreshSessionFamilySnapshot> inventoryResult = inventory.get(10, TimeUnit.SECONDS);
+            RefreshSessionLifecycleResult rotationResult = rotation.get(10, TimeUnit.SECONDS);
+            // assert
+            assertThat(inventoryResult)
+                    .extracting(snapshot -> snapshot.getSessionId().toString())
+                    .containsExactly(current.getSessionId());
+            assertThat(rotationResult.getSessionId()).isEqualTo(current.getSessionId());
+            assertThat(redis.hasKey(keys.session(current.getSessionId()))).isTrue();
+            // verify
+        }
+
+        @Test
+        @DisplayName("inventory racing capacity eviction remains bounded and consistent")
+        void inventoryRacingCapacityEvictionRemainsBoundedAndConsistent() throws Exception {
+            // arrange
+            for (int i = 0; i < 9; i++) {
+                store.create(baseCreateParam("existing-" + i));
+                clock.advance(Duration.ofSeconds(1));
+            }
+            RefreshSessionLifecycleResult current = store.create(baseCreateParam("current"));
+            CyclicBarrier barrier = new CyclicBarrier(3);
+            ExecutorService executor = newExecutor(2);
+            Future<List<RefreshSessionFamilySnapshot>> inventory = executor.submit(() -> {
+                barrier.await();
+                return store.inventory(USER_ID, current.getSessionId(), clock.instant());
+            });
+            Future<RefreshSessionLifecycleResult> creation = executor.submit(() -> {
+                barrier.await();
+                return store.create(baseCreateParam("capacity"));
+            });
+            // conditions
+            // act
+            barrier.await();
+            List<RefreshSessionFamilySnapshot> result = inventory.get(10, TimeUnit.SECONDS);
+            creation.get(10, TimeUnit.SECONDS);
+            // assert
+            assertThat(result).hasSize(10);
+            assertThat(result)
+                    .extracting(snapshot -> snapshot.getSessionId().toString())
+                    .contains(current.getSessionId());
+            assertThat(redis.opsForZSet().size(keys.baseIndex(USER_ID))).isEqualTo(10L);
+            // verify
+        }
+
+        @Test
+        @DisplayName("stale cleanup racing rotation never deletes a changed successor")
+        void staleCleanupRacingRotationNeverDeletesChangedSuccessor() throws Exception {
+            // arrange
+            RefreshSessionLifecycleResult stale = store.create(baseCreateParam("stale"));
+            clock.advance(Duration.ofDays(6));
+            RefreshSessionLifecycleResult current = store.create(baseCreateParam("current"));
+            clock.advance(Duration.ofDays(1));
+            CyclicBarrier barrier = new CyclicBarrier(3);
+            ExecutorService executor = newExecutor(2);
+            Future<List<RefreshSessionFamilySnapshot>> inventory = executor.submit(() -> {
+                barrier.await();
+                return store.inventory(USER_ID, current.getSessionId(), clock.instant());
+            });
+            Future<?> rotation = rotatingTask(executor, barrier, stale);
+            // conditions
+            // act
+            barrier.await();
+            List<RefreshSessionFamilySnapshot> result = inventory.get(10, TimeUnit.SECONDS);
+            rotation.get(10, TimeUnit.SECONDS);
+            // assert
+            assertThat(result)
+                    .extracting(snapshot -> snapshot.getSessionId().toString())
+                    .containsExactly(current.getSessionId());
+            assertFamilyCompletelyAbsent(stale.getSessionId());
+            // verify
+        }
+
+    }
+
+    @Nested
     @DisplayName("Production read and presented-token revocation")
     class ProductionCutoverTests {
 
@@ -621,20 +916,88 @@ class RefreshSessionFamilyStoreIT {
         }
 
         @Test
+        @DisplayName("revoke one makes missing and foreign targets no op without deleting foreign state")
+        void revokeOneMakesMissingAndForeignTargetsNoOp() {
+            // arrange
+            String missingSessionId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+            RefreshSessionLifecycleResult foreign = store.create(foreignCreateParam("foreign"));
+            // conditions
+            // act
+            store.revokeOne(USER_ID, missingSessionId);
+            store.revokeOne(USER_ID, foreign.getSessionId());
+            // assert
+            assertThat(redis.hasKey(keys.session(foreign.getSessionId()))).isTrue();
+            assertThat(redis.opsForZSet().score(keys.baseIndex(FOREIGN_USER_ID), foreign.getSessionId())).isNotNull();
+            // verify
+        }
+
+        @Test
         @DisplayName("revoke others retains only the selected owned family")
         void revokeOthersRetainsOnlyTheSelectedOwnedFamily() {
             // arrange
             RefreshSessionLifecycleResult first = store.create(baseCreateParam("first"));
             RefreshSessionLifecycleResult retained = store.create(baseCreateParam("retained"));
             RefreshSessionLifecycleResult third = store.create(adminCreateParam("third"));
+            RefreshSessionLifecycleResult missing = store.create(baseCreateParam("missing"));
+            redis.opsForValue().set(keys.grace(missing.getSessionId()), "unusable-grace");
+            redis.delete(keys.session(missing.getSessionId()));
             // conditions
             // act
             store.revokeOthers(USER_ID, retained.getSessionId());
             // assert
             assertFamilyCompletelyAbsent(first.getSessionId());
             assertFamilyCompletelyAbsent(third.getSessionId());
+            assertFamilyCompletelyAbsent(missing.getSessionId());
             assertThat(redis.hasKey(keys.session(retained.getSessionId()))).isTrue();
             assertThat(redis.opsForZSet().size(keys.baseIndex(USER_ID))).isEqualTo(1L);
+            // verify
+        }
+
+        @Test
+        @DisplayName("revoke others repairs unindexed current and preserves its grace")
+        void revokeOthersRepairsUnindexedCurrentAndPreservesGrace() {
+            // arrange
+            RefreshSessionLifecycleResult other = store.create(baseCreateParam("other"));
+            RefreshSessionLifecycleResult current = store.create(adminCreateParam("current"));
+            RefreshSessionLifecycleResult rotated = store.rotate(adminRotateParam(current.getRefreshToken()));
+            String currentFamilyBefore = redis.opsForValue().get(keys.session(current.getSessionId()));
+            String currentGraceBefore = redis.opsForValue().get(keys.grace(current.getSessionId()));
+            redis.opsForZSet().remove(keys.baseIndex(USER_ID), current.getSessionId());
+            redis.opsForZSet().remove(keys.elevatedIndex(USER_ID), current.getSessionId());
+
+            // act
+            store.revokeOthers(USER_ID, current.getSessionId());
+
+            // assert
+            assertFamilyCompletelyAbsent(other.getSessionId());
+            assertThat(redis.opsForValue().get(keys.session(current.getSessionId()))).isEqualTo(currentFamilyBefore);
+            assertThat(redis.opsForValue().get(keys.grace(current.getSessionId()))).isEqualTo(currentGraceBefore);
+            assertThat(redis.opsForZSet().score(keys.baseIndex(USER_ID), current.getSessionId()))
+                    .isEqualTo((double) rotated.getFamily().getLastUsedAt().toEpochMilli());
+            assertThat(redis.opsForZSet().score(keys.elevatedIndex(USER_ID), current.getSessionId())).isNotNull();
+        }
+
+        @Test
+        @DisplayName("revoke others fails before partial revocation on cross owner corruption")
+        void revokeOthersFailsBeforePartialRevocationOnCrossOwnerCorruption() {
+            // arrange
+            RefreshSessionLifecycleResult other = store.create(baseCreateParam("other"));
+            RefreshSessionLifecycleResult current = store.create(baseCreateParam("current"));
+            RefreshSessionLifecycleResult foreign = store.create(foreignCreateParam("foreign"));
+            redis.opsForZSet().add(
+                    keys.baseIndex(USER_ID),
+                    foreign.getSessionId(),
+                    foreign.getFamily().getLastUsedAt().toEpochMilli());
+            // conditions
+            // act
+            RefreshSessionLifecycleException failure = catchThrowableOfType(
+                    RefreshSessionLifecycleException.class,
+                    () -> store.revokeOthers(USER_ID, current.getSessionId()));
+            // assert
+            assertThat(failure.getReason()).isEqualTo(RefreshSessionLifecycleException.Reason.MALFORMED_STATE);
+            assertThat(redis.hasKey(keys.session(other.getSessionId()))).isTrue();
+            assertThat(redis.hasKey(keys.session(current.getSessionId()))).isTrue();
+            assertThat(redis.hasKey(keys.session(foreign.getSessionId()))).isTrue();
             // verify
         }
 
@@ -644,6 +1007,7 @@ class RefreshSessionFamilyStoreIT {
             // arrange
             RefreshSessionLifecycleResult first = store.create(baseCreateParam("first"));
             RefreshSessionLifecycleResult second = store.create(adminCreateParam("second"));
+            store.rotate(adminRotateParam(second.getRefreshToken()));
             // conditions
             // act
             store.revokeAll(USER_ID);
@@ -656,31 +1020,46 @@ class RefreshSessionFamilyStoreIT {
         }
 
         @Test
-        @DisplayName("revoke all removes corrupt foreign membership without deletinng foreign family")
-        void revokeAllRemovesCorruptForeignMembershipWithoutDeletingForeignFamily() {
+        @DisplayName("public revoke all includes explicit current missing both memberships")
+        void publicRevokeAllIncludesExplicitCurrentMissingBothMemberships() {
+            // arrange
+            RefreshSessionLifecycleResult other = store.create(baseCreateParam("other"));
+            RefreshSessionLifecycleResult current = store.create(adminCreateParam("current"));
+            redis.opsForZSet().remove(keys.baseIndex(USER_ID), current.getSessionId());
+            redis.opsForZSet().remove(keys.elevatedIndex(USER_ID), current.getSessionId());
+            // conditions
+            // act
+            store.revokeAll(USER_ID, current.getSessionId());
+            // assert
+            assertFamilyCompletelyAbsent(other.getSessionId());
+            assertFamilyCompletelyAbsent(current.getSessionId());
+            assertThat(redis.hasKey(keys.baseIndex(USER_ID))).isFalse();
+            assertThat(redis.hasKey(keys.elevatedIndex(USER_ID))).isFalse();
+            // verify
+        }
+
+        @Test
+        @DisplayName("revoke all fails closed on corrupt foreign membership without deleting any family")
+        void revokeAllFailsClosedOnCorruptForeignMembershipWithoutDeletingAnyFamily() {
             // arrange
             RefreshSessionLifecycleResult owned = store.create(baseCreateParam("owned"));
-            RefreshSessionLifecycleResult foreign = store.create(RefreshSessionFamilyCreateParam.builder()
-                    .userId(FOREIGN_USER_ID)
-                    .instanceId(INSTANCE_ID)
-                    .roles(List.of("USER"))
-                    .authVersion(4L)
-                    .deviceLabel("foreign")
-                    .clientBindingHash(CLIENT_BINDING)
-                    .build());
+            RefreshSessionLifecycleResult foreign = store.create(foreignCreateParam("foreign"));
             redis.opsForZSet().add(
                     keys.baseIndex(USER_ID),
                     foreign.getSessionId(),
                     foreign.getFamily().getLastUsedAt().toEpochMilli());
             // conditions
             // act
-            store.revokeAll(USER_ID);
+            RefreshSessionLifecycleException failure = catchThrowableOfType(
+                    RefreshSessionLifecycleException.class,
+                    () -> store.revokeAll(USER_ID));
             // assert
-            assertFamilyCompletelyAbsent(owned.getSessionId());
+            assertThat(failure.getReason()).isEqualTo(RefreshSessionLifecycleException.Reason.MALFORMED_STATE);
+            assertThat(redis.hasKey(keys.session(owned.getSessionId()))).isTrue();
             assertThat(redis.hasKey(keys.session(foreign.getSessionId()))).isTrue();
             assertThat(redis.opsForZSet().score(keys.baseIndex(FOREIGN_USER_ID), foreign.getSessionId()))
                     .isNotNull();
-            assertThat(redis.opsForZSet().score(keys.baseIndex(USER_ID), foreign.getSessionId())).isNull();
+            assertThat(redis.opsForZSet().score(keys.baseIndex(USER_ID), foreign.getSessionId())).isNotNull();
             // verify
         }
 
@@ -715,6 +1094,59 @@ class RefreshSessionFamilyStoreIT {
             // verify
         }
 
+        @Test
+        @DisplayName("revoke others racing current and non current rotation preserves only current")
+        void revokeOthersRacingRotationsPreservesOnlyCurrent() throws Exception {
+            // arrange
+            RefreshSessionLifecycleResult other = store.create(baseCreateParam("other"));
+            RefreshSessionLifecycleResult current = store.create(baseCreateParam("current"));
+            CyclicBarrier barrier = new CyclicBarrier(4);
+            ExecutorService executor = newExecutor(3);
+            Future<?> otherRotation = rotatingTask(executor, barrier, other);
+            Future<?> currentRotation = rotatingTask(executor, barrier, current);
+            Future<?> revocation = executor.submit(() -> {
+                barrier.await();
+                store.revokeOthers(USER_ID, current.getSessionId());
+                return null;
+            });
+            // conditions
+            // act
+            barrier.await();
+            otherRotation.get(10, TimeUnit.SECONDS);
+            currentRotation.get(10, TimeUnit.SECONDS);
+            revocation.get(10, TimeUnit.SECONDS);
+            // assert
+            assertFamilyCompletelyAbsent(other.getSessionId());
+            assertThat(redis.hasKey(keys.session(current.getSessionId()))).isTrue();
+            assertThat(redis.opsForZSet().score(keys.baseIndex(USER_ID), current.getSessionId())).isNotNull();
+            // verify
+        }
+
+        @Test
+        @DisplayName("revoke all racing rotation cannot resurrect any in scope family")
+        void revokeAllRacingRotationCannotResurrectAnyFamily() throws Exception {
+            // arrange
+            RefreshSessionLifecycleResult current = store.create(baseCreateParam("current"));
+            CyclicBarrier barrier = new CyclicBarrier(3);
+            ExecutorService executor = newExecutor(2);
+            Future<?> rotation = rotatingTask(executor, barrier, current);
+            Future<?> revocation = executor.submit(() -> {
+                barrier.await();
+                store.revokeAll(USER_ID, current.getSessionId());
+                return null;
+            });
+            // conditions
+            // act
+            barrier.await();
+            rotation.get(10, TimeUnit.SECONDS);
+            revocation.get(10, TimeUnit.SECONDS);
+            // assert
+            assertFamilyCompletelyAbsent(current.getSessionId());
+            assertThat(redis.hasKey(keys.baseIndex(USER_ID))).isFalse();
+            assertThat(redis.hasKey(keys.elevatedIndex(USER_ID))).isFalse();
+            // verify
+        }
+
     }
 
     private RefreshSessionFamilyCreateParam baseCreateParam(String deviceLabel) {
@@ -735,6 +1167,17 @@ class RefreshSessionFamilyStoreIT {
                 .roles(List.of("INSTANCE_ADMIN", "USER"))
                 .authVersion(7L)
                 .adminSessionVersion(3L)
+                .deviceLabel(deviceLabel)
+                .clientBindingHash(CLIENT_BINDING)
+                .build();
+    }
+
+    private RefreshSessionFamilyCreateParam foreignCreateParam(String deviceLabel) {
+        return RefreshSessionFamilyCreateParam.builder()
+                .userId(FOREIGN_USER_ID)
+                .instanceId(INSTANCE_ID)
+                .roles(List.of("USER"))
+                .authVersion(4L)
                 .deviceLabel(deviceLabel)
                 .clientBindingHash(CLIENT_BINDING)
                 .build();
@@ -765,6 +1208,21 @@ class RefreshSessionFamilyStoreIT {
         ExecutorService executor = Executors.newFixedThreadPool(threads);
         executors.add(executor);
         return executor;
+    }
+
+    private Future<?> rotatingTask(
+            ExecutorService executor,
+            CyclicBarrier barrier,
+            RefreshSessionLifecycleResult family) {
+        return executor.submit(() -> {
+            barrier.await();
+            try {
+                store.rotate(baseRotateParam(family.getRefreshToken()));
+            } catch (RefreshSessionLifecycleException ignored) {
+                // A concurrent revocation may linearize first.
+            }
+            return null;
+        });
     }
 
     private void assertFamilyCompletelyAbsent(String sessionId) {

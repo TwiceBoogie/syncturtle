@@ -1,6 +1,7 @@
 package com.syncturtle.platform.gateway.security;
 
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
@@ -14,6 +15,7 @@ import com.syncturtle.platform.gateway.type.GatewayRouteSecurityCategory;
 public final class GatewayRouteSecurityPolicy {
 
     private static final String RETIRED_INSTANCE_ADMIN_SIGN_OUT_PATH = "/api/instances/admins/sign-out";
+    private static final String USER_SESSION_PATH = "/api/users/me/sessions";
 
     private static final Set<String> PUBLIC_POST_PATHS = Set.of(
             "/auth/email-check",
@@ -59,6 +61,10 @@ public final class GatewayRouteSecurityPolicy {
 
         if (RETIRED_INSTANCE_ADMIN_SIGN_OUT_PATH.equals(path)) {
             return GatewayRouteSecurityCategory.DEFAULT_DENY;
+        }
+
+        if (isUserSessionNamespace(path)) {
+            return classifyUserSessionRoute(method, path);
         }
 
         if (HttpMethod.OPTIONS.equals(method)) {
@@ -130,6 +136,48 @@ public final class GatewayRouteSecurityPolicy {
                 || path.startsWith("/api/workspaces/")
                 || path.equals("/api/assets")
                 || path.startsWith("/api/assets/");
+    }
+
+    private static GatewayRouteSecurityCategory classifyUserSessionRoute(HttpMethod method, String path) {
+        boolean knownPath = isKnownUserSessionPath(path);
+        if (HttpMethod.OPTIONS.equals(method)) {
+            return knownPath ? GatewayRouteSecurityCategory.PUBLIC : GatewayRouteSecurityCategory.DEFAULT_DENY;
+        }
+
+        if (HttpMethod.GET.equals(method) && USER_SESSION_PATH.equals(path)) {
+            return GatewayRouteSecurityCategory.PROTECTED;
+        }
+
+        if (HttpMethod.DELETE.equals(method) && knownPath) {
+            return GatewayRouteSecurityCategory.PROTECTED;
+        }
+
+        return GatewayRouteSecurityCategory.DEFAULT_DENY;
+    }
+
+    private static boolean isKnownUserSessionPath(String path) {
+        if (USER_SESSION_PATH.equals(path) || (USER_SESSION_PATH + "/others").equals(path)) {
+            return true;
+        }
+
+        if (!path.startsWith(USER_SESSION_PATH + "/")) {
+            return false;
+        }
+
+        String sessionId = path.substring(USER_SESSION_PATH.length() + 1);
+        return isCanonicalUuid(sessionId);
+    }
+
+    private static boolean isUserSessionNamespace(String path) {
+        return path.startsWith("/api/users/me/session");
+    }
+
+    private static boolean isCanonicalUuid(String value) {
+        try {
+            return UUID.fromString(value).toString().equals(value);
+        } catch (IllegalArgumentException exception) {
+            return false;
+        }
     }
 
     private static boolean isKnownPath(String path) {
