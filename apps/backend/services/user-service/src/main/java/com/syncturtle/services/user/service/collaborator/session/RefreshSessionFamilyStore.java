@@ -40,6 +40,7 @@ import tools.jackson.databind.json.JsonMapper;
 public final class RefreshSessionFamilyStore {
 
     private static final int REFRESH_SECRET_BYTES = 48;
+    private static final int INVENTORY_MAX_ATTEMPTS = 2;
     private static final Duration INDEX_LIFETIME = Duration.ofDays(30);
     private static final String INSTANCE_ADMIN = "INSTANCE_ADMIN";
     private static final String OP_CREATE = "CREATE";
@@ -48,6 +49,8 @@ public final class RefreshSessionFamilyStore {
     private static final String OP_REVOKE_ONE = "REVOKE_ONE";
     private static final String OP_REVOKE_OTHERS = "REVOKE_OTHERS";
     private static final String OP_REVOKE_ALL = "REVOKE_ALL";
+    private static final String OP_INVENTORY = "INVENTORY";
+    private static final String OP_RECONCILE_INVENTORY = "RECONCILE_INVENTORY";
 
     private final StringRedisTemplate redis;
     private final RefreshSessionRedisKeys keys;
@@ -308,15 +311,55 @@ public final class RefreshSessionFamilyStore {
 
         String canonicalSessionId = canonicalUuid(sessionId, "sessionId");
         List<String> result = executeRevoke(OP_REVOKE_ONE, userId, canonicalSessionId, "");
-        requireStatus(result, "REVOKED");
+        String status = first(result);
+        if (!"REVOKED".equals(status) && !"NOT_REVOKED".equals(status)) {
+            throw failure(status);
+        }
     }
 
     public void revokeOthers(String userId, String retainedSessionId) {
         Assert.hasText(userId, "userId is required");
 
         String canonicalSessionId = canonicalUuid(retainedSessionId, "retainedSessionId");
-        List<String> result = executeRevoke(OP_REVOKE_OTHERS, userId, canonicalSessionId, canonicalSessionId);
-        requireStatus(result, "REVOKED");
+        for (int attempt = 0; attempt < INVENTORY_MAX_ATTEMPTS; attempt++) {
+            String currentJson = readFamilyJson(canonicalSessionId);
+            if (!StringUtils.hasText(currentJson)) {
+                throw new RefreshSessionLifecycleException(MISSING_FAMILY,
+                        "current refresh session family is unavailable");
+            }
+
+            RefreshSessionFamilyRecord current = decodeFamily(currentJson);
+            if (!userId.equals(current.getUserId())) {
+                throw new RefreshSessionLifecycleException(MALFORMED_STATE,
+                        "current refresh session family owner is invalid");
+            }
+
+            List<String> result = execute(
+                    OP_REVOKE_OTHERS,
+                    canonicalSessionId,
+                    current,
+                    currentJson,
+                    null,
+                    current.getLastUsedAt(),
+                    "",
+                    null,
+                    "",
+                    "",
+                    current.getRotationCounter(),
+                    current.getRotationCounter(),
+                    canonicalSessionId);
+
+            if ("REVOKED".equals(first(result))) {
+                return;
+            }
+
+            if (!"CHANGED".equals(first(result))) {
+                throw failure(first(result));
+            }
+        }
+
+        throw new RefreshSessionLifecycleException(INVARIANT_VIOLATION,
+                "current refresh session changed during revoke-others reconciliation");
     }
 
     public void revokeAll(String userId) {
@@ -324,6 +367,68 @@ public final class RefreshSessionFamilyStore {
 
         List<String> result = executeRevoke(OP_REVOKE_ALL, userId, "all", "");
         requireStatus(result, "REVOKED");
+    }
+
+    public void revokeAll(String userId, String currentSessionId) {
+        Assert.hasText(userId, "userId is required");
+
+        String canonicalSessionId = canonicalUuid(currentSessionId, "currentSessionId");
+        List<String> result = executeRevoke(
+                OP_REVOKE_ALL,
+                userId,
+                canonicalSessionId,
+                canonicalSessionId);
+        requireStatus(result, "REVOKED");
+    }
+
+    public List<RefreshSessionFamilySnapshot> inventory(
+            String userId,
+            String currentSessionId,
+            Instant effectiveNow) {
+        Assert.hasText(userId, "userId is required");
+        Assert.notNull(effectiveNow, "effectiveNow is required");
+
+        String canonicalSessionId = canonicalUuid(currentSessionId, "currentSessionId");
+        for (int attempt = 0; attempt < INVENTORY_MAX_ATTEMPTS; attempt++) {
+            List<String> snapshotResult = executeInventorySnapshot(userId, canonicalSessionId, effectiveNow);
+            requireStatus(snapshotResult, "INVENTORY");
+
+            List<InventoryCandidate> candidates = decodeInventory(
+                    snapshotResult,
+                    userId,
+                    canonicalSessionId,
+                    effectiveNow);
+            List<String> reconcileResult = executeInventoryReconciliation(
+                    userId,
+                    canonicalSessionId,
+                    effectiveNow,
+                    candidates);
+            String status = first(reconcileResult);
+
+            if ("CHANGED".equals(status)) {
+                continue;
+            }
+
+            if ("CURRENT_EXPIRED".equals(status)) {
+                throw new RefreshSessionLifecycleException(EXPIRED_FAMILY,
+                        "current refresh session family is expired");
+            }
+
+            if (!"RECONCILED".equals(status)) {
+                throw failure(status);
+            }
+
+            List<RefreshSessionFamilySnapshot> snapshots = new ArrayList<>(candidates.size());
+            for (InventoryCandidate candidate : candidates) {
+                if (!candidate.expired) {
+                    snapshots.add(candidate.snapshot);
+                }
+            }
+            return List.copyOf(snapshots);
+        }
+
+        throw new RefreshSessionLifecycleException(INVARIANT_VIOLATION,
+                "refresh session inventory changed repeatedly during reconciliation");
     }
 
     public String extractSessionId(String refreshToken) {
@@ -382,20 +487,7 @@ public final class RefreshSessionFamilyStore {
     }
 
     private List<String> executeRevoke(String operation, String userId, String sessionId, String retainedSessionId) {
-        RefreshSessionFamilyRecord placeholder = RefreshSessionFamilyRecord.builder()
-                .recordVersion(RefreshSessionFamilyRecord.CURRENT_RECORD_VERSION)
-                .userId(userId)
-                .instanceId("00000000-0000-0000-0000-000000000000")
-                .roles(List.of("USER"))
-                .authVersion(0L)
-                .currentRefreshTokenHash("0".repeat(64))
-                .rotationCounter(0L)
-                .createdAt(Instant.EPOCH)
-                .lastUsedAt(Instant.EPOCH)
-                .idleExpiresAt(Instant.EPOCH.plus(Duration.ofDays(7)))
-                .absoluteExpiresAt(Instant.EPOCH.plus(Duration.ofDays(30)))
-                .clientBindingHash("0".repeat(64))
-                .build();
+        RefreshSessionFamilyRecord placeholder = placeholderFamily(userId);
 
         return execute(
                 operation,
@@ -410,7 +502,100 @@ public final class RefreshSessionFamilyStore {
                 "",
                 0L,
                 0L,
-                retainedSessionId);
+                retainedSessionId,
+                List.of());
+    }
+
+    private List<String> executeInventorySnapshot(
+            String userId,
+            String currentSessionId,
+            Instant effectiveNow) {
+        RefreshSessionFamilyRecord placeholder = placeholderFamily(userId);
+        return execute(
+                OP_INVENTORY,
+                currentSessionId,
+                placeholder,
+                "",
+                null,
+                effectiveNow,
+                "",
+                null,
+                "",
+                "",
+                0L,
+                0L,
+                currentSessionId);
+    }
+
+    private List<String> executeInventoryReconciliation(
+            String userId,
+            String currentSessionId,
+            Instant effectiveNow,
+            List<InventoryCandidate> candidates) {
+        List<String> reconciliationArguments = new ArrayList<>(1 + (candidates.size() * 5));
+        reconciliationArguments.add(Integer.toString(candidates.size()));
+        for (InventoryCandidate candidate : candidates) {
+            RefreshSessionFamilyRecord family = candidate.snapshot.getFamily();
+            reconciliationArguments.add(candidate.snapshot.getSessionId().toString());
+            reconciliationArguments.add(candidate.exactJson);
+            reconciliationArguments.add(Long.toString(family.getLastUsedAt().toEpochMilli()));
+            reconciliationArguments.add(isElevated(family) ? "1" : "0");
+            reconciliationArguments.add(candidate.expired ? "1" : "0");
+        }
+
+        RefreshSessionFamilyRecord placeholder = placeholderFamily(userId);
+        return execute(
+                OP_RECONCILE_INVENTORY,
+                currentSessionId,
+                placeholder,
+                "",
+                null,
+                effectiveNow,
+                "",
+                null,
+                "",
+                "",
+                0L,
+                0L,
+                currentSessionId,
+                reconciliationArguments);
+    }
+
+    private List<InventoryCandidate> decodeInventory(
+            List<String> result,
+            String userId,
+            String currentSessionId,
+            Instant effectiveNow) {
+        if ((result.size() - 1) % 2 != 0) {
+            throw new RefreshSessionLifecycleException(INVARIANT_VIOLATION,
+                    "refresh session inventory result is incomplete");
+        }
+
+        List<InventoryCandidate> candidates = new ArrayList<>((result.size() - 1) / 2);
+        boolean currentFound = false;
+        for (int i = 1; i < result.size(); i += 2) {
+            String sessionId = canonicalUuid(result.get(i), "inventory sessionId");
+            String exactJson = result.get(i + 1);
+            RefreshSessionFamilyRecord family = decodeFamily(exactJson);
+
+            if (!userId.equals(family.getUserId())) {
+                throw new RefreshSessionLifecycleException(MALFORMED_STATE,
+                        "refresh session inventory owner is invalid");
+            }
+
+            boolean expired = !effectiveNow.isBefore(family.getIdleExpiresAt())
+                    || !effectiveNow.isBefore(family.getAbsoluteExpiresAt());
+            RefreshSessionFamilySnapshot snapshot = new RefreshSessionFamilySnapshot(UUID.fromString(sessionId),
+                    family);
+            candidates.add(new InventoryCandidate(snapshot, exactJson, expired));
+            currentFound = currentFound || currentSessionId.equals(sessionId);
+        }
+
+        if (!currentFound) {
+            throw new RefreshSessionLifecycleException(MISSING_FAMILY, "current refresh session family is unavailable");
+        }
+
+        return candidates;
     }
 
     private List<String> execute(
@@ -427,6 +612,38 @@ public final class RefreshSessionFamilyStore {
             long currentCounter,
             long nextCounter,
             String retainedSessionId) {
+        return execute(
+                operation,
+                sessionId,
+                current,
+                expectedJson,
+                next,
+                effectiveNow,
+                presentedHash,
+                graceExpiresAt,
+                graceJson,
+                clientBindingHash,
+                currentCounter,
+                nextCounter,
+                retainedSessionId,
+                List.of());
+    }
+
+    private List<String> execute(
+            String operation,
+            String sessionId,
+            RefreshSessionFamilyRecord current,
+            String expectedJson,
+            RefreshSessionFamilyRecord next,
+            Instant effectiveNow,
+            String presentedHash,
+            Instant graceExpiresAt,
+            String graceJson,
+            String clientBindingHash,
+            long currentCounter,
+            long nextCounter,
+            String retainedSessionId,
+            List<String> additionalArguments) {
         List<String> redisKeys = List.of(
                 keys.session(sessionId),
                 keys.grace(sessionId),
@@ -438,10 +655,12 @@ public final class RefreshSessionFamilyStore {
         String adminVersion = next == null || next.getAdminSessionVersion() == null
                 ? ""
                 : Long.toString(next.getAdminSessionVersion());
-        boolean elevated = next != null && isElevated(next);
+        boolean elevated = next != null
+                ? isElevated(next)
+                : OP_REVOKE_OTHERS.equals(operation) && isElevated(current);
         boolean writesVersions = OP_CREATE.equals(operation) || OP_ROTATE.equals(operation);
 
-        List<String> arguments = new ArrayList<>(25);
+        List<String> arguments = new ArrayList<>(25 + additionalArguments.size());
         arguments.add(operation);
         arguments.add(sessionId);
         arguments.add(current.getUserId());
@@ -467,6 +686,7 @@ public final class RefreshSessionFamilyStore {
         arguments.add(retainedSessionId);
         arguments.add(writesVersions ? keys.userAuthVersion(current.getUserId()) : "");
         arguments.add(writesVersions ? keys.adminSessionVersion(current.getInstanceId(), current.getUserId()) : "");
+        arguments.addAll(additionalArguments);
 
         try {
             return scriptExecutor.execute(redisKeys, arguments);
@@ -563,6 +783,8 @@ public final class RefreshSessionFamilyStore {
                     "refresh session Redis state has the wrong type");
             case "UNSUPPORTED_VERSION" -> new RefreshSessionLifecycleException(UNSUPPORTED_RECORD_VERSION,
                     "refresh session Redis state has an unsupported version");
+            case "CHANGED" -> new RefreshSessionLifecycleException(INVARIANT_VIOLATION,
+                    "refresh session Redis state changed during reconciliation");
             default -> new RefreshSessionLifecycleException(INVARIANT_VIOLATION,
                     "unexpected refresh session lifecycle result");
         };
@@ -584,6 +806,40 @@ public final class RefreshSessionFamilyStore {
 
     private static boolean isElevated(RefreshSessionFamilyRecord family) {
         return family.getAdminSessionVersion() != null && family.getRoles().contains(INSTANCE_ADMIN);
+    }
+
+    private static RefreshSessionFamilyRecord placeholderFamily(String userId) {
+        return RefreshSessionFamilyRecord.builder()
+                .recordVersion(RefreshSessionFamilyRecord.CURRENT_RECORD_VERSION)
+                .userId(userId)
+                .instanceId("00000000-0000-0000-0000-000000000000")
+                .roles(List.of("USER"))
+                .authVersion(0L)
+                .currentRefreshTokenHash("0".repeat(64))
+                .rotationCounter(0L)
+                .createdAt(Instant.EPOCH)
+                .lastUsedAt(Instant.EPOCH)
+                .idleExpiresAt(Instant.EPOCH.plus(Duration.ofDays(7)))
+                .absoluteExpiresAt(Instant.EPOCH.plus(Duration.ofDays(30)))
+                .clientBindingHash("0".repeat(64))
+                .build();
+    }
+
+    private static final class InventoryCandidate {
+
+        private final RefreshSessionFamilySnapshot snapshot;
+        private final String exactJson;
+        private final boolean expired;
+
+        private InventoryCandidate(
+                RefreshSessionFamilySnapshot snapshot,
+                String exactJson,
+                boolean expired) {
+            this.snapshot = snapshot;
+            this.exactJson = exactJson;
+            this.expired = expired;
+        }
+
     }
 
 }

@@ -9,6 +9,9 @@
 -- 19 current idle expiry ms, 20 current absolute expiry ms,
 -- 21 current counter, 22 successor counter, 23 retained sid,
 -- 24 user auth-version key, 25 admin-session-version key.
+-- INVENTORY reconciliation only:
+-- 26 candidate count, then repeating groups of five values from ARGV 27:
+-- sid, exact family JSON, last-used score ms, elevated (0/1), expired (0/1).
 
 local BASE_CAPACITY = 10
 local ELEVATED_CAPACITY = 3
@@ -55,6 +58,18 @@ end
 local function is_sha256(value)
     return type(value) == 'string' and string.len(value) == 64 and
         string.match(value, '^[0-9a-f]+$') ~= nil
+end
+
+local function canonical_sid(value)
+    if type(value) ~= 'string' or string.len(value) ~= 36 or string.lower(value) ~= value then
+        return false
+    end
+    if string.sub(value, 9, 9) ~= '-' or string.sub(value, 14, 14) ~= '-' or
+        string.sub(value, 19, 19) ~= '-' or string.sub(value, 24, 24) ~= '-' then
+        return false
+    end
+    local compact = string.gsub(value, '-', '')
+    return string.len(compact) == 32 and string.match(compact, '^[0-9a-f]+$') ~= nil
 end
 
 local function canonical_roles(roles)
@@ -222,7 +237,12 @@ local function add_unique(values, seen, value)
     end
 end
 
-local function inspect_indexes()
+local function inspect_indexes(explicit_sid)
+    if redis.call('ZCARD', KEYS[3]) > BASE_CAPACITY or
+        redis.call('ZCARD', KEYS[4]) > ELEVATED_CAPACITY then
+        return nil, 'MALFORMED_STATE'
+    end
+
     local base_members = redis.call('ZRANGE', KEYS[3], 0, -1)
     local elevated_members = redis.call('ZRANGE', KEYS[4], 0, -1)
     local all_members = {}
@@ -233,15 +253,20 @@ local function inspect_indexes()
     for _, sid in ipairs(elevated_members) do
         add_unique(all_members, seen, sid)
     end
+    if explicit_sid and explicit_sid ~= '' then
+        add_unique(all_members, seen, explicit_sid)
+    end
 
     local orphan_members = {}
     local malformed_members = {}
     local stale_elevated = {}
     local foreign_members = {}
     local valid = {}
+    local valid_json = {}
     local base_member = {}
     local elevated_member = {}
     local scores = {}
+    local corrupt_status = nil
     for _, sid in ipairs(base_members) do
         base_member[sid] = true
         scores[sid] = tonumber(redis.call('ZSCORE', KEYS[3], sid))
@@ -254,6 +279,10 @@ local function inspect_indexes()
     end
 
     for _, sid in ipairs(all_members) do
+        if not canonical_sid(sid) then
+            return nil, 'MALFORMED_STATE'
+        end
+
         local family_key = ARGV[16] .. sid
         local grace_key = ARGV[17] .. sid
         if not is_type(family_key, 'string') or not is_type(grace_key, 'string') then
@@ -267,10 +296,13 @@ local function inspect_indexes()
             local family, status = family_status(json, ARGV[3], '')
             if status == 'OWNER_MISMATCH' then
                 foreign_members[sid] = true
+                corrupt_status = corrupt_status or 'MALFORMED_STATE'
             elseif status then
                 malformed_members[sid] = true
+                corrupt_status = corrupt_status or status
             else
                 valid[sid] = family
+                valid_json[sid] = json
                 if elevated_member[sid] and not family_is_elevated(family) then
                     stale_elevated[sid] = true
                 end
@@ -284,13 +316,17 @@ local function inspect_indexes()
     local missing_elevated = {}
     for sid, family in pairs(valid) do
         if not orphan_members[sid] and not malformed_members[sid] and not foreign_members[sid] then
-            table.insert(ordered_base, { sid = sid, score = scores[sid] })
-            if not base_member[sid] then
+            if scores[sid] then
+                table.insert(ordered_base, { sid = sid, score = scores[sid] })
+            end
+            if not base_member[sid] and scores[sid] then
                 missing_base[sid] = scores[sid]
             end
             if family_is_elevated(family) then
-                table.insert(ordered_elevated, { sid = sid, score = scores[sid] })
-                if not elevated_member[sid] then
+                if scores[sid] then
+                    table.insert(ordered_elevated, { sid = sid, score = scores[sid] })
+                end
+                if not elevated_member[sid] and scores[sid] then
                     missing_elevated[sid] = scores[sid]
                 end
             end
@@ -305,10 +341,22 @@ local function inspect_indexes()
     table.sort(ordered_base, lru_order)
     table.sort(ordered_elevated, lru_order)
 
+    local valid_count = 0
+    for _, _ in pairs(valid) do
+        valid_count = valid_count + 1
+    end
+    if valid_count > BASE_CAPACITY then
+        return nil, 'MALFORMED_STATE'
+    end
+
     return {
+        all = all_members,
         base = base_members,
         elevated = elevated_members,
         valid = valid,
+        validJson = valid_json,
+        validCount = valid_count,
+        corruptStatus = corrupt_status,
         orphanMembers = orphan_members,
         malformedMembers = malformed_members,
         staleElevated = stale_elevated,
@@ -386,6 +434,15 @@ local function delete_family(sid)
     redis.call('DEL', ARGV[16] .. sid, ARGV[17] .. sid)
     redis.call('ZREM', KEYS[3], sid)
     redis.call('ZREM', KEYS[4], sid)
+end
+
+local function remove_memberships(sid)
+    redis.call('ZREM', KEYS[3], sid)
+    redis.call('ZREM', KEYS[4], sid)
+end
+
+local function has_entries(values)
+    return next(values) ~= nil
 end
 
 local function apply_cleanup(indexes, evicted)
@@ -621,64 +678,204 @@ local function rotate_family()
 end
 
 local function revoke_many(operation)
-    if not preflight_fixed_types(false) then
+    local has_explicit_current = ARGV[23] ~= ''
+    if not preflight_fixed_types(has_explicit_current) then
         return { 'WRONG_TYPE' }
     end
-    local indexes, status = inspect_indexes()
+    local explicit_sid = has_explicit_current and ARGV[23] or nil
+    local indexes, status = inspect_indexes(explicit_sid)
     if status then
         return { status }
     end
-    if operation == 'REVOKE_OTHERS' and not indexes.valid[ARGV[23]] then
-        return { 'MALFORMED_STATE' }
+    if indexes.corruptStatus then
+        return { indexes.corruptStatus }
     end
 
-    local targets = {}
-    local seen = {}
-    for _, sid in ipairs(indexes.base) do
-        add_unique(targets, seen, sid)
-    end
-    for _, sid in ipairs(indexes.elevated) do
-        add_unique(targets, seen, sid)
+    if operation == 'REVOKE_OTHERS' then
+        local current_json = redis.call('GET', KEYS[1])
+        if not current_json then
+            return { 'MISSING' }
+        end
+        if current_json ~= ARGV[6] then
+            return { 'CHANGED' }
+        end
+        local current, current_status = family_status(current_json, ARGV[3], '')
+        if current_status then
+            return { current_status == 'OWNER_MISMATCH' and 'MALFORMED_STATE' or current_status }
+        end
+        if not indexes.valid[ARGV[23]] or family_is_elevated(current) ~= (ARGV[13] == '1') then
+            return { 'MALFORMED_STATE' }
+        end
     end
 
-    for _, sid in ipairs(targets) do
+    for _, sid in ipairs(indexes.all) do
         if operation == 'REVOKE_ALL' or sid ~= ARGV[23] then
-            if indexes.foreignMembers[sid] or indexes.malformedMembers[sid] then
-                redis.call('ZREM', KEYS[3], sid)
-                redis.call('ZREM', KEYS[4], sid)
-            else
-                delete_family(sid)
-            end
+            delete_family(sid)
         end
     end
     if operation == 'REVOKE_ALL' then
         redis.call('DEL', KEYS[3], KEYS[4])
     else
-        expire_or_delete_indexes(nil)
+        redis.call('ZADD', KEYS[3], ARGV[5], ARGV[23])
+        if ARGV[13] == '1' then
+            redis.call('ZADD', KEYS[4], ARGV[5], ARGV[23])
+        else
+            redis.call('ZREM', KEYS[4], ARGV[23])
+        end
+        expire_or_delete_indexes(ARGV[18])
     end
     return { 'REVOKED' }
 end
 
 local function revoke_one()
-    if not preflight_fixed_types(true) then
+    if not preflight_fixed_types(false) then
+        return { 'WRONG_TYPE' }
+    end
+    local family_type = redis_type(KEYS[1])
+    if family_type ~= 'none' and family_type ~= 'string' then
         return { 'WRONG_TYPE' }
     end
     local json = redis.call('GET', KEYS[1])
-    if json then
-        local family, status = family_status(json, ARGV[3], '')
-        if status == 'OWNER_MISMATCH' then
-            return { 'MALFORMED_STATE' }
-        end
-        if status then
-            return { status }
-        end
-        if family and family.userId ~= ARGV[3] then
-            return { 'MALFORMED_STATE' }
-        end
+    if not json then
+        remove_memberships(ARGV[2])
+        expire_or_delete_indexes(nil)
+        return { 'NOT_REVOKED' }
+    end
+    local family, status = family_status(json, ARGV[3], '')
+    if status == 'OWNER_MISMATCH' then
+        return { 'NOT_REVOKED' }
+    end
+    if status then
+        return { status }
+    end
+    if not is_type(KEYS[2], 'string') then
+        return { 'WRONG_TYPE' }
     end
     delete_family(ARGV[2])
     expire_or_delete_indexes(nil)
     return { 'REVOKED' }
+end
+
+local function inventory_snapshot()
+    if not preflight_fixed_types(true) then
+        return { 'WRONG_TYPE' }
+    end
+    local indexes, status = inspect_indexes(ARGV[2])
+    if status then
+        return { status }
+    end
+    if indexes.corruptStatus then
+        return { indexes.corruptStatus }
+    end
+
+    for sid, _ in pairs(indexes.orphanMembers) do
+        delete_family(sid)
+    end
+    expire_or_delete_indexes(nil)
+
+    if not indexes.valid[ARGV[2]] then
+        return { 'MISSING' }
+    end
+
+    local session_ids = {}
+    for sid, _ in pairs(indexes.valid) do
+        table.insert(session_ids, sid)
+    end
+    table.sort(session_ids)
+
+    local result = { 'INVENTORY' }
+    for _, sid in ipairs(session_ids) do
+        table.insert(result, sid)
+        table.insert(result, indexes.validJson[sid])
+    end
+    return result
+end
+
+local function reconcile_inventory()
+    if not preflight_fixed_types(true) then
+        return { 'WRONG_TYPE' }
+    end
+    local candidate_count = tonumber(ARGV[26])
+    if not candidate_count or candidate_count < 1 or candidate_count > BASE_CAPACITY or
+        candidate_count ~= math.floor(candidate_count) then
+        return { 'MALFORMED_STATE' }
+    end
+
+    local expected = {}
+    local ordered = {}
+    local argument = 27
+    for _ = 1, candidate_count do
+        local sid = ARGV[argument]
+        local json = ARGV[argument + 1]
+        local score = tonumber(ARGV[argument + 2])
+        local elevated = ARGV[argument + 3]
+        local expired = ARGV[argument + 4]
+        if not canonical_sid(sid) or expected[sid] or not json or json == '' or not score or
+            (elevated ~= '0' and elevated ~= '1') or (expired ~= '0' and expired ~= '1') then
+            return { 'MALFORMED_STATE' }
+        end
+        expected[sid] = {
+            json = json,
+            score = score,
+            elevated = elevated == '1',
+            expired = expired == '1'
+        }
+        table.insert(ordered, sid)
+        argument = argument + 5
+    end
+    if not expected[ARGV[2]] then
+        return { 'MALFORMED_STATE' }
+    end
+
+    local indexes, status = inspect_indexes(ARGV[2])
+    if status then
+        return { status }
+    end
+    if indexes.corruptStatus then
+        return { indexes.corruptStatus }
+    end
+    if has_entries(indexes.orphanMembers) or indexes.validCount ~= candidate_count then
+        return { 'CHANGED' }
+    end
+
+    for _, sid in ipairs(ordered) do
+        local candidate = expected[sid]
+        if indexes.validJson[sid] ~= candidate.json then
+            return { 'CHANGED' }
+        end
+        local family = indexes.valid[sid]
+        if not family or family_is_elevated(family) ~= candidate.elevated then
+            return { 'MALFORMED_STATE' }
+        end
+    end
+    for sid, _ in pairs(indexes.valid) do
+        if not expected[sid] then
+            return { 'CHANGED' }
+        end
+    end
+
+    local current_expired = false
+    for _, sid in ipairs(ordered) do
+        local candidate = expected[sid]
+        if candidate.expired then
+            delete_family(sid)
+            if sid == ARGV[2] then
+                current_expired = true
+            end
+        else
+            redis.call('ZADD', KEYS[3], candidate.score, sid)
+            if candidate.elevated then
+                redis.call('ZADD', KEYS[4], candidate.score, sid)
+            else
+                redis.call('ZREM', KEYS[4], sid)
+            end
+        end
+    end
+    expire_or_delete_indexes(ARGV[18])
+    if current_expired then
+        return { 'CURRENT_EXPIRED' }
+    end
+    return { 'RECONCILED' }
 end
 
 local function revoke_presented()
@@ -739,6 +936,10 @@ elseif ARGV[1] == 'REVOKE_ONE' then
     return revoke_one()
 elseif ARGV[1] == 'REVOKE_OTHERS' or ARGV[1] == 'REVOKE_ALL' then
     return revoke_many(ARGV[1])
+elseif ARGV[1] == 'INVENTORY' then
+    return inventory_snapshot()
+elseif ARGV[1] == 'RECONCILE_INVENTORY' then
+    return reconcile_inventory()
 end
 
 return { 'MALFORMED_STATE' }
