@@ -101,7 +101,7 @@ class RefreshSessionServiceImplTest {
                     .thenReturn(receipt());
 
             // act
-            IssueTokenResponse result = service.refreshSession(PRESENTED);
+            IssueTokenResponse result = service.refreshSession(PRESENTED, SESSION_ID);
 
             // assert
             assertThat(result.getRefreshToken()).isEqualTo(SESSION_ID + ".successor");
@@ -123,7 +123,7 @@ class RefreshSessionServiceImplTest {
             // act
             AuthException failure = catchThrowableOfType(
                     AuthException.class,
-                    () -> service.refreshSession(PRESENTED));
+                    () -> service.refreshSession(PRESENTED, SESSION_ID));
 
             // assert
             assertThat(failure.getAuthErrorCode()).isEqualTo(AuthErrorCode.AUTHENTICATION_FAILED);
@@ -147,7 +147,7 @@ class RefreshSessionServiceImplTest {
             // act
             AuthException failure = catchThrowableOfType(
                     AuthException.class,
-                    () -> service.refreshSession(PRESENTED));
+                    () -> service.refreshSession(PRESENTED, SESSION_ID));
 
             // assert
             assertThat(failure.getAuthErrorCode()).isEqualTo(AuthErrorCode.AUTHENTICATION_FAILED);
@@ -166,7 +166,7 @@ class RefreshSessionServiceImplTest {
             // act
             AuthException failure = catchThrowableOfType(
                     AuthException.class,
-                    () -> service.refreshSession(PRESENTED));
+                    () -> service.refreshSession(PRESENTED, SESSION_ID));
 
             // assert
             assertThat(failure.getAuthErrorCode()).isEqualTo(AuthErrorCode.AUTHENTICATION_FAILED);
@@ -184,7 +184,7 @@ class RefreshSessionServiceImplTest {
             // act
             RemoteServiceException failure = catchThrowableOfType(
                     RemoteServiceException.class,
-                    () -> service.refreshSession(PRESENTED));
+                    () -> service.refreshSession(PRESENTED, SESSION_ID));
 
             // assert
             assertThat(failure.getErrorCode().getHttpStatusCode()).isEqualTo(503);
@@ -213,11 +213,30 @@ class RefreshSessionServiceImplTest {
             // act
             AuthException failure = catchThrowableOfType(
                     AuthException.class,
-                    () -> service.refreshSession(PRESENTED));
+                    () -> service.refreshSession(PRESENTED, SESSION_ID));
 
             // assert
             assertThat(failure.getAuthErrorCode()).isEqualTo(AuthErrorCode.AUTHENTICATION_FAILED);
         }
+
+        @Test
+        void rejectsCsrfSessionMismatchBeforeFamilyLookupOrRotation() {
+            // arrange
+            String otherSessionId = "44444444-4444-4444-4444-444444444444";
+            // conditions
+            when(familyStore.extractSessionId(PRESENTED)).thenReturn(SESSION_ID);
+            // act
+            AuthException failure = catchThrowableOfType(
+                    AuthException.class,
+                    () -> service.refreshSession(PRESENTED, otherSessionId));
+            // assert
+            assertThat(failure.getAuthErrorCode()).isEqualTo(AuthErrorCode.INVALID_CSRF_TOKEN);
+            // verify
+            verify(familyStore, never()).requireFamily(any());
+            verify(sessionIssuer, never()).rotateSession(any(), any(), any());
+            verify(familyStore, never()).revokeOne(any(), any());
+        }
+
     }
 
     private RefreshSessionFamilyRecord family(List<String> roles, Long adminVersion) {
