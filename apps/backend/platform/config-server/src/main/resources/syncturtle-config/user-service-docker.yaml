@@ -26,3 +26,5 @@ app:
       base-url: http://workspace-service:8080
     email-service:
       base-url: http://email-service:8080
+    file-service:
+      base-url: http://file-service:8080
