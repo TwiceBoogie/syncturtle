@@ -14,6 +14,7 @@
     "lint": "turbo run lint --continue",
     "typecheck": "turbo run typecheck --continue",
     "test": "turbo run test --continue",
+    "test:frontend": "turbo run test --continue --filter=!@syncturtle/backend",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "constraints": "yarn constraints",

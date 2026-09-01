@@ -209,14 +209,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     @Transactional
-    public SignOutResponse signOut(String logoutContext, String presentedRefreshToken) {
+    public SignOutResponse signOut(String logoutContext, String presentedRefreshToken, String trustedCsrfSessionId) {
         Assert.hasText(logoutContext, "logout context is required");
+
+        String canonicalCsrfSessionId = requireCanonicalCsrfSessionId(trustedCsrfSessionId);
 
         if (StringUtils.hasText(presentedRefreshToken)) {
             try {
+                String refreshSessionId = refreshSessionFamilyStore.extractSessionId(presentedRefreshToken);
+                if (!refreshSessionId.equals(canonicalCsrfSessionId)) {
+                    throw AuthException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
+                }
+
                 refreshSessionFamilyStore.revokePresented(presentedRefreshToken);
             } catch (IllegalArgumentException exception) {
-                log.debug("Ignoring a malformed refresh credential during sign out");
+                throw AuthException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
             }
         }
 
@@ -283,6 +290,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         .build());
 
         return IssueTokenResponse.issued(session, authenticationRedirector.successLocation(nextPath));
+    }
+
+    private static String requireCanonicalCsrfSessionId(String value) {
+        try {
+            String canonical = UUID.fromString(value).toString();
+            if (!canonical.equals(value)) {
+                throw AuthException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
+            }
+            return canonical;
+        } catch (AuthException exception) {
+            throw exception;
+        } catch (RuntimeException exception) {
+            throw AuthException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
+        }
     }
 
     private static void requireEmailPasswordInput(String email, String password, AuthErrorCode errorCode) {

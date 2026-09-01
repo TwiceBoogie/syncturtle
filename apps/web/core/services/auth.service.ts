@@ -11,8 +11,7 @@ export class AuthService extends APIService {
 
   async requestCSRFToken(): Promise<ICsrfTokenData> {
     try {
-      const response = await this.get<ICsrfTokenData>("/api/get-csrf-token");
-      return response.data;
+      return this.requestCsrfToken();
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;
       throw err.data ?? err;
@@ -22,6 +21,7 @@ export class AuthService extends APIService {
   async setPassword(data: { password: string }): Promise<IUser> {
     try {
       const response = await this.post<IUser>("/auth/set-password", data);
+      this.invalidateCsrfToken();
       return response.data;
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;
@@ -47,6 +47,8 @@ export class AuthService extends APIService {
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;
       throw err.data ?? err;
+    } finally {
+      this.invalidateCsrfToken();
     }
   }
 
