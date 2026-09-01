@@ -1,41 +1,82 @@
 package com.syncturtle.platform.gateway.controller;
 
-import static com.syncturtle.common.core.cookie.CsrfConstants.CSRF_HEADER_NAME;
-import static com.syncturtle.common.core.cookie.CsrfConstants.CSRF_FORM_FIELD_NAME;
-
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ServerWebExchange;
 
 import com.syncturtle.common.security.cookie.ReactiveCsrfCookieWriter;
-import com.syncturtle.common.security.csrf.CsrfTokenService;
-import com.syncturtle.common.security.csrf.IssuedCsrfToken;
+import com.syncturtle.platform.gateway.dto.response.CsrfTokenResponse;
+import com.syncturtle.platform.gateway.security.PassportAuthenticationToken;
+import com.syncturtle.platform.gateway.security.csrf.GatewayCsrfTokenProcessor;
+import com.syncturtle.platform.gateway.security.csrf.IssuedPreAuthCsrfToken;
+import com.syncturtle.platform.gateway.security.csrf.IssuedSessionCsrfToken;
+import com.syncturtle.platform.gateway.security.session.ParsedPassportSession;
+import com.syncturtle.platform.gateway.type.GatewayCsrfScope;
 
 import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Mono;
 
-import java.util.Map;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
 @RequiredArgsConstructor
 public class CsrfController {
 
-    private final CsrfTokenService csrfTokenService;
+    private final GatewayCsrfTokenProcessor csrfTokenProcessor;
     private final ReactiveCsrfCookieWriter csrfCookieWriter;
+    private final Clock clock;
 
     @GetMapping("/api/get-csrf-token")
-    public ResponseEntity<Map<String, Object>> getCsrfToken(ServerHttpResponse response) {
-        IssuedCsrfToken token = csrfTokenService.issueToken();
+    public Mono<ResponseEntity<CsrfTokenResponse>> getCsrfToken(ServerWebExchange exchange) {
+        return exchange.getPrincipal()
+                .ofType(PassportAuthenticationToken.class)
+                .map(authentication -> issueSession(exchange, authentication.getValidatedSession()))
+                .switchIfEmpty(Mono.fromSupplier(() -> issuePreAuth(exchange)));
+    }
 
-        csrfCookieWriter.setCsrfCookie(response, token.getSignedToken());
+    private ResponseEntity<CsrfTokenResponse> issuePreAuth(ServerWebExchange exchange) {
+        IssuedPreAuthCsrfToken issued = csrfTokenProcessor.issuePreAuth();
+        csrfCookieWriter.setCsrfCookie(
+                exchange.getResponse(),
+                issued.getSignedCookieToken(),
+                remainingAge(issued.getExpiresAt()));
+        CsrfTokenResponse response = new CsrfTokenResponse(
+                issued.getSubmittedToken(),
+                GatewayCsrfScope.PREAUTH,
+                issued.getExpiresAt());
+        return noStore(response);
+    }
 
-        return ResponseEntity.ok(Map.of(
-                "ok", true,
-                "csrfToken", token.getRawToken(),
-                "cookieName", csrfCookieWriter.csrfCookieName(),
-                "headerName", CSRF_HEADER_NAME,
-                "formFieldName", CSRF_FORM_FIELD_NAME));
+    private ResponseEntity<CsrfTokenResponse> issueSession(
+            ServerWebExchange exchange,
+            ParsedPassportSession session) {
+        IssuedSessionCsrfToken issued = csrfTokenProcessor.issueSession(session.getSessionId(),
+                session.getExpiresAt());
+        csrfCookieWriter.setCsrfCookie(
+                exchange.getResponse(),
+                issued.getSignedCookieToken(),
+                remainingAge(issued.getExpiresAt()));
+        CsrfTokenResponse response = new CsrfTokenResponse(
+                issued.getSubmittedToken(),
+                GatewayCsrfScope.SESSION,
+                issued.getExpiresAt());
+        return noStore(response);
+    }
+
+    private Duration remainingAge(Instant expiresAt) {
+        Duration remaining = Duration.between(Instant.now(clock), expiresAt);
+        return remaining.isNegative() ? Duration.ZERO : remaining;
+    }
+
+    private static ResponseEntity<CsrfTokenResponse> noStore(CsrfTokenResponse response) {
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(response);
     }
 
 }
