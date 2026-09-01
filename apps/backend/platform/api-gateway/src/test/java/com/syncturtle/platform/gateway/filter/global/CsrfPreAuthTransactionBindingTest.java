@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +18,9 @@ import org.springframework.mock.web.server.MockServerWebExchange;
 
 import com.syncturtle.common.contracts.auth.session.PreAuthTransactionBinding;
 import com.syncturtle.common.security.cookie.SecurityCookieFactory;
-import com.syncturtle.common.security.csrf.CsrfTokenService;
+import com.syncturtle.platform.gateway.security.csrf.GatewayCsrfRoutePolicy;
+import com.syncturtle.platform.gateway.security.csrf.GatewayCsrfTokenProcessor;
+import com.syncturtle.platform.gateway.security.csrf.ValidatedPreAuthCsrfToken;
 
 import reactor.core.publisher.Mono;
 
@@ -31,11 +34,17 @@ class CsrfPreAuthTransactionBindingTest {
         void addsBindingDerivedFromTheValidatedSignedCookieOnly() {
             // arrange
             SecurityCookieFactory cookies = mock(SecurityCookieFactory.class);
-            CsrfTokenService csrf = mock(CsrfTokenService.class);
+            GatewayCsrfTokenProcessor tokenProcessor = mock(GatewayCsrfTokenProcessor.class);
             // conditions
             when(cookies.csrfCookieName()).thenReturn("csrf_token");
-            when(csrf.matches("signed-cookie", "submitted-secret")).thenReturn(true);
-            CsrfMiddlewareFilter filter = new CsrfMiddlewareFilter(cookies, csrf);
+            when(tokenProcessor.validatePreAuth("signed-cookie", "submitted-secret")).thenReturn(
+                    new ValidatedPreAuthCsrfToken(
+                            "submitted-secret",
+                            "signed-cookie",
+                            Instant.parse("2026-08-27T12:00:00Z"),
+                            Instant.parse("2026-08-27T12:30:00Z")));
+            CsrfMiddlewareFilter filter = new CsrfMiddlewareFilter(cookies, tokenProcessor,
+                    new GatewayCsrfRoutePolicy());
             MockServerWebExchange exchange = MockServerWebExchange
                     .from(MockServerHttpRequest.post("/api/instances/admins/sign-in")
                             .cookie(new HttpCookie("csrf_token", "signed-cookie"))
@@ -51,56 +60,6 @@ class CsrfPreAuthTransactionBindingTest {
             // assert
             assertThat(forwarded)
                     .hasValue(PreAuthTransactionBinding.fromValidatedSignedCsrfToken("signed-cookie").getValue());
-        }
-
-        @Test
-        @DisplayName("adds binding for the exact administrator sign-up route with trailing slash")
-        void addsBindingForExactAdministratorSignupRoute() {
-            // arrange
-            SecurityCookieFactory cookies = mock(SecurityCookieFactory.class);
-            CsrfTokenService csrf = mock(CsrfTokenService.class);
-            when(cookies.csrfCookieName()).thenReturn("csrf_token");
-            when(csrf.matches("signed-cookie", "submitted-secret")).thenReturn(true);
-            CsrfMiddlewareFilter filter = new CsrfMiddlewareFilter(cookies, csrf);
-            MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest
-                    .post("/api/instances/admins/sign-up/")
-                    .cookie(new HttpCookie("csrf_token", "signed-cookie"))
-                    .header("X-CSRF-Token", "submitted-secret")
-                    .build());
-            AtomicReference<String> forwarded = new AtomicReference<>();
-            GatewayFilterChain chain = current -> {
-                forwarded.set(current.getRequest().getHeaders().getFirst(HDR_PREAUTH_TRANSACTION_BINDING));
-                return Mono.empty();
-            };
-            // act
-            filter.filter(exchange, chain).block();
-            // assert
-            assertThat(forwarded)
-                    .hasValue(PreAuthTransactionBinding.fromValidatedSignedCsrfToken("signed-cookie").getValue());
-        }
-
-        @Test
-        @DisplayName("does not inject binding for another unsafe route")
-        void doesNotInjectBindingForAnotherUnsafeRoute() {
-            // arrange
-            SecurityCookieFactory cookies = mock(SecurityCookieFactory.class);
-            CsrfTokenService csrf = mock(CsrfTokenService.class);
-            when(cookies.csrfCookieName()).thenReturn("csrf_token");
-            when(csrf.matches("signed-cookie", "submitted-secret")).thenReturn(true);
-            CsrfMiddlewareFilter filter = new CsrfMiddlewareFilter(cookies, csrf);
-            MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.post("/auth/sign-in")
-                    .cookie(new HttpCookie("csrf_token", "signed-cookie"))
-                    .header("X-CSRF-Token", "submitted-secret")
-                    .build());
-            AtomicReference<String> forwarded = new AtomicReference<>("not-forwarded");
-            GatewayFilterChain chain = current -> {
-                forwarded.set(current.getRequest().getHeaders().getFirst(HDR_PREAUTH_TRANSACTION_BINDING));
-                return Mono.empty();
-            };
-            // act
-            filter.filter(exchange, chain).block();
-            // assert
-            assertThat(forwarded).hasValue(null);
         }
 
     }

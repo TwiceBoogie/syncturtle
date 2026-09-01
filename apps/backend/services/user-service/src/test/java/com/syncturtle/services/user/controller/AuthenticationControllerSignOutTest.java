@@ -28,6 +28,7 @@ import jakarta.servlet.http.HttpServletResponse;
 class AuthenticationControllerSignOutTest {
 
     private static final String REFRESH_TOKEN = "3a428175-bef1-4c13-ae53-997b6fbfc508.refresh-secret";
+    private static final String SESSION_ID = "3a428175-bef1-4c13-ae53-997b6fbfc508";
 
     @Nested
     class SignOut {
@@ -39,9 +40,10 @@ class AuthenticationControllerSignOutTest {
                     "signOut",
                     String.class,
                     String.class,
+                    String.class,
                     HttpServletResponse.class);
             // act
-            CookieValue cookieValue = method.getParameters()[1].getAnnotation(CookieValue.class);
+            CookieValue cookieValue = method.getParameters()[2].getAnnotation(CookieValue.class);
             // assert
             assertThat(cookieValue).isNotNull();
             assertThat(cookieValue.name()).isEqualTo("#{@securityCookieFactory.refreshCookieName()}");
@@ -65,16 +67,16 @@ class AuthenticationControllerSignOutTest {
                     hostResolver);
             MockHttpServletResponse servletResponse = new MockHttpServletResponse();
             // conditions
-            when(authenticationService.signOut("WEB", REFRESH_TOKEN))
+            when(authenticationService.signOut("WEB", REFRESH_TOKEN, SESSION_ID))
                     .thenReturn(SignOutResponse.redirect("https://syncturtle.test/sign-in"));
             // act
-            ResponseEntity<Void> result = controller.signOut("WEB", REFRESH_TOKEN, servletResponse);
+            ResponseEntity<Void> result = controller.signOut("WEB", SESSION_ID, REFRESH_TOKEN, servletResponse);
             // assert
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.SEE_OTHER);
             assertThat(result.getHeaders().getLocation()).isEqualTo(URI.create("https://syncturtle.test/sign-in"));
             // verify
             InOrder order = inOrder(cookieWriter, authenticationService);
-            order.verify(authenticationService).signOut("WEB", REFRESH_TOKEN);
+            order.verify(authenticationService).signOut("WEB", REFRESH_TOKEN, SESSION_ID);
             order.verify(cookieWriter).clearAllSecurityCookies(servletResponse);
         }
     }

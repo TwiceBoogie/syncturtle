@@ -49,6 +49,13 @@ mc admin user add local "${APP_STORAGE_ACCESS_KEY}" "${APP_STORAGE_SECRET_KEY}"
 mc admin policy create local syncturtle-file-service "${policy_file}"
 mc admin policy attach local syncturtle-file-service --user "${APP_STORAGE_ACCESS_KEY}"
 
-mc version info "local/${APP_STORAGE_BUCKET}" | grep -qi enabled
+version_info=$(mc version info "local/${APP_STORAGE_BUCKET}")
+case "${version_info}" in
+  *"versioning is enabled"*) ;;
+  *)
+    echo "MinIO bucket versioning verification failed" >&2
+    exit 1
+    ;;
+esac
 
 echo "MinIO bucket, versioning, private access, and file-service policy are ready"

@@ -2,10 +2,12 @@
 
 import type { FC, ReactNode } from "react";
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 // hooks
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useUser } from "@/hooks/store/use-user";
 import { useInstance } from "@/hooks/store/use-instance";
+import { currentUserBootstrapKey } from "./user-wrapper-policy";
 import useSWR from "swr";
 
 interface IUserWrapperProps {
@@ -14,12 +16,13 @@ interface IUserWrapperProps {
 
 export const UserWrapper: FC<IUserWrapperProps> = (props) => {
   const { children } = props;
+  const pathname = usePathname();
   // hooks
   const { isSidebarCollapsed, toggleSidebar } = useAppTheme();
   const { currentUser, fetchCurrentUser } = useUser();
-  const { fetchInstanceAdmins } = useInstance();
+  const { instance, fetchInstanceAdmins } = useInstance();
 
-  useSWR("CURRENT_USER", () => fetchCurrentUser(), {
+  useSWR(currentUserBootstrapKey(instance?.isSetupDone, pathname), () => fetchCurrentUser(), {
     shouldRetryOnError: false,
   });
 
