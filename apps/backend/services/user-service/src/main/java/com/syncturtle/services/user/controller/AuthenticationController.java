@@ -89,7 +89,7 @@ public class AuthenticationController {
                 request.getEmail(),
                 request.getPassword(),
                 request.getNextPath());
-        writeSessionCookiesIfPresent(servletResponse, response);
+        writeSessionCookiesIfPresent(servletResponse, response, true);
         return redirect(response.getLocation());
     }
 
@@ -111,7 +111,7 @@ public class AuthenticationController {
                 request.getEmail(),
                 request.getPassword(),
                 request.getNextPath());
-        writeSessionCookiesIfPresent(servletResponse, response);
+        writeSessionCookiesIfPresent(servletResponse, response, true);
         return redirect(response.getLocation());
     }
 
@@ -122,7 +122,7 @@ public class AuthenticationController {
                 request.getEmail(),
                 request.getCode(),
                 request.getNextPath());
-        writeSessionCookiesIfPresent(servletResponse, response);
+        writeSessionCookiesIfPresent(servletResponse, response, true);
         return redirect(response.getLocation());
     }
 
@@ -133,13 +133,14 @@ public class AuthenticationController {
                 request.getEmail(),
                 request.getCode(),
                 request.getNextPath());
-        writeSessionCookiesIfPresent(servletResponse, response);
+        writeSessionCookiesIfPresent(servletResponse, response, true);
         return redirect(response.getLocation());
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<Void> refresh(
             HttpServletResponse servletResponse,
+            @RequestHeader(name = GatewayHeaders.HDR_INTERNAL_CSRF_SESSION_ID) String trustedCsrfSessionId,
             @CookieValue(name = "#{@securityCookieFactory.refreshCookieName()}", required = false) String presentedRefreshToken) {
         if (!StringUtils.hasText(presentedRefreshToken)) {
             cookieWriter.clearAuthCookies(servletResponse);
@@ -147,13 +148,20 @@ public class AuthenticationController {
         }
 
         try {
-            IssueTokenResponse response = refreshSessionService.refreshSession(presentedRefreshToken);
-            writeSessionCookiesIfPresent(servletResponse, response);
+            IssueTokenResponse response = refreshSessionService.refreshSession(presentedRefreshToken,
+                    trustedCsrfSessionId);
+            writeSessionCookiesIfPresent(servletResponse, response, false);
+
             return ResponseEntity.noContent().build();
         } catch (AuthException exception) {
             if (exception.getAuthErrorCode() == AuthErrorCode.AUTHENTICATION_FAILED) {
                 cookieWriter.clearAuthCookies(servletResponse);
             }
+
+            if (exception.getAuthErrorCode() == AuthErrorCode.INVALID_CSRF_TOKEN) {
+                cookieWriter.clearAllSecurityCookies(servletResponse);
+            }
+
             throw exception;
         }
     }
@@ -161,13 +169,26 @@ public class AuthenticationController {
     @PostMapping(EndpointPaths.SIGN__OUT)
     public ResponseEntity<Void> signOut(
             @RequestHeader(name = GatewayHeaders.HDR_INTERNAL_LOGOUT_CONTEXT, required = false, defaultValue = "WEB") String logoutContext,
+            @RequestHeader(name = GatewayHeaders.HDR_INTERNAL_CSRF_SESSION_ID) String trustedCsrfSessionId,
             @CookieValue(name = "#{@securityCookieFactory.refreshCookieName()}", required = false) String presentedRefreshToken,
             HttpServletResponse servletResponse) {
-        SignOutResponse response = authenticationService.signOut(logoutContext, presentedRefreshToken);
-        cookieWriter.clearAllSecurityCookies(servletResponse);
-        return ResponseEntity.status(HttpStatus.SEE_OTHER)
-                .location(URI.create(response.getRedirection()))
-                .build();
+        try {
+            SignOutResponse response = authenticationService.signOut(logoutContext, presentedRefreshToken,
+                    trustedCsrfSessionId);
+            cookieWriter.clearAllSecurityCookies(servletResponse);
+            cookieWriter.clearAdminSessionHandoffCookie(servletResponse);
+
+            return ResponseEntity.status(HttpStatus.SEE_OTHER)
+                    .location(URI.create(response.getRedirection()))
+                    .build();
+        } catch (AuthException exception) {
+            if (exception.getAuthErrorCode() == AuthErrorCode.INVALID_CSRF_TOKEN) {
+                cookieWriter.clearAllSecurityCookies(servletResponse);
+                cookieWriter.clearAdminSessionHandoffCookie(servletResponse);
+            }
+
+            throw exception;
+        }
     }
 
     @PostMapping("/set-password")
@@ -181,13 +202,18 @@ public class AuthenticationController {
                 sessionId,
                 request.getPassword());
         cookieWriter.clearAuthCookies(servletResponse);
-        writeSessionCookiesIfPresent(servletResponse, response.getTokens());
+        writeSessionCookiesIfPresent(servletResponse, response.getTokens(), false);
         return ResponseEntity.ok(response.getUser());
     }
 
-    private void writeSessionCookiesIfPresent(HttpServletResponse response, IssueTokenResponse session) {
-        if (session == null) {
+    private void writeSessionCookiesIfPresent(HttpServletResponse response, IssueTokenResponse session,
+            boolean clearCsrf) {
+        if (!hasIssuedSession(session)) {
             return;
+        }
+
+        if (clearCsrf) {
+            cookieWriter.clearCsrfCookie(response);
         }
 
         Duration accessMaxAge = Duration.between(session.getAccessIssuedAt(), session.getAccessExpiresAt());
@@ -199,6 +225,16 @@ public class AuthenticationController {
                 accessMaxAge,
                 session.getRefreshToken(),
                 refreshMaxAge);
+    }
+
+    private static boolean hasIssuedSession(IssueTokenResponse session) {
+        return session != null
+                && StringUtils.hasText(session.getAccessToken())
+                && session.getAccessIssuedAt() != null
+                && session.getAccessExpiresAt() != null
+                && StringUtils.hasText(session.getRefreshToken())
+                && session.getRefreshIssuedAt() != null
+                && session.getRefreshExpiresAt() != null;
     }
 
     private ResponseEntity<Void> redirect(String redirection) {
