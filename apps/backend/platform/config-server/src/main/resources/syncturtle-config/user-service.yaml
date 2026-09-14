@@ -91,6 +91,20 @@ app:
       commit-recovered: false
       log-retries: true
   security:
+    request-provenance:
+      keys:
+        signer:
+          private-key-location: ${APP_SECURITY_REQUEST_PROVENANCE_USER_SERVICE_PRIVATE_KEY_LOCATION}
+          public-key-location: ${APP_SECURITY_REQUEST_PROVENANCE_USER_SERVICE_PUBLIC_KEY_LOCATION}
+        verification-public-key-locations:
+          api-gateway:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_API_GATEWAY_PUBLIC_KEY_LOCATION}",
+            ]
+          instance-service:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_INSTANCE_SERVICE_PUBLIC_KEY_LOCATION}",
+            ]
     csrf:
       enabled: true
       signing-key: ${APP_SECURITY_CSRF_SIGNING_KEY}

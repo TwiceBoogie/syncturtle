@@ -7,9 +7,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.syncturtle.common.core.header.GatewayHeaders;
 import com.syncturtle.common.security.cookie.ServletAuthCookieWriter;
 import com.syncturtle.common.web.context.RequestClientContext;
 import com.syncturtle.common.web.url.PublicUrlResolver;
@@ -34,11 +36,13 @@ public class AdminSessionCompletionController {
     private final PublicUrlResolver hostResolver;
 
     @GetMapping("/session")
-    public ResponseEntity<Void> complete(HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
+    public ResponseEntity<Void> complete(
+            @RequestHeader(GatewayHeaders.HDR_PREAUTH_TRANSACTION_BINDING) String preAuthBinding,
+            HttpServletRequest servletRequest,
+            HttpServletResponse servletResponse) {
         String completionCode = readSingleCookie(servletRequest, cookieWriter.adminSessionHandoffCookieName());
-        String signedCsrfToken = readSingleCookie(servletRequest, cookieWriter.csrfCookieName());
 
-        if (!StringUtils.hasText(completionCode) || !StringUtils.hasText(signedCsrfToken)) {
+        if (!StringUtils.hasText(completionCode) || !StringUtils.hasText(preAuthBinding)) {
             cookieWriter.clearAdminSessionHandoffCookie(servletResponse);
             return redirect(hostResolver.admin(""));
         }
@@ -46,11 +50,12 @@ public class AdminSessionCompletionController {
         try {
             IssueTokenResponse response = service.complete(AdminSessionCompletionParam.builder()
                     .completionCode(completionCode)
-                    .signedCsrfToken(signedCsrfToken)
+                    .preAuthBinding(preAuthBinding)
                     .clientIp(requestClientContext.getClientIp())
                     .userAgent(requestClientContext.getUserAgent())
                     .build());
             writeSessionCookies(servletResponse, response);
+            cookieWriter.clearCsrfCookie(servletResponse);
             cookieWriter.clearAdminSessionHandoffCookie(servletResponse);
 
             return redirect(response.getLocation());

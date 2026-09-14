@@ -87,6 +87,21 @@ app:
     presign-expiration: ${APP_STORAGE_PRESIGN_EXPIRATION:10m}
 
   security:
+    request-provenance:
+      keys:
+        verification-public-key-locations:
+          api-gateway:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_API_GATEWAY_PUBLIC_KEY_LOCATION}",
+            ]
+          user-service:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_USER_SERVICE_PUBLIC_KEY_LOCATION}",
+            ]
+          workspace-service:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_WORKSPACE_SERVICE_PUBLIC_KEY_LOCATION}",
+            ]
     csrf:
       enabled: false
       signing-key: ${APP_SECURITY_CSRF_SIGNING_KEY}

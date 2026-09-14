@@ -5,7 +5,6 @@ import static com.syncturtle.common.core.header.GatewayHeaders.HDR_AUTH_USER_ID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -27,11 +26,12 @@ import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.security.core.Authentication;
 
 import com.syncturtle.common.security.cookie.SecurityCookieFactory;
-import com.syncturtle.common.security.csrf.CsrfTokenService;
 import com.syncturtle.common.security.property.SecurityCookieProperties;
 import com.syncturtle.platform.gateway.filter.GatewayFilterOrders;
 import com.syncturtle.platform.gateway.security.BrowserSecurityCookiePolicy;
 import com.syncturtle.platform.gateway.security.CookieOrBearerServerAuthenticationConverter;
+import com.syncturtle.platform.gateway.security.csrf.GatewayCsrfRoutePolicy;
+import com.syncturtle.platform.gateway.security.csrf.GatewayCsrfTokenProcessor;
 
 import reactor.core.publisher.Mono;
 
@@ -173,8 +173,8 @@ class BrowserSecurityCookieIsolationFilterTest {
         }
 
         @Test
-        @DisplayName("keeps only handoff and csrf on completion")
-        void keepsOnlyHandoffAndCsrfOnCompletion() {
+        @DisplayName("keeps only handoff on completion")
+        void keepsOnlyHandoffOnCompletion() {
             // arrange
             MockServerHttpRequest request = MockServerHttpRequest.get("/auth/admin/session")
                     .cookie(
@@ -193,7 +193,7 @@ class BrowserSecurityCookieIsolationFilterTest {
             // act
             filter.filter(exchange, chain).block();
             // assert
-            assertThat(downstreamCookie).hasValue("admin_session_handoff=handoff; csrf_token=csrf");
+            assertThat(downstreamCookie).hasValue("admin_session_handoff=handoff");
             // assert
         }
 
@@ -256,8 +256,9 @@ class BrowserSecurityCookieIsolationFilterTest {
         @DisplayName("authentication and csrf consume credentials before isolation")
         void authenticationAndCsrfConsumeCredentialsBeforeIsolation() {
             // arrange
-            CsrfTokenService csrfTokenService = mock(CsrfTokenService.class);
-            CsrfMiddlewareFilter csrfFilter = new CsrfMiddlewareFilter(cookieFactory, csrfTokenService);
+            GatewayCsrfTokenProcessor tokenProcessor = mock(GatewayCsrfTokenProcessor.class);
+            CsrfMiddlewareFilter csrfFilter = new CsrfMiddlewareFilter(cookieFactory, tokenProcessor,
+                    new GatewayCsrfRoutePolicy());
             CookieOrBearerServerAuthenticationConverter converter = new CookieOrBearerServerAuthenticationConverter(
                     cookieFactory);
             MockServerHttpRequest request = MockServerHttpRequest.post("/api/users/me")
@@ -274,7 +275,6 @@ class BrowserSecurityCookieIsolationFilterTest {
             };
             GatewayFilterChain isolation = current -> filter.filter(current, route);
             // conditions
-            when(csrfTokenService.matches("signed-csrf", "raw-csrf")).thenReturn(true);
             // act
             Authentication authentication = converter.convert(exchange).block();
             csrfFilter.filter(exchange, isolation).block();

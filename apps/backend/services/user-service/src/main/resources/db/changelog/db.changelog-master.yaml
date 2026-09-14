@@ -37,3 +37,7 @@ databaseChangeLog:
   - include:
       file: releases/0008_add_outbox_trace_context.sql
       relativeToChangelogFile: true
+
+  - include:
+      file: releases/0009_allow_nullable_user_names.sql
+      relativeToChangelogFile: true

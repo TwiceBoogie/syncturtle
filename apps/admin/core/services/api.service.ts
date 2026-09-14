@@ -1,3 +1,6 @@
+import { CsrfTokenCache, revokedCurrentSession, shouldRetryInvalidCsrf } from "./csrf-token-cache";
+import type { ICsrfTokenData } from "@syncturtle/types";
+
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 export interface IRequestConfig {
@@ -20,6 +23,7 @@ export interface IRequestConfig {
    * Internal retry counter used to prevent infinite refresh loops
    */
   _retryAttempt?: number;
+  _csrfRetryAttempt?: number;
 }
 
 export interface IHttpResponse<T> {
@@ -52,32 +56,22 @@ export abstract class APIService {
   /**
    * All APIService subclasses share these promises in the same browser runtime
    */
-  private static csrfPromise: Promise<string> | null = null;
+  private static readonly csrfCache = new CsrfTokenCache();
   private static refreshPromise: Promise<void> | null = null;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
   }
 
-  private async getCsrfToken(): Promise<string> {
-    if (!APIService.csrfPromise) {
-      APIService.csrfPromise = this.get<{ csrfToken: string }>("/api/get-csrf-token", {
-        csrf: false,
-        skipAuthRefresh: true,
-      })
-        .then((res) => {
-          const token = res.data?.csrfToken;
-          if (!token) {
-            throw new Error("CSRF token missing from response");
-          }
-          return token;
-        })
-        .catch((err) => {
-          APIService.csrfPromise = null;
-          throw err;
-        });
-    }
-    return APIService.csrfPromise;
+  protected requestCsrfToken(): Promise<ICsrfTokenData> {
+    return APIService.csrfCache.get(async () => {
+      const response = await this.get<ICsrfTokenData>("/api/get-csrf-token", { csrf: false, skipAuthRefresh: true });
+      return response.data;
+    });
+  }
+
+  protected invalidateCsrfToken(): void {
+    APIService.csrfCache.invalidate();
   }
 
   private async refreshSession(): Promise<void> {
@@ -111,15 +105,11 @@ export abstract class APIService {
       return config;
     }
 
-    const token = await this.getCsrfToken();
+    const token = await this.requestCsrfToken();
+    const headers = new Headers(config.headers);
+    headers.set("X-CSRF-Token", token.csrfToken);
 
-    return {
-      ...config,
-      headers: {
-        ...(config.headers || {}),
-        "X-CSRF-Token": token,
-      },
-    };
+    return { ...config, headers };
   }
 
   private buildUrl(path: string, params?: IRequestConfig["params"]): string {
@@ -184,30 +174,25 @@ export abstract class APIService {
   private async request<T>(method: HttpMethod, path: string, config: IRequestConfig = {}): Promise<IHttpResponse<T>> {
     const configWithCsrf = await this.withCsrfIfNeeded(method, config);
     const { params, headers, body, signal, credentials, validateStatus } = configWithCsrf;
+    const requestHeaders = new Headers(headers);
+    const init: RequestInit = { method, headers: requestHeaders, credentials: credentials ?? "include" };
 
-    const url = this.buildUrl(path, params);
-    const init: RequestInit = {
-      method,
-      headers: {
-        ...(headers || {}),
-      },
-      credentials: credentials ?? "include",
-      signal,
-    };
+    if (signal) {
+      init.signal = signal;
+    }
 
     if (body !== undefined && body !== null && method !== "GET") {
       if (body instanceof FormData || body instanceof URLSearchParams || typeof body === "string") {
         init.body = body;
       } else {
-        init.headers = {
-          "Content-Type": "application/json",
-          ...(headers || {}),
-        };
+        if (!requestHeaders.has("Content-Type")) {
+          requestHeaders.set("Content-Type", "application/json");
+        }
         init.body = JSON.stringify(body);
       }
     }
 
-    const response = await fetch(url, init);
+    const response = await fetch(this.buildUrl(path, params), init);
     const parsed = await this.parseResponseBody(response);
 
     // refresh before validate status so caller accepts some 4xx, it still silent refresh on 401
@@ -223,15 +208,22 @@ export abstract class APIService {
       }
     }
 
-    // if csrf is stale or missing, force a fresh token fetch next time
-    if (response.status === 403 && this.shouldAttachCsrf(method, configWithCsrf)) {
-      APIService.csrfPromise = null;
+    if (
+      this.shouldAttachCsrf(method, configWithCsrf) &&
+      shouldRetryInvalidCsrf(response.status, parsed, config._csrfRetryAttempt ?? 0)
+    ) {
+      this.invalidateCsrfToken();
+      return this.request<T>(method, path, { ...config, _csrfRetryAttempt: (config._csrfRetryAttempt ?? 0) + 1 });
     }
 
     const isOk = validateStatus ? validateStatus(response.status) : response.ok;
 
     if (!isOk) {
       throw new HttpError<T>(response, parsed as T | null);
+    }
+
+    if (revokedCurrentSession(parsed)) {
+      this.invalidateCsrfToken();
     }
 
     return {

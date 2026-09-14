@@ -236,7 +236,18 @@ app:
   gateway:
     client-metadata:
       trusted-proxy-count: ${GATEWAY_TRUSTED_PROXY_COUNT:0}
+    csrf:
+      pre-auth-lifetime: 30m
+      session-max-lifetime: 7d
+      nonce-bytes: 32
+      max-signed-token-chars: 2048
+      max-payload-bytes: 1024
   security:
+    request-provenance:
+      keys:
+        signer:
+          private-key-location: ${APP_SECURITY_REQUEST_PROVENANCE_API_GATEWAY_PRIVATE_KEY_LOCATION}
+          public-key-location: ${APP_SECURITY_REQUEST_PROVENANCE_API_GATEWAY_PUBLIC_KEY_LOCATION}
     encryption:
       secret-key: ${APP_SECURITY_ENCRYPTION_SECRET_KEY}
     csrf:

@@ -6,6 +6,7 @@ import java.time.Duration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -37,8 +38,10 @@ public class OAuthController {
     }
 
     @GetMapping("/google/callback")
-    public ResponseEntity<Void> googleCallback(@RequestParam(name = "code", required = false) String code,
-            @RequestParam(name = "state", required = false) String state, HttpServletResponse servletResponse) {
+    public ResponseEntity<Void> googleCallback(
+            @RequestParam(name = "code", required = false) String code,
+            @RequestParam(name = "state", required = false) String state,
+            HttpServletResponse servletResponse) {
         IssueTokenResponse response = service.googleOAuthCallback(code, state);
 
         writeSessionCookiesIfPresent(servletResponse, response);
@@ -54,8 +57,10 @@ public class OAuthController {
     }
 
     @GetMapping("/github/callback")
-    public ResponseEntity<Void> githubCallback(@RequestParam(name = "code", required = false) String code,
-            @RequestParam(name = "state", required = false) String state, HttpServletResponse servletResponse) {
+    public ResponseEntity<Void> githubCallback(
+            @RequestParam(name = "code", required = false) String code,
+            @RequestParam(name = "state", required = false) String state,
+            HttpServletResponse servletResponse) {
         IssueTokenResponse response = service.githubOAuthCallback(code, state);
 
         writeSessionCookiesIfPresent(servletResponse, response);
@@ -71,8 +76,10 @@ public class OAuthController {
     }
 
     @GetMapping("/gitlab/callback")
-    public ResponseEntity<Void> gitlabCallback(@RequestParam(name = "code", required = false) String code,
-            @RequestParam(name = "state", required = false) String state, HttpServletResponse servletResponse) {
+    public ResponseEntity<Void> gitlabCallback(
+            @RequestParam(name = "code", required = false) String code,
+            @RequestParam(name = "state", required = false) String state,
+            HttpServletResponse servletResponse) {
         IssueTokenResponse response = service.gitlabOAuthCallback(code, state);
 
         writeSessionCookiesIfPresent(servletResponse, response);
@@ -89,15 +96,30 @@ public class OAuthController {
     }
 
     private void writeSessionCookiesIfPresent(HttpServletResponse response, IssueTokenResponse session) {
-        if (session == null) {
+        if (!hasIssuedSession(session)) {
             return;
         }
 
         Duration accessMaxAge = Duration.between(session.getAccessIssuedAt(), session.getAccessExpiresAt());
         Duration refreshMaxAge = Duration.between(session.getRefreshIssuedAt(), session.getRefreshExpiresAt());
 
-        cookieWriter.setAccessTokenCookie(response, session.getAccessToken(), accessMaxAge);
-        cookieWriter.setRefreshTokenCookie(response, session.getRefreshToken(), refreshMaxAge);
+        cookieWriter.clearCsrfCookie(response);
+        cookieWriter.setAuthCookies(
+                response,
+                session.getAccessToken(),
+                accessMaxAge,
+                session.getRefreshToken(),
+                refreshMaxAge);
+    }
+
+    private static boolean hasIssuedSession(IssueTokenResponse session) {
+        return session != null
+                && StringUtils.hasText(session.getAccessToken())
+                && session.getAccessIssuedAt() != null
+                && session.getAccessExpiresAt() != null
+                && StringUtils.hasText(session.getRefreshToken())
+                && session.getRefreshIssuedAt() != null
+                && session.getRefreshExpiresAt() != null;
     }
 
 }
