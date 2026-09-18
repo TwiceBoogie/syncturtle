@@ -1,12 +1,16 @@
 package com.syncturtle.platform.gateway.filter.global;
 
+import static com.syncturtle.common.core.header.GatewayHeaders.HDR_INTERNAL_CSRF_SESSION_ID;
+import static com.syncturtle.common.core.header.GatewayHeaders.HDR_PREAUTH_TRANSACTION_BINDING;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -16,245 +20,243 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
-import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.server.ServerWebExchange;
 
+import com.syncturtle.common.core.security.token.Base64UrlSecureTokenGenerator;
 import com.syncturtle.common.security.cookie.SecurityCookieFactory;
-import com.syncturtle.common.security.csrf.CsrfTokenService;
+import com.syncturtle.common.security.csrf.impl.HmacCsrfTokenSigner;
+import com.syncturtle.common.security.property.SecurityCookieProperties;
+import com.syncturtle.platform.gateway.configuration.property.GatewayCsrfProperties;
+import com.syncturtle.platform.gateway.security.PassportAuthenticationToken;
+import com.syncturtle.platform.gateway.security.csrf.GatewayCsrfRoutePolicy;
+import com.syncturtle.platform.gateway.security.csrf.GatewayCsrfTokenProcessor;
+import com.syncturtle.platform.gateway.security.csrf.IssuedPreAuthCsrfToken;
+import com.syncturtle.platform.gateway.security.csrf.IssuedSessionCsrfToken;
+import com.syncturtle.platform.gateway.security.session.ParsedPassportSession;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.json.JsonMapper;
 
 @DisplayName("CsrfMiddlewareFilter")
 class CsrfMiddlewareFilterTest {
 
-    private static final String COOKIE_NAME = "csrf_token";
-    private static final String SIGNED_TOKEN = "signed-token";
-    private static final String RAW_TOKEN = "raw-token";
+    private static final Instant NOW = Instant.parse("2026-08-27T12:00:00Z");
+    private static final String SESSION_ID = "33333333-3333-3333-3333-333333333333";
+    private static final String OTHER_SESSION_ID = "44444444-4444-4444-4444-444444444444";
 
-    private CsrfTokenService tokenService;
+    private SecurityCookieFactory cookieFactory;
+    private GatewayCsrfTokenProcessor tokenProcessor;
     private CsrfMiddlewareFilter filter;
 
     @BeforeEach
     void setup() {
-        SecurityCookieFactory cookieFactory = mock(SecurityCookieFactory.class);
-        when(cookieFactory.csrfCookieName()).thenReturn(COOKIE_NAME);
-        tokenService = mock(CsrfTokenService.class);
-        filter = new CsrfMiddlewareFilter(cookieFactory, tokenService);
+        SecurityCookieProperties cookieProperties = new SecurityCookieProperties(false, false, "Lax", "Lax", "Lax",
+                Duration.ofMinutes(30));
+        cookieFactory = new SecurityCookieFactory(cookieProperties);
+        GatewayCsrfProperties csrfProperties = new GatewayCsrfProperties(Duration.ofMinutes(30), Duration.ofDays(7), 32,
+                2048, 1024);
+        tokenProcessor = new GatewayCsrfTokenProcessor(
+                new JsonMapper(),
+                new HmacCsrfTokenSigner("k".repeat(32).getBytes(StandardCharsets.UTF_8)),
+                new Base64UrlSecureTokenGenerator(),
+                csrfProperties,
+                Clock.fixed(NOW, ZoneOffset.UTC));
+        filter = new CsrfMiddlewareFilter(cookieFactory, tokenProcessor, new GatewayCsrfRoutePolicy());
     }
 
     @Nested
-    @DisplayName("filter(ServerWebExchange, GatewayFilterChain)")
-    class FilterTests {
+    class PreAuthTests {
 
         @Test
-        @DisplayName("permits safe requests without csrf pair")
-        void permitsSafeRequestWithoutCsrfPair() {
+        void validatesFormEqualityPreservesBodyAndBuildsExistingHandoffBinding() {
             // arrange
-            MockServerWebExchange exchange = MockServerWebExchange.from(
-                    MockServerHttpRequest.get("/api/users/me/sessions").build());
-            AtomicBoolean forwarded = new AtomicBoolean();
-            GatewayFilterChain chain = current -> {
-                forwarded.set(true);
-                return Mono.empty();
-            };
-            // conditions
-            // act
-            filter.filter(exchange, chain).block();
-            // assert
-            assertThat(forwarded).isTrue();
-            // verify
-            verifyNoInteractions(tokenService);
-        }
-
-        @Test
-        @DisplayName("permits json refresh with matching header and cookie")
-        void permitsJsonRefreshWithMatchingHeaderAndCookie() {
-            // arrange
-            MockServerHttpRequest request = MockServerHttpRequest.post("/auth/refresh")
-                    .cookie(new HttpCookie(COOKIE_NAME, SIGNED_TOKEN))
-                    .header("X-CSRF-Token", RAW_TOKEN)
-                    .build();
-            MockServerWebExchange exchange = MockServerWebExchange.from(request);
-            AtomicBoolean forwarded = new AtomicBoolean();
-            GatewayFilterChain chain = current -> {
-                forwarded.set(true);
-                return Mono.empty();
-            };
-            // conditions
-            when(tokenService.matches(SIGNED_TOKEN, RAW_TOKEN)).thenReturn(true);
-            // act
-            filter.filter(exchange, chain).block();
-            // assert
-            assertThat(forwarded).isTrue();
-            // verify
-        }
-
-        @Test
-        @DisplayName("permits the final admin logout form and preserves its body")
-        void permitsTheFinalAdminLogoutFormAndPreservesItsBody() {
-            // arrange
-            String body = "csrfmiddlewaretoken=" + RAW_TOKEN;
-            MockServerHttpRequest request = MockServerHttpRequest.post("/auth/admin/sign-out")
+            IssuedPreAuthCsrfToken issued = tokenProcessor.issuePreAuth();
+            String body = "csrfmiddlewaretoken=" + issued.getSubmittedToken() + "&email=user%40example.test";
+            MockServerHttpRequest request = MockServerHttpRequest.post("/api/instances/admins/sign-in")
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                    .cookie(new HttpCookie(COOKIE_NAME, SIGNED_TOKEN))
+                    .cookie(new HttpCookie(cookieFactory.csrfCookieName(), issued.getSignedCookieToken()))
                     .body(body);
             MockServerWebExchange exchange = MockServerWebExchange.from(request);
             AtomicReference<String> forwardedBody = new AtomicReference<>();
-            GatewayFilterChain chain = current -> DataBufferUtils.join(current.getRequest().getBody())
-                    .doOnNext(buffer -> {
-                        forwardedBody.set(buffer.toString(StandardCharsets.UTF_8));
-                        DataBufferUtils.release(buffer);
-                    })
-                    .then();
+            AtomicReference<String> binding = new AtomicReference<>();
+            GatewayFilterChain chain = current -> {
+                binding.set(current.getRequest().getHeaders().getFirst(HDR_PREAUTH_TRANSACTION_BINDING));
+                return DataBufferUtils.join(current.getRequest().getBody()).doOnNext(buffer -> {
+                    forwardedBody.set(buffer.toString(StandardCharsets.UTF_8));
+                    DataBufferUtils.release(buffer);
+                }).then();
+            };
             // conditions
-            when(tokenService.matches(SIGNED_TOKEN, RAW_TOKEN)).thenReturn(true);
             // act
             filter.filter(exchange, chain).block();
             // assert
             assertThat(forwardedBody).hasValue(body);
+            assertThat(binding.get()).isNotBlank();
+            // verify
         }
 
+    }
+
+    @Nested
+    class TransportSessionTests {
+
         @Test
-        @DisplayName("rejects form when header and field conflict")
-        void rejectsFormWhenHeaderAndFieldConflict() {
+        void reconstructsTrustedSessionHeaderOnlyAfterSessionValidation() {
             // arrange
-            MockServerHttpRequest request = MockServerHttpRequest.post("/auth/sign-in")
-                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                    .cookie(new HttpCookie(COOKIE_NAME, SIGNED_TOKEN))
-                    .header("X-CSRF-Token", "different-token")
-                    .body("csrfmiddlewaretoken=" + RAW_TOKEN);
+            IssuedSessionCsrfToken issued = tokenProcessor.issueSession(SESSION_ID, NOW.plus(Duration.ofDays(7)));
+            MockServerHttpRequest request = MockServerHttpRequest.post("/auth/refresh")
+                    .cookie(new HttpCookie(cookieFactory.csrfCookieName(), issued.getSignedCookieToken()))
+                    .header("X-CSRF-Token", issued.getSubmittedToken())
+                    .header(HDR_INTERNAL_CSRF_SESSION_ID, OTHER_SESSION_ID)
+                    .build();
             MockServerWebExchange exchange = MockServerWebExchange.from(request);
-            AtomicBoolean forwarded = new AtomicBoolean();
-            GatewayFilterChain chain = current -> current.getFormData()
-                    .doOnNext(formData -> forwarded.set(
-                            RAW_TOKEN.equals(formData.getFirst("csrfmiddlewaretoken"))))
-                    .then();
+            AtomicReference<String> trustedSessionId = new AtomicReference<>();
             // conditions
-            when(tokenService.matches(SIGNED_TOKEN, null)).thenReturn(false);
             // act
-            filter.filter(exchange, chain).block();
+            filter.filter(exchange, current -> {
+                trustedSessionId.set(current.getRequest().getHeaders().getFirst(HDR_INTERNAL_CSRF_SESSION_ID));
+                return Mono.empty();
+            }).block();
             // assert
-            assertThat(forwarded).isFalse();
-            assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+            assertThat(trustedSessionId).hasValue(SESSION_ID);
             // verify
         }
 
         @Test
-        @DisplayName("preservices a one shot form body for downstream isolation and routing")
-        void preservesAOneShotFormBodyForDownstreamIsolationAndRouting() {
+        void rejectsPreAuthOnRefreshAndClearsCsrfIdentity() {
             // arrange
-            String requestBody = "csrfmiddlewaretoken=" + RAW_TOKEN + "&firstName=Luna";
-            AtomicInteger bodySubscriptions = new AtomicInteger();
-            Flux<DataBuffer> oneShotBody = Flux.defer(() -> {
-                if (bodySubscriptions.getAndIncrement() > 0) {
-                    return Flux.empty();
-                }
-                return Flux.just(DefaultDataBufferFactory.sharedInstance.wrap(
-                        requestBody.getBytes(StandardCharsets.UTF_8)));
-            });
-            MockServerHttpRequest request = MockServerHttpRequest.post("/api/instances/admins/sign-up")
-                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                    .cookie(new HttpCookie(COOKIE_NAME, SIGNED_TOKEN))
-                    .body(oneShotBody);
-            MockServerWebExchange exchange = MockServerWebExchange.from(request);
-            AtomicReference<String> forwardedBody = new AtomicReference<>();
-            GatewayFilterChain chain = current -> DataBufferUtils.join(current.getRequest().getBody())
-                    .doOnNext(buffer -> {
-                        forwardedBody.set(buffer.toString(StandardCharsets.UTF_8));
-                        DataBufferUtils.release(buffer);
-                    })
-                    .then();
-            // conditions
-            when(tokenService.matches(SIGNED_TOKEN, RAW_TOKEN)).thenReturn(true);
-            // act
-            filter.filter(exchange, chain).block();
-            // assert
-            assertThat(bodySubscriptions).hasValue(1);
-            assertThat(forwardedBody).hasValue(requestBody);
-        }
-
-        @Test
-        @DisplayName("permits form logout with matching form field and cookie")
-        void permitsFormLogoutWithMatchingFormFieldAndCookie() {
-            // arrange
-            MockServerHttpRequest request = MockServerHttpRequest.post("/api/instances/admins/sign-out")
-                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                    .cookie(new HttpCookie(COOKIE_NAME, SIGNED_TOKEN))
-                    .body("csrfmiddlewaretoken=" + RAW_TOKEN);
+            IssuedPreAuthCsrfToken issued = tokenProcessor.issuePreAuth();
+            MockServerHttpRequest request = MockServerHttpRequest.post("/auth/refresh")
+                    .cookie(new HttpCookie(cookieFactory.csrfCookieName(), issued.getSignedCookieToken()))
+                    .header("X-CSRF-Token", issued.getSubmittedToken())
+                    .build();
             MockServerWebExchange exchange = MockServerWebExchange.from(request);
             AtomicBoolean forwarded = new AtomicBoolean();
-            GatewayFilterChain chain = current -> current.getFormData()
-                    .doOnNext(formData -> forwarded.set(
-                            RAW_TOKEN.equals(formData.getFirst("csrfmiddlewaretoken"))))
-                    .then();
             // conditions
-            when(tokenService.matches(SIGNED_TOKEN, RAW_TOKEN)).thenReturn(true);
             // act
-            filter.filter(exchange, chain).block();
-            // assert
-            assertThat(forwarded).isTrue();
-            // verify
-        }
-
-        @Test
-        @DisplayName("permits form with one shot body and preserves body for forwarding")
-        void permitsFormWithOneShotBodyAndPreservesBodyForForwarding() {
-            // arrange
-            String requestBody = "csrfmiddlewaretoken=" + RAW_TOKEN + "&firstName=Luna";
-            AtomicInteger bodySubscriptions = new AtomicInteger();
-            Flux<DataBuffer> oneShotBody = Flux.defer(() -> {
-                if (bodySubscriptions.getAndIncrement() > 0) {
-                    return Flux.empty();
-                }
-                byte[] bodyBytes = requestBody.getBytes(StandardCharsets.UTF_8);
-                return Flux.just(DefaultDataBufferFactory.sharedInstance.wrap(bodyBytes));
-            });
-            MockServerHttpRequest request = MockServerHttpRequest.post("/api/instances/admins/sign-up")
-                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                    .cookie(new HttpCookie(COOKIE_NAME, SIGNED_TOKEN))
-                    .body(oneShotBody);
-            MockServerWebExchange exchange = MockServerWebExchange.from(request);
-            AtomicReference<String> forwardedBody = new AtomicReference<>();
-            GatewayFilterChain chain = current -> DataBufferUtils.join(current.getRequest().getBody())
-                    .doOnNext(buffer -> {
-                        forwardedBody.set(buffer.toString(StandardCharsets.UTF_8));
-                        DataBufferUtils.release(buffer);
-                    })
-                    .then();
-            // conditions
-            when(tokenService.matches(SIGNED_TOKEN, RAW_TOKEN)).thenReturn(true);
-            // act
-            filter.filter(exchange, chain).block();
-
-            // assert
-            assertThat(bodySubscriptions).hasValue(1);
-            assertThat(forwardedBody).hasValue(requestBody);
-        }
-
-        @Test
-        void rejectsUnsafeRequestWithoutMatchingPair() {
-            when(tokenService.matches(any(), any())).thenReturn(false);
-            MockServerWebExchange exchange = MockServerWebExchange.from(
-                    MockServerHttpRequest.post("/auth/refresh").build());
-            AtomicBoolean forwarded = new AtomicBoolean();
-            GatewayFilterChain chain = current -> {
+            filter.filter(exchange, current -> {
                 forwarded.set(true);
                 return Mono.empty();
-            };
-
-            filter.filter(exchange, chain).block();
-
+            }).block();
+            // assert
             assertThat(forwarded).isFalse();
             assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+            assertThat(exchange.getResponse().getCookies()).containsKey(cookieFactory.csrfCookieName());
+            // verify
         }
 
+    }
+
+    @Nested
+    class AuthenticatedSessionTests {
+
+        @Test
+        void forwardsMatchingSessionOnceWhenDownstreamCompletesEmpty() {
+            // arrange
+            IssuedSessionCsrfToken issued = tokenProcessor.issueSession(SESSION_ID, NOW.plus(Duration.ofDays(7)));
+            MockServerHttpRequest request = MockServerHttpRequest.patch("/api/users/me/profile")
+                    .cookie(new HttpCookie(cookieFactory.csrfCookieName(), issued.getSignedCookieToken()))
+                    .header("X-CSRF-Token", issued.getSubmittedToken())
+                    .build();
+            ServerWebExchange exchange = MockServerWebExchange.from(request).mutate()
+                    .principal(Mono.just(authentication(SESSION_ID)))
+                    .build();
+            AtomicInteger forwarded = new AtomicInteger();
+            // conditions
+            // act
+            filter.filter(exchange, current -> {
+                forwarded.incrementAndGet();
+                return Mono.empty();
+            }).block();
+            // assert
+            assertThat(forwarded).hasValue(1);
+            assertThat(exchange.getResponse().getStatusCode()).isNull();
+            assertThat(exchange.getResponse().getCookies()).doesNotContainKey(cookieFactory.csrfCookieName());
+            // verify
+        }
+
+        @Test
+        void doesNotRejectAfterMatchingSessionCommitsSuccessfulResponse() {
+            // arrange
+            IssuedSessionCsrfToken issued = tokenProcessor.issueSession(SESSION_ID, NOW.plus(Duration.ofDays(7)));
+            MockServerHttpRequest request = MockServerHttpRequest.patch("/api/users/me/profile")
+                    .cookie(new HttpCookie(cookieFactory.csrfCookieName(), issued.getSignedCookieToken()))
+                    .header("X-CSRF-Token", issued.getSubmittedToken())
+                    .build();
+            ServerWebExchange exchange = MockServerWebExchange.from(request).mutate()
+                    .principal(Mono.just(authentication(SESSION_ID)))
+                    .build();
+            AtomicInteger forwarded = new AtomicInteger();
+            // conditions
+            // act
+            filter.filter(exchange, current -> {
+                forwarded.incrementAndGet();
+                current.getResponse().setStatusCode(HttpStatus.OK);
+                return current.getResponse().setComplete();
+            }).block();
+            // assert
+            assertThat(forwarded).hasValue(1);
+            assertThat(exchange.getResponse().isCommitted()).isTrue();
+            assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(exchange.getResponse().getCookies()).doesNotContainKey(cookieFactory.csrfCookieName());
+            // verify
+        }
+
+        @Test
+        void requiresTokenSidToMatchValidatedPassportSid() {
+            // arrange
+            IssuedSessionCsrfToken issued = tokenProcessor.issueSession(SESSION_ID, NOW.plus(Duration.ofDays(7)));
+            MockServerHttpRequest request = MockServerHttpRequest.patch("/api/users/me/profile")
+                    .cookie(new HttpCookie(cookieFactory.csrfCookieName(), issued.getSignedCookieToken()))
+                    .header("X-CSRF-Token", issued.getSubmittedToken())
+                    .build();
+            MockServerWebExchange baseExchange = MockServerWebExchange.from(request);
+            ServerWebExchange exchange = baseExchange.mutate()
+                    .principal(Mono.just(authentication(OTHER_SESSION_ID)))
+                    .build();
+            AtomicBoolean forwarded = new AtomicBoolean();
+            // conditions
+            // act
+            filter.filter(exchange, current -> {
+                forwarded.set(true);
+                return Mono.empty();
+            }).block();
+            // assert
+            assertThat(forwarded).isFalse();
+            assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+            assertThat(exchange.getResponse().getCookies()).containsKey(cookieFactory.csrfCookieName());
+            assertThat(baseExchange.getResponse().getBodyAsString().block()).contains("INVALID_CSRF_TOKEN");
+            // verify
+        }
+
+    }
+
+    private PassportAuthenticationToken authentication(String sessionId) {
+        Jwt jwt = Jwt.withTokenValue("access")
+                .header("alg", "RS256")
+                .subject("11111111-1111-1111-1111-111111111111")
+                .issuedAt(NOW.minusSeconds(60))
+                .expiresAt(NOW.plusSeconds(600))
+                .build();
+        ParsedPassportSession session = new ParsedPassportSession(
+                2,
+                sessionId,
+                "11111111-1111-1111-1111-111111111111",
+                "22222222-2222-2222-2222-222222222222",
+                List.of("USER"),
+                1L,
+                null,
+                true,
+                NOW.minusSeconds(60),
+                NOW.plus(Duration.ofDays(7)));
+        return new PassportAuthenticationToken(jwt, List.of(), session);
     }
 
 }

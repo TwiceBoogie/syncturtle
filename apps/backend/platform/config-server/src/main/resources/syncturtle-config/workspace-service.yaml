@@ -64,6 +64,20 @@ app:
     runtime-cache:
       ttl: ${APP_WORKSPACE_RUNTIME_CACHE_TTL:1m}
   security:
+    request-provenance:
+      keys:
+        signer:
+          private-key-location: ${APP_SECURITY_REQUEST_PROVENANCE_WORKSPACE_SERVICE_PRIVATE_KEY_LOCATION}
+          public-key-location: ${APP_SECURITY_REQUEST_PROVENANCE_WORKSPACE_SERVICE_PUBLIC_KEY_LOCATION}
+        verification-public-key-locations:
+          api-gateway:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_API_GATEWAY_PUBLIC_KEY_LOCATION}",
+            ]
+          instance-service:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_INSTANCE_SERVICE_PUBLIC_KEY_LOCATION}",
+            ]
     csrf:
       enabled: false
     cookies:

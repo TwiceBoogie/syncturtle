@@ -14,6 +14,12 @@ public final class GatewayFilterOrders {
     public static final int CSRF = Ordered.HIGHEST_PRECEDENCE + 30;
     public static final int BROWSER_SECURITY_COOKIE_ISOLATION = Ordered.HIGHEST_PRECEDENCE + 40;
     /**
+     * Spring Cloud Gateway's RouteToRequestUrlFilter currently uses order 10000.
+     * This filter signs the final rewritten downstream request immediately before
+     * it.
+     */
+    public static final int REQUEST_PROVENANCE = 9999;
+    /**
      * Runs after authentication/header-enrichment filters but before spring cloud
      * gateway's final routing filter
      */

@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.syncturtle.common.contracts.email.event.EmailToSendEvent;
@@ -33,6 +34,7 @@ import com.syncturtle.common.contracts.messaging.KafkaTopics;
 import com.syncturtle.services.email.EmailServiceApplication;
 import com.syncturtle.services.email.service.EmailInboxService;
 import com.syncturtle.services.email.support.kafka.EmailKafkaTopicsTestConfiguration;
+import com.syncturtle.services.email.support.security.EmailRequestProvenanceTestKeyInitializer;
 import com.syncturtle.testing.annotation.IntegrationTest;
 import com.syncturtle.testing.annotation.UseKafka;
 import com.syncturtle.testing.annotation.UsePostgresDb;
@@ -45,6 +47,7 @@ import com.syncturtle.testing.container.KafkaContainerSingleton;
         "app.kafka.error-handling.max-elapsed-time=2ms",
         "app.kafka.error-handling.dlt-suffix=.DLT"
 })
+@ContextConfiguration(initializers = EmailRequestProvenanceTestKeyInitializer.class)
 @UseKafka
 @UsePostgresDb("email_service_dlt_it")
 @Import(EmailKafkaTopicsTestConfiguration.class)
