@@ -46,7 +46,7 @@ class GatewayDefaultDenyChainTest {
         void permitsKnownPublicRouteToReachApplicationHandler() {
             // arrange
             MockServerWebExchange exchange = MockServerWebExchange.from(
-                    MockServerHttpRequest.get("/api/get-csrf-token").build());
+                    MockServerHttpRequest.get("/api/instances").build());
             AtomicBoolean reachedHandler = new AtomicBoolean();
             // conditions
             // act

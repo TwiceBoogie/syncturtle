@@ -6,9 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 
-import com.syncturtle.common.security.cookie.ReactiveCsrfCookieWriter;
 import com.syncturtle.common.security.cookie.SecurityCookieFactory;
 import com.syncturtle.common.security.cookie.ServletAuthCookieWriter;
 import com.syncturtle.common.security.property.SecurityCookieProperties;
@@ -32,14 +30,6 @@ public class CookieAutoConfiguration {
     @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
     ServletAuthCookieWriter servletAuthCookieWriter(SecurityCookieFactory cookieFactory) {
         return new ServletAuthCookieWriter(cookieFactory);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnClass(ServerHttpResponse.class)
-    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.REACTIVE)
-    ReactiveCsrfCookieWriter reactiveCsrfCookieWriter(SecurityCookieFactory cookieFactory) {
-        return new ReactiveCsrfCookieWriter(cookieFactory);
     }
 
 }

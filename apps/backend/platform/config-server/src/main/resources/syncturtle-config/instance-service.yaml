@@ -72,23 +72,36 @@ app:
     instance-changelog-url: "https://syncturtle.com/changelog"
 
   security:
+    request-provenance:
+      keys:
+        signer:
+          private-key-location: ${APP_SECURITY_REQUEST_PROVENANCE_INSTANCE_SERVICE_PRIVATE_KEY_LOCATION}
+          public-key-location: ${APP_SECURITY_REQUEST_PROVENANCE_INSTANCE_SERVICE_PUBLIC_KEY_LOCATION}
+        verification-public-key-locations:
+          api-gateway:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_API_GATEWAY_PUBLIC_KEY_LOCATION}",
+            ]
+          user-service:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_USER_SERVICE_PUBLIC_KEY_LOCATION}",
+            ]
+          workspace-service:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_WORKSPACE_SERVICE_PUBLIC_KEY_LOCATION}",
+            ]
+          email-service:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_EMAIL_SERVICE_PUBLIC_KEY_LOCATION}",
+            ]
     encryption:
       secret-key: ${APP_SECURITY_ENCRYPTION_SECRET_KEY}
-
-    csrf:
-      enabled: ${APP_SECURITY_CSRF_ENABLED:true}
-      signing-key: ${APP_SECURITY_CSRF_SIGNING_KEY:}
-      raw-token-bytes: 32
-      form:
-        enabled: true
 
     cookies:
       secure: ${APP_SECURITY_COOKIES_SECURE:false}
       managed-prefix-enabled: ${APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED:false}
       access-same-site: Lax
       refresh-same-site: Lax
-      csrf-same-site: Lax
-      csrf-max-age: 30m
 
   gateway:
     context:
