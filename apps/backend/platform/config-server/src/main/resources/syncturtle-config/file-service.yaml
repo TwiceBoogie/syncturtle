@@ -87,19 +87,26 @@ app:
     presign-expiration: ${APP_STORAGE_PRESIGN_EXPIRATION:10m}
 
   security:
-    csrf:
-      enabled: false
-      signing-key: ${APP_SECURITY_CSRF_SIGNING_KEY}
-      form:
-        enabled: false
-
+    request-provenance:
+      keys:
+        verification-public-key-locations:
+          api-gateway:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_API_GATEWAY_PUBLIC_KEY_LOCATION}",
+            ]
+          user-service:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_USER_SERVICE_PUBLIC_KEY_LOCATION}",
+            ]
+          workspace-service:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_WORKSPACE_SERVICE_PUBLIC_KEY_LOCATION}",
+            ]
     cookies:
       secure: ${APP_SECURITY_COOKIES_SECURE:false}
       managed-prefix-enabled: ${APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED:false}
       access-same-site: Lax
       refresh-same-site: Lax
-      csrf-same-site: Lax
-      csrf-max-age: 30m
 
   web:
     errors:

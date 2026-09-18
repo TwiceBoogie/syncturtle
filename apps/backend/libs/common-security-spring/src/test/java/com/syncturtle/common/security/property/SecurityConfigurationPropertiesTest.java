@@ -13,24 +13,7 @@ import org.springframework.context.annotation.Configuration;
 class SecurityConfigurationPropertiesTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-            .withUserConfiguration(TestConfiguration.class)
-            .withPropertyValues("app.security.csrf.enabled=false");
-
-    @Nested
-    class CsrfPropertiesBinding {
-
-        @Test
-        void disabledCsrfDoesNotRequireASecret() {
-            // arrange + act
-            contextRunner.run(context -> {
-                // assert
-                assertThat(context).hasNotFailed();
-                assertThat(context.getBean(CsrfProperties.class).getSigningKey()).isEmpty();
-            });
-            // verify
-        }
-
-    }
+            .withUserConfiguration(TestConfiguration.class);
 
     @Nested
     class SecurityCookiePropertiesBinding {
@@ -90,7 +73,7 @@ class SecurityConfigurationPropertiesTest {
     }
 
     @Configuration(proxyBeanMethods = false)
-    @EnableConfigurationProperties({ CsrfProperties.class, SecurityCookieProperties.class })
+    @EnableConfigurationProperties(SecurityCookieProperties.class)
     static class TestConfiguration {
     }
 

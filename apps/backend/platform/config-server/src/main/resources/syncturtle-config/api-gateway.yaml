@@ -236,12 +236,22 @@ app:
   gateway:
     client-metadata:
       trusted-proxy-count: ${GATEWAY_TRUSTED_PROXY_COUNT:0}
+    csrf:
+      signing:
+        key: ${APP_SECURITY_CSRF_SIGNING_KEY}
+      pre-auth-lifetime: 30m
+      session-max-lifetime: 7d
+      nonce-bytes: 32
+      max-signed-token-chars: 2048
+      max-payload-bytes: 1024
   security:
+    request-provenance:
+      keys:
+        signer:
+          private-key-location: ${APP_SECURITY_REQUEST_PROVENANCE_API_GATEWAY_PRIVATE_KEY_LOCATION}
+          public-key-location: ${APP_SECURITY_REQUEST_PROVENANCE_API_GATEWAY_PUBLIC_KEY_LOCATION}
     encryption:
       secret-key: ${APP_SECURITY_ENCRYPTION_SECRET_KEY}
-    csrf:
-      enabled: true
-      signing-key: ${APP_SECURITY_CSRF_SIGNING_KEY}
     cookies:
       secure: ${APP_SECURITY_COOKIES_SECURE:false}
       managed-prefix-enabled: ${APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED:false}
