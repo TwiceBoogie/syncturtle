@@ -11,8 +11,7 @@ export class AuthService extends APIService {
 
   async requestCSRFToken(): Promise<ICsrfTokenData> {
     try {
-      const response = await this.get<ICsrfTokenData>("/api/get-csrf-token");
-      return response.data;
+      return this.requestCsrfToken();
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;
       throw err.data ?? err;
@@ -22,6 +21,7 @@ export class AuthService extends APIService {
   async setPassword(data: { password: string }): Promise<IUser> {
     try {
       const response = await this.post<IUser>("/auth/set-password", data);
+      this.invalidateCsrfToken();
       return response.data;
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;
@@ -41,12 +41,20 @@ export class AuthService extends APIService {
 
   async signOut(): Promise<void> {
     try {
-      await this.post<void>("/auth/sign-out", undefined, {
+      const response = await this.post<void>("/auth/sign-out", undefined, {
         validateStatus: (s) => s >= 200 && s < 500,
       });
+
+      if (response.status >= 200 && response.status < 300) {
+        this.announceAuthStateChanged();
+      } else {
+        throw new HttpError(response.raw, response.data);
+      }
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;
       throw err.data ?? err;
+    } finally {
+      this.invalidateCsrfToken();
     }
   }
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 // heroui
@@ -23,6 +23,7 @@ import { Banner } from "../common/banner";
 import { API_BASE_URL } from "@syncturtle/constants";
 // services
 import { AuthService } from "@/services/auth.service";
+import { createSignInCsrfLoader, isSignInSubmitDisabled } from "./sign-in-csrf-loader";
 
 enum EErrorCodes {
   INSTANCE_NOT_CONFIGURED = "INSTANCE_NOT_CONFIGURED",
@@ -63,16 +64,42 @@ export const InstanceSignInForm = () => {
   }));
   const [showPassword, setShowPassword] = useState(false);
   const [csrfToken, setCsrfToken] = useState<string | undefined>(undefined);
+  const [csrfStatus, setCsrfStatus] = useState<"loading" | "ready" | "error">("loading");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const csrfLoadStarted = useRef(false);
+
+  const loadCsrfToken = useMemo(
+    () =>
+      createSignInCsrfLoader(
+        () => AuthService.clearSessionCsrf(),
+        () => authService.requestCSRFToken()
+      ),
+    []
+  );
+
+  const loadCsrfIntoForm = useCallback(() => {
+    void loadCsrfToken()
+      .then((token) => {
+        setCsrfToken(token);
+        setCsrfStatus("ready");
+      })
+      .catch(() => setCsrfStatus("error"));
+  }, [loadCsrfToken]);
+
+  const requestCsrfToken = useCallback(() => {
+    setCsrfToken(undefined);
+    setCsrfStatus("loading");
+    loadCsrfIntoForm();
+  }, [loadCsrfIntoForm]);
 
   const handleFormChange = (key: keyof TFormData, value: string | boolean) =>
     setFormData((prev) => ({ ...prev, [key]: value }));
 
   useEffect(() => {
-    if (csrfToken === undefined) {
-      authService.requestCSRFToken().then((data) => data.csrfToken && setCsrfToken(data.csrfToken));
-    }
-  }, [csrfToken]);
+    if (csrfLoadStarted.current) return;
+    csrfLoadStarted.current = true;
+    loadCsrfIntoForm();
+  }, [loadCsrfIntoForm]);
 
   // derived values
   const errorData: TError = useMemo(() => {
@@ -96,10 +123,7 @@ export const InstanceSignInForm = () => {
     } else return { type: undefined, message: undefined };
   }, [errorCode, errorMessage]);
 
-  const isButtonDisabled = useMemo(
-    () => (!isSubmitting && formData.email && formData.password ? false : true),
-    [formData.email, formData.password, isSubmitting]
-  );
+  const isButtonDisabled = isSignInSubmitDisabled({ csrfToken, ...formData, isSubmitting });
 
   return (
     <>
@@ -117,6 +141,14 @@ export const InstanceSignInForm = () => {
                 <Fieldset.Legend>Manage your Syncturtle instance</Fieldset.Legend>
                 <Description>Configure instance-wide settings to secure your instance</Description>
                 {errorData.type && errorData.message && <Banner type="error" message={errorData.message} />}
+                {csrfStatus === "error" && (
+                  <div className="flex flex-col items-center gap-2" role="alert">
+                    <Banner type="error" message="Unable to prepare secure sign-in. Try again." />
+                    <Button type="button" onPress={requestCsrfToken}>
+                      Retry secure sign-in
+                    </Button>
+                  </div>
+                )}
                 <FieldGroup>
                   <Input type="hidden" name="csrfmiddlewaretoken" value={csrfToken ?? ""} />
                   <TextField

@@ -67,13 +67,21 @@ app:
       commit-recovered: false
       log-retries: true
   security:
+    request-provenance:
+      keys:
+        signer:
+          private-key-location: ${APP_SECURITY_REQUEST_PROVENANCE_EMAIL_SERVICE_PRIVATE_KEY_LOCATION}
+          public-key-location: ${APP_SECURITY_REQUEST_PROVENANCE_EMAIL_SERVICE_PUBLIC_KEY_LOCATION}
+        verification-public-key-locations:
+          api-gateway:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_API_GATEWAY_PUBLIC_KEY_LOCATION}",
+            ]
     cookies:
       secure: ${APP_SECURITY_COOKIES_SECURE:false}
       managed-prefix-enabled: ${APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED:false}
       access-same-site: Lax
       refresh-same-site: Lax
-      csrf-same-site: Lax
-      csrf-max-age: 30m
   email:
     inbox:
       processing:

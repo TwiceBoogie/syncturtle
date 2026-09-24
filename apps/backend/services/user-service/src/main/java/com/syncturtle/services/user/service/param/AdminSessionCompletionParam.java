@@ -9,21 +9,21 @@ import lombok.Getter;
 public final class AdminSessionCompletionParam {
 
     private final String completionCode;
-    private final String signedCsrfToken;
+    private final String preAuthBinding;
     private final String clientIp;
     private final String userAgent;
 
     @Builder
     private AdminSessionCompletionParam(
             String completionCode,
-            String signedCsrfToken,
+            String preAuthBinding,
             String clientIp,
             String userAgent) {
         Assert.hasText(completionCode, "completionCode is required");
-        Assert.hasText(signedCsrfToken, "signedCsrfToken is required");
+        Assert.hasText(preAuthBinding, "preAuthBinding is required");
 
         this.completionCode = completionCode.trim();
-        this.signedCsrfToken = signedCsrfToken.trim();
+        this.preAuthBinding = preAuthBinding.trim();
         this.clientIp = normalizeNullable(clientIp);
         this.userAgent = normalizeNullable(userAgent);
     }

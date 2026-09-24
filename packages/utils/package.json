@@ -18,7 +18,9 @@
     "dev": "tsup --watch",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "clean": "rm -rf .turbo dist"
+    "clean": "rm -rf .turbo dist",
+    "test": "vitest run",
+    "test:watch": "vitest watch"
   },
   "dependencies": {
     "@syncturtle/constants": "workspace:*",
@@ -27,8 +29,11 @@
   "devDependencies": {
     "@syncturtle/eslint-config": "workspace:*",
     "@syncturtle/typescript-config": "workspace:*",
+    "@types/node": "catalog:next16",
     "eslint": "catalog:",
     "tsup": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }
