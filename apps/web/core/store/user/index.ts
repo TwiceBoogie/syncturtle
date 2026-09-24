@@ -7,6 +7,7 @@ import { UserSettingsStore, type IUserSettingsStore } from "./settings.store";
 // syncturtle imports
 import { ExternalStore } from "@syncturtle/utils";
 import type { IUser, IUserUpdateRequest } from "@syncturtle/types";
+import { APIService } from "@/services/api.service";
 
 type TError = {
   status: string;
@@ -47,6 +48,7 @@ export interface IUserStore {
   deactivateAccount: () => Promise<void>;
   reset: () => void;
   signOut: () => Promise<void>;
+  transitionToSignedOut: () => void;
 }
 
 export interface IUserStoreInternal extends IUserStore {
@@ -63,6 +65,7 @@ export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStor
   public userSettings: UserSettingsStore;
 
   private fetchCurrentUserSeq = 0;
+  private signedOut = false;
 
   constructor(private readonly _store: RootStore) {
     super(createInitialSnapshot());
@@ -114,15 +117,16 @@ export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStor
           return user;
         }
 
+        this.signedOut = false;
         this.setState({ data: user, isLoading: false, isAuthenticated: true });
       } else {
         this.setState({ data: user, isLoading: false, isAuthenticated: false });
       }
       return user;
     } catch (error) {
+      if (requestSeq !== this.fetchCurrentUserSeq) throw error;
       this.setState({
         isLoading: false,
-        isAuthenticated: false,
         error: {
           status: "user-fetch-error",
           message: "Failed to fetch current user",
@@ -228,12 +232,20 @@ export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStor
   public deactivateAccount = async (): Promise<void> => {};
 
   public signOut = async (): Promise<void> => {
-    try {
-      await this.authService.signOut();
-    } catch (error) {
-      console.log(error);
-      throw error;
-    }
+    await this.authService.signOut();
+    this.transitionToSignedOut();
+  };
+
+  public transitionToSignedOut = (): void => {
+    if (this.signedOut) return;
+    this.signedOut = true;
+    this.fetchCurrentUserSeq += 1;
+    APIService.clearSessionCsrf();
+    this.reset();
+    this.userProfile.reset();
+    // Hard navigation disposes settings/workspace/member and page-local SWR state.
+    // CoreRootStore.resetOnSignOut is currently empty; do not invent a global reset.
+    if (typeof window !== "undefined" && window.location.pathname !== "/") window.location.assign("/");
   };
 
   public reset = (): void => {
