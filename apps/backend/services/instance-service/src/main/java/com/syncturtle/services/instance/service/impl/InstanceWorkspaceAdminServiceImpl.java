@@ -45,9 +45,9 @@ public class InstanceWorkspaceAdminServiceImpl implements InstanceWorkspaceAdmin
         Assert.notNull(currentUserId, "currentUserId is required");
         Assert.hasText(slug, "slug is required");
 
-        UUID instanceId = requireCurrentInstanceId();
+        requireCurrentInstanceId();
 
-        return workspaceClient.checkSlug(instanceId, slug);
+        return workspaceClient.checkSlug(currentUserId, slug);
     }
 
     @Override
@@ -85,9 +85,9 @@ public class InstanceWorkspaceAdminServiceImpl implements InstanceWorkspaceAdmin
         Assert.notNull(currentUserId, "currentUserId is required");
         Assert.notNull(request, "workspace create request is required");
 
-        UUID instanceId = requireCurrentInstanceId();
+        requireCurrentInstanceId();
 
-        return workspaceClient.createWorkspace(instanceId, request);
+        return workspaceClient.createWorkspace(currentUserId, request);
     }
 
     private UUID requireCurrentInstanceId() {

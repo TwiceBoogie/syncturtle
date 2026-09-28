@@ -12,11 +12,11 @@ import lombok.Getter;
 /**
  * Public URL configuration for browser facing frontends and externally visible
  * backend/gateway endpoints.
- * 
+ *
  * <p>
  * These URLs should represent the public URLs that browsers, OAuth providers,
  * webhooks, and external clients can reach.
- * 
+ *
  * <p>
  * IMPORTANT:
  * <ul>
@@ -43,16 +43,14 @@ public final class PublicUrlProperties {
         this.api = Objects.requireNonNull(api, "api is required");
         this.userApp = Objects.requireNonNull(userApp, "userApp is required");
         this.admin = Objects.requireNonNull(admin, "admin is required");
-        // this.instanceChangelogUrl = normalizeRequiredOrigin(instanceChangelogUrl,
-        // "app.public.instance-changelog-url");
-        this.instanceChangelogUrl = instanceChangelogUrl;
+        this.instanceChangelogUrl = normalizeOptionalWebUrl(instanceChangelogUrl, "instance-changelog-url");
     }
 
     @Getter
     public static final class Api {
         /**
          * Public backend/gateway origin.
-         * 
+         *
          * <p>
          * Examples:
          * - http://localhost:8000
@@ -62,7 +60,7 @@ public final class PublicUrlProperties {
         private final String origin;
         /**
          * Optional public API base path.
-         * 
+         *
          * <p>
          * Examples:
          * - empty
@@ -196,6 +194,21 @@ public final class PublicUrlProperties {
         }
 
         return out;
+    }
+
+    private static String normalizeOptionalWebUrl(String raw, String propertyName) {
+        if (!StringUtils.hasText(raw)) {
+            return null;
+        }
+        String value = raw.trim();
+        URI uri = URI.create(value);
+        if (!("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme()))
+                || !StringUtils.hasText(uri.getHost())
+                || uri.getUserInfo() != null
+                || uri.getFragment() != null) {
+            throw new IllegalArgumentException("app.public." + propertyName + " must be an HTTP(S) URL");
+        }
+        return value;
     }
 
 }

@@ -4,18 +4,18 @@ x-backend-runtime: &backend-runtime
   CONFIG_SERVER_URL: http://config-server:8888
   SERVER_PORT: "8080"
   DEPLOYMENT_ENV: "${DEPLOYMENT_ENV:-compose-local}"
-  SYNCTURTLE_DEPLOYMENT_ID: "${SYNCTURTLE_DEPLOYMENT_ID:-compose-local}"
+  SYNCTURTLE_DEPLOYMENT_ID: "${SYNCTURTLE_DEPLOYMENT_ID:-compose}"
   SYNCTURTLE_REPLICA_ID: "${SYNCTURTLE_REPLICA_ID:-single}"
   SYNCTURTLE_SERVICE_REPLICA_COUNT: "${SYNCTURTLE_SERVICE_REPLICA_COUNT:-1}"
   KAFKA_BOOTSTRAP_SERVERS: kafka:9092
   APP_KAFKA_TOPIC_PARTITIONS: "${APP_KAFKA_TOPIC_PARTITIONS:-3}"
   APP_KAFKA_TOPIC_REPLICAS: "${APP_KAFKA_TOPIC_REPLICAS:-1}"
   REDIS_PASSWORD: ${REDIS_PASSWORD:?Run ./scripts/init-local-env.sh first}
-  APP_SECURITY_ENCRYPTION_SECRET_KEY: ${APP_SECURITY_ENCRYPTION_SECRET_KEY:?Run ./scripts/init-local-env.sh first}
-  APP_SECURITY_CSRF_SIGNING_KEY: ${APP_SECURITY_CSRF_SIGNING_KEY:?Run ./scripts/init-local-env.sh first}
-  APP_SECURITY_CSRF_ENABLED: "${APP_SECURITY_CSRF_ENABLED:-true}"
-  APP_SECURITY_COOKIES_SECURE: "${APP_SECURITY_COOKIES_SECURE:-false}"
-  APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED: "${APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED:-false}"
+  APP_SECURITY_REQUEST_PROVENANCE_API_GATEWAY_PUBLIC_KEY_LOCATION: file:/run/secrets/request-provenance/public/api-gateway.pem
+  APP_SECURITY_REQUEST_PROVENANCE_INSTANCE_SERVICE_PUBLIC_KEY_LOCATION: file:/run/secrets/request-provenance/public/instance-service.pem
+  APP_SECURITY_REQUEST_PROVENANCE_USER_SERVICE_PUBLIC_KEY_LOCATION: file:/run/secrets/request-provenance/public/user-service.pem
+  APP_SECURITY_REQUEST_PROVENANCE_WORKSPACE_SERVICE_PUBLIC_KEY_LOCATION: file:/run/secrets/request-provenance/public/workspace-service.pem
+  APP_SECURITY_REQUEST_PROVENANCE_EMAIL_SERVICE_PUBLIC_KEY_LOCATION: file:/run/secrets/request-provenance/public/email-service.pem
   APP_PUBLIC_API_ORIGIN: "${APP_PUBLIC_API_ORIGIN:-http://localhost}"
   APP_PUBLIC_API_BASE_PATH: "${APP_PUBLIC_API_BASE_PATH:-/}"
   APP_PUBLIC_WEB_ORIGIN: "${APP_PUBLIC_WEB_ORIGIN:-http://localhost}"
@@ -26,10 +26,8 @@ x-backend-runtime: &backend-runtime
   APP_PASSPORT_AUDIENCE: "${APP_PASSPORT_AUDIENCE:-syncturtle-api-local}"
   APP_PASSPORT_KID: "${APP_PASSPORT_KID:?Run ./scripts/init-local-env.sh first}"
   APP_WEB_ACCESS_LOGGING_ENABLED: "${APP_WEB_ACCESS_LOGGING_ENABLED:-true}"
-  APP_REDIS_KEY_PREFIX: "${APP_REDIS_KEY_PREFIX:-st:compose-local:}"
+  APP_REDIS_KEY_PREFIX: "${APP_REDIS_KEY_PREFIX:-st:compose:}"
   APP_RESPONSE_CACHE_ENABLED: "${APP_RESPONSE_CACHE_ENABLED:-true}"
-  APP_RESPONSE_CACHE_KEY_PREFIX: "${APP_RESPONSE_CACHE_KEY_PREFIX:-st:compose-local:rc:}"
-  APP_RESPONSE_CACHE_HASH_BYTES: "${APP_RESPONSE_CACHE_HASH_BYTES:-16}"
   OPENTELEMETRY_ENABLED: "${OPENTELEMETRY_ENABLED:-true}"
   TRACING_SAMPLING_PROBABILITY: "${TRACING_SAMPLING_PROBABILITY:-1.0}"
   OTLP_TRACES_ENABLED: "${OTLP_TRACES_ENABLED:-true}"
@@ -108,11 +106,13 @@ services:
         APP_PORT: "8080"
     environment:
       <<: *backend-runtime
+      APP_SECURITY_ENCRYPTION_SECRET_KEY: ${APP_SECURITY_ENCRYPTION_SECRET_KEY:?Run ./scripts/init-local-env.sh first}
+      APP_SECURITY_COOKIES_SECURE: "${APP_SECURITY_COOKIES_SECURE:-false}"
+      APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED: "${APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED:-false}"
       INSTANCE_DB_PASSWORD: ${INSTANCE_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
       INSTANCE_MIGRATOR_DB_PASSWORD: ${INSTANCE_MIGRATOR_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
       SYNCTURTLE_AUTO_SETUP: "true"
       SYNCTURTLE_SETUP_PROFILES: setup,docker
-      APP_NAME: "${APP_NAME:-syncturtle}"
       APP_EDITION: "${APP_EDITION:-COMMUNITY}"
       APP_TEST: "${APP_TEST:-false}"
       APP_SKIP_ENV_VAR: "${APP_SKIP_ENV_VAR:-true}"
@@ -125,6 +125,10 @@ services:
       APP_ENABLE_MAGIC_LINK_LOGIN: "${APP_ENABLE_MAGIC_LINK_LOGIN:-0}"
       PRODUCT_TELEMETRY_ENABLED: "${PRODUCT_TELEMETRY_ENABLED:-false}"
       PRODUCT_TELEMETRY_ENDPOINT: http://syncturtle-otel:5317
+      APP_SECURITY_REQUEST_PROVENANCE_INSTANCE_SERVICE_PRIVATE_KEY_LOCATION: file:/run/secrets/request-provenance/private/instance-service.pem
+    volumes:
+      - ./development/secrets/request-provenance/public:/run/secrets/request-provenance/public:ro
+      - ./development/secrets/request-provenance/private/instance-service.pem:/run/secrets/request-provenance/private/instance-service.pem:ro
     <<: *backend-security
     expose:
       - "8080"
@@ -147,19 +151,22 @@ services:
         APP_PORT: "8080"
     environment:
       <<: *backend-runtime
+      APP_SECURITY_COOKIES_SECURE: "${APP_SECURITY_COOKIES_SECURE:-false}"
+      APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED: "${APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED:-false}"
       USER_DB_PASSWORD: ${USER_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
       USER_MIGRATOR_DB_PASSWORD: ${USER_MIGRATOR_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
-      APP_AUTH_ACCESS_TOKEN_TTL: 15m
-      APP_AUTH_REFRESH_TOKEN_TTL: 30d
-      APP_AUTH_PASSWORD_RESET_TOKEN_TTL: 30m
-      APP_AUTH_PASSWORD_RESET_TOKEN_BYTES: "48"
+      APP_AUTH_REFRESH_SESSION_CLIENT_BINDING_HMAC_KEY: ${APP_AUTH_REFRESH_SESSION_CLIENT_BINDING_HMAC_KEY:?Run ./scripts/init-local-env.sh first}
+      APP_AUTH_REFRESH_SESSION_SUCCESSOR_ENVELOPE_KEY: ${APP_AUTH_REFRESH_SESSION_SUCCESSOR_ENVELOPE_KEY:?Run ./scripts/init-local-env.sh first}
       APP_CACHE_RUNTIME_CACHE_TTL: 1m
       APP_CACHE_RUNTIME_SECRET_CACHE_TTL: 5m
       APP_PASSPORT_PRIVATE_KEY_LOCATION: file:/run/secrets/jwt-private-key.pem
       APP_PASSPORT_PUBLIC_KEY_LOCATION: file:/run/secrets/jwt-public-key.pem
+      APP_SECURITY_REQUEST_PROVENANCE_USER_SERVICE_PRIVATE_KEY_LOCATION: file:/run/secrets/request-provenance/private/user-service.pem
     volumes:
       - ./development/secrets/jwt-private-key.pem:/run/secrets/jwt-private-key.pem:ro
       - ./development/secrets/jwt-public-key.pem:/run/secrets/jwt-public-key.pem:ro
+      - ./development/secrets/request-provenance/public:/run/secrets/request-provenance/public:ro
+      - ./development/secrets/request-provenance/private/user-service.pem:/run/secrets/request-provenance/private/user-service.pem:ro
     <<: *backend-security
     expose:
       - "8080"
@@ -185,6 +192,10 @@ services:
       WORKSPACE_DB_PASSWORD: ${WORKSPACE_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
       WORKSPACE_MIGRATOR_DB_PASSWORD: ${WORKSPACE_MIGRATOR_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
       APP_WORKSPACE_RUNTIME_CACHE_TTL: 10m
+      APP_SECURITY_REQUEST_PROVENANCE_WORKSPACE_SERVICE_PRIVATE_KEY_LOCATION: file:/run/secrets/request-provenance/private/workspace-service.pem
+    volumes:
+      - ./development/secrets/request-provenance/public:/run/secrets/request-provenance/public:ro
+      - ./development/secrets/request-provenance/private/workspace-service.pem:/run/secrets/request-provenance/private/workspace-service.pem:ro
     <<: *backend-security
     expose:
       - "8080"
@@ -217,17 +228,15 @@ services:
       APP_STORAGE_PUBLIC_ENDPOINT: "${APP_STORAGE_PUBLIC_ENDPOINT:-http://localhost}"
       APP_STORAGE_USE_PATH_STYLE: "true"
       APP_STORAGE_PRESIGN_EXPIRATION: 10m
-      APP_FILE_KAFKA_USER_ASSET_LINKS_GROUP_ID: file-svc-user-event-v1
-      APP_FILE_KAFKA_WORKSPACE_ASSET_LINKS_GROUP_ID: file-svc-workspace-event-v1
       APP_FILE_UPLOAD_MAX_IMAGE_SIZE: 5MB
-      APP_FILE_UPLOAD_IDEMPOTENCY_RETENTION: 24h
       APP_FILE_UPLOAD_IDEMPOTENCY_PROCESSING_LEASE: 1m
       APP_FILE_CLEANUP_ENABLED: "true"
       APP_FILE_CLEANUP_FIXED_DELAY_MS: "60000"
       APP_FILE_CLEANUP_INITIAL_DELAY_MS: "10000"
       APP_FILE_CLEANUP_BATCH_SIZE: "50"
       APP_FILE_CLEANUP_CLAIM_LEASE: 5m
-      APP_FILE_CLEANUP_UNLINKED_ASSET_RETENTION: 7d
+    volumes:
+      - ./development/secrets/request-provenance/public:/run/secrets/request-provenance/public:ro
     <<: *backend-security
     expose:
       - "8080"
@@ -254,6 +263,10 @@ services:
       EMAIL_MIGRATOR_DB_PASSWORD: ${EMAIL_MIGRATOR_DB_PASSWORD:?Run ./scripts/init-local-env.sh first}
       INSTANCE_SERVICE_BASE_URL: http://instance-service:8080
       APP_EMAIL_RUNTIME_CONFIG_CACHE_TTL: 2m
+      APP_SECURITY_REQUEST_PROVENANCE_EMAIL_SERVICE_PRIVATE_KEY_LOCATION: file:/run/secrets/request-provenance/private/email-service.pem
+    volumes:
+      - ./development/secrets/request-provenance/public:/run/secrets/request-provenance/public:ro
+      - ./development/secrets/request-provenance/private/email-service.pem:/run/secrets/request-provenance/private/email-service.pem:ro
     <<: *backend-security
     expose:
       - "8080"
@@ -276,10 +289,17 @@ services:
         APP_PORT: "8080"
     environment:
       <<: *backend-runtime
+      APP_SECURITY_COOKIES_SECURE: "${APP_SECURITY_COOKIES_SECURE:-false}"
+      APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED: "${APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED:-false}"
       REDIS_HOST: redis
       REDIS_PORT: "6379"
       GATEWAY_CORS_ALLOWED_ORIGINS: "${GATEWAY_CORS_ALLOWED_ORIGINS:-http://localhost}"
       GATEWAY_TRUSTED_PROXY_COUNT: "${GATEWAY_TRUSTED_PROXY_COUNT:-1}"
+      APP_SECURITY_CSRF_SIGNING_KEY: ${APP_SECURITY_CSRF_SIGNING_KEY:?Run ./scripts/init-local-env.sh first}
+      APP_SECURITY_REQUEST_PROVENANCE_API_GATEWAY_PRIVATE_KEY_LOCATION: file:/run/secrets/request-provenance/private/api-gateway.pem
+    volumes:
+      - ./development/secrets/request-provenance/public:/run/secrets/request-provenance/public:ro
+      - ./development/secrets/request-provenance/private/api-gateway.pem:/run/secrets/request-provenance/private/api-gateway.pem:ro
     <<: *backend-security
     expose:
       - "8080"
@@ -326,7 +346,7 @@ services:
     networks:
       - edge
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:3000/api/health"]
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:3000/api/health"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -353,7 +373,7 @@ services:
     networks:
       - edge
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:3000/god-mode/api/health"]
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:3000/god-mode/api/health"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -378,7 +398,7 @@ services:
       minio-init:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost/nginx-health"]
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1/nginx-health"]
       interval: 10s
       timeout: 5s
       retries: 10

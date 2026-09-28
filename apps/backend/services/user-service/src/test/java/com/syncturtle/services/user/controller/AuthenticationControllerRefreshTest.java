@@ -66,9 +66,9 @@ class AuthenticationControllerRefreshTest {
                     .refreshExpiresAt(now.plusSeconds(3600))
                     .build();
             // conditions
-            when(refreshSessionService.refreshSession(PRESENTED)).thenReturn(issued);
+            when(refreshSessionService.refreshSession(PRESENTED, SESSION_ID)).thenReturn(issued);
             // act
-            ResponseEntity<Void> result = controller.refresh(servletResponse, PRESENTED);
+            ResponseEntity<Void> result = controller.refresh(servletResponse, SESSION_ID, PRESENTED);
             // assert
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
             // verify
@@ -78,6 +78,7 @@ class AuthenticationControllerRefreshTest {
                     ArgumentMatchers.any(),
                     ArgumentMatchers.eq(SESSION_ID + ".successor"),
                     ArgumentMatchers.any());
+            verify(cookieWriter, never()).clearCsrfCookie(servletResponse);
         }
 
         @Test
@@ -85,11 +86,11 @@ class AuthenticationControllerRefreshTest {
             // arrange
             AuthException rejected = AuthException.of(AuthErrorCode.AUTHENTICATION_FAILED);
             // conditions
-            when(refreshSessionService.refreshSession(PRESENTED)).thenThrow(rejected);
+            when(refreshSessionService.refreshSession(PRESENTED, SESSION_ID)).thenThrow(rejected);
             // act
             AuthException failure = catchThrowableOfType(
                     AuthException.class,
-                    () -> controller.refresh(servletResponse, PRESENTED));
+                    () -> controller.refresh(servletResponse, SESSION_ID, PRESENTED));
             // assert
             assertThat(failure).isSameAs(rejected);
             // verify
@@ -103,11 +104,11 @@ class AuthenticationControllerRefreshTest {
                     "session-state",
                     new IllegalStateException("redis unavailable"));
             // conditions
-            when(refreshSessionService.refreshSession(PRESENTED)).thenThrow(unavailable);
+            when(refreshSessionService.refreshSession(PRESENTED, SESSION_ID)).thenThrow(unavailable);
             // act
             RemoteServiceException failure = catchThrowableOfType(
                     RemoteServiceException.class,
-                    () -> controller.refresh(servletResponse, PRESENTED));
+                    () -> controller.refresh(servletResponse, SESSION_ID, PRESENTED));
             // assert
             assertThat(failure).isSameAs(unavailable);
             // verify

@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @ConfigurationProperties(prefix = "app")
 public final class InstanceServiceProperties {
-    private final String name;
     private final String edition;
     private final boolean test;
 
@@ -17,7 +16,6 @@ public final class InstanceServiceProperties {
     private final boolean skipEnvVar;
 
     private final ConfigKeys configKeys;
-    private final Kafka kafka;
 
     private final Security security;
 
@@ -74,9 +72,4 @@ public final class InstanceServiceProperties {
         private final String secretKey;
     }
 
-    @Getter
-    @RequiredArgsConstructor
-    public static final class Kafka {
-        private final boolean enabled;
-    }
 }

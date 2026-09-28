@@ -8,7 +8,9 @@
     "start": "next start",
     "clean": "rm -rf .turbo .next dist",
     "lint": "eslint . --max-warnings=0",
-    "typecheck": "next typegen && tsc -p tsconfig.json --noEmit"
+    "test": "vitest run",
+    "typecheck": "next typegen && tsc -p tsconfig.json --noEmit",
+    "test:watch": "vitest watch"
   },
   "dependencies": {
     "@bprogress/next": "^3.2.12",
@@ -40,6 +42,10 @@
     "@syncturtle/tailwind-config": "workspace:*",
     "@syncturtle/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "catalog:",
+    "@testing-library/dom": "catalog:",
+    "@testing-library/jest-dom": "catalog:",
+    "@testing-library/react": "catalog:",
+    "@testing-library/user-event": "catalog:",
     "@types/lodash": "catalog:",
     "@types/node": "catalog:next16",
     "@types/react": "catalog:react19",
@@ -47,8 +53,12 @@
     "esbuild": "^0.27.4",
     "eslint": "catalog:",
     "eslint-config-next": "catalog:next16",
+    "jsdom": "catalog:",
     "serwist": "^9.5.7",
     "tailwindcss": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-tsconfig-paths": "catalog:",
+    "vitest": "catalog:"
   }
 }

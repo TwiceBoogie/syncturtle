@@ -26,7 +26,7 @@ public final class InstanceConfigurationConsumerGroupProperties {
             throw new IllegalArgumentException(
                     "app.kafka.instance-configuration.local-replica-count must be at least 1");
         }
-        if (localReplicaCount > 1 && "single".equals(replicaId)) {
+        if (localReplicaCount > 1 && "single".equals(this.replicaId)) {
             throw new IllegalArgumentException(
                     "app.kafka.instance-configuration.replica-id must be unique when local-replica-count is greater than 1");
         }

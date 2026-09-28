@@ -23,6 +23,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.syncturtle.common.cache.payload.CachedResponsePayload;
 import com.syncturtle.common.cache.property.ResponseCacheProperties;
+import com.syncturtle.common.cache.property.RedisKeyProperties;
 import com.syncturtle.common.cache.response.annotation.CacheResponse;
 import com.syncturtle.common.cache.response.annotation.InvalidateCache;
 import com.syncturtle.common.web.context.RequestUserContext;
@@ -36,9 +37,14 @@ import tools.jackson.databind.json.JsonMapper;
 @Aspect
 public final class ResponseCacheAspect {
 
+    private static final int HASH_BYTES = 16;
+    private static final String BODY_TYPE_ALLOWLIST_PREFIX = "com.syncturtle.";
+    private static final String WORKSPACE_HEADER_NAME = "X-Workspace-Id";
+
     private final StringRedisTemplate redis;
     private final JsonMapper jsonMapper;
     private final ResponseCacheProperties properties;
+    private final String keyPrefix;
     private final ResponseCacheKeyBuilder keyBuilder;
     private final RequestUserContext userContext;
     private final String serviceName;
@@ -47,27 +53,28 @@ public final class ResponseCacheAspect {
             StringRedisTemplate redis,
             JsonMapper jsonMapper,
             ResponseCacheProperties properties,
+            RedisKeyProperties redisKeyProperties,
             ResponseCacheKeyBuilder keyBuilder,
             RequestUserContext userContext,
             String serviceName) {
         Assert.notNull(redis, "redis is required");
         Assert.notNull(jsonMapper, "jsonMapper is required");
         Assert.notNull(properties, "properties is required");
+        Assert.notNull(redisKeyProperties, "redisKeyProperties is required");
         Assert.notNull(keyBuilder, "keyBuilder is required");
         Assert.hasText(serviceName, "serviceName is required");
 
         this.redis = redis;
         this.jsonMapper = jsonMapper;
         this.properties = properties;
+        this.keyPrefix = redisKeyProperties.getKeyPrefix() + "rc:";
         this.keyBuilder = keyBuilder;
         this.userContext = userContext;
         this.serviceName = serviceName.trim();
     }
 
     @Around("@annotation(cacheResponse)")
-    public Object aroundCache(
-            ProceedingJoinPoint joinPoint,
-            CacheResponse cacheResponse) throws Throwable {
+    public Object aroundCache(ProceedingJoinPoint joinPoint, CacheResponse cacheResponse) throws Throwable {
         if (!properties.isEnabled()) {
             return joinPoint.proceed();
         }
@@ -94,40 +101,27 @@ public final class ResponseCacheAspect {
             return joinPoint.proceed();
         }
 
-        String workspaceScope = resolveWorkspaceScope(
-                request,
-                cacheResponse);
+        String workspaceScope = resolveWorkspaceScope(request, cacheResponse);
 
         if (cacheResponse.perWorkspace() && workspaceScope == null) {
             return joinPoint.proceed();
         }
 
         String generation = currentGeneration(group);
-
-        String canonicalVariant = keyBuilder.canonicalVariantInput(
-                request,
-                cacheResponse.varyHeaders());
-
-        String hash = keyBuilder.variantHashHex(
-                canonicalVariant,
-                properties.getHashBytes());
-
+        String canonicalVariant = keyBuilder.canonicalVariantInput(request, cacheResponse.varyHeaders());
+        String hash = keyBuilder.variantHashHex(canonicalVariant, HASH_BYTES);
         String cacheKey = keyBuilder.responseKey(
-                properties.getKeyPrefix(),
+                keyPrefix,
                 serviceName,
                 group,
                 generation,
                 hash,
                 workspaceScope,
                 userScope);
-
         String cachedJson = redis.opsForValue().get(cacheKey);
 
         if (cachedJson != null) {
-            ResponseEntity<?> cachedResponse = readCachedResponse(
-                    joinPoint,
-                    cacheKey,
-                    cachedJson);
+            ResponseEntity<?> cachedResponse = readCachedResponse(joinPoint, cacheKey, cachedJson);
 
             if (cachedResponse != null) {
                 log.debug("Response cache hit: {}", cacheKey);
@@ -139,10 +133,7 @@ public final class ResponseCacheAspect {
 
         log.debug("Response cache miss: {}", cacheKey);
 
-        return proceedAndMaybeCache(
-                joinPoint,
-                cacheResponse,
-                cacheKey);
+        return proceedAndMaybeCache(joinPoint, cacheResponse, cacheKey);
     }
 
     @Around("@annotation("
@@ -150,15 +141,12 @@ public final class ResponseCacheAspect {
             + ") || @annotation("
             + "com.syncturtle.common.cache.response.annotation.InvalidateCaches"
             + ")")
-    public Object aroundEvict(
-            ProceedingJoinPoint joinPoint) throws Throwable {
+    public Object aroundEvict(ProceedingJoinPoint joinPoint) throws Throwable {
         if (!properties.isEnabled()) {
             return joinPoint.proceed();
         }
 
-        Method method = ((MethodSignature) joinPoint.getSignature())
-                .getMethod();
-
+        Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         InvalidateCache[] invalidations = method.getAnnotationsByType(InvalidateCache.class);
 
         for (InvalidateCache invalidation : invalidations) {
@@ -178,10 +166,8 @@ public final class ResponseCacheAspect {
         return result;
     }
 
-    private Object proceedAndMaybeCache(
-            ProceedingJoinPoint joinPoint,
-            CacheResponse annotation,
-            String cacheKey) throws Throwable {
+    private Object proceedAndMaybeCache(ProceedingJoinPoint joinPoint, CacheResponse annotation, String cacheKey)
+            throws Throwable {
         Object result = joinPoint.proceed();
 
         if (!(result instanceof ResponseEntity<?> response)) {
@@ -190,9 +176,7 @@ public final class ResponseCacheAspect {
 
         int status = response.getStatusCode().value();
 
-        if (!isCacheableStatus(
-                status,
-                annotation.cacheableStatuses())) {
+        if (!isCacheableStatus(status, annotation.cacheableStatuses())) {
             return result;
         }
 
@@ -206,9 +190,7 @@ public final class ResponseCacheAspect {
             payload.setBodyJson(null);
             payload.setBodyType(null);
         } else {
-            payload.setBodyJson(
-                    jsonMapper.writeValueAsString(body));
-
+            payload.setBodyJson(jsonMapper.writeValueAsString(body));
             payload.setBodyType(body.getClass().getName());
         }
 
@@ -224,26 +206,16 @@ public final class ResponseCacheAspect {
         return result;
     }
 
-    private ResponseEntity<?> readCachedResponse(
-            ProceedingJoinPoint joinPoint,
-            String cacheKey,
-            String cachedJson) {
+    private ResponseEntity<?> readCachedResponse(ProceedingJoinPoint joinPoint, String cacheKey, String cachedJson) {
         try {
-            CachedResponsePayload cached = jsonMapper.readValue(
-                    cachedJson,
-                    CachedResponsePayload.class);
+            CachedResponsePayload cached = jsonMapper.readValue(cachedJson, CachedResponsePayload.class);
 
             if (cached.getBodyType() == null) {
-                return ResponseEntity
-                        .status(cached.getStatus())
-                        .body(null);
+                return ResponseEntity.status(cached.getStatus()).body(null);
             }
 
             JavaType declaredBodyType = resolveResponseEntityBodyType(joinPoint);
-
-            JavaType deserializationType = chooseDeserializationType(
-                    declaredBodyType,
-                    cached.getBodyType());
+            JavaType deserializationType = chooseDeserializationType(declaredBodyType, cached.getBodyType());
 
             if (deserializationType == null) {
                 log.warn(
@@ -255,37 +227,25 @@ public final class ResponseCacheAspect {
                 return null;
             }
 
-            Object body = jsonMapper.readValue(
-                    cached.getBodyJson(),
-                    deserializationType);
+            Object body = jsonMapper.readValue(cached.getBodyJson(), deserializationType);
 
-            return ResponseEntity
-                    .status(cached.getStatus())
-                    .body(body);
+            return ResponseEntity.status(cached.getStatus()).body(body);
         } catch (Exception exception) {
-            log.warn(
-                    "Failed to read cached response. key={}",
-                    cacheKey,
-                    exception);
+            log.warn("Failed to read cached response. key={}", cacheKey, exception);
 
             return null;
         }
     }
 
     private String currentGeneration(String group) {
-        String versionKey = keyBuilder.versionKey(
-                properties.getKeyPrefix(),
-                serviceName,
-                group);
-
+        String versionKey = keyBuilder.versionKey(keyPrefix, serviceName, group);
         String existingGeneration = redis.opsForValue().get(versionKey);
 
         if (existingGeneration != null) {
             return existingGeneration;
         }
 
-        Boolean initialized = redis.opsForValue()
-                .setIfAbsent(versionKey, "1");
+        Boolean initialized = redis.opsForValue().setIfAbsent(versionKey, "1");
 
         if (Boolean.TRUE.equals(initialized)) {
             return "1";
@@ -301,11 +261,7 @@ public final class ResponseCacheAspect {
     }
 
     private void bumpGeneration(String group) {
-        String versionKey = keyBuilder.versionKey(
-                properties.getKeyPrefix(),
-                serviceName,
-                group);
-
+        String versionKey = keyBuilder.versionKey(keyPrefix, serviceName, group);
         Long generation = redis.opsForValue().increment(versionKey);
 
         log.debug(
@@ -314,30 +270,24 @@ public final class ResponseCacheAspect {
                 generation);
     }
 
-    private String resolveUserScope(
-            CacheResponse annotation) {
+    private String resolveUserScope(CacheResponse annotation) {
         if (!annotation.perUser()) {
             return "";
         }
 
-        if (userContext == null
-                || userContext.getUserId() == null) {
+        if (userContext == null || userContext.getUserId() == null) {
             return null;
         }
 
-        return keyBuilder.userScope(
-                userContext.getUserId().toString());
+        return keyBuilder.userScope(userContext.getUserId().toString());
     }
 
-    private String resolveWorkspaceScope(
-            HttpServletRequest request,
-            CacheResponse annotation) {
+    private String resolveWorkspaceScope(HttpServletRequest request, CacheResponse annotation) {
         if (!annotation.perWorkspace()) {
             return "";
         }
 
-        String workspaceId = request.getHeader(
-                properties.getWorkspaceHeaderName());
+        String workspaceId = request.getHeader(WORKSPACE_HEADER_NAME);
 
         if (!StringUtils.hasText(workspaceId)) {
             return null;
@@ -356,13 +306,9 @@ public final class ResponseCacheAspect {
         return null;
     }
 
-    private JavaType resolveResponseEntityBodyType(
-            ProceedingJoinPoint joinPoint) {
+    private JavaType resolveResponseEntityBodyType(ProceedingJoinPoint joinPoint) {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-
-        Type returnType = signature
-                .getMethod()
-                .getGenericReturnType();
+        Type returnType = signature.getMethod().getGenericReturnType();
 
         if (!(returnType instanceof ParameterizedType parameterizedType)) {
             return null;
@@ -380,22 +326,16 @@ public final class ResponseCacheAspect {
 
         Type bodyType = parameterizedType.getActualTypeArguments()[0];
 
-        return jsonMapper
-                .getTypeFactory()
-                .constructType(bodyType);
+        return jsonMapper.getTypeFactory().constructType(bodyType);
     }
 
-    private JavaType chooseDeserializationType(
-            JavaType declaredBodyType,
-            String cachedBodyTypeName) {
+    private JavaType chooseDeserializationType(JavaType declaredBodyType, String cachedBodyTypeName) {
         if (!StringUtils.hasText(cachedBodyTypeName)) {
             return null;
         }
 
         if (declaredBodyType == null) {
-            return safeTypeFromCache(
-                    null,
-                    cachedBodyTypeName);
+            return safeTypeFromCache(null, cachedBodyTypeName);
         }
 
         Class<?> declaredRawClass = declaredBodyType.getRawClass();
@@ -409,69 +349,52 @@ public final class ResponseCacheAspect {
         }
 
         boolean interfaceOrAbstract = declaredRawClass.isInterface()
-                || Modifier.isAbstract(
-                        declaredRawClass.getModifiers());
+                || Modifier.isAbstract(declaredRawClass.getModifiers());
 
         if (!interfaceOrAbstract) {
-            if (!declaredRawClass
-                    .getName()
-                    .equals(cachedBodyTypeName)) {
+            if (!declaredRawClass.getName().equals(cachedBodyTypeName)) {
                 return null;
             }
 
             return declaredBodyType;
         }
 
-        return safeTypeFromCache(
-                declaredRawClass,
-                cachedBodyTypeName);
+        return safeTypeFromCache(declaredRawClass, cachedBodyTypeName);
     }
 
-    private JavaType safeTypeFromCache(
-            Class<?> declaredBase,
-            String cachedBodyTypeName) {
+    private JavaType safeTypeFromCache(Class<?> declaredBase, String cachedBodyTypeName) {
         if (!StringUtils.hasText(cachedBodyTypeName)) {
             return null;
         }
 
-        if (!cachedBodyTypeName.startsWith(
-                properties.getBodyTypeAllowlistPrefix())) {
+        if (!cachedBodyTypeName.startsWith(BODY_TYPE_ALLOWLIST_PREFIX)) {
             return null;
         }
 
         try {
             Class<?> concreteType = Class.forName(cachedBodyTypeName);
 
-            if (declaredBase != null
-                    && !declaredBase.isAssignableFrom(concreteType)) {
+            if (declaredBase != null && !declaredBase.isAssignableFrom(concreteType)) {
                 return null;
             }
 
-            return jsonMapper
-                    .getTypeFactory()
-                    .constructType(concreteType);
+            return jsonMapper.getTypeFactory().constructType(concreteType);
         } catch (ClassNotFoundException exception) {
             return null;
         }
     }
 
-    private static boolean isSafeHttpMethod(
-            HttpServletRequest request) {
+    private static boolean isSafeHttpMethod(HttpServletRequest request) {
         String method = request.getMethod();
 
-        return "GET".equalsIgnoreCase(method)
-                || "HEAD".equalsIgnoreCase(method);
+        return "GET".equalsIgnoreCase(method) || "HEAD".equalsIgnoreCase(method);
     }
 
-    private static boolean isCacheableStatus(
-            int status,
-            int[] cacheableStatuses) {
-        if (cacheableStatuses == null
-                || cacheableStatuses.length == 0) {
+    private static boolean isCacheableStatus(int status, int[] cacheableStatuses) {
+        if (cacheableStatuses == null || cacheableStatuses.length == 0) {
             return status == 200;
         }
 
-        return Arrays.stream(cacheableStatuses)
-                .anyMatch(candidate -> candidate == status);
+        return Arrays.stream(cacheableStatuses).anyMatch(candidate -> candidate == status);
     }
 }

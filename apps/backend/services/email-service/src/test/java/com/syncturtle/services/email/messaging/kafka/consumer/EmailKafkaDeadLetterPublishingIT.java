@@ -26,32 +26,36 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.syncturtle.common.contracts.email.event.EmailToSendEvent;
 import com.syncturtle.common.contracts.messaging.KafkaTopics;
+import com.syncturtle.common.kafka.topic.KafkaDeploymentTopics;
+import com.syncturtle.common.kafka.topic.KafkaDeadLetterTopics;
 import com.syncturtle.services.email.EmailServiceApplication;
 import com.syncturtle.services.email.service.EmailInboxService;
 import com.syncturtle.services.email.support.kafka.EmailKafkaTopicsTestConfiguration;
+import com.syncturtle.services.email.support.security.EmailRequestProvenanceTestKeyInitializer;
 import com.syncturtle.testing.annotation.IntegrationTest;
 import com.syncturtle.testing.annotation.UseKafka;
 import com.syncturtle.testing.annotation.UsePostgresDb;
 import com.syncturtle.testing.container.KafkaContainerSingleton;
 
 @IntegrationTest(classes = EmailServiceApplication.class, properties = {
-        "app.kafka.enabled=true",
         "app.kafka.error-handling.initial-interval=1ms",
         "app.kafka.error-handling.multiplier=1",
-        "app.kafka.error-handling.max-elapsed-time=2ms",
-        "app.kafka.error-handling.dlt-suffix=.DLT"
+        "app.kafka.error-handling.max-elapsed-time=2ms"
 })
+@ContextConfiguration(initializers = EmailRequestProvenanceTestKeyInitializer.class)
 @UseKafka
 @UsePostgresDb("email_service_dlt_it")
 @Import(EmailKafkaTopicsTestConfiguration.class)
 @DisplayName("Email kafka dead letter publishing")
 class EmailKafkaDeadLetterPublishingIT {
 
-    private static final String DLT_TOPIC = KafkaTopics.EMAIL_EVENTS_V1 + ".DLT";
+    @Autowired
+    private KafkaDeploymentTopics topics;
 
     @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;
@@ -80,20 +84,20 @@ class EmailKafkaDeadLetterPublishingIT {
             doThrow(new IllegalStateException("forced-email-listener-failure"))
                     .when(service).receive(any(EmailToSendEvent.class));
             dltConsumer = consumer();
-            dltConsumer.subscribe(List.of(DLT_TOPIC));
+            dltConsumer.subscribe(List.of(topics.topic(KafkaTopics.EMAIL_EVENTS_V1) + KafkaDeadLetterTopics.SUFFIX));
             dltConsumer.poll(Duration.ofMillis(100));
 
-            kafkaTemplate.send(KafkaTopics.EMAIL_EVENTS_V1, EVENT_ID, event).get(10, TimeUnit.SECONDS);
+            kafkaTemplate.send(topics.topic(KafkaTopics.EMAIL_EVENTS_V1), EVENT_ID, event).get(10, TimeUnit.SECONDS);
 
             ConsumerRecord<String, String> recovered = pollForRecord(dltConsumer, Duration.ofSeconds(15));
 
             assertThat(recovered).as("failed email event published to DLT").isNotNull();
-            assertThat(recovered.topic()).isEqualTo(DLT_TOPIC);
+            assertThat(recovered.topic()).isEqualTo(topics.topic(KafkaTopics.EMAIL_EVENTS_V1) + KafkaDeadLetterTopics.SUFFIX);
             assertThat(recovered.partition()).isZero();
             assertThat(recovered.key()).isEqualTo(EVENT_ID);
             assertThat(recovered.value()).contains(EVENT_ID);
             assertThat(header(recovered, KafkaHeaders.DLT_ORIGINAL_TOPIC))
-                    .isEqualTo(KafkaTopics.EMAIL_EVENTS_V1);
+                    .isEqualTo(topics.topic(KafkaTopics.EMAIL_EVENTS_V1));
             assertThat(header(recovered, KafkaHeaders.DLT_EXCEPTION_MESSAGE))
                     .contains("forced-email-listener-failure");
         }

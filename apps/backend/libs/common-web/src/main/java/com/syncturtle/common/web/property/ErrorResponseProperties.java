@@ -49,9 +49,8 @@ public final class ErrorResponseProperties {
     }
 
     private static int requirePositive(int value, String propertyName) {
-        if (value <= 0) {
-            throw new IllegalArgumentException(
-                    "app.web.errors." + propertyName + " must be greater than 0");
+        if (value <= 0 || value > 50) {
+            throw new IllegalArgumentException("app.web.errors." + propertyName + " must be between 1 and 50");
         }
 
         return value;
