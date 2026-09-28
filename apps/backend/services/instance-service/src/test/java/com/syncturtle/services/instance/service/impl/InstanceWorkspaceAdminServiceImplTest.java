@@ -134,13 +134,13 @@ class InstanceWorkspaceAdminServiceImplTest {
             when(instanceIdProjection.getId()).thenReturn(instanceId);
             when(instanceRepository.findFirstByDeletedAtIsNullOrderByCreatedAtDesc(InstanceIdProjection.class))
                     .thenReturn(Optional.of(instanceIdProjection));
-            when(workspaceClient.checkSlug(instanceId, "demo")).thenReturn(slugCheckResponse);
+            when(workspaceClient.checkSlug(currentUserId, "demo")).thenReturn(slugCheckResponse);
             // act
             InstanceWorkspaceSlugCheckResponse actual = service.checkSlug(currentUserId, "demo");
             // assert
             assertThat(actual).isSameAs(slugCheckResponse);
             // verify
-            verify(workspaceClient).checkSlug(instanceId, "demo");
+            verify(workspaceClient).checkSlug(currentUserId, "demo");
             verifyNoInteractions(workspaceRepository, cursorCodec, pageMapper);
         }
 
@@ -291,13 +291,13 @@ class InstanceWorkspaceAdminServiceImplTest {
             when(instanceIdProjection.getId()).thenReturn(instanceId);
             when(instanceRepository.findFirstByDeletedAtIsNullOrderByCreatedAtDesc(InstanceIdProjection.class))
                     .thenReturn(Optional.of(instanceIdProjection));
-            when(workspaceClient.createWorkspace(instanceId, createRequest)).thenReturn(workspaceResponse);
+            when(workspaceClient.createWorkspace(currentUserId, createRequest)).thenReturn(workspaceResponse);
             // act
             InstanceWorkspaceResponse actual = service.createWorkspace(currentUserId, createRequest);
             // assert
             assertThat(actual).isSameAs(workspaceResponse);
             // verify
-            verify(workspaceClient).createWorkspace(instanceId, createRequest);
+            verify(workspaceClient).createWorkspace(currentUserId, createRequest);
             verifyNoInteractions(workspaceRepository, cursorCodec, pageMapper);
         }
 

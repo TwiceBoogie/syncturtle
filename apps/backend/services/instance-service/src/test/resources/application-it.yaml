@@ -1,5 +1,4 @@
 app:
-  name: ${APP_NAME:syncturtle}
   edition: ${APP_EDITION:COMMUNITY}
   test: ${APP_TEST:false}
   telemetry:
@@ -40,7 +39,7 @@ app:
     encryption:
       secret-key: ${APP_SECURITY_ENCRYPTION_SECRET_KEY}
   kafka:
-    enabled: false
+    deployment-id: test
   product-telemetry:
     enabled: true
     endpoint: ${PRODUCT_TELEMETRY_ENDPOINT:http://localhost:15317}
@@ -48,8 +47,6 @@ app:
     interval: 10m
   response-cache:
     enabled: true
-    key-prefix: "st:resp:"
-    hash-bytes: 16
 
   services:
     user-service:

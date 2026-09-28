@@ -22,7 +22,7 @@ public class WorkspaceFlagConfigurationChangeEventListener {
 
     private final WorkspaceConfigResolver configResolver;
 
-    @KafkaListener(topics = KafkaTopics.INSTANCE_CONFIG_EVENTS_V1, groupId = "#{@instanceConfigurationConsumerGroups.sharedGroupId}", containerFactory = "instanceConfigurationKafkaListenerFactory")
+    @KafkaListener(topics = "#{@kafkaDeploymentTopics.topic('" + KafkaTopics.INSTANCE_CONFIG_EVENTS_V1 + "')}", groupId = "#{@instanceConfigurationConsumerGroups.sharedGroupId}", containerFactory = "instanceConfigurationKafkaListenerFactory")
     public void onInstanceConfigurationChanged(InstanceConfigurationEvent event) {
         if (event.getScope() != InstanceConfigurationScope.WORKSPACE) {
             return;

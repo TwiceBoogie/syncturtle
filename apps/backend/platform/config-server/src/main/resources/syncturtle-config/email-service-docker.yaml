@@ -15,5 +15,3 @@ app:
   clients:
     instance-service:
       base-url: http://instance-service:8080
-      connect-timeout: 2s
-      read-timeout: 5s

@@ -11,7 +11,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +25,6 @@ import org.springframework.http.ResponseEntity;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.syncturtle.services.user.configuration.property.AuthProperties;
 import com.syncturtle.services.user.configuration.property.PassportProperties;
 import com.syncturtle.services.user.controller.JwksController;
 import com.syncturtle.services.user.service.collaborator.token.AccessTokenIssuer;
@@ -116,16 +114,11 @@ class PassportKeyConfigurationTest {
             PassportProperties passportProperties = passportProperties(
                     ephemeralKeyPair.privateKeyPath(),
                     ephemeralKeyPair.publicKeyPath());
-            AuthProperties authProperties = new AuthProperties(
-                    Duration.ofMinutes(15),
-                    Duration.ofMinutes(30),
-                    48);
             PassportKeyConfiguration configuration = new PassportKeyConfiguration();
             KeyMaterial keyMaterial = configuration.keyMaterial(passportProperties, new DefaultResourceLoader());
             Algorithm signingAlgorithm = configuration.passportAlgorithm(keyMaterial);
             AccessTokenIssuer issuer = new AccessTokenIssuer(
                     passportProperties,
-                    authProperties,
                     keyMaterial,
                     signingAlgorithm);
             JwksController jwksController = new JwksController(issuer);

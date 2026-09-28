@@ -29,8 +29,7 @@ class GatewayPassportJwtValidatorTest {
     void setUp() {
         GatewayPassportProperties properties = new GatewayPassportProperties(
                 ISSUER,
-                AUDIENCE,
-                "X-Auth-");
+                AUDIENCE);
         PassportAuthenticationMetrics metrics = new PassportAuthenticationMetrics(new SimpleMeterRegistry());
         GatewaySecurityConfiguration configuration = new GatewaySecurityConfiguration(metrics);
         validator = configuration.passportJwtValidator(properties);

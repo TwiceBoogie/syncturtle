@@ -85,14 +85,14 @@ public final class SecurityCookieFactory {
                 normalizeMaxAge(maxAge));
     }
 
-    public ResponseCookie csrfCookie(String signedToken) {
+    public ResponseCookie csrfCookie(String signedToken, Duration maxAge) {
         return createCookie(
                 csrfCookieName(),
                 signedToken,
                 ROOT_PATH,
                 properties.isSecure(),
                 properties.getCsrfSameSite(),
-                properties.getCsrfMaxAge());
+                normalizeMaxAge(maxAge));
     }
 
     public ResponseCookie adminSessionHandoffCookie(String completionCode, Duration maxAge) {

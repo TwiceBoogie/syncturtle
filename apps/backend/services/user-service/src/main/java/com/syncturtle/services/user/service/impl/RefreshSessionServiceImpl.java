@@ -42,12 +42,13 @@ public class RefreshSessionServiceImpl implements RefreshSessionService {
 
     @Override
     @Transactional
-    public IssueTokenResponse refreshSession(String presentedRefreshToken) {
+    public IssueTokenResponse refreshSession(String presentedRefreshToken, String trustedCsrfSessionId) {
         if (!StringUtils.hasText(presentedRefreshToken)) {
             throw invalidRefresh("Missing refresh token");
         }
 
         String sessionId = extractSessionId(presentedRefreshToken);
+        requireCsrfSessionMatch(sessionId, trustedCsrfSessionId);
         RefreshSessionFamilyRecord family = requireFamily(sessionId);
         User user = requireRefreshUser(sessionId, family);
         InstanceLite instance = requireRefreshInstance(sessionId, family);
@@ -154,6 +155,20 @@ public class RefreshSessionServiceImpl implements RefreshSessionService {
             return RemoteServiceException.unavailable("session-state", exception);
         }
         return invalidRefresh("Refresh session is no longer valid");
+    }
+
+    private static void requireCsrfSessionMatch(String refreshSessionId, String trustedCsrfSessionId) {
+        String canonicalTrustedSessionId;
+        try {
+            canonicalTrustedSessionId = UUID.fromString(trustedCsrfSessionId).toString();
+        } catch (RuntimeException exception) {
+            throw AuthException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
+        }
+
+        if (!canonicalTrustedSessionId.equals(trustedCsrfSessionId)
+                || !refreshSessionId.equals(canonicalTrustedSessionId)) {
+            throw AuthException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
+        }
     }
 
     private static AuthException invalidRefresh(String message) {

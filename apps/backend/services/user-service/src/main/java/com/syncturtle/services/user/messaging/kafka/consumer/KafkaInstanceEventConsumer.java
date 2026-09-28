@@ -20,7 +20,7 @@ public class KafkaInstanceEventConsumer {
     private final InstanceLiteRepository instanceRepository;
 
     @Transactional
-    @KafkaListener(topics = KafkaTopics.INSTANCE_EVENTS_V1, groupId = "user-svc-instance-event-v1", containerFactory = "instanceKafkaListenerFactory")
+    @KafkaListener(topics = "#{@kafkaDeploymentTopics.topic('" + KafkaTopics.INSTANCE_EVENTS_V1 + "')}", groupId = "#{@kafkaConsumerGroups.workGroupId('user-service', 'instance-event-v1')}", containerFactory = "instanceKafkaListenerFactory")
     public void onInstance(InstanceEvent event) {
         UUID instanceId = event.getId();
 

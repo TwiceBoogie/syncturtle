@@ -43,11 +43,9 @@ logging:
     tc: INFO
 app:
   kafka:
-    enabled: false
-    consumer-group: email-service-it
+    deployment-id: test
     instance-configuration:
-      enabled: true
-      deployment-id: test
+      deployment-id: ${app.kafka.deployment-id}
       replica-id: email-it
       local-replica-count: 1
   email:
@@ -63,5 +61,3 @@ app:
   clients:
     instance-service:
       base-url: http://localhost:8001
-      connect-timeout: 2s
-      read-timeout: 5s
