@@ -112,7 +112,7 @@ class AdminSessionHandoffCookieTest {
     }
 
     private static SecurityCookieProperties properties(boolean secure, boolean managedPrefixEnabled) {
-        return new SecurityCookieProperties(secure, managedPrefixEnabled, "Lax", "Lax", "Lax", Duration.ofHours(1));
+        return new SecurityCookieProperties(secure, managedPrefixEnabled, "Lax", "Lax", "Lax");
     }
 
 }

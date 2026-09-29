@@ -8,7 +8,8 @@ import org.springframework.kafka.core.KafkaAdmin.NewTopics;
 import org.springframework.util.Assert;
 
 import com.syncturtle.common.contracts.messaging.KafkaTopics;
-import com.syncturtle.common.kafka.property.KafkaErrorHandlingProperties;
+import com.syncturtle.common.kafka.topic.KafkaDeadLetterTopics;
+import com.syncturtle.common.kafka.topic.KafkaDeploymentTopics;
 
 /**
  * Provisions the kafka topology required by email-service integration tests.
@@ -20,14 +21,12 @@ public class EmailKafkaTopicsTestConfiguration {
     private static final int TEST_REPLICA_COUNT = 1;
 
     @Bean
-    NewTopics emailEventsTopic(KafkaErrorHandlingProperties errorHandlingProperties) {
-        Assert.notNull(errorHandlingProperties, "kafka error handling properties are required");
-
+    NewTopics emailEventsTopic(KafkaDeploymentTopics topics) {
         return new NewTopics(
-                topic(KafkaTopics.EMAIL_EVENTS_V1),
-                deadLetterTopic(KafkaTopics.EMAIL_EVENTS_V1, errorHandlingProperties.getDltSuffix()),
-                topic(KafkaTopics.INSTANCE_CONFIG_EVENTS_V1),
-                deadLetterTopic(KafkaTopics.INSTANCE_CONFIG_EVENTS_V1, errorHandlingProperties.getDltSuffix()));
+                topic(topics.topic(KafkaTopics.EMAIL_EVENTS_V1)),
+                topic(topics.topic(KafkaTopics.EMAIL_EVENTS_V1) + KafkaDeadLetterTopics.SUFFIX),
+                topic(topics.topic(KafkaTopics.INSTANCE_CONFIG_EVENTS_V1)),
+                topic(topics.topic(KafkaTopics.INSTANCE_CONFIG_EVENTS_V1) + KafkaDeadLetterTopics.SUFFIX));
     }
 
     private static NewTopic topic(String topicName) {
@@ -39,11 +38,5 @@ public class EmailKafkaTopicsTestConfiguration {
                 .build();
     }
 
-    private static NewTopic deadLetterTopic(String sourceTopic, String dltSuffix) {
-        Assert.hasText(sourceTopic, "kafka source topic is required");
-        Assert.hasText(dltSuffix, "kafka dlt suffix is required");
-
-        return topic(sourceTopic.trim() + dltSuffix.trim());
-    }
 
 }

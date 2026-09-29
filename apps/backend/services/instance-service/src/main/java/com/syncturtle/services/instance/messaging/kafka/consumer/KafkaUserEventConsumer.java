@@ -27,7 +27,7 @@ public class KafkaUserEventConsumer {
     private final Clock clock;
 
     @Transactional
-    @KafkaListener(topics = KafkaTopics.USER_EVENTS_V1, groupId = "instance-svc-user-event-v1", containerFactory = "userKafkaListenerFactory")
+    @KafkaListener(topics = "#{@kafkaDeploymentTopics.topic('" + KafkaTopics.USER_EVENTS_V1 + "')}", groupId = "#{@kafkaConsumerGroups.workGroupId('instance-service', 'user-event-v1')}", containerFactory = "userKafkaListenerFactory")
     public void onUser(UserEvent event) {
         Assert.notNull(event, "user event is required");
 

@@ -12,11 +12,9 @@ eureka:
     enabled: false
 app:
   kafka:
-    enabled: false
-    consumer-group: email-service-test
+    deployment-id: test
     instance-configuration:
-      enabled: true
-      deployment-id: test
+      deployment-id: ${app.kafka.deployment-id}
       replica-id: email-test
       local-replica-count: 1
   email:
@@ -29,9 +27,3 @@ app:
   clients:
     instance-service:
       base-url: http://localhost:8001
-      connect-timeout: 2s
-      read-timeout: 5s
-  observability:
-    otel:
-      logback:
-        enabled: false

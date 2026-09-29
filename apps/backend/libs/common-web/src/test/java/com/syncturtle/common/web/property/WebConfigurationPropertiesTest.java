@@ -30,10 +30,15 @@ class WebConfigurationPropertiesTest {
                 .run(context -> assertThat(context).hasFailed());
     }
 
+    @Test
+    void rejectsInvalidChangelogUrl() {
+        contextRunner.withPropertyValues("app.public.instance-changelog-url=javascript:alert(1)")
+                .run(context -> assertThat(context).hasFailed());
+    }
+
     @Configuration(proxyBeanMethods = false)
     @EnableConfigurationProperties({
             ErrorResponseProperties.class,
-            GatewayContextProperties.class,
             PublicUrlProperties.class
     })
     static class TestConfiguration {

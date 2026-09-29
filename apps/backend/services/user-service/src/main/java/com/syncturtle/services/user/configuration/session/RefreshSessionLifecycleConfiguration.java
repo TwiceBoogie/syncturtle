@@ -11,7 +11,6 @@ import com.syncturtle.common.cache.template.RedisKeyBuilder;
 import com.syncturtle.common.core.security.token.SecureTokenGenerator;
 import com.syncturtle.common.core.security.token.TokenHasher;
 import com.syncturtle.services.user.configuration.property.RefreshSessionClientBindingProperties;
-import com.syncturtle.services.user.configuration.property.RefreshSessionLifecycleProperties;
 import com.syncturtle.services.user.configuration.property.RefreshSessionSuccessorEnvelopeProperties;
 import com.syncturtle.services.user.service.collaborator.session.RefreshSessionClientFingerprintFactory;
 import com.syncturtle.services.user.service.collaborator.session.RefreshSessionFamilySerializer;
@@ -37,9 +36,8 @@ public class RefreshSessionLifecycleConfiguration {
     }
 
     @Bean
-    RefreshSessionLifetimeDecider refreshSessionLifetimeDecider(RefreshSessionLifecycleProperties properties,
-            Clock clock) {
-        return new RefreshSessionLifetimeDecider(properties, clock);
+    RefreshSessionLifetimeDecider refreshSessionLifetimeDecider(Clock clock) {
+        return new RefreshSessionLifetimeDecider(clock);
     }
 
     @Bean
@@ -69,7 +67,6 @@ public class RefreshSessionLifecycleConfiguration {
             RefreshSessionLifetimeDecider lifetimeDecider,
             RefreshSessionSuccessorEnvelopeCipher envelopeCipher,
             RefreshSessionLifecycleScriptExecutor scriptExecutor,
-            RefreshSessionLifecycleProperties properties,
             JsonMapper jsonMapper) {
         return new RefreshSessionFamilyStore(
                 redis,
@@ -80,7 +77,6 @@ public class RefreshSessionLifecycleConfiguration {
                 lifetimeDecider,
                 envelopeCipher,
                 scriptExecutor,
-                properties,
                 jsonMapper);
     }
 

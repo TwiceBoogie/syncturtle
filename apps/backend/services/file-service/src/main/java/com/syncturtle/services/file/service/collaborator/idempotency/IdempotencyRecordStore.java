@@ -13,6 +13,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
 
 import com.syncturtle.services.file.configuration.property.FileUploadProperties;
+import com.syncturtle.services.file.policy.FileLifecyclePolicy;
 import com.syncturtle.services.file.model.IdempotencyRecord;
 import com.syncturtle.services.file.repository.IdempotencyRecordRepository;
 import com.syncturtle.services.file.service.result.IdempotencyAcquireResult;
@@ -91,7 +92,7 @@ public class IdempotencyRecordStore {
                 return;
             }
 
-            record.failIfClaimed(processingToken, properties.getIdempotencyRetention(), clock);
+            record.failIfClaimed(processingToken, FileLifecyclePolicy.UPLOAD_IDEMPOTENCY_RETENTION, clock);
         });
     }
 
@@ -106,7 +107,7 @@ public class IdempotencyRecordStore {
                 routeKey,
                 requestHash,
                 properties.getIdempotencyProcessingLease(),
-                properties.getIdempotencyRetention(),
+                FileLifecyclePolicy.UPLOAD_IDEMPOTENCY_RETENTION,
                 clock);
 
         repository.saveAndFlush(record);
@@ -126,7 +127,7 @@ public class IdempotencyRecordStore {
             UUID token = existing.reclaim(
                     requestHash,
                     properties.getIdempotencyProcessingLease(),
-                    properties.getIdempotencyRetention(),
+                    FileLifecyclePolicy.UPLOAD_IDEMPOTENCY_RETENTION,
                     clock);
 
             return IdempotencyAcquireResult.acquired(existing.getId(), token);
@@ -145,7 +146,7 @@ public class IdempotencyRecordStore {
         }
 
         Duration processingLease = properties.getIdempotencyProcessingLease();
-        Duration retention = properties.getIdempotencyRetention();
+        Duration retention = FileLifecyclePolicy.UPLOAD_IDEMPOTENCY_RETENTION;
         UUID token = existing.reclaim(requestHash, processingLease, retention, clock);
 
         return IdempotencyAcquireResult.acquired(existing.getId(), token);
