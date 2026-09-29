@@ -15,15 +15,10 @@ import org.springframework.context.annotation.Configuration;
 class EmailConfigurationPropertiesTest {
 
     private static final String[] REQUIRED_PROPERTIES = {
-            "app.kafka.enabled=false",
-            "app.kafka.consumer-group=email-service-test",
-            "app.kafka.config-broadcast-group=email-service-test-config",
             "app.email.inbox.scheduler.enabled=false",
             "app.email.inbox.scheduler.poll-delay=10s",
             "app.email.runtime-config-cache.ttl=30m",
-            "app.clients.instance-service.base-url=http://localhost:8001",
-            "app.clients.instance-service.connect-timeout=2s",
-            "app.clients.instance-service.read-timeout=5s"
+            "app.clients.instance-service.base-url=http://localhost:8001"
     };
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
@@ -92,7 +87,6 @@ class EmailConfigurationPropertiesTest {
     @Configuration(proxyBeanMethods = false)
     @EnableConfigurationProperties({
             EmailInboxProperties.class,
-            EmailKafkaProperties.class,
             EmailRuntimeConfigCacheProperties.class,
             EmailTransportProperties.class,
             InstanceServiceClientProperties.class

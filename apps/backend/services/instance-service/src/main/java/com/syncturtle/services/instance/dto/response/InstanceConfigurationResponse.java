@@ -7,9 +7,11 @@ import com.syncturtle.common.contracts.instance.config.InstanceConfigurationKey;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.extern.jackson.Jacksonized;
 
 @Getter
 @Builder
+@Jacksonized
 public final class InstanceConfigurationResponse {
     private UUID id;
     private InstanceConfigurationKey key;

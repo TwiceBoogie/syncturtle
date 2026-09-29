@@ -8,12 +8,13 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
-import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
+import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
 import com.syncturtle.common.cache.template.RedisKeyBuilder;
 import com.syncturtle.services.workspace.configuration.cache.WorkspaceFlagsRuntimeCacheNames;
+import com.syncturtle.services.workspace.service.collaborator.runtime.WorkspaceFlagRuntimeSnapshot;
 
 @EnableCaching
 @Configuration(proxyBeanMethods = false)
@@ -28,7 +29,8 @@ public class WorkspaceFlagsRuntimeCacheConfiguration {
     @Bean
     RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer(RedisKeyBuilder redisKeyBuilder,
             @Value("${app.workspace.runtime-cache.ttl}") Duration ttl) {
-        RedisSerializer<Object> serializer = GenericJacksonJsonRedisSerializer.builder().build();
+        RedisSerializer<WorkspaceFlagRuntimeSnapshot> serializer = new JacksonJsonRedisSerializer<>(
+                WorkspaceFlagRuntimeSnapshot.class);
         RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig()
                 .disableCachingNullValues()
                 .computePrefixWith(cacheName -> cachePrefix(redisKeyBuilder))

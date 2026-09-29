@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { LogOut, Palette } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { LogOut, Palette, Shield } from "lucide-react";
 // next-theme
 import { useTheme } from "next-themes";
 // heroui
@@ -9,41 +9,42 @@ import { Avatar, Dropdown, Label } from "@heroui/react";
 // hooks
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useUser } from "@/hooks/store/use-user";
-// services
-import { AuthService } from "@/services/auth.service";
 // syncturtle imports
-import { API_BASE_URL } from "@syncturtle/constants";
 import { cn } from "@syncturtle/ui";
+import { ADMIN_BASE_PATH } from "@syncturtle/constants";
 
-const authService = new AuthService();
+const sessionsHref = `${(ADMIN_BASE_PATH || "/god-mode").replace(/\/+$/, "")}/sessions/`;
 
 export const AdminSidebarDropdown = () => {
   // store hooks
   const { isSidebarCollapsed } = useAppTheme();
-  const { currentUser } = useUser();
+  const { currentUser, signOut } = useUser();
   // hooks
   const { resolvedTheme, setTheme } = useTheme();
   // state
-  const [csrfToken, setCsrfToken] = useState<string | undefined>(undefined);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
+  const signOutPending = useRef(false);
   const [leftOpen, setLeftOpen] = useState(false);
-
-  const signoutFormRef = useRef<HTMLFormElement | null>(null);
-
-  useEffect(() => {
-    if (csrfToken === undefined)
-      authService.requestCSRFToken().then((data) => {
-        if (data.csrfToken) setCsrfToken(data.csrfToken);
-      });
-  }, [csrfToken]);
 
   const handleSwitchTheme = () => {
     const newTheme = resolvedTheme === "dark" ? "light" : "dark";
     setTheme(newTheme);
   };
 
-  const handleSignOut = () => {
-    if (!csrfToken) return;
-    signoutFormRef.current?.requestSubmit();
+  const handleSignOut = async () => {
+    if (signOutPending.current) return;
+    signOutPending.current = true;
+    setIsSigningOut(true);
+    setSignOutError(null);
+    try {
+      await signOut();
+    } catch {
+      setSignOutError("Unable to confirm sign out. Please try again.");
+    } finally {
+      signOutPending.current = false;
+      setIsSigningOut(false);
+    }
   };
 
   // derived state
@@ -64,6 +65,11 @@ export const AdminSidebarDropdown = () => {
         </div>
       </div>
       <Dropdown.Menu>
+        <Dropdown.Item id="sessions" textValue="Sessions" href={sessionsHref}>
+          <div className="flex gap-2">
+            <Shield className="h-4 w-4" /> <Label>Sessions</Label>
+          </div>
+        </Dropdown.Item>
         <Dropdown.Item id={`theme-resolver`} textValue="theme-resolver" onPress={handleSwitchTheme}>
           <div className="flex gap-2">
             <Palette className="h-4 w-4" /> Switch to {resolvedTheme === "dark" ? "light" : "dark"} mode
@@ -74,10 +80,10 @@ export const AdminSidebarDropdown = () => {
           textValue="Sign-out"
           variant="danger"
           onPress={handleSignOut}
-          isDisabled={!csrfToken}
+          isDisabled={isSigningOut}
         >
           <div className="flex w-full items-center justify-between gap-2">
-            <Label>Log Out</Label>
+            <Label>{isSigningOut ? "Signing out..." : "Log Out"}</Label>
             <LogOut className="h-4 w-4" />
           </div>
         </Dropdown.Item>
@@ -87,10 +93,7 @@ export const AdminSidebarDropdown = () => {
 
   return (
     <div className="flex items-center gap-x-5 gap-y-2 border-b border-custom-sidebar-border-200 px-4 py-3.5">
-      {/* hidden logout form (POST) */}
-      <form ref={signoutFormRef} method="POST" action={`${API_BASE_URL}/auth/admin/sign-out`} className="hidden">
-        <input type="hidden" name="csrfmiddlewaretoken" value={csrfToken ?? ""} />
-      </form>
+      {signOutError && <p role="alert">{signOutError}</p>}
       <div className="h-full w-full truncate">
         <div
           className={`flex grow items-center gap-x-2 truncate rounded py-1 ${isSidebarCollapsed ? "justify-center" : ""}`}

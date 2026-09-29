@@ -173,7 +173,7 @@ export const WorkspaceCreateStep: FC<IWorkspaceCreateStepProps> = (props) => {
 
     await updateUserProfile({ lastWorkspaceId: workspaceId });
 
-    await fetchCurrentUserSettings();
+    await fetchCurrentUserSettings(true);
   };
 
   const handleCreateWorkspace = async (event: SyntheticEvent<HTMLFormElement>) => {

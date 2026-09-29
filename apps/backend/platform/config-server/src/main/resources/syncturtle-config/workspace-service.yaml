@@ -23,7 +23,6 @@ spring:
       observation-enabled: true
     listener:
       observation-enabled: true
-      auto-startup: ${app.kafka.enabled:true}
     producer:
       acks: all
       batch-size: 32768
@@ -46,33 +45,33 @@ jdbc:
 
 app:
   kafka:
-    enabled: true
     instance-configuration:
-      enabled: true
-      deployment-id: ${SYNCTURTLE_DEPLOYMENT_ID:compose}
+      deployment-id: ${app.kafka.deployment-id}
       replica-id: ${SYNCTURTLE_REPLICA_ID:${HOSTNAME:localhost}-${server.port}}
       local-replica-count: ${SYNCTURTLE_SERVICE_REPLICA_COUNT:1}
     error-handling:
       initial-interval: 500ms
       multiplier: 2.0
       max-elapsed-time: 8s
-      dlt-suffix: ".DLT"
-      ack-after-handle: true
-      commit-recovered: false
       log-retries: true
   workspace:
     runtime-cache:
       ttl: ${APP_WORKSPACE_RUNTIME_CACHE_TTL:1m}
   security:
-    csrf:
-      enabled: false
-    cookies:
-      secure: ${APP_SECURITY_COOKIES_SECURE:false}
-      managed-prefix-enabled: ${APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED:false}
-      access-same-site: Lax
-      refresh-same-site: Lax
-      csrf-same-site: Lax
-      csrf-max-age: 30m
+    request-provenance:
+      keys:
+        signer:
+          private-key-location: ${APP_SECURITY_REQUEST_PROVENANCE_WORKSPACE_SERVICE_PRIVATE_KEY_LOCATION}
+          public-key-location: ${APP_SECURITY_REQUEST_PROVENANCE_WORKSPACE_SERVICE_PUBLIC_KEY_LOCATION}
+        verification-public-key-locations:
+          api-gateway:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_API_GATEWAY_PUBLIC_KEY_LOCATION}",
+            ]
+          instance-service:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_INSTANCE_SERVICE_PUBLIC_KEY_LOCATION}",
+            ]
   web:
     errors:
       include-path: true
@@ -82,7 +81,3 @@ app:
       max-stack-trace-lines: 30
     access-logging:
       enabled: true
-  data:
-    jpa:
-      auditing:
-        enabled: true

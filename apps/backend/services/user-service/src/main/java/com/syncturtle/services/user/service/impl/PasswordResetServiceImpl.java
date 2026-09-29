@@ -18,7 +18,6 @@ import com.syncturtle.common.contracts.email.event.EmailToSendEvent;
 import com.syncturtle.common.contracts.user.event.UserEvent;
 import com.syncturtle.common.core.security.token.SecureTokenGenerator;
 import com.syncturtle.common.core.security.token.TokenHasher;
-import com.syncturtle.services.user.configuration.property.AuthProperties;
 import com.syncturtle.services.user.messaging.kafka.factory.AuthenticationEmailEventFactory;
 import com.syncturtle.services.user.messaging.kafka.factory.UserEventFactory;
 import com.syncturtle.services.user.model.InstanceLite;
@@ -35,6 +34,7 @@ import com.syncturtle.services.user.service.collaborator.outbox.UserOutboxWriter
 import com.syncturtle.services.user.service.collaborator.runtime.UserAuthRuntimeConfigResolver;
 import com.syncturtle.services.user.service.collaborator.runtime.UserAuthRuntimeSnapshot;
 import com.syncturtle.services.user.service.collaborator.session.RefreshSessionFamilyStore;
+import com.syncturtle.services.user.service.collaborator.token.AuthTokenPolicy;
 
 import lombok.RequiredArgsConstructor;
 
@@ -54,7 +54,6 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final PasswordResetUrlBuilder resetUrlBuilder;
     private final SecureTokenGenerator tokenGenerator;
     private final TokenHasher tokenHasher;
-    private final AuthProperties authProperties;
     private final PasswordEncoder passwordEncoder;
     private final RefreshSessionFamilyStore refreshSessionFamilyStore;
     private final AuthenticationEmailEventFactory emailEventFactory;
@@ -81,9 +80,9 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
         invalidateOutstandingTokens(user.getId(), now);
 
-        String rawToken = tokenGenerator.generateBase64Url(authProperties.getPasswordResetTokenBytes());
+        String rawToken = tokenGenerator.generateBase64Url(AuthTokenPolicy.PASSWORD_RESET_TOKEN_BYTES);
         String tokenHash = tokenHasher.hash(rawToken);
-        Instant expiresAt = now.plus(authProperties.getPasswordResetTokenTtl());
+        Instant expiresAt = now.plus(AuthTokenPolicy.PASSWORD_RESET_TOKEN_TTL);
 
         PasswordResetToken passwordResetToken = PasswordResetToken.issue(user, tokenHash, expiresAt);
 
@@ -93,7 +92,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         String resetUrl = resetUrlBuilder.build(uidb64, rawToken);
 
         EmailToSendEvent emailEvent = emailEventFactory.passwordReset(normalizedEmail, resetUrl,
-                authProperties.getPasswordResetTokenTtl());
+                AuthTokenPolicy.PASSWORD_RESET_TOKEN_TTL);
         emailOutboxWriter.saveEmailToSendEvent(emailEvent, user.getId());
     }
 

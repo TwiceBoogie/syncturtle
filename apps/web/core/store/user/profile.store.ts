@@ -12,6 +12,7 @@ type TError = {
 
 export type TUserProfileSnapshot = {
   isLoading: boolean;
+  isFinishingOnboarding: boolean;
   data: TUserProfile;
   error: TError | undefined;
 };
@@ -51,6 +52,7 @@ const createInitialProfile = (): TUserProfile => ({
 
 const createInitialSnapshot = (): TUserProfileSnapshot => ({
   isLoading: false,
+  isFinishingOnboarding: false,
   data: createInitialProfile(),
   error: undefined,
 });
@@ -58,6 +60,7 @@ const createInitialSnapshot = (): TUserProfileSnapshot => ({
 export interface IUserProfileStore {
   // observables
   isLoading: boolean;
+  isFinishingOnboarding: boolean;
   data: TUserProfile;
   error: TError | undefined;
   // actions
@@ -91,6 +94,10 @@ export class ProfileStore extends ExternalStore<TUserProfileSnapshot> implements
   // raw getters for data
   get isLoading(): boolean {
     return this.state.isLoading;
+  }
+
+  get isFinishingOnboarding(): boolean {
+    return this.state.isFinishingOnboarding;
   }
 
   get data(): TUserProfile {
@@ -162,7 +169,8 @@ export class ProfileStore extends ExternalStore<TUserProfileSnapshot> implements
   public finishUserOnboarding = async (): Promise<void> => {
     const previousProfile = cloneDeep(this.data);
 
-    const firstWorkspace = Object.values(this.store.workspace.workspaces ?? {})?.[0];
+    const selectedWorkspace = this.store.workspace.getWorkspaceById(this.data.lastWorkspaceId ?? "");
+    const firstWorkspace = selectedWorkspace ?? Object.values(this.store.workspace.workspaces ?? {})[0];
     const dataToUpdate: Partial<TUserProfile> = {
       onboardingStep: {
         ...this.data.onboardingStep,
@@ -177,6 +185,7 @@ export class ProfileStore extends ExternalStore<TUserProfileSnapshot> implements
     this.setState((prev) => ({
       ...prev,
       isLoading: true,
+      isFinishingOnboarding: true,
       data: this.mutateUserProfile(prev.data, dataToUpdate),
       error: undefined,
     }));
@@ -185,12 +194,13 @@ export class ProfileStore extends ExternalStore<TUserProfileSnapshot> implements
       await this.userService.updateCurrentUserProfile(dataToUpdate);
       await this.userService.updateUserOnboard();
       // refresh profile/settings after backend has completed onboarding
-      await Promise.all([this.fetchUserProfile(), this.store.user.userSettings.fetchCurrentUserSettings()]);
+      await Promise.all([this.fetchUserProfile(), this.store.user.userSettings.fetchCurrentUserSettings(true)]);
 
       // make sure local profile is onboarded even if the response is cached/stale
       this.setState((prev) => ({
         ...prev,
         isLoading: false,
+        isFinishingOnboarding: false,
         data: this.mutateUserProfile(prev.data, {
           ...dataToUpdate,
           isOnboarded: true,
@@ -200,6 +210,7 @@ export class ProfileStore extends ExternalStore<TUserProfileSnapshot> implements
     } catch (error) {
       this.setState({
         isLoading: false,
+        isFinishingOnboarding: false,
         data: previousProfile,
         error: {
           status: "user-profile-onboard-finish-error",
@@ -271,6 +282,8 @@ export class ProfileStore extends ExternalStore<TUserProfileSnapshot> implements
         set(next, profileKey, merge(cloneDeep(currentValue), value));
         return;
       }
+
+      set(next, profileKey, value);
     });
 
     return next;

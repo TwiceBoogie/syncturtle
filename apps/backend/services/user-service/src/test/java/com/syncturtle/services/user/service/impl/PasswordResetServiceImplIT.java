@@ -1,7 +1,6 @@
 package com.syncturtle.services.user.service.impl;
 
 import static com.syncturtle.services.user.support.fixture.PasswordResetFixtures.TOKEN_BYTES;
-import static com.syncturtle.services.user.support.fixture.PasswordResetFixtures.TOKEN_TTL;
 import static com.syncturtle.services.user.support.fixture.PasswordResetIntegrationFixtures.newOutstandingToken;
 import static com.syncturtle.services.user.support.fixture.PasswordResetIntegrationFixtures.newUser;
 import static com.syncturtle.services.user.support.fixture.PasswordResetIntegrationFixtures.uniqueRawToken;
@@ -35,7 +34,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import com.syncturtle.common.core.security.token.SecureTokenGenerator;
 import com.syncturtle.common.core.security.token.TokenHasher;
-import com.syncturtle.services.user.configuration.property.AuthProperties;
 import com.syncturtle.services.user.messaging.kafka.factory.AuthenticationEmailEventFactory;
 import com.syncturtle.services.user.messaging.kafka.factory.UserEventFactory;
 import com.syncturtle.services.user.model.InstanceLite;
@@ -87,8 +85,6 @@ class PasswordResetServiceImplIT {
     @MockitoBean
     TokenHasher tokenHasher;
     @MockitoBean
-    AuthProperties authProperties;
-    @MockitoBean
     PasswordEncoder passwordEncoder;
     @MockitoBean
     RefreshSessionFamilyStore refreshSessionFamilyStore;
@@ -106,8 +102,6 @@ class PasswordResetServiceImplIT {
         when(configuration.isSmtpEnabled()).thenReturn(true);
         when(instanceRepository.findFirstByOrderByCreatedAtAsc()).thenReturn(Optional.of(instance));
         when(configFlagResolver.getInstanceConfigurations()).thenReturn(configuration);
-        when(authProperties.getPasswordResetTokenBytes()).thenReturn(TOKEN_BYTES);
-        when(authProperties.getPasswordResetTokenTtl()).thenReturn(TOKEN_TTL);
     }
 
     @Nested

@@ -147,9 +147,23 @@ class SecurityCookieFactoryTest {
             SecurityCookieFactory factory = factory(true, true);
             // conditions
             // act
-            ResponseCookie cookie = factory.csrfCookie("signed.csrf");
+            ResponseCookie cookie = factory.csrfCookie("signed.csrf", Duration.ofMinutes(30));
             // assert
             assertCookie(cookie, "__Host-csrf_token", "/", true, "Lax", Duration.ofMinutes(30));
+            // verify
+        }
+
+        @Test
+        @DisplayName("uses actual typed token remaining lifetime when provided")
+        void usesActualTypedTokenRemainingLifetimeWhenProvided() {
+            // arrange
+            SecurityCookieFactory factory = factory(false, false);
+            Duration remainingLifetime = Duration.ofDays(3);
+            // conditions
+            // act
+            ResponseCookie cookie = factory.csrfCookie("payload.signature", remainingLifetime);
+            // assert
+            assertCookie(cookie, "csrf_token", "/", false, "Lax", remainingLifetime);
             // verify
         }
 
@@ -161,8 +175,7 @@ class SecurityCookieFactoryTest {
                 managedPrefixEnabled,
                 "Lax",
                 "Lax",
-                "Lax",
-                Duration.ofMinutes(30));
+                "Lax");
         return new SecurityCookieFactory(properties);
     }
 

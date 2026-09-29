@@ -1,6 +1,7 @@
 package com.syncturtle.services.user.service.collaborator.session;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -14,7 +15,6 @@ import org.springframework.util.StringUtils;
 
 import com.syncturtle.common.core.security.token.SecureTokenGenerator;
 import com.syncturtle.common.core.security.token.TokenHasher;
-import com.syncturtle.services.user.configuration.property.AdminSessionHandoffProperties;
 import com.syncturtle.services.user.exception.AdminSessionHandoffException;
 import com.syncturtle.services.user.service.param.AdminSessionHandoffCreateParam;
 import com.syncturtle.services.user.type.AdminSessionHandoffState;
@@ -22,6 +22,7 @@ import com.syncturtle.services.user.type.AdminSessionHandoffState;
 public final class AdminSessionHandoffStore {
 
     private static final int SECRET_BYTES = 32;
+    private static final Duration HANDOFF_TTL = Duration.ofSeconds(30);
     private static final Pattern HASH = Pattern.compile("[0-9a-f]{64}");
     private static final String OP_CLAIM = "CLAIM";
     private static final String OP_RELEASE = "RELEASE";
@@ -33,7 +34,6 @@ public final class AdminSessionHandoffStore {
     private final TokenHasher tokenHasher;
     private final AdminSessionHandoffSerializer serializer;
     private final AdminSessionHandoffScriptExecutor scriptExecutor;
-    private final AdminSessionHandoffProperties properties;
     private final Clock clock;
     private final Supplier<String> idGenerator;
 
@@ -44,10 +44,9 @@ public final class AdminSessionHandoffStore {
             TokenHasher tokenHasher,
             AdminSessionHandoffSerializer serializer,
             AdminSessionHandoffScriptExecutor scriptExecutor,
-            AdminSessionHandoffProperties properties,
             Clock clock) {
         this(redis, keys, tokenGenerator, tokenHasher, serializer, scriptExecutor,
-                properties, clock, () -> UUID.randomUUID().toString());
+                clock, () -> UUID.randomUUID().toString());
     }
 
     AdminSessionHandoffStore(
@@ -57,7 +56,6 @@ public final class AdminSessionHandoffStore {
             TokenHasher tokenHasher,
             AdminSessionHandoffSerializer serializer,
             AdminSessionHandoffScriptExecutor scriptExecutor,
-            AdminSessionHandoffProperties properties,
             Clock clock,
             Supplier<String> idGenerator) {
         Assert.notNull(redis, "redis is required");
@@ -66,7 +64,6 @@ public final class AdminSessionHandoffStore {
         Assert.notNull(tokenHasher, "tokenHasher is required");
         Assert.notNull(serializer, "serializer is required");
         Assert.notNull(scriptExecutor, "scriptExecutor is required");
-        Assert.notNull(properties, "properties are required");
         Assert.notNull(clock, "clock is required");
         Assert.notNull(idGenerator, "idGenerator is required");
 
@@ -76,7 +73,6 @@ public final class AdminSessionHandoffStore {
         this.tokenHasher = tokenHasher;
         this.serializer = serializer;
         this.scriptExecutor = scriptExecutor;
-        this.properties = properties;
         this.clock = clock;
         this.idGenerator = idGenerator;
     }
@@ -85,7 +81,7 @@ public final class AdminSessionHandoffStore {
         Assert.notNull(param, "admin session handoff create param is required");
 
         Instant issuedAt = clock.instant();
-        Instant expiresAt = issuedAt.plus(properties.getTtl());
+        Instant expiresAt = issuedAt.plus(HANDOFF_TTL);
         String receiptId = nextId("generated receiptId");
         String secret = tokenGenerator.generateBase64Url(SECRET_BYTES);
         Assert.hasText(secret, "generated handoff secret is required");
@@ -110,7 +106,7 @@ public final class AdminSessionHandoffStore {
             Boolean created = redis.opsForValue().setIfAbsent(
                     keys.handoff(receiptId),
                     serializer.encode(record),
-                    properties.getTtl());
+                    HANDOFF_TTL);
             if (!Boolean.TRUE.equals(created)) {
                 throw new AdminSessionHandoffException(
                         AdminSessionHandoffException.Reason.INVARIANT_VIOLATION,
