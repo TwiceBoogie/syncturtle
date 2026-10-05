@@ -11,6 +11,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -83,6 +84,24 @@ class PassportSessionValidatorTest {
             verify(values).multiGet(keys.capture());
             assertThat(keys.getValue().iterator().next())
                     .isEqualTo("st:test:auth:user-service:refresh-session:sid:" + SESSION_ID);
+        }
+
+        @Test
+        @DisplayName("rejects a previously accepted one-hour jwt after its session is revoked")
+        void rejectsPreviouslyAcceptedJwtAfterSessionRevocation() throws Exception {
+            PassportClaims claims = userClaims(USER_ID, INSTANCE_ID, List.of("USER"), 4L, null);
+            String sessionJson = jsonMapper
+                    .writeValueAsString(userSession(USER_ID, INSTANCE_ID, List.of("USER"), 4L, null));
+            when(values.multiGet(anyCollection()))
+                    .thenReturn(Mono.just(List.of(sessionJson, "4")))
+                    .thenReturn(Mono.just(Arrays.asList(null, "4")));
+
+            ParsedPassportSession accepted = validator.validate(claims).block();
+            PassportAuthenticationException rejected = catchThrowableOfType(PassportAuthenticationException.class,
+                    () -> validator.validate(claims).block());
+
+            assertThat(accepted).isNotNull();
+            assertThat(rejected.getReason()).isEqualTo(PassportAuthenticationFailureReason.SESSION_MISSING);
         }
 
         @Test
@@ -233,7 +252,7 @@ class PassportSessionValidatorTest {
                 .issuer("https://api.syncturtle.test/auth")
                 .subject(userId)
                 .issuedAt(NOW.minusSeconds(60))
-                .expiresAt(NOW.plusSeconds(900))
+                .expiresAt(NOW.plus(Duration.ofHours(1)))
                 .claim("sid", SESSION_ID)
                 .claim("instance_id", instanceId)
                 .claim("roles", roles)

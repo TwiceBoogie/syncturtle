@@ -15,8 +15,9 @@ export interface IInstance {
   licenseKey: string | undefined;
   instanceId: string | undefined;
   currentVersion: string | undefined;
-  latestVersion: string | undefined;
-  lastCheckedAt: string | undefined;
+  latestVersion: string | null;
+  versionStatus: "CURRENT" | "UPDATE_AVAILABLE" | "AHEAD_OF_RELEASE" | "UNKNOWN";
+  lastCheckedAt: string | null;
   namespace: string | undefined;
   isTelemetryEnabled: boolean;
   isSupportRequired: boolean;

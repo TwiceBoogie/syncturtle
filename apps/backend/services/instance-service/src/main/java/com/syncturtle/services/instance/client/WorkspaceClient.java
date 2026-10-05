@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.syncturtle.common.core.header.GatewayHeaders;
 import com.syncturtle.common.core.service.ServiceClientNames;
 import com.syncturtle.services.instance.dto.request.InstanceWorkspaceCreateRequest;
 import com.syncturtle.services.instance.dto.response.InstanceWorkspaceResponse;
@@ -19,12 +20,12 @@ public interface WorkspaceClient {
 
     @GetMapping("/slug-check")
     InstanceWorkspaceSlugCheckResponse checkSlug(
-            @RequestHeader("X-Instance-Id") UUID instanceId,
+            @RequestHeader(GatewayHeaders.HDR_INTERNAL_ACTOR_USER_ID) UUID currentUserId,
             @RequestParam("slug") String slug);
 
     @PostMapping
     InstanceWorkspaceResponse createWorkspace(
-            @RequestHeader("X-Instance-Id") UUID instanceId,
+            @RequestHeader(GatewayHeaders.HDR_INTERNAL_ACTOR_USER_ID) UUID currentUserId,
             @RequestBody InstanceWorkspaceCreateRequest request);
 
 }

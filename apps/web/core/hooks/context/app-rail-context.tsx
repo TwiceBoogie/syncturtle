@@ -1,13 +1,14 @@
 "use client";
 
-import { createContext, type ReactNode } from "react";
+import { createContext, useCallback, useSyncExternalStore, type ReactNode } from "react";
 import { useParams } from "next/navigation";
-import useLocalStorage from "@/hooks/use-local-storage";
 
 export interface IAppRailContextType {
-  isEnabled: boolean;
+  editionAvailable: boolean;
+  canUseAppRail: boolean;
+  isCollapsed: boolean;
   shouldRenderAppRail: boolean;
-  toggleAppRail: (value?: boolean) => void;
+  toggleAppRail: () => void;
 }
 
 const AppRailContext = createContext<IAppRailContextType | undefined>(undefined);
@@ -16,30 +17,61 @@ export { AppRailContext };
 
 interface IAppRailProviderProps {
   children: ReactNode;
+  editionAvailable: boolean;
 }
 
-export const AppRailProvider = ({ children }: IAppRailProviderProps) => {
-  const { workspaceSlug } = useParams();
-  const { storedValue: isAppRailVisible, setValue: setIsAppRailVisible } = useLocalStorage<boolean>(
-    `APP_RAIL_${workspaceSlug}`,
-    false
+const getCollapsedKey = (workspaceSlug: string) => `APP_RAIL_COLLAPSED_${workspaceSlug}`;
+
+const getServerSnapshot = () => false;
+
+const readCollapsed = (key: string) => {
+  try {
+    return window.localStorage.getItem(key) === "true";
+  } catch {
+    return false;
+  }
+};
+
+export const AppRailProvider = ({ children, editionAvailable }: IAppRailProviderProps) => {
+  const { workspaceSlug } = useParams<{ workspaceSlug: string }>();
+  const key = workspaceSlug ? getCollapsedKey(workspaceSlug) : null;
+
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      if (!key) return () => {};
+      const onStorage = (event: StorageEvent) => {
+        if (event.key === key) onStoreChange();
+      };
+      window.addEventListener("storage", onStorage);
+      window.addEventListener(`local-storage:${key}`, onStoreChange);
+      return () => {
+        window.removeEventListener("storage", onStorage);
+        window.removeEventListener(`local-storage:${key}`, onStoreChange);
+      };
+    },
+    [key]
   );
 
-  const isEnabled = false;
+  const getSnapshot = useCallback(() => (key ? readCollapsed(key) : false), [key]);
+  const isCollapsed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const canUseAppRail = editionAvailable;
+  const shouldRenderAppRail = canUseAppRail && !isCollapsed;
 
-  const toggleAppRail = (value?: boolean) => {
-    if (value === undefined) {
-      setIsAppRailVisible(!isAppRailVisible);
-    } else {
-      setIsAppRailVisible(value);
+  const toggleAppRail = useCallback(() => {
+    if (!canUseAppRail || !key) return;
+    try {
+      window.localStorage.setItem(key, JSON.stringify(!readCollapsed(key)));
+      window.dispatchEvent(new Event(`local-storage:${key}`));
+    } catch {
+      // Storage can be unavailable; the rail remains in its current state.
     }
-  };
+  }, [canUseAppRail, key]);
 
-  const contextValue: IAppRailContextType = {
-    isEnabled,
-    shouldRenderAppRail: !!isAppRailVisible && isEnabled,
-    toggleAppRail,
-  };
-
-  return <AppRailContext.Provider value={contextValue}>{children}</AppRailContext.Provider>;
+  return (
+    <AppRailContext.Provider
+      value={{ editionAvailable, canUseAppRail, isCollapsed, shouldRenderAppRail, toggleAppRail }}
+    >
+      {children}
+    </AppRailContext.Provider>
+  );
 };

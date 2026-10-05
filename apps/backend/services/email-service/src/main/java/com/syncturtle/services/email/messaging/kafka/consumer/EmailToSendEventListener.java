@@ -15,7 +15,7 @@ public class EmailToSendEventListener {
 
     private final EmailInboxService service;
 
-    @KafkaListener(topics = KafkaTopics.EMAIL_EVENTS_V1, groupId = "email-service-dispatcher", containerFactory = "emailToSendKafkaListenerFactory")
+    @KafkaListener(topics = "#{@kafkaDeploymentTopics.topic('" + KafkaTopics.EMAIL_EVENTS_V1 + "')}", groupId = "#{@kafkaConsumerGroups.workGroupId('email-service', 'dispatch-v1')}", containerFactory = "emailToSendKafkaListenerFactory")
     public void onEmailToSend(EmailToSendEvent event) {
         service.receive(event);
     }

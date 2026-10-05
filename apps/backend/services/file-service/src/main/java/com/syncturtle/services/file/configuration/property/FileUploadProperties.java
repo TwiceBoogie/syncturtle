@@ -7,28 +7,29 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.util.unit.DataSize;
 
+import com.syncturtle.services.file.policy.FileLifecyclePolicy;
+
 import lombok.Getter;
 
 @Getter
 @ConfigurationProperties(prefix = "app.file.upload")
 public final class FileUploadProperties {
 
+    private static final DataSize MAX_SUPPORTED_IMAGE_SIZE = DataSize.ofMegabytes(100);
+
     private final DataSize maxImageSize;
-    private final Duration idempotencyRetention;
     private final Duration idempotencyProcessingLease;
 
     public FileUploadProperties(
             @DefaultValue("5MB") DataSize maxImageSize,
-            @DefaultValue("24h") Duration idempotencyRetention,
             @DefaultValue("1m") Duration idempotencyProcessingLease) {
         this.maxImageSize = requirePositive(maxImageSize, "maxImageSize");
-        this.idempotencyRetention = requirePositive(idempotencyRetention, "idempotencyRetention");
         this.idempotencyProcessingLease = requirePositive(idempotencyProcessingLease,
                 "idempotencyProcessingLease");
 
-        if (idempotencyProcessingLease.compareTo(idempotencyRetention) >= 0) {
+        if (idempotencyProcessingLease.compareTo(FileLifecyclePolicy.UPLOAD_IDEMPOTENCY_RETENTION) >= 0) {
             throw new IllegalArgumentException(
-                    "app.file.upload.idempotencyProcessingLease must be shorter than idempotencyRetention");
+                    "app.file.upload.idempotencyProcessingLease must be shorter than the 24h replay horizon");
         }
     }
 
@@ -37,6 +38,11 @@ public final class FileUploadProperties {
         if (size.toBytes() <= 0) {
             throw new IllegalArgumentException("app.file.upload." + fieldName + " must be positive");
         }
+
+        if (size.toBytes() > MAX_SUPPORTED_IMAGE_SIZE.toBytes()) {
+            throw new IllegalArgumentException("app.file.upload." + fieldName + " must not exceed 100MB");
+        }
+
         return size;
     }
 
@@ -45,6 +51,7 @@ public final class FileUploadProperties {
         if (duration.isZero() || duration.isNegative()) {
             throw new IllegalArgumentException("app.file.upload." + fieldName + " must be positive");
         }
+
         return duration;
     }
 }

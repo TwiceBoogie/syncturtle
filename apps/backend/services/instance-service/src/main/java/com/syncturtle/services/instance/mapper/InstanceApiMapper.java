@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import com.syncturtle.services.instance.dto.response.InstanceResponse;
 import com.syncturtle.services.instance.dto.response.InstanceSetupResponse;
 import com.syncturtle.services.instance.model.Instance;
+import com.syncturtle.services.instance.version.ReleaseVersion;
 
 @Component
 public final class InstanceApiMapper {
@@ -25,6 +26,9 @@ public final class InstanceApiMapper {
                 .instanceId(instance.getInstanceId())
                 .currentVersion(instance.getUpdateCheck().getCurrentVersion())
                 .latestVersion(instance.getUpdateCheck().getLatestVersion())
+                .versionStatus(ReleaseVersion.status(
+                        instance.getUpdateCheck().getCurrentVersion(),
+                        instance.getUpdateCheck().getLatestVersion()))
                 .lastCheckedAt(instance.getUpdateCheck().getLastCheckedAt())
                 .namespace(instance.getRuntime().getNamespace())
                 .telemetryEnabled(instance.isTelemetryEnabled())

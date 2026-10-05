@@ -20,49 +20,30 @@ import WhiteHorizontalLogo from "@/public/syncturtle-logos/syncturtle-logo-light
 interface IOnboardingHeaderProps {
   currentStep: TOnboardingStep;
   updateCurrentStep: (step: TOnboardingStep) => void;
-  hasInvitations: boolean;
+  isBusy: boolean;
 }
 
 export const OnboardingHeader: FC<IOnboardingHeaderProps> = (props) => {
-  const { currentStep, updateCurrentStep, hasInvitations } = props;
+  const { currentStep, updateCurrentStep, isBusy } = props;
   // theme
   const { resolvedTheme } = useTheme();
   // store hooks
   const { data: user } = useUser();
 
-  const handleStepBack = () => {
-    switch (currentStep) {
-      case EOnboardingSteps.ROLE_SETUP:
-        updateCurrentStep(EOnboardingSteps.PROFILE_SETUP);
-        break;
-      case EOnboardingSteps.USE_CASE_SETUP:
-        updateCurrentStep(EOnboardingSteps.ROLE_SETUP);
-        break;
-      case EOnboardingSteps.WORKSPACE_CREATE_OR_JOIN:
-        updateCurrentStep(EOnboardingSteps.USE_CASE_SETUP);
-        break;
-    }
-  };
-
-  const noBackStep: readonly TOnboardingStep[] = [EOnboardingSteps.PROFILE_SETUP, EOnboardingSteps.INVITE_MEMBERS];
-  const canGoBack = !noBackStep.includes(currentStep);
-
-  // Get current step number for progress tracking
-  const getCurrentStepNumber = (): number => {
-    const stepOrder: TOnboardingStep[] = [
-      EOnboardingSteps.PROFILE_SETUP,
-      EOnboardingSteps.ROLE_SETUP,
-      EOnboardingSteps.USE_CASE_SETUP,
-      ...(hasInvitations
-        ? [EOnboardingSteps.WORKSPACE_CREATE_OR_JOIN]
-        : [EOnboardingSteps.WORKSPACE_CREATE_OR_JOIN, EOnboardingSteps.INVITE_MEMBERS]),
-    ];
-    return stepOrder.indexOf(currentStep) + 1;
-  };
-
   // derived values
-  const currentStepNumber = getCurrentStepNumber();
-  const totalSteps = hasInvitations ? 4 : 5; // 4 if invites available, 5 if not
+  const stepOrder: TOnboardingStep[] = [
+    EOnboardingSteps.PROFILE_SETUP,
+    EOnboardingSteps.WORKSPACE_CREATE_OR_JOIN,
+    EOnboardingSteps.USE_CASE_SETUP,
+  ];
+  const currentStepNumber = stepOrder.indexOf(currentStep) + 1;
+  const totalSteps = stepOrder.length;
+  const canGoBack = currentStepNumber > 1 && !isBusy;
+  const handleStepBack = () => {
+    const previousStep = stepOrder[currentStepNumber - 2];
+    if (canGoBack && previousStep) updateCurrentStep(previousStep);
+  };
+
   const username =
     user?.displayName || [user?.firstName, user?.lastName].filter(Boolean).join(" ") || user?.email || "";
 

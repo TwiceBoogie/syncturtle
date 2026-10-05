@@ -29,7 +29,7 @@ import { getFieldErrors } from "@/helpers/error.helper";
 import { AssetOrchestratorService } from "@/services/asset-orchestrator.service";
 
 export interface IProfileSetupStepProps {
-  handleStepChange: (step: TOnboardingStep, skipInvites?: boolean) => void;
+  handleStepChange: (step: TOnboardingStep) => Promise<void>;
 }
 
 interface IProfileSetupFormValues {
@@ -84,7 +84,7 @@ const validateName = (value: string) => {
 
 const validateLastName = (value: string) => {
   const lastName = value.trim();
-  if (!lastName) return "Last name is required";
+  if (!lastName) return null;
   if (lastName.length > 24) {
     return "Last name must be within 24 characters";
   }
@@ -158,7 +158,7 @@ export const ProfileSetupStep: FC<IProfileSetupStepProps> = (props) => {
         }),
         handleSubmitUserDetail(formData),
       ]);
-      handleStepChange(EOnboardingSteps.PROFILE_SETUP);
+      await handleStepChange(EOnboardingSteps.PROFILE_SETUP);
     } catch (error) {
       setErrors(getFieldErrors(error));
       toast("Error", {

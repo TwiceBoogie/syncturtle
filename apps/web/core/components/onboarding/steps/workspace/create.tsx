@@ -1,355 +1,109 @@
 "use client";
 
-import type { FC, SyntheticEvent } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useRef, useState } from "react";
+import type { SyntheticEvent } from "react";
 // heroui
-import {
-  Button,
-  Description,
-  FieldError,
-  Form,
-  Input,
-  InputGroup,
-  Label,
-  Radio,
-  RadioGroup,
-  Spinner,
-  TextField,
-  toast,
-} from "@heroui/react";
+import { Button, FieldError, Form, Input, Label, TextField } from "@heroui/react";
 // syncturtle imports
-import { ORGANIZATION_SIZE, RESTRICTED_URLS } from "@syncturtle/constants";
-import type { TFieldErrors, IUser, IWorkspace } from "@syncturtle/types";
-import { useTranslation } from "@syncturtle/i18n";
+import { RESTRICTED_URLS } from "@syncturtle/constants";
+import type { IUser, IWorkspace } from "@syncturtle/types";
 // hooks
-import { useUserProfile, useUserSettings } from "@/hooks/store/user";
 import { useWorkspace } from "@/hooks/store/use-workspace";
 // components
 import { CommonOnboardingHeader } from "../common";
 // services
 import { WorkspaceService } from "@/services/workspace.service";
-import { getFieldErrors, getPublicErrorMessage, hasFieldErrors } from "@/helpers/error.helper";
+import { getPublicErrorMessage } from "@/helpers/error.helper";
 
-interface IWorkspaceCreateStepProps {
+const slugBase = (name: string) =>
+  name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 36)
+    .replace(/-+$/g, "") || "space";
+
+// Slug availability is checked before POST; the server still arbitrates races.
+async function availableSlug(name: string): Promise<string> {
+  const base = slugBase(name);
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const candidate = `${base}-${crypto.randomUUID().slice(0, 8)}`;
+    if (!RESTRICTED_URLS.includes(candidate) && (await workspaceService.workspaceSlugCheck(candidate)).available)
+      return candidate;
+  }
+  throw new Error("Could not find an available space URL. Please try again.");
+}
+
+type Props = {
   user: IUser | undefined;
-  onComplete: (skipInvites?: boolean) => void;
-  handleCurrentViewChange: () => void;
-  hasInvitations?: boolean;
-}
-
-interface IWorkspaceCreateFormData {
-  name: string;
-  slug: string;
-  organizationSize: string;
-}
-
-const defaultFormData: IWorkspaceCreateFormData = {
-  name: "",
-  slug: "",
-  organizationSize: "",
-};
-
-type TWorkspaceCreateClientErrors = Partial<Record<keyof IWorkspaceCreateFormData, string>>;
-
-const slugify = (value: string) => value.toLowerCase().trim().replace(/\s+/g, "-");
-
-const validateWorkspaceName = (value: string) => {
-  const name = value.trim();
-
-  if (!name) return "This field is required";
-
-  if (!/^[\w\s-]*$/.test(name)) {
-    return "Workspace name can only contain letters, numbers, spaces, dashes, and underscores.";
-  }
-
-  if (name.length > 80) {
-    return "Workspace name must be within 80 characters.";
-  }
-
-  return undefined;
-};
-
-const validateWorkspaceSlug = (value: string) => {
-  const slug = value.trim();
-
-  if (!slug) return "This field is required";
-
-  if (slug.length > 48) {
-    return "Workspace URL must be within 48 characters.";
-  }
-
-  if (!/^[a-zA-Z0-9_-]+$/.test(slug)) {
-    return "Workspace URL can only contain letters, numbers, dashes, and underscores.";
-  }
-
-  if (RESTRICTED_URLS.includes(slug.toLowerCase())) {
-    return "This workspace URL is reserved.";
-  }
-
-  return undefined;
-};
-
-const validateWorkspaceCreateForm = (formData: IWorkspaceCreateFormData) => {
-  const errors: TWorkspaceCreateClientErrors = {};
-
-  const nameError = validateWorkspaceName(formData.name);
-  const slugError = validateWorkspaceSlug(formData.slug);
-
-  if (nameError) errors.name = nameError;
-  if (slugError) errors.slug = slugError;
-
-  if (!formData.organizationSize.trim()) {
-    errors.organizationSize = "This field is required";
-  }
-
-  return errors;
+  onComplete: (workspace: IWorkspace) => Promise<void>;
+  onBusyChange?: (busy: boolean) => void;
 };
 
 const workspaceService = new WorkspaceService();
 
-export const WorkspaceCreateStep: FC<IWorkspaceCreateStepProps> = (props) => {
-  const { user, onComplete, handleCurrentViewChange, hasInvitations = false } = props;
-  // sote hooks
-  const { updateUserProfile } = useUserProfile();
-  const { fetchCurrentUserSettings } = useUserSettings();
-  const { createWorkspace, fetchWorkspaces } = useWorkspace();
-  const { t } = useTranslation();
-  // states
-  const [formData, setFormData] = useState<IWorkspaceCreateFormData>(defaultFormData);
-  const [clientErrors, setClientErrors] = useState<TWorkspaceCreateClientErrors>({});
-  const [serverFieldErrors, setServerFieldErrors] = useState<TFieldErrors>({});
+export const WorkspaceCreateStep = ({ user, onComplete, onBusyChange }: Props) => {
+  const { createWorkspace } = useWorkspace();
+  const [name, setName] = useState("Personal");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [wasSubmitted, setWasSubmitted] = useState(false);
-  const [host, setHost] = useState("");
+  const [error, setError] = useState<string>();
+  const created = useRef<IWorkspace | null>(null);
+  const submitting = useRef(false);
+  const nameError = !name.trim()
+    ? "Enter a space name."
+    : name.trim().length > 80
+      ? "Limit your space name to 80 characters."
+      : undefined;
 
-  useEffect(() => {
-    setHost(window.location.host);
-  }, []);
-
-  const clearServerFieldErrors = (field: keyof IWorkspaceCreateFormData) => {
-    setServerFieldErrors((prev) => {
-      if (!prev[field]) return prev;
-
-      const next = { ...prev };
-      delete next[field];
-
-      return next;
-    });
-  };
-
-  const handleFormChange = (key: keyof IWorkspaceCreateFormData, value: string) => {
-    clearServerFieldErrors(key);
-
-    setFormData((prev) => {
-      let next: IWorkspaceCreateFormData;
-
-      if (key === "name") {
-        next = { ...prev, name: value, slug: slugify(value) };
-
-        setServerFieldErrors((previousErrors) => {
-          if (!previousErrors.slug) return previousErrors;
-
-          const nextErrors = { ...previousErrors };
-          delete nextErrors.slug;
-
-          return nextErrors;
-        });
-      } else if (key === "slug") {
-        next = { ...prev, slug: slugify(value) };
-      } else {
-        next = { ...prev, [key]: value };
-      }
-
-      if (wasSubmitted) {
-        setClientErrors(validateWorkspaceCreateForm(next));
-      }
-
-      return next;
-    });
-  };
-
-  const completeSetup = async (workspaceId: string) => {
-    if (!user) return;
-
-    await updateUserProfile({ lastWorkspaceId: workspaceId });
-
-    await fetchCurrentUserSettings();
-  };
-
-  const handleCreateWorkspace = async (event: SyntheticEvent<HTMLFormElement>) => {
+  const submit = async (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    setWasSubmitted(true);
-    setServerFieldErrors({});
-
-    if (isSubmitting) return;
-
-    const nextClientErrors = validateWorkspaceCreateForm(formData);
-    setClientErrors(nextClientErrors);
-
-    if (Object.keys(nextClientErrors).length > 0) return;
-
+    if (submitting.current || !user || nameError) return;
+    submitting.current = true;
     setIsSubmitting(true);
-
-    const createWorkspacePromise = (async () => {
-      const slugCheck = await workspaceService.workspaceSlugCheck(formData.slug);
-
-      if (slugCheck.available !== true || RESTRICTED_URLS.includes(formData.slug)) {
-        const nextServerErrors: TFieldErrors = {
-          slug: "Workspace URL is already taken.",
-        };
-
-        setServerFieldErrors(nextServerErrors);
-
-        throw new Error("Workspace URL is already taken.");
-      }
-
-      const workspacePayload: Partial<IWorkspace> = {
-        name: formData.name.trim(),
-        slug: formData.slug.trim(),
-        organizationSize: formData.organizationSize,
-      };
-
-      const workspaceResponse = await createWorkspace(workspacePayload);
-
-      await fetchWorkspaces();
-      await completeSetup(workspaceResponse.id);
-
-      onComplete(formData.organizationSize === "Just myself");
-
-      return workspaceResponse;
-    })();
-
-    toast.promise(createWorkspacePromise, {
-      loading: "Creating workspace...",
-      success: "Workspace created successfully",
-      error: (error) => getPublicErrorMessage(error, "Could not create workspace."),
-    });
-
+    onBusyChange?.(true);
+    setError(undefined);
     try {
-      await createWorkspacePromise;
-    } catch (error) {
-      console.log(error);
-      const nextServerErrors = getFieldErrors(error);
-
-      if (hasFieldErrors(nextServerErrors)) {
-        setServerFieldErrors(nextServerErrors);
+      if (!created.current) {
+        const slug = await availableSlug(name);
+        // Store upsert completes before this resolves. No list/settings projection
+        // refresh may replace the returned workspace or gate its availability.
+        created.current = await createWorkspace({ name: name.trim(), slug });
       }
+      // A failed profile/settings/completion retry reuses the successful POST.
+      await onComplete(created.current);
+    } catch (failure) {
+      setError(getPublicErrorMessage(failure, "Could not prepare your space. Please try again."));
     } finally {
+      submitting.current = false;
       setIsSubmitting(false);
+      onBusyChange?.(false);
     }
   };
 
-  // derived values
-  const currentClientErrors = useMemo(() => validateWorkspaceCreateForm(formData), [formData]);
-  const getFieldError = (field: keyof IWorkspaceCreateFormData) => clientErrors[field] ?? serverFieldErrors[field];
-  const nameError = getFieldError("name");
-  const slugError = getFieldError("slug");
-  const organizationSizeError = getFieldError("organizationSize");
-
-  const isButtonDisabled = useMemo(() => {
-    if (isSubmitting) return true;
-    if (Object.keys(currentClientErrors).length > 0) return true;
-    if (hasFieldErrors(serverFieldErrors)) return true;
-
-    return false;
-  }, [currentClientErrors, serverFieldErrors, isSubmitting]);
-
   return (
-    <Form
-      className="flex flex-col gap-10"
-      validationBehavior="aria"
-      validationErrors={serverFieldErrors}
-      onSubmit={handleCreateWorkspace}
-    >
-      <CommonOnboardingHeader title="Create your workspace" description="All your work - unified." />
-
-      <div className="flex flex-col gap-8 toast--success">
-        <TextField
-          id="name"
-          name="name"
-          isRequired
-          value={formData.name}
-          isInvalid={Boolean(nameError)}
-          onChange={(value: string) => handleFormChange("name", value)}
-          variant="secondary"
-        >
-          <Label>{t("workspace_creation.form.name.label")}</Label>
-          <Input type="text" placeholder="Enter workspace name" />
-          {nameError && <FieldError>{nameError}</FieldError>}
-        </TextField>
-
-        <TextField
-          id="slug"
-          name="slug"
-          isRequired
-          value={formData.slug}
-          isInvalid={Boolean(slugError)}
-          onChange={(value: string) => handleFormChange("slug", value)}
-          variant="secondary"
-        >
-          <Label>{t("workspace_creation.form.url.label")}</Label>
-          <InputGroup>
-            <InputGroup.Prefix>{host}/</InputGroup.Prefix>
-            <InputGroup.Input placeholder={t("workspace_creation.form.url.placeholder")} />
-          </InputGroup>
-          {!slugError && <Description>{t("workspace_creation.form.url.edit_slug")}</Description>}
-          {slugError && <FieldError>{slugError}</FieldError>}
-        </TextField>
-
-        <RadioGroup
-          isRequired
-          name="organizationSize"
-          orientation="horizontal"
-          value={formData.organizationSize}
-          isInvalid={Boolean(organizationSizeError)}
-          onChange={(value: string) => handleFormChange("organizationSize", value)}
-          variant="secondary"
-        >
-          <Label>{t("workspace_creation.form.organization_size.label")}</Label>
-          {ORGANIZATION_SIZE.map((size) => (
-            <Radio key={size} value={size}>
-              <Radio.Content>
-                <Radio.Control>
-                  <Radio.Indicator>
-                    {({ isSelected }) =>
-                      isSelected ? <span className="text-xs leading-none text-background">✓</span> : null
-                    }
-                  </Radio.Indicator>
-                </Radio.Control>
-                <span className="font-medium">{size}</span>
-              </Radio.Content>
-            </Radio>
-          ))}
-          {organizationSizeError && <FieldError>{organizationSizeError}</FieldError>}
-        </RadioGroup>
-      </div>
-
-      <div className="flex flex-col gap-4">
-        <Button
-          type="submit"
-          size="sm"
-          fullWidth
-          isPending={isSubmitting}
-          isDisabled={isButtonDisabled}
-          className="rounded-md"
-        >
-          {({ isPending }) => (isPending ? <Spinner color="current" /> : t("workspace_creation.button.default"))}
-        </Button>
-
-        {hasInvitations && (
-          <Button
-            type="button"
-            size="sm"
-            variant="tertiary"
-            fullWidth
-            onPress={handleCurrentViewChange}
-            isDisabled={isSubmitting}
-          >
-            Join existing workspace
-          </Button>
-        )}
-      </div>
+    <Form className="flex flex-col gap-6" onSubmit={submit} validationBehavior="aria">
+      <CommonOnboardingHeader
+        title="Create a space for what matters to you"
+        description="Start with Personal or choose a name. You can use it on your own."
+      />
+      <TextField
+        id="space-name"
+        name="name"
+        isRequired
+        value={name}
+        isInvalid={Boolean(nameError)}
+        isDisabled={isSubmitting || Boolean(created.current)}
+        onChange={setName}
+      >
+        <Label>Space name</Label>
+        <Input maxLength={80} placeholder="Personal" />
+        {nameError && <FieldError>{nameError}</FieldError>}
+      </TextField>
+      {error && <p role="alert">{error}</p>}
+      <Button type="submit" isDisabled={isSubmitting || !user || Boolean(nameError)} isPending={isSubmitting}>
+        {created.current ? "Continue with created space" : "Create space"}
+      </Button>
     </Form>
   );
 };

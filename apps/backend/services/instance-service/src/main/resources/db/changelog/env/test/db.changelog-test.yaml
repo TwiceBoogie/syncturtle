@@ -2,7 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: 9000-seed-test
       author: syncturtle
-      contextFilter: test
+      contextFilter: "@test"
       runOnChange: true
       changes:
         - sqlFile:

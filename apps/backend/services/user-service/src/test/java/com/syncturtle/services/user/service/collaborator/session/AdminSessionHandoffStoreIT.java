@@ -36,7 +36,6 @@ import com.syncturtle.common.cache.property.RedisKeyProperties;
 import com.syncturtle.common.cache.template.RedisKeyBuilder;
 import com.syncturtle.common.core.security.token.Base64UrlSecureTokenGenerator;
 import com.syncturtle.common.core.security.token.Sha256TokenHasher;
-import com.syncturtle.services.user.configuration.property.AdminSessionHandoffProperties;
 import com.syncturtle.services.user.exception.AdminSessionHandoffException;
 import com.syncturtle.services.user.support.clock.MutableClock;
 import com.syncturtle.services.user.type.AdminSessionHandoffState;
@@ -75,7 +74,6 @@ class AdminSessionHandoffStoreIT {
         serializer = new AdminSessionHandoffSerializer(jsonMapper);
         keys = new AdminSessionHandoffRedisKeys(
                 new RedisKeyBuilder(new RedisKeyProperties(KEY_PREFIX)));
-        AdminSessionHandoffProperties properties = new AdminSessionHandoffProperties(Duration.ofSeconds(30));
         store = new AdminSessionHandoffStore(
                 redis,
                 keys,
@@ -83,7 +81,6 @@ class AdminSessionHandoffStoreIT {
                 new Sha256TokenHasher(),
                 serializer,
                 new AdminSessionHandoffScriptExecutor(redis),
-                properties,
                 clock,
                 this::nextId);
     }
@@ -137,7 +134,6 @@ class AdminSessionHandoffStoreIT {
                     new Sha256TokenHasher(),
                     serializer,
                     new AdminSessionHandoffScriptExecutor(unavailableRedis),
-                    new AdminSessionHandoffProperties(Duration.ofSeconds(30)),
                     clock,
                     this::unavailableId);
             // act

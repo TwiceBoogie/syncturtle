@@ -25,7 +25,6 @@ import org.springframework.util.StringUtils;
 import com.syncturtle.common.contracts.auth.session.RefreshSessionFamilyRecord;
 import com.syncturtle.common.core.security.token.SecureTokenGenerator;
 import com.syncturtle.common.core.security.token.TokenHasher;
-import com.syncturtle.services.user.configuration.property.RefreshSessionLifecycleProperties;
 import com.syncturtle.services.user.exception.RefreshSessionFamilySerializerException;
 import com.syncturtle.services.user.exception.RefreshSessionLifecycleException;
 import com.syncturtle.services.user.exception.RefreshSessionSuccessorEnvelopeException;
@@ -41,7 +40,8 @@ public final class RefreshSessionFamilyStore {
 
     private static final int REFRESH_SECRET_BYTES = 48;
     private static final int INVENTORY_MAX_ATTEMPTS = 2;
-    private static final Duration INDEX_LIFETIME = Duration.ofDays(30);
+    private static final Duration INDEX_LIFETIME = RefreshSessionFamilyRecord.ABSOLUTE_LIFETIME;
+    private static final Duration GRACE_WINDOW = Duration.ofSeconds(5);
     private static final String INSTANCE_ADMIN = "INSTANCE_ADMIN";
     private static final String OP_CREATE = "CREATE";
     private static final String OP_ROTATE = "ROTATE";
@@ -60,7 +60,6 @@ public final class RefreshSessionFamilyStore {
     private final RefreshSessionLifetimeDecider lifetimeDecider;
     private final RefreshSessionSuccessorEnvelopeCipher envelopeCipher;
     private final RefreshSessionLifecycleScriptExecutor scriptExecutor;
-    private final RefreshSessionLifecycleProperties properties;
     private final JsonMapper jsonMapper;
     private final Supplier<String> sessionIdGenerator;
 
@@ -73,7 +72,6 @@ public final class RefreshSessionFamilyStore {
             RefreshSessionLifetimeDecider lifetimeDecider,
             RefreshSessionSuccessorEnvelopeCipher envelopeCipher,
             RefreshSessionLifecycleScriptExecutor scriptExecutor,
-            RefreshSessionLifecycleProperties properties,
             JsonMapper jsonMapper) {
         this(
                 redis,
@@ -84,7 +82,6 @@ public final class RefreshSessionFamilyStore {
                 lifetimeDecider,
                 envelopeCipher,
                 scriptExecutor,
-                properties,
                 jsonMapper,
                 () -> UUID.randomUUID().toString());
     }
@@ -98,7 +95,6 @@ public final class RefreshSessionFamilyStore {
             RefreshSessionLifetimeDecider lifetimeDecider,
             RefreshSessionSuccessorEnvelopeCipher envelopeCipher,
             RefreshSessionLifecycleScriptExecutor scriptExecutor,
-            RefreshSessionLifecycleProperties properties,
             JsonMapper jsonMapper,
             Supplier<String> sessionIdGenerator) {
         Assert.notNull(redis, "redis is required");
@@ -109,7 +105,6 @@ public final class RefreshSessionFamilyStore {
         Assert.notNull(lifetimeDecider, "lifetimeDecider is required");
         Assert.notNull(envelopeCipher, "envelopeCipher is required");
         Assert.notNull(scriptExecutor, "scriptExecutor is required");
-        Assert.notNull(properties, "lifecycle properties are required");
         Assert.notNull(jsonMapper, "jsonMapper is required");
         Assert.notNull(sessionIdGenerator, "sessionIdGenerator is required");
 
@@ -121,7 +116,6 @@ public final class RefreshSessionFamilyStore {
         this.lifetimeDecider = lifetimeDecider;
         this.envelopeCipher = envelopeCipher;
         this.scriptExecutor = scriptExecutor;
-        this.properties = properties;
         this.jsonMapper = jsonMapper;
         this.sessionIdGenerator = sessionIdGenerator;
     }
@@ -213,7 +207,7 @@ public final class RefreshSessionFamilyStore {
                     .clientBindingHash(param.getClientBindingHash())
                     .build();
 
-            graceExpiresAt = lifetime.getEffectiveNow().plus(properties.getGraceWindow());
+            graceExpiresAt = lifetime.getEffectiveNow().plus(GRACE_WINDOW);
             String envelope = encryptSuccessor(successorToken, sessionId, nextCounter, graceExpiresAt);
             RefreshSessionGraceRecord grace = RefreshSessionGraceRecord.builder()
                     .graceVersion(RefreshSessionGraceRecord.CURRENT_GRACE_VERSION)
