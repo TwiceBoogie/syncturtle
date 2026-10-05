@@ -16,6 +16,8 @@ export const GitlabOAuthButon: FC<IGitlabOAuthButtonProps> = ({ text }) => {
   const nextPath = searchParams.get("nextPath");
 
   const handleSignIn = () => {
+    // OAuth starts at the API endpoint and requires a document navigation.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.assign(`${API_BASE_URL}/auth/gitlab/${nextPath ? `?nextPath=${nextPath}` : ``}`);
   };
 

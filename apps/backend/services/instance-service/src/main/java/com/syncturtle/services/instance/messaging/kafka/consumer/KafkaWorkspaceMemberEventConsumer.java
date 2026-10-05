@@ -2,6 +2,7 @@ package com.syncturtle.services.instance.messaging.kafka.consumer;
 
 import java.time.Clock;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
+@Profile("!setup")
 @RequiredArgsConstructor
 public class KafkaWorkspaceMemberEventConsumer {
 
@@ -27,7 +29,8 @@ public class KafkaWorkspaceMemberEventConsumer {
     private final Clock clock;
 
     @Transactional
-    @KafkaListener(topics = KafkaTopics.WORKSPACE_MEMBER_EVENTS_V1, groupId = "instance-svc-workspace-member-event-v1", containerFactory = "workspaceMemberKafkaListenerFactory")
+    @KafkaListener(topics = "#{@kafkaDeploymentTopics.topic('" + KafkaTopics.WORKSPACE_MEMBER_EVENTS_V1
+            + "')}", groupId = "#{@kafkaConsumerGroups.workGroupId('instance-service', 'workspace-member-event-v1')}", containerFactory = "workspaceMemberKafkaListenerFactory")
     public void onWorkspaceMemberEvent(WorkspaceMemberEvent event) {
         Assert.notNull(event, "workspace member event is required");
 

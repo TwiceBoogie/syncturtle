@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import com.syncturtle.common.contracts.messaging.OutboxEvent;
+import com.syncturtle.common.kafka.topic.KafkaDeploymentTopics;
 import com.syncturtle.common.observability.tracing.PersistedTraceContext;
 import com.syncturtle.common.observability.tracing.TraceContextPropagator;
 
@@ -25,6 +26,7 @@ public class OutboxKafkaPublisher {
     private static final Duration DEFAULT_SEND_TIMEOUT = Duration.ofSeconds(10);
 
     private final KafkaTemplate<String, Object> kafka;
+    private final KafkaDeploymentTopics topics;
     private final TraceContextPropagator traceContextPropagator;
 
     public void publishOutboxEvent(String topic, String messageKey, OutboxEvent event,
@@ -38,7 +40,7 @@ public class OutboxKafkaPublisher {
 
     private void send(String topic, String messageKey, OutboxEvent event) {
         try {
-            RecordMetadata metadata = kafka.send(topic, messageKey, event)
+            RecordMetadata metadata = kafka.send(topics.topic(topic), messageKey, event)
                     .get(DEFAULT_SEND_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)
                     .getRecordMetadata();
 

@@ -27,7 +27,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import com.syncturtle.common.contracts.auth.session.PreAuthTransactionBinding;
 import com.syncturtle.common.web.url.PublicUrlResolver;
 import com.syncturtle.services.user.dto.response.IssueTokenResponse;
 import com.syncturtle.services.user.exception.AdminSessionHandoffException;
@@ -50,7 +49,7 @@ import com.syncturtle.services.user.service.param.AuthorizedSessionIssueParam;
 @DisplayName("AdminSessionCompletionService")
 class AdminSessionCompletionServiceImplTest {
 
-    private static final String SIGNED_CSRF = "signed.csrf";
+    private static final String PREAUTH_BINDING = "preauth-binding";
     private static final String COMPLETION_CODE = "33333333-3333-3333-3333-333333333333.opaque";
 
     @Mock
@@ -95,7 +94,7 @@ class AdminSessionCompletionServiceImplTest {
             AdminSessionHandoffClaim claimed = claim();
             InstanceAuthorizationSnapshot authorization = InstanceAuthorizationSnapshot.instanceAdmin(9L);
             AuthenticatedSessionReceipt issued = issuedSession();
-            String preAuthHash = PreAuthTransactionBinding.fromValidatedSignedCsrfToken(SIGNED_CSRF).getValue();
+            String preAuthHash = PREAUTH_BINDING;
             // conditions
             when(fingerprintFactory.create("192.0.2.10", "Admin browser"))
                     .thenReturn(new RefreshSessionClientFingerprint("Admin browser", CLIENT_BINDING));
@@ -310,7 +309,7 @@ class AdminSessionCompletionServiceImplTest {
             AdminSessionHandoffException replay = new AdminSessionHandoffException(
                     AdminSessionHandoffException.Reason.REPLAYED,
                     "replayed");
-            String preAuthHash = PreAuthTransactionBinding.fromValidatedSignedCsrfToken(SIGNED_CSRF).getValue();
+            String preAuthHash = PREAUTH_BINDING;
             // conditions
             when(fingerprintFactory.create("192.0.2.10", "Admin browser"))
                     .thenReturn(new RefreshSessionClientFingerprint("Admin browser", CLIENT_BINDING));
@@ -322,7 +321,7 @@ class AdminSessionCompletionServiceImplTest {
         }
 
         private void stubClaim(AdminSessionHandoffClaim claimed) {
-            String preAuthHash = PreAuthTransactionBinding.fromValidatedSignedCsrfToken(SIGNED_CSRF).getValue();
+            String preAuthHash = PREAUTH_BINDING;
             when(fingerprintFactory.create("192.0.2.10", "Admin browser"))
                     .thenReturn(new RefreshSessionClientFingerprint("Admin browser", CLIENT_BINDING));
             when(handoffStore.claim(COMPLETION_CODE, preAuthHash, CLIENT_BINDING)).thenReturn(claimed);
@@ -340,7 +339,7 @@ class AdminSessionCompletionServiceImplTest {
         private AdminSessionCompletionParam completionParam() {
             return AdminSessionCompletionParam.builder()
                     .completionCode(COMPLETION_CODE)
-                    .signedCsrfToken(SIGNED_CSRF)
+                    .preAuthBinding(PREAUTH_BINDING)
                     .clientIp("192.0.2.10")
                     .userAgent("Admin browser")
                     .build();

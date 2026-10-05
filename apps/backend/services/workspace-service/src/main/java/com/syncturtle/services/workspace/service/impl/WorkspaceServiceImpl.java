@@ -23,7 +23,6 @@ import com.syncturtle.common.contracts.workspace.event.WorkspaceEvent;
 import com.syncturtle.common.contracts.workspace.event.WorkspaceMemberEvent;
 import com.syncturtle.common.contracts.workspace.exception.WorkspaceException;
 import com.syncturtle.common.contracts.workspace.type.WorkspaceRole;
-import com.syncturtle.common.core.exception.SlugAlreadyExistsException;
 import com.syncturtle.common.core.security.token.SecureTokenGenerator;
 import com.syncturtle.services.workspace.dto.request.WorkspaceCreateRequest;
 import com.syncturtle.services.workspace.dto.request.WorkspaceInvitationRequest;
@@ -90,7 +89,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
             workspaceSlugPolicy.assertAvailable(normalizedSlug);
 
             return WorkspaceSlugCheckResponse.available();
-        } catch (SlugAlreadyExistsException exception) {
+        } catch (WorkspaceException exception) {
             return WorkspaceSlugCheckResponse.unavailable(exception.getMessage());
         } catch (IllegalArgumentException exception) {
             return WorkspaceSlugCheckResponse.unavailable(exception.getMessage());

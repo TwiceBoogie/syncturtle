@@ -40,7 +40,7 @@ import jakarta.servlet.http.Cookie;
 class AdminSessionCompletionControllerTest {
 
     private static final String HANDOFF_COOKIE = "admin_session_handoff";
-    private static final String CSRF_COOKIE = "csrf_token";
+    private static final String PREAUTH_BINDING = "preauth-binding";
     private static final String COMPLETION_CODE = "33333333-3333-3333-3333-333333333333.opaque";
 
     @Mock
@@ -64,7 +64,7 @@ class AdminSessionCompletionControllerTest {
     class CompleteTests {
 
         @Test
-        @DisplayName("writes final credentials, clears only the handoff, and redirects")
+        @DisplayName("writes final credentials, clears bootstrap cookies, and redirects")
         void writesFinalCredentialsClearsHandoffAndRedirects() {
             // arrange
             MockHttpServletRequest request = validRequest();
@@ -85,7 +85,7 @@ class AdminSessionCompletionControllerTest {
             when(requestClientContext.getUserAgent()).thenReturn("Admin browser");
             when(service.complete(any(AdminSessionCompletionParam.class))).thenReturn(issued);
             // act
-            ResponseEntity<Void> result = controller.complete(request, response);
+            ResponseEntity<Void> result = controller.complete(PREAUTH_BINDING, request, response);
             // assert
             assertThat(result.getStatusCode().value()).isEqualTo(303);
             assertThat(result.getHeaders().getLocation())
@@ -97,6 +97,7 @@ class AdminSessionCompletionControllerTest {
                     Duration.ofSeconds(900),
                     "refresh",
                     Duration.ofSeconds(3600));
+            verify(cookieWriter).clearCsrfCookie(response);
             verify(cookieWriter).clearAdminSessionHandoffCookie(response);
             verify(cookieWriter, never()).clearAuthCookies(response);
         }
@@ -117,7 +118,7 @@ class AdminSessionCompletionControllerTest {
             when(service.complete(any(AdminSessionCompletionParam.class))).thenThrow(invalid);
             when(hostResolver.admin("")).thenReturn("https://admin.example.test");
             // act
-            ResponseEntity<Void> result = controller.complete(request, response);
+            ResponseEntity<Void> result = controller.complete(PREAUTH_BINDING, request, response);
             // assert
             assertThat(result.getHeaders().getLocation()).hasToString("https://admin.example.test");
             verify(cookieWriter).clearAdminSessionHandoffCookie(response);
@@ -131,14 +132,13 @@ class AdminSessionCompletionControllerTest {
             MockHttpServletRequest request = new MockHttpServletRequest();
             request.setCookies(
                     new Cookie(HANDOFF_COOKIE, COMPLETION_CODE),
-                    new Cookie(HANDOFF_COOKIE, COMPLETION_CODE),
-                    new Cookie(CSRF_COOKIE, "signed.csrf"));
+                    new Cookie(HANDOFF_COOKIE, COMPLETION_CODE));
             MockHttpServletResponse response = new MockHttpServletResponse();
             // conditions
             stubCookieNames();
             when(hostResolver.admin("")).thenReturn("https://admin.example.test");
             // act
-            ResponseEntity<Void> result = controller.complete(request, response);
+            ResponseEntity<Void> result = controller.complete(PREAUTH_BINDING, request, response);
             // assert
             assertThat(result.getStatusCode().value()).isEqualTo(303);
             // verify
@@ -161,7 +161,7 @@ class AdminSessionCompletionControllerTest {
             when(requestClientContext.getUserAgent()).thenReturn("Admin browser");
             when(service.complete(any(AdminSessionCompletionParam.class))).thenThrow(unavailable);
             // act + assert
-            assertThatThrownBy(() -> controller.complete(request, response)).isSameAs(unavailable);
+            assertThatThrownBy(() -> controller.complete(PREAUTH_BINDING, request, response)).isSameAs(unavailable);
             // verify
             verify(cookieWriter, never()).clearAdminSessionHandoffCookie(response);
             verify(cookieWriter, never()).clearAuthCookies(response);
@@ -169,15 +169,12 @@ class AdminSessionCompletionControllerTest {
 
         private MockHttpServletRequest validRequest() {
             MockHttpServletRequest request = new MockHttpServletRequest();
-            request.setCookies(
-                    new Cookie(HANDOFF_COOKIE, COMPLETION_CODE),
-                    new Cookie(CSRF_COOKIE, "signed.csrf"));
+            request.setCookies(new Cookie(HANDOFF_COOKIE, COMPLETION_CODE));
             return request;
         }
 
         private void stubCookieNames() {
             when(cookieWriter.adminSessionHandoffCookieName()).thenReturn(HANDOFF_COOKIE);
-            when(cookieWriter.csrfCookieName()).thenReturn(CSRF_COOKIE);
         }
 
     }

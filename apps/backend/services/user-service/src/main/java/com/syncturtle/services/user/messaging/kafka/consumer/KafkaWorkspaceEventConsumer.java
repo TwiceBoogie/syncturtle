@@ -27,7 +27,7 @@ public class KafkaWorkspaceEventConsumer {
     private final Clock clock;
 
     @Transactional
-    @KafkaListener(topics = KafkaTopics.WORKSPACE_EVENTS_V1, groupId = "user-svc-workspace-event-v1", containerFactory = "workspaceKafkaListenerFactory")
+    @KafkaListener(topics = "#{@kafkaDeploymentTopics.topic('" + KafkaTopics.WORKSPACE_EVENTS_V1 + "')}", groupId = "#{@kafkaConsumerGroups.workGroupId('user-service', 'workspace-event-v1')}", containerFactory = "workspaceKafkaListenerFactory")
     public void onWorkspace(WorkspaceEvent event) {
         Assert.notNull(event, "workspace event is required");
 

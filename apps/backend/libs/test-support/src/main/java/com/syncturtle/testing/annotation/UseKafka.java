@@ -12,20 +12,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface UseKafka {
-    /**
-     * Optional explicit consumer group. If blank, test-support derives one from the
-     * test class name.
-     * 
-     * @return
-     */
-    String consumerGroup() default "";
-
-    /**
-     * Optional explicit config-broadcast group. If blank, test-support derives one
-     * from the test class name.
-     * 
-     * @return
-     */
-    String configBroadcastGroup() default "";
-
+    /** Optional test installation identity; defaults to the test class name. */
+    String deploymentId() default "";
 }

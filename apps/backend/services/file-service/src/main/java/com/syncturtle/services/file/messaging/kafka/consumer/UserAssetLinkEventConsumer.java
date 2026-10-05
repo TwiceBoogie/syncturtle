@@ -16,7 +16,7 @@ public class UserAssetLinkEventConsumer {
 
     private final FileAssetLinkSynchronizationService synchronizationService;
 
-    @KafkaListener(topics = KafkaTopics.USER_EVENTS_V1, groupId = "${app.file.kafka.user-asset-links-group-id}", containerFactory = "userKafkaListenerFactory")
+    @KafkaListener(topics = "#{@kafkaDeploymentTopics.topic('" + KafkaTopics.USER_EVENTS_V1 + "')}", groupId = "#{@kafkaConsumerGroups.workGroupId('file-service', 'user-asset-links-v1')}", containerFactory = "userKafkaListenerFactory")
     public void onUserEvent(UserEvent event) {
         Assert.notNull(event, "user event is required");
 

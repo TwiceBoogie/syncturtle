@@ -6,26 +6,22 @@ import java.time.Instant;
 import org.springframework.util.Assert;
 
 import com.syncturtle.common.contracts.auth.session.RefreshSessionFamilyRecord;
-import com.syncturtle.services.user.configuration.property.RefreshSessionLifecycleProperties;
 import com.syncturtle.services.user.type.RefreshSessionLifetimeStatus;
 
 public final class RefreshSessionLifetimeDecider {
 
-    private final RefreshSessionLifecycleProperties properties;
     private final Clock clock;
 
-    public RefreshSessionLifetimeDecider(RefreshSessionLifecycleProperties properties, Clock clock) {
-        Assert.notNull(properties, "refresh session lifecycle propertis is required");
+    public RefreshSessionLifetimeDecider(Clock clock) {
         Assert.notNull(clock, "clock is required");
 
-        this.properties = properties;
         this.clock = clock;
     }
 
     public RefreshSessionLifetimeDecision decideForCreation() {
         Instant now = Instant.now(clock);
-        Instant absoluteExpiresAt = now.plus(properties.getAbsoluteLifetime());
-        Instant idleExpiresAt = minimum(now.plus(properties.getIdleLifetime()), absoluteExpiresAt);
+        Instant absoluteExpiresAt = now.plus(RefreshSessionFamilyRecord.ABSOLUTE_LIFETIME);
+        Instant idleExpiresAt = minimum(now.plus(RefreshSessionFamilyRecord.IDLE_LIFETIME), absoluteExpiresAt);
 
         return RefreshSessionLifetimeDecision.builder()
                 .status(RefreshSessionLifetimeStatus.CREATED)
@@ -52,7 +48,7 @@ public final class RefreshSessionLifetimeDecider {
             return existingDecision(RefreshSessionLifetimeStatus.IDLE_EXPIRED, effectiveNow, record);
         }
 
-        Instant idleExpiresAt = minimum(effectiveNow.plus(properties.getIdleLifetime()), record.getAbsoluteExpiresAt());
+        Instant idleExpiresAt = minimum(effectiveNow.plus(RefreshSessionFamilyRecord.IDLE_LIFETIME), record.getAbsoluteExpiresAt());
 
         return RefreshSessionLifetimeDecision.builder()
                 .status(RefreshSessionLifetimeStatus.ROTATABLE)
