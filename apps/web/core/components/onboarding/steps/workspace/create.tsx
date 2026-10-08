@@ -173,7 +173,7 @@ export const WorkspaceCreateStep: FC<IWorkspaceCreateStepProps> = (props) => {
 
     await updateUserProfile({ lastWorkspaceId: workspaceId });
 
-    await fetchCurrentUserSettings();
+    await fetchCurrentUserSettings(true);
   };
 
   const handleCreateWorkspace = async (event: SyntheticEvent<HTMLFormElement>) => {
@@ -264,7 +264,7 @@ export const WorkspaceCreateStep: FC<IWorkspaceCreateStepProps> = (props) => {
     >
       <CommonOnboardingHeader title="Create your workspace" description="All your work - unified." />
 
-      <div className="flex flex-col gap-8 toast--success">
+      <div className="flex flex-col gap-5 toast--success">
         <TextField
           id="name"
           name="name"

@@ -4,7 +4,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -17,6 +16,7 @@ import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.ExponentialBackOff;
 
 import com.syncturtle.common.kafka.property.KafkaErrorHandlingProperties;
+import com.syncturtle.common.kafka.topic.KafkaDeadLetterTopics;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,34 +28,25 @@ import lombok.extern.slf4j.Slf4j;
         DefaultErrorHandler.class,
         DeadLetterPublishingRecoverer.class
 })
-@ConditionalOnBooleanProperty(prefix = "app.kafka", name = "enabled")
 @EnableConfigurationProperties(KafkaErrorHandlingProperties.class)
 public class KafkaErrorHandlingAutoConfiguration {
 
     @Bean
     @ConditionalOnBean(KafkaTemplate.class)
     @ConditionalOnMissingBean(CommonErrorHandler.class)
-    DefaultErrorHandler kafkaErrorHandler(
-            KafkaTemplate<Object, Object> kafkaTemplate,
+    DefaultErrorHandler kafkaErrorHandler(KafkaTemplate<Object, Object> kafkaTemplate,
             KafkaErrorHandlingProperties properties) {
         ExponentialBackOff backOff = createBackOff(properties);
 
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(
                 kafkaTemplate,
-                (record, exception) -> resolveDeadLetterTopic(
-                        record,
-                        properties));
+                (record, exception) -> resolveDeadLetterTopic(record));
 
         DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, backOff);
 
-        handler.setAckAfterHandle(
-                properties.isAckAfterHandle());
-
-        handler.setCommitRecovered(
-                properties.isCommitRecovered());
-
-        handler.addNotRetryableExceptions(
-                IllegalArgumentException.class);
+        handler.setAckAfterHandle(true);
+        handler.setCommitRecovered(false);
+        handler.addNotRetryableExceptions(IllegalArgumentException.class);
 
         if (properties.isLogRetries()) {
             handler.setRetryListeners(
@@ -78,29 +69,19 @@ public class KafkaErrorHandlingAutoConfiguration {
         return handler;
     }
 
-    private static ExponentialBackOff createBackOff(
-            KafkaErrorHandlingProperties properties) {
+    private static ExponentialBackOff createBackOff(KafkaErrorHandlingProperties properties) {
         ExponentialBackOff backOff = new ExponentialBackOff(
-                properties
-                        .getInitialInterval()
-                        .toMillis(),
+                properties.getInitialInterval().toMillis(),
                 properties.getMultiplier());
 
-        backOff.setMaxElapsedTime(
-                properties
-                        .getMaxElapsedTime()
-                        .toMillis());
+        backOff.setMaxElapsedTime(properties.getMaxElapsedTime().toMillis());
 
         return backOff;
     }
 
-    private static TopicPartition resolveDeadLetterTopic(
-            ConsumerRecord<?, ?> record,
-            KafkaErrorHandlingProperties properties) {
-        String deadLetterTopic = record.topic() + properties.getDltSuffix();
+    private static TopicPartition resolveDeadLetterTopic(ConsumerRecord<?, ?> record) {
+        String deadLetterTopic = record.topic() + KafkaDeadLetterTopics.SUFFIX;
 
-        return new TopicPartition(
-                deadLetterTopic,
-                record.partition());
+        return new TopicPartition(deadLetterTopic, record.partition());
     }
 }

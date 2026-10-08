@@ -39,6 +39,9 @@
   [data-theme="light"] {
     color-scheme: light !important;
 
+    /* Outer application canvas; distinct from the white content surface. */
+    --canvas: oklch(0.9614 0.0013 286.38);
+
     --background: hsl(0 0% 100%);
     --foreground: hsl(0 0% 10%);
 
@@ -157,6 +160,8 @@
   [data-theme="dark"] {
     color-scheme: dark !important;
 
+    --canvas: oklch(0.1689 0.0021 286.18);
+
     --background: hsl(0 0% 4%);
     --foreground: hsl(0 0% 93%);
 
@@ -236,6 +241,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-canvas: var(--canvas);
 
   --color-custom-primary-0: rgb(255 255 255);
   --color-custom-primary-10: rgb(var(--color-primary-10));

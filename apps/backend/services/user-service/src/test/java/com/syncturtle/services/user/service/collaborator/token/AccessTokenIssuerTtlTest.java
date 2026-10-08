@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.syncturtle.services.user.configuration.property.AuthProperties;
 import com.syncturtle.services.user.configuration.property.PassportProperties;
 import com.syncturtle.services.user.service.param.AccessTokenIssueParam;
 
@@ -21,20 +20,15 @@ class AccessTokenIssuerTtlTest {
     class IssueAccessToken {
 
         @Test
-        void usesConfiguredFifteenMinuteLifetime() {
+        void usesCodeOwnedOneHourLifetime() {
             PassportProperties passport = new PassportProperties(
                     "https://api.syncturtle.test/auth",
                     "syncturtle-test",
                     "test-kid",
                     "file:/unused-private.pem",
                     "file:/unused-public.pem");
-            AuthProperties auth = new AuthProperties(
-                    Duration.ofMinutes(15),
-                    Duration.ofMinutes(30),
-                    48);
             AccessTokenIssuer issuer = new AccessTokenIssuer(
                     passport,
-                    auth,
                     null,
                     Algorithm.HMAC256("ephemeral-test-secret-with-sufficient-length"));
             AccessTokenIssueParam input = AccessTokenIssueParam.builder()
@@ -49,9 +43,9 @@ class AccessTokenIssuerTtlTest {
             DecodedJWT jwt = JWT.decode(result.getToken());
 
             assertThat(Duration.between(result.getIssuedAt(), result.getExpiresAt()))
-                    .isEqualTo(Duration.ofMinutes(15));
+                    .isEqualTo(Duration.ofHours(1));
             assertThat(Duration.between(jwt.getIssuedAtAsInstant(), jwt.getExpiresAtAsInstant()))
-                    .isEqualTo(Duration.ofMinutes(15));
+                    .isEqualTo(Duration.ofHours(1));
         }
     }
 }

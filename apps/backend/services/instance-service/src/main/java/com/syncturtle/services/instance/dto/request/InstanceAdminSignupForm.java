@@ -23,8 +23,8 @@ public final class InstanceAdminSignupForm {
     @Size(max = 255, message = "Email address must be 255 characters or fewer.")
     private String email;
 
-    @NotBlank(message = "Enter your company or workspace name.")
-    @Size(max = 100, message = "Company name must be 100 characters or fewer.")
+    @NotBlank(message = "Enter an installation name.")
+    @Size(max = 100, message = "Installation name must be 100 characters or fewer.")
     private String companyName;
 
     @NotBlank(message = "Enter a password.")

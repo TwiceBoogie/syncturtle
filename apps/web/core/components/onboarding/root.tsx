@@ -3,50 +3,44 @@
 import type { FC } from "react";
 import { useCallback, useEffect, useState } from "react";
 // syncturtle imports
-import type { IWorkspaceMemberInvitation, TOnboardingStep, TOnboardingSteps, TUserProfile } from "@syncturtle/types";
 import { EOnboardingSteps } from "@syncturtle/constants";
-// components
-import { OnboardingHeader } from "./header";
-import { OnboardingStepRoot } from "./steps";
+import type { IWorkspaceMemberInvitation, TOnboardingStep, TOnboardingSteps, TUserProfile } from "@syncturtle/types";
 // hooks
 import { useUser, useUserProfile } from "@/hooks/store/user";
 import { useWorkspace } from "@/hooks/store/use-workspace";
-import { toast } from "@heroui/react";
+// components
+import { OnboardingHeader } from "./header";
+import { OnboardingStepRoot } from "./steps";
 
 interface IOnboardingRootProps {
   invitations?: IWorkspaceMemberInvitation[];
 }
 
-export const OnboardingRoot: FC<IOnboardingRootProps> = (props) => {
-  const { invitations = [] } = props;
-  // state
+export const OnboardingRoot: FC<IOnboardingRootProps> = ({ invitations = [] }) => {
   const [currentStep, setCurrentStep] = useState<TOnboardingStep>(EOnboardingSteps.PROFILE_SETUP);
   // store hooks
   const { data: user } = useUser();
   const { data: userProfile, updateUserProfile, finishUserOnboarding } = useUserProfile();
   const { workspaces } = useWorkspace();
 
-  // derived values
   const workspacesList = Object.values(workspaces ?? {});
+
+  // Calculate total steps based on whether invitations are available
   const hasInvitations = invitations.length > 0;
 
   const finishOnboarding = useCallback(async () => {
     if (!user) return;
 
-    try {
-      await finishUserOnboarding();
-    } catch (error) {
-      console.log(error);
-      toast.danger("Failed", {
-        actionProps: {
-          children: "remove",
-          onPress: () => toast.clear(),
-        },
-        description: "Failed to update user profile.",
+    await finishUserOnboarding()
+      .then(() => {
+        // capture success feature but later
+      })
+      .catch(() => {
+        // use heroui Toast component to showcase error. error could come from finishUserOnboarding()
       });
-    }
   }, [user, finishUserOnboarding]);
 
+  // handle step change
   const stepChange = useCallback(
     async (steps: Partial<TOnboardingSteps>) => {
       if (!user) return;
@@ -67,9 +61,6 @@ export const OnboardingRoot: FC<IOnboardingRootProps> = (props) => {
     (step: TOnboardingStep, skipInvites?: boolean) => {
       switch (step) {
         case EOnboardingSteps.PROFILE_SETUP:
-          setCurrentStep(EOnboardingSteps.ROLE_SETUP);
-          break;
-        case EOnboardingSteps.ROLE_SETUP:
           setCurrentStep(EOnboardingSteps.USE_CASE_SETUP);
           break;
         case EOnboardingSteps.USE_CASE_SETUP:
@@ -98,16 +89,16 @@ export const OnboardingRoot: FC<IOnboardingRootProps> = (props) => {
   useEffect(() => {
     const handleInitialStep = () => {
       if (
-        userProfile.onboardingStep.profileComplete &&
-        !userProfile.onboardingStep.workspaceCreate &&
-        !userProfile.onboardingStep.workspaceJoin
+        userProfile?.onboardingStep?.profileComplete &&
+        !userProfile?.onboardingStep?.workspaceCreate &&
+        !userProfile?.onboardingStep?.workspaceJoin
       ) {
         setCurrentStep(EOnboardingSteps.WORKSPACE_CREATE_OR_JOIN);
       }
       if (
-        userProfile.onboardingStep.profileComplete &&
-        userProfile.onboardingStep.workspaceCreate &&
-        !userProfile.onboardingStep.workspaceInvite
+        userProfile?.onboardingStep?.profileComplete &&
+        userProfile?.onboardingStep?.workspaceCreate &&
+        !userProfile?.onboardingStep?.workspaceInvite
       ) {
         setCurrentStep(EOnboardingSteps.INVITE_MEMBERS);
       }

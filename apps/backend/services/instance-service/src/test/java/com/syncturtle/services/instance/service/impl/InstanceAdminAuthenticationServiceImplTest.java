@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -146,6 +147,8 @@ class InstanceAdminAuthenticationServiceImplTest {
             assertThat(request.getPreAuthBinding().getValue()).isEqualTo(PRE_AUTH_HASH);
             assertThat(request.getClientIp()).isEqualTo("192.0.2.10");
             assertThat(request.getUserAgent()).isEqualTo("Admin browser");
+            // No product-onboarding or workspace-provisioning user call is part of setup.
+            verifyNoMoreInteractions(userClient);
         }
 
         @Test

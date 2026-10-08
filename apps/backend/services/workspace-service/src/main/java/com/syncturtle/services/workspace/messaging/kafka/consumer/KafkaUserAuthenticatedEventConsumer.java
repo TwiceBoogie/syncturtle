@@ -18,7 +18,7 @@ public class KafkaUserAuthenticatedEventConsumer {
 
     private final AcceptedWorkspaceInvitationCompletionService completionService;
 
-    @KafkaListener(topics = KafkaTopics.USER_AUTHENTICATED_EVENTS_V1, groupId = "workspace-svc-user-authenticated-event-v1", containerFactory = "userAuthenticatedKafkaListenerFactory")
+    @KafkaListener(topics = "#{@kafkaDeploymentTopics.topic('" + KafkaTopics.USER_AUTHENTICATED_EVENTS_V1 + "')}", groupId = "#{@kafkaConsumerGroups.workGroupId('workspace-service', 'user-authenticated-event-v1')}", containerFactory = "userAuthenticatedKafkaListenerFactory")
     public void onCommand(UserAuthenticatedEvent event) {
         Assert.notNull(event, "workspace membership command is required");
         Assert.notNull(event.getUserId(), "userId is required");

@@ -89,19 +89,16 @@ spring:
     context-propagation: auto
 
 app:
-  env: ${DEPLOYMENT_ENV:local}
-
   web:
     access-logging:
       enabled: ${APP_WEB_ACCESS_LOGGING_ENABLED:true}
 
   redis:
     keys:
-      key-prefix: ${APP_REDIS_KEY_PREFIX:st:${app.env}:}
+      key-prefix: ${APP_REDIS_KEY_PREFIX:st:local:}
+
+  kafka:
+    deployment-id: ${SYNCTURTLE_DEPLOYMENT_ID:local}
 
   response-cache:
     enabled: ${APP_RESPONSE_CACHE_ENABLED:true}
-    key-prefix: ${APP_RESPONSE_CACHE_KEY_PREFIX:${app.redis.keys.key-prefix}rc:}
-    hash-bytes: ${APP_RESPONSE_CACHE_HASH_BYTES:16}
-    body-type-allowlist-prefix: com.syncturtle.
-    workspace-header-name: X-Workspace-Id

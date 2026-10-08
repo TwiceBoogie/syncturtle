@@ -19,7 +19,7 @@ public class InstanceWorkspaceCreateRequest {
     @Size(max = 48, message = "Workspace slug must be 48 characters or fewer.")
     String slug;
 
-    @NotBlank(message = "Organization size is required.")
+    // Optional legacy metadata
     @Size(max = 20, message = "Organization size must be 20 characters or fewer.")
     String organizationSize;
 

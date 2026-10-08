@@ -32,7 +32,6 @@ public final class GatewayRouteSecurityPolicy {
             "/api/instances/admins/sign-up");
 
     private static final Set<String> PUBLIC_GET_PATHS = Set.of(
-            "/api/get-csrf-token",
             "/auth/admin/session",
             "/auth/google",
             "/auth/google/callback",
@@ -123,7 +122,8 @@ public final class GatewayRouteSecurityPolicy {
 
     private static boolean isOptionalAuthentication(HttpMethod method, String path) {
         return (HttpMethod.GET.equals(method) || HttpMethod.HEAD.equals(method))
-                && path.equals("/api/instances/admins/session");
+                && (path.equals("/api/instances/admins/session")
+                        || path.equals("/api/get-csrf-token"));
     }
 
     private static boolean isProtected(String path) {
@@ -188,6 +188,7 @@ public final class GatewayRouteSecurityPolicy {
                 || path.equals("/actuator/health")
                 || path.startsWith("/actuator/health/")
                 || path.equals("/api/instances/admins/session")
+                || path.equals("/api/get-csrf-token")
                 || isProtected(path);
     }
 
@@ -196,6 +197,7 @@ public final class GatewayRouteSecurityPolicy {
         while (path.length() > 1 && path.endsWith("/")) {
             path = path.substring(0, path.length() - 1);
         }
+
         return path;
     }
 

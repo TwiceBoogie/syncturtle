@@ -116,12 +116,9 @@ public class ApiErrorResponseFactory {
     }
 
     private boolean shouldIncludeDebug() {
-        if (properties.isIncludeDebug()) {
-            return true;
-        }
-
-        // fallback
-        return environment.matchesProfiles("local", "dev", "development", "test", "setup");
+        return properties.isIncludeDebug()
+                && !environment.matchesProfiles("prod", "production", "docker")
+                && environment.matchesProfiles("local", "dev", "development", "test");
     }
 
 }
