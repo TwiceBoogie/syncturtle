@@ -12,6 +12,7 @@ type TError = {
 
 export type TUserProfileSnapshot = {
   isLoading: boolean;
+  isFinishingOnboarding: boolean;
   data: TUserProfile;
   error: TError | undefined;
 };
@@ -51,6 +52,7 @@ const createInitialProfile = (): TUserProfile => ({
 
 const createInitialSnapshot = (): TUserProfileSnapshot => ({
   isLoading: false,
+  isFinishingOnboarding: false,
   data: createInitialProfile(),
   error: undefined,
 });
@@ -58,6 +60,7 @@ const createInitialSnapshot = (): TUserProfileSnapshot => ({
 export interface IUserProfileStore {
   // observables
   isLoading: boolean;
+  isFinishingOnboarding: boolean;
   data: TUserProfile;
   error: TError | undefined;
   // actions
@@ -93,6 +96,10 @@ export class ProfileStore extends ExternalStore<TUserProfileSnapshot> implements
     return this.state.isLoading;
   }
 
+  get isFinishingOnboarding(): boolean {
+    return this.state.isFinishingOnboarding;
+  }
+
   get data(): TUserProfile {
     return this.state.data;
   }
@@ -107,7 +114,7 @@ export class ProfileStore extends ExternalStore<TUserProfileSnapshot> implements
     this.setState({ isLoading: true, error: undefined });
 
     try {
-      const userProfile = await this.userService.getCurrentUserProfile();
+      const userProfile = await this.userService.getCurrentUserProfile(true);
 
       if (requestSeq !== this.fetchUserProfileSeq) {
         return userProfile;
@@ -147,7 +154,7 @@ export class ProfileStore extends ExternalStore<TUserProfileSnapshot> implements
         this.setState({ data: userProfile });
       }
       return userProfile ?? this.data;
-    } catch {
+    } catch (error) {
       // revert
       this.setState({
         data: previousProfile,
@@ -156,13 +163,16 @@ export class ProfileStore extends ExternalStore<TUserProfileSnapshot> implements
           message: "Failed to update user profile",
         },
       });
+      throw error;
     }
   };
 
   public finishUserOnboarding = async (): Promise<void> => {
     const previousProfile = cloneDeep(this.data);
 
-    const firstWorkspace = Object.values(this.store.workspace.workspaces ?? {})?.[0];
+    const selectedWorkspace = this.store.workspace.getWorkspaceById(this.data.lastWorkspaceId ?? "");
+    const firstWorkspace = selectedWorkspace ?? Object.values(this.store.workspace.workspaces ?? {})[0];
+    if (!firstWorkspace) throw new Error("Choose a usable space before finishing onboarding.");
     const dataToUpdate: Partial<TUserProfile> = {
       onboardingStep: {
         ...this.data.onboardingStep,
@@ -177,20 +187,24 @@ export class ProfileStore extends ExternalStore<TUserProfileSnapshot> implements
     this.setState((prev) => ({
       ...prev,
       isLoading: true,
+      isFinishingOnboarding: true,
       data: this.mutateUserProfile(prev.data, dataToUpdate),
       error: undefined,
     }));
 
     try {
-      await this.userService.updateCurrentUserProfile(dataToUpdate);
+      // Persist canonical completion before publishing legacy all-true flags,
+      // which old wrappers also recognize as completed after a reload.
       await this.userService.updateUserOnboard();
+      await this.userService.updateCurrentUserProfile(dataToUpdate);
       // refresh profile/settings after backend has completed onboarding
-      await Promise.all([this.fetchUserProfile(), this.store.user.userSettings.fetchCurrentUserSettings()]);
+      await Promise.all([this.fetchUserProfile(), this.store.user.userSettings.fetchCurrentUserSettings(true)]);
 
       // make sure local profile is onboarded even if the response is cached/stale
       this.setState((prev) => ({
         ...prev,
         isLoading: false,
+        isFinishingOnboarding: false,
         data: this.mutateUserProfile(prev.data, {
           ...dataToUpdate,
           isOnboarded: true,
@@ -200,6 +214,7 @@ export class ProfileStore extends ExternalStore<TUserProfileSnapshot> implements
     } catch (error) {
       this.setState({
         isLoading: false,
+        isFinishingOnboarding: false,
         data: previousProfile,
         error: {
           status: "user-profile-onboard-finish-error",
@@ -271,6 +286,8 @@ export class ProfileStore extends ExternalStore<TUserProfileSnapshot> implements
         set(next, profileKey, merge(cloneDeep(currentValue), value));
         return;
       }
+
+      set(next, profileKey, value);
     });
 
     return next;

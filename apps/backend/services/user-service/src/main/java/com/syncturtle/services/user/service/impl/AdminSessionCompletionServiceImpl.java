@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import com.syncturtle.common.contracts.auth.session.PreAuthTransactionBinding;
 import com.syncturtle.common.web.url.PublicUrlResolver;
 import com.syncturtle.services.user.dto.response.IssueTokenResponse;
 import com.syncturtle.services.user.exception.AdminSessionHandoffException;
@@ -45,8 +44,7 @@ public class AdminSessionCompletionServiceImpl implements AdminSessionCompletion
     public IssueTokenResponse complete(AdminSessionCompletionParam param) {
         Assert.notNull(param, "admin session completion param is required");
 
-        String preAuthHash = PreAuthTransactionBinding.fromValidatedSignedCsrfToken(param.getSignedCsrfToken())
-                .getValue();
+        String preAuthHash = param.getPreAuthBinding();
         RefreshSessionClientFingerprint fingerprint = fingerprintFactory.create(param.getClientIp(),
                 param.getUserAgent());
         AdminSessionHandoffClaim claim = handoffStore.claim(param.getCompletionCode(), preAuthHash,
@@ -64,7 +62,8 @@ public class AdminSessionCompletionServiceImpl implements AdminSessionCompletion
         }
 
         // Once issuer invocation begins, its outcome can be uncertain. Never release
-        // the handoff claim after this point because retry could create a second family.
+        // the handoff claim after this point because retry could create a second
+        // family.
         AuthenticatedSessionReceipt session = sessionIssuer.issueAuthorizedSession(AuthorizedSessionIssueParam.builder()
                 .userId(record.getUserId().toString())
                 .instanceId(record.getInstanceId().toString())

@@ -15,6 +15,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
 
 import com.syncturtle.services.file.configuration.property.FileCleanupProperties;
+import com.syncturtle.services.file.policy.FileLifecyclePolicy;
 import com.syncturtle.services.file.dto.response.FileAssetCleanupResponse;
 import com.syncturtle.services.file.model.FileAsset;
 import com.syncturtle.services.file.repository.FileAssetRepository;
@@ -76,7 +77,7 @@ public class FileAssetCleanupServiceImpl implements FileAssetCleanupService {
     private List<StorageCleanupClaim> claimDueAssets() {
         List<StorageCleanupClaim> claims = transactionTemplate.execute(status -> {
             Instant now = Instant.now(clock);
-            Instant unlinkedBefore = now.minus(properties.getUnlinkedAssetRetention());
+            Instant unlinkedBefore = now.minus(FileLifecyclePolicy.UNLINKED_ASSET_RETENTION);
             List<UUID> ids = assetRepository.lockStorageCleanupCandidateIds(
                     now,
                     unlinkedBefore,

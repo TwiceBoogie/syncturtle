@@ -1,6 +1,5 @@
 package com.syncturtle.services.user.service.collaborator.session;
 
-import static com.syncturtle.services.user.support.fixture.RefreshSessionPropertyFixtures.lifecycleProperties;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -187,7 +186,7 @@ class RefreshSessionLifetimeDeciderTest {
 
     private static RefreshSessionLifetimeDecider policyAt(Instant instant) {
         Clock clock = Clock.fixed(instant, ZoneOffset.UTC);
-        return new RefreshSessionLifetimeDecider(lifecycleProperties(), clock);
+        return new RefreshSessionLifetimeDecider(clock);
     }
 
     private static RefreshSessionFamilyRecord recordAt(Instant lastUsedAt, long rotationCounter) {

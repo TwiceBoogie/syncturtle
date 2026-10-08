@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 
 ARG APP_NAME
 ARG NEXT_PUBLIC_BASE_PATH=""
@@ -22,7 +22,8 @@ WORKDIR /repo
 
 RUN corepack enable
 
-COPY package.json yarn.lock .yarnrc.yml yarn.config.cjs turbo.json ./
+COPY package.json yarn.lock .yarnrc.yml yarn.config.cjs turbo.json vitest.shared.ts ./
+COPY .yarn/patches ./.yarn/patches
 COPY apps ./apps
 COPY packages ./packages
 
@@ -30,7 +31,7 @@ RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
     yarn install --immutable && \
     yarn turbo run build --filter="${APP_NAME}"
 
-FROM node:22-alpine AS runtime
+FROM node:24-alpine AS runtime
 
 ARG APP_NAME
 ENV NODE_ENV=production \

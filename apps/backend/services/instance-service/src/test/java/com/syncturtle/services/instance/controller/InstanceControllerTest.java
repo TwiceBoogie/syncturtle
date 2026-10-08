@@ -17,17 +17,22 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.syncturtle.common.core.endpoint.EndpointPaths;
+import com.syncturtle.services.instance.configuration.web.InstanceWebMvcConfiguration;
 import com.syncturtle.services.instance.dto.request.InstanceUpdateRequest;
 import com.syncturtle.services.instance.service.InstanceService;
 import com.syncturtle.services.instance.support.JsonContent;
 import com.syncturtle.services.instance.support.fixture.ResponseFixtures;
 
-@WebMvcTest(controllers = InstanceController.class)
+@WebMvcTest(controllers = InstanceController.class,
+        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE,
+                classes = InstanceWebMvcConfiguration.class))
 @AutoConfigureMockMvc(addFilters = false)
 @DisplayName("InstanceController")
 class InstanceControllerTest {

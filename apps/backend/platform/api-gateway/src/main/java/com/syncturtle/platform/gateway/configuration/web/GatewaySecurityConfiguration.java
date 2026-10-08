@@ -3,11 +3,14 @@ package com.syncturtle.platform.gateway.configuration.web;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cloud.gateway.config.GlobalCorsProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -27,8 +30,11 @@ import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.server.ServerWebExchange;
 
+import com.syncturtle.common.security.cookie.SecurityCookieFactory;
 import com.syncturtle.platform.gateway.configuration.property.GatewayClientMetadataProperties;
 import com.syncturtle.platform.gateway.configuration.property.GatewayPassportProperties;
 import com.syncturtle.platform.gateway.exception.PassportAuthenticationException;
@@ -48,9 +54,16 @@ import reactor.core.publisher.Mono;
 public class GatewaySecurityConfiguration {
 
     private final PassportAuthenticationMetrics metrics;
+    private final SecurityCookieFactory cookieFactory;
 
-    public GatewaySecurityConfiguration(PassportAuthenticationMetrics metrics) {
+    @Autowired
+    public GatewaySecurityConfiguration(PassportAuthenticationMetrics metrics, SecurityCookieFactory cookieFactory) {
         this.metrics = metrics;
+        this.cookieFactory = cookieFactory;
+    }
+
+    GatewaySecurityConfiguration(PassportAuthenticationMetrics metrics) {
+        this(metrics, null);
     }
 
     @Bean
@@ -167,6 +180,14 @@ public class GatewaySecurityConfiguration {
         return Clock.systemUTC();
     }
 
+    // https://docs.spring.io/spring-security/reference/reactive/integrations/cors.html
+    @Bean
+    CorsConfigurationSource gatewayCorsConfigurationSource(GlobalCorsProperties properties) {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        properties.getCorsConfigurations().forEach(source::registerCorsConfiguration);
+        return source;
+    }
+
     private void configureBase(ServerHttpSecurity http) {
         http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
@@ -213,6 +234,12 @@ public class GatewaySecurityConfiguration {
             metrics.rejected(PassportAuthenticationFailureReason.AUTHENTICATION_REQUIRED);
         }
 
+        if (isCsrfIssuance(exchange)) {
+            cookieFactory.clearAccessTokenCookies().forEach(exchange.getResponse()::addCookie);
+            cookieFactory.clearRefreshTokenCookies().forEach(exchange.getResponse()::addCookie);
+            cookieFactory.clearCsrfCookies().forEach(exchange.getResponse()::addCookie);
+        }
+
         return writeJson(exchange, HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Authentication required.");
     }
 
@@ -225,6 +252,11 @@ public class GatewaySecurityConfiguration {
             current = current.getCause();
         }
         return null;
+    }
+
+    private static boolean isCsrfIssuance(ServerWebExchange exchange) {
+        return HttpMethod.GET.equals(exchange.getRequest().getMethod())
+                && "/api/get-csrf-token".equals(exchange.getRequest().getPath().pathWithinApplication().value());
     }
 
     private Mono<Void> writeJson(

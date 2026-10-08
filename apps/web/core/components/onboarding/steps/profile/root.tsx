@@ -131,7 +131,7 @@ export const ProfileSetupStep: FC<IProfileSetupStepProps> = (props) => {
     const userDetailsPayload: IUserUpdateRequest = {
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
-      displayName: user?.displayName ?? formData.firstName.trim(),
+      displayName: user?.displayName?.trim() || formData.firstName.trim(),
       avatarAssetId: selectedAsset(formData.avatar)?.assetId ?? null,
     };
     await updateCurrentUser(userDetailsPayload);
@@ -158,7 +158,7 @@ export const ProfileSetupStep: FC<IProfileSetupStepProps> = (props) => {
         }),
         handleSubmitUserDetail(formData),
       ]);
-      handleStepChange(EOnboardingSteps.PROFILE_SETUP);
+      await handleStepChange(EOnboardingSteps.PROFILE_SETUP);
     } catch (error) {
       setErrors(getFieldErrors(error));
       toast("Error", {
@@ -268,6 +268,7 @@ export const ProfileSetupStep: FC<IProfileSetupStepProps> = (props) => {
         </TextField>
 
         <TextField
+          isRequired
           name="lastName"
           type="text"
           value={formData.lastName}
@@ -287,7 +288,14 @@ export const ProfileSetupStep: FC<IProfileSetupStepProps> = (props) => {
         )}
       </div>
 
-      <Button type="submit" isPending={isSubmitting} isDisabled={isButtonDisabled} fullWidth>
+      <Button
+        type="submit"
+        size="sm"
+        className={"rounded-sm"}
+        isPending={isSubmitting}
+        isDisabled={isButtonDisabled}
+        fullWidth
+      >
         {({ isPending }) => (
           <>
             {isPending ? <Spinner color="current" /> : null}

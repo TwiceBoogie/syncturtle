@@ -94,8 +94,7 @@ class ServletAuthCookieWriterTest {
                 managedPrefixEnabled,
                 "Lax",
                 "Lax",
-                "Lax",
-                Duration.ofMinutes(30));
+                "Lax");
         return new ServletAuthCookieWriter(new SecurityCookieFactory(properties));
     }
 

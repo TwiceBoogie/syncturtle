@@ -1,6 +1,5 @@
 package com.syncturtle.services.user.service.collaborator.session;
 
-import static com.syncturtle.services.user.support.fixture.RefreshSessionPropertyFixtures.lifecycleProperties;
 import static com.syncturtle.services.user.support.fixture.RefreshSessionPropertyFixtures.successorEnvelopeProperties;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
@@ -34,7 +33,6 @@ import com.syncturtle.common.cache.template.RedisKeyBuilder;
 import com.syncturtle.common.contracts.auth.session.RefreshSessionFamilyRecord;
 import com.syncturtle.common.core.security.token.Base64UrlSecureTokenGenerator;
 import com.syncturtle.common.core.security.token.Sha256TokenHasher;
-import com.syncturtle.services.user.configuration.property.RefreshSessionLifecycleProperties;
 import com.syncturtle.services.user.exception.RefreshSessionLifecycleException;
 import com.syncturtle.services.user.service.param.RefreshSessionFamilyCreateParam;
 import com.syncturtle.services.user.service.param.RefreshSessionFamilyRotateParam;
@@ -79,7 +77,6 @@ class RefreshSessionFamilyStoreIT {
 
         RedisKeyBuilder keyBuilder = new RedisKeyBuilder(new RedisKeyProperties(KEY_PREFIX));
         keys = new RefreshSessionRedisKeys(keyBuilder);
-        RefreshSessionLifecycleProperties lifecycleProperties = lifecycleProperties();
 
         RefreshSessionSuccessorEnvelopeCipher envelopeCipher = new RefreshSessionSuccessorEnvelopeCipher(
                 successorEnvelopeProperties(), new SecureRandom());
@@ -89,10 +86,9 @@ class RefreshSessionFamilyStoreIT {
                 new Base64UrlSecureTokenGenerator(),
                 new Sha256TokenHasher(),
                 serializer,
-                new RefreshSessionLifetimeDecider(lifecycleProperties, clock),
+                new RefreshSessionLifetimeDecider(clock),
                 envelopeCipher,
                 new RefreshSessionLifecycleScriptExecutor(redis),
-                lifecycleProperties,
                 jsonMapper);
     }
 
