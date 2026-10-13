@@ -173,8 +173,8 @@ class BrowserSecurityCookieIsolationFilterTest {
         }
 
         @Test
-        @DisplayName("keeps only handoff and csrf on completion")
-        void keepsOnlyHandoffAndCsrfOnCompletion() {
+        @DisplayName("keeps only handoff on completion")
+        void keepsOnlyHandoffOnCompletion() {
             // arrange
             MockServerHttpRequest request = MockServerHttpRequest.get("/auth/admin/session")
                     .cookie(
@@ -193,7 +193,7 @@ class BrowserSecurityCookieIsolationFilterTest {
             // act
             filter.filter(exchange, chain).block();
             // assert
-            assertThat(downstreamCookie).hasValue("admin_session_handoff=handoff; csrf_token=csrf");
+            assertThat(downstreamCookie).hasValue("admin_session_handoff=handoff");
             // assert
         }
 

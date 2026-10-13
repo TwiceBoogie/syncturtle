@@ -202,8 +202,8 @@ class BrowserSecurityCookiePolicyTest {
     class TransitionalCsrfAndHandoffTests {
 
         @Test
-        @DisplayName("completion gets exactly one handoff and one csrf cookie")
-        void completionGetsExactlyOneHandoffAndOneCsrfCookie() {
+        @DisplayName("completion gets exactly one handoff cookie and no raw csrf cookie")
+        void completionGetsExactlyOneHandoffCookieAndNoRawCsrfCookie() {
             // arrange
             HttpCookie accessToken = new HttpCookie("access_token", "access");
             HttpCookie refreshToken = new HttpCookie("refresh_token", "refresh");
@@ -218,7 +218,7 @@ class BrowserSecurityCookiePolicyTest {
             // assert
             assertThat(decision.getDownstreamCookies())
                     .extracting(HttpCookie::toString)
-                    .containsExactly("admin_session_handoff=handoff", "csrf_token=csrf");
+                    .containsExactly("admin_session_handoff=handoff");
             // verify
         }
 

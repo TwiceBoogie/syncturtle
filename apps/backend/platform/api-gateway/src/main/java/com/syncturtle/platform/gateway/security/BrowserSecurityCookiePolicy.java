@@ -75,11 +75,7 @@ public final class BrowserSecurityCookiePolicy {
         }
 
         if (HttpMethod.GET.equals(method) && ADMIN_SESSION_COMPLETION_PATH.equals(path)) {
-            addSingleCookie(
-                    downstreamCookies,
-                    requestCookies,
-                    cookieFactory.adminSessionHandoffCookieName());
-            addSingleCookie(downstreamCookies, requestCookies, cookieFactory.csrfCookieName());
+            addSingleCookie(downstreamCookies, requestCookies, cookieFactory.adminSessionHandoffCookieName());
             return Decision.forward(downstreamCookies);
         }
 

@@ -5,6 +5,10 @@ set -eu
 repository_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 environment_dir="$repository_root/development/environment"
 secret_dir="$repository_root/development/secrets"
+provenance_private_dir="$secret_dir/request-provenance/private"
+provenance_public_dir="$secret_dir/request-provenance/public"
+provenance_public_temporary="$secret_dir/.request-provenance-public.der.$$"
+provenance_derived_temporary="$secret_dir/.request-provenance-derived.der.$$"
 
 root_environment="$repository_root/.env"
 host_nginx_environment="$environment_dir/.env.host-nginx"
@@ -72,6 +76,7 @@ cleanup_temporary_key_files() {
     "$private_public_key_der_temporary" \
     "$public_key_digest_temporary" \
     "$private_key_digest_temporary"
+  rm -f "$provenance_public_temporary" "$provenance_derived_temporary"
 }
 
 escape_sed_replacement() {
@@ -146,6 +151,31 @@ ensure_generated_value() {
   fi
 }
 
+ensure_generated_path_value() {
+  value_file=$1
+  value_key=$2
+  generation_marker=$3
+  expected_value=$4
+
+  if grep -q "__${generation_marker}__" "$value_file"; then
+    replace_marker "$value_file" "$generation_marker" "$expected_value"
+    return
+  fi
+
+  existing_value=$(read_value "$value_file" "$value_key")
+  if [ -z "$existing_value" ]; then
+    printf '\n%s=%s\n' "$value_key" "$expected_value" >> "$value_file"
+    chmod 600 "$value_file"
+    return
+  fi
+
+  if [ "$existing_value" != "$expected_value" ]; then
+    echo "$value_key does not match the generated local key path in $value_file" >&2
+    echo "Existing files were preserved; reconcile the stale path explicitly." >&2
+    exit 1
+  fi
+}
+
 derive_der_key_kid() {
   der_file=$1
   digest_file=$2
@@ -204,16 +234,52 @@ derive_private_key_kid() {
     "$private_key_digest_temporary"
 }
 
+ensure_request_provenance_key_pair() {
+  provenance_issuer=$1
+  provenance_private_key="$provenance_private_dir/$provenance_issuer.pem"
+  provenance_public_key="$provenance_public_dir/$provenance_issuer.pem"
+
+  if [ ! -e "$provenance_private_key" ] && [ ! -e "$provenance_public_key" ]; then
+    openssl genpkey -algorithm ED25519 -out "$provenance_private_key"
+    openssl pkey -in "$provenance_private_key" -pubout -out "$provenance_public_key"
+    chmod 600 "$provenance_private_key"
+    chmod 644 "$provenance_public_key"
+    echo "Created local request-provenance key pair for: $provenance_issuer"
+  elif [ ! -e "$provenance_private_key" ] || [ ! -e "$provenance_public_key" ]; then
+    echo "Refusing to replace a partial request-provenance key pair for $provenance_issuer" >&2
+    exit 1
+  else
+    echo "Preserving existing request-provenance key pair for: $provenance_issuer"
+  fi
+
+  if ! openssl pkey -check -noout -in "$provenance_private_key" >/dev/null; then
+    echo "Request-provenance private key failed validation for $provenance_issuer" >&2
+    exit 1
+  fi
+  if ! openssl pkey -pubin -pubcheck -noout -in "$provenance_public_key" >/dev/null; then
+    echo "Request-provenance public key failed validation for $provenance_issuer" >&2
+    exit 1
+  fi
+
+  openssl pkey -pubin -in "$provenance_public_key" -outform DER -out "$provenance_public_temporary"
+  openssl pkey -in "$provenance_private_key" -pubout -outform DER -out "$provenance_derived_temporary"
+  if ! cmp -s "$provenance_public_temporary" "$provenance_derived_temporary"; then
+    echo "Request-provenance key pair does not match for $provenance_issuer" >&2
+    exit 1
+  fi
+}
+
 require_command openssl
 require_command sed
 require_command grep
 require_command tr
 require_command rm
+require_command cmp
 
 umask 077
 trap cleanup_temporary_key_files 0 1 2 15
 
-mkdir -p "$environment_dir" "$secret_dir"
+mkdir -p "$environment_dir" "$secret_dir" "$provenance_private_dir" "$provenance_public_dir"
 
 copy_template_once \
   "$repository_root/.env.example" \
@@ -373,6 +439,30 @@ ensure_generated_value \
   "APP_PASSPORT_PUBLIC_KEY_LOCATION" \
   "GENERATE_APP_PASSPORT_PUBLIC_KEY_LOCATION" \
   "$host_public_key_location"
+
+provenance_issuers="api-gateway instance-service user-service workspace-service email-service"
+for provenance_issuer in $provenance_issuers; do
+  ensure_request_provenance_key_pair "$provenance_issuer"
+
+  provenance_environment_suffix=$(printf '%s' "$provenance_issuer" | tr '[:lower:]-' '[:upper:]_')
+  provenance_private_variable="APP_SECURITY_REQUEST_PROVENANCE_${provenance_environment_suffix}_PRIVATE_KEY_LOCATION"
+  provenance_public_variable="APP_SECURITY_REQUEST_PROVENANCE_${provenance_environment_suffix}_PUBLIC_KEY_LOCATION"
+  provenance_private_location="file:$provenance_private_dir/$provenance_issuer.pem"
+  provenance_public_location="file:$provenance_public_dir/$provenance_issuer.pem"
+
+  for provenance_environment_file in "$host_nginx_environment" "$host_direct_environment"; do
+    ensure_generated_path_value \
+      "$provenance_environment_file" \
+      "$provenance_private_variable" \
+      "GENERATE_$provenance_private_variable" \
+      "$provenance_private_location"
+    ensure_generated_path_value \
+      "$provenance_environment_file" \
+      "$provenance_public_variable" \
+      "GENERATE_$provenance_public_variable" \
+      "$provenance_public_location"
+  done
+done
 
 ensure_generated_value \
   "$host_direct_environment" \

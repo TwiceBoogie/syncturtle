@@ -68,6 +68,11 @@ public final class CsrfMiddlewareFilter implements GlobalFilter, Ordered {
         }
 
         String signedToken = readCookie(request, cookieFactory.csrfCookieName());
+
+        if (requirement == GatewayCsrfRequirement.PREAUTH_COOKIE) {
+            return validateCookieOnlyPreAuth(exchange, chain, signedToken);
+        }
+
         if (isFormUrlEncoded(request)) {
             return cacheRequestBody(exchange, cachedRequest -> {
                 ServerWebExchange cachedExchange = exchange.mutate().request(cachedRequest).build();
@@ -109,6 +114,24 @@ public final class CsrfMiddlewareFilter implements GlobalFilter, Ordered {
         }
     }
 
+            return requireAuthenticatedSession(exchange, chain, validated);
+        } catch (GatewayCsrfTokenException exception) {
+            return reject(exchange);
+        }
+    }
+
+    private Mono<Void> validateCookieOnlyPreAuth(
+            ServerWebExchange exchange,
+            GatewayFilterChain chain,
+            String signedToken) {
+        try {
+            ValidatedPreAuthCsrfToken validated = tokenProcessor.validatePreAuthCookie(signedToken);
+            return forwardPreAuthBinding(exchange, chain, validated);
+        } catch (GatewayCsrfTokenException exception) {
+            return reject(exchange);
+        }
+    }
+
     private Mono<Void> forwardPreAuth(
             ServerWebExchange exchange,
             GatewayFilterChain chain,
@@ -119,6 +142,13 @@ public final class CsrfMiddlewareFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
 
+        return forwardPreAuthBinding(exchange, chain, validated);
+    }
+
+    private Mono<Void> forwardPreAuthBinding(
+            ServerWebExchange exchange,
+            GatewayFilterChain chain,
+            ValidatedPreAuthCsrfToken validated) {
         String binding = PreAuthTransactionBinding
                 .fromValidatedSignedCsrfToken(validated.getSignedCookieToken())
                 .getValue();

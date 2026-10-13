@@ -62,6 +62,41 @@ class CsrfPreAuthTransactionBindingTest {
                     .hasValue(PreAuthTransactionBinding.fromValidatedSignedCsrfToken("signed-cookie").getValue());
         }
 
+        @Test
+        @DisplayName("completion validates the preauth cookie and forwards only its derived binding")
+        void completionValidatesCookieAndForwardsDerivedBinding() {
+            // arrange
+            SecurityCookieFactory cookies = mock(SecurityCookieFactory.class);
+            GatewayCsrfTokenProcessor tokenProcessor = mock(GatewayCsrfTokenProcessor.class);
+            ValidatedPreAuthCsrfToken token = new ValidatedPreAuthCsrfToken(
+                    "payload",
+                    "signed-cookie",
+                    Instant.parse("2026-08-27T12:00:00Z"),
+                    Instant.parse("2026-08-27T12:30:00Z"));
+            CsrfMiddlewareFilter filter = new CsrfMiddlewareFilter(
+                    cookies,
+                    tokenProcessor,
+                    new GatewayCsrfRoutePolicy());
+            MockServerWebExchange exchange = MockServerWebExchange.from(
+                    MockServerHttpRequest.get("/auth/admin/session")
+                            .cookie(new HttpCookie("csrf_token", "signed-cookie"))
+                            .build());
+            AtomicReference<String> forwarded = new AtomicReference<>();
+            GatewayFilterChain chain = current -> {
+                forwarded.set(current.getRequest().getHeaders().getFirst(HDR_PREAUTH_TRANSACTION_BINDING));
+                return Mono.empty();
+            };
+            // conditions
+            when(cookies.csrfCookieName()).thenReturn("csrf_token");
+            when(tokenProcessor.validatePreAuthCookie("signed-cookie")).thenReturn(token);
+            // act
+            filter.filter(exchange, chain).block();
+            // assert
+            assertThat(forwarded).hasValue(
+                    PreAuthTransactionBinding.fromValidatedSignedCsrfToken("signed-cookie").getValue());
+            // verify
+        }
+
     }
 
 }

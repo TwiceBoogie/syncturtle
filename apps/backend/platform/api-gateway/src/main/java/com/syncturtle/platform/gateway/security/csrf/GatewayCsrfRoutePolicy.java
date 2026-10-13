@@ -61,6 +61,10 @@ public final class GatewayCsrfRoutePolicy {
 
         String path = normalize(rawPath);
 
+        if (HttpMethod.GET.equals(method) && "/auth/admin/session".equals(path)) {
+            return GatewayCsrfRequirement.PREAUTH_COOKIE;
+        }
+
         if (HttpMethod.POST.equals(method)) {
             if (PREAUTH_POST_PATHS.contains(path) || isResetPasswordCompletion(path)) {
                 return GatewayCsrfRequirement.PREAUTH;
@@ -103,6 +107,10 @@ public final class GatewayCsrfRoutePolicy {
         String path = normalize(rawPath);
         return path.equals("/api/instances/admins/sign-in")
                 || path.equals("/api/instances/admins/sign-up");
+    }
+
+    public boolean isAdminHandoffCompletion(HttpMethod method, String rawPath) {
+        return HttpMethod.GET.equals(method) && "/auth/admin/session".equals(normalize(rawPath));
     }
 
     private static boolean isResetPasswordCompletion(String path) {

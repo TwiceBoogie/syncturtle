@@ -44,6 +44,16 @@ class GatewayCsrfTokenCodecTest {
     class PreAuth {
 
         @Test
+        void validatesSignedPreAuthCookieWithoutCallerSubmittedMaterial() {
+            IssuedPreAuthCsrfToken issued = processor.issuePreAuth();
+
+            ValidatedPreAuthCsrfToken validated = processor.validatePreAuthCookie(issued.getSignedCookieToken());
+
+            assertThat(validated.getSignedCookieToken()).isEqualTo(issued.getSignedCookieToken());
+            assertThat(validated.getSubmittedToken()).isEqualTo(issued.getSubmittedToken());
+        }
+
+        @Test
         void issuesAndValidatesTheExactCanonicalClaims() {
             IssuedPreAuthCsrfToken issued = processor.issuePreAuth();
 
@@ -129,11 +139,15 @@ class GatewayCsrfTokenCodecTest {
         @Test
         void rejectsMacTamperAndSubmittedPayloadMismatch() {
             IssuedPreAuthCsrfToken issued = processor.issuePreAuth();
-            String tampered = issued.getSignedCookieToken().substring(0, issued.getSignedCookieToken().length() - 1)
-                    + "A";
+            String signedCookieToken = issued.getSignedCookieToken();
+            int signatureStart = signedCookieToken.lastIndexOf('.') + 1;
+            char replacement = signedCookieToken.charAt(signatureStart) == 'A' ? 'B' : 'A';
+            String tampered = signedCookieToken.substring(0, signatureStart)
+                    + replacement
+                    + signedCookieToken.substring(signatureStart + 1);
 
             assertInvalidPreAuth(tampered, issued.getSubmittedToken());
-            assertInvalidPreAuth(issued.getSignedCookieToken(), issued.getSubmittedToken() + "A");
+            assertInvalidPreAuth(signedCookieToken, issued.getSubmittedToken() + "A");
         }
 
         @Test

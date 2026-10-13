@@ -84,20 +84,17 @@ public final class GatewayCsrfTokenProcessor {
     }
 
     public ValidatedPreAuthCsrfToken validatePreAuth(String signedCookieToken, String submittedToken) {
-        ParsedClaims claims = parseAndValidate(signedCookieToken, submittedToken, GatewayCsrfScope.PREAUTH);
-        String canonical = canonicalPreAuthJson(claims.issuedAt, claims.expiresAt, claims.nonce);
-        requireCanonicalPayload(claims.payload, canonical);
-        requireExactPreAuthLifetime(claims);
+        ParsedClaims claims = parseAndValidate(signedCookieToken, submittedToken, GatewayCsrfScope.PREAUTH, true);
+        return validatedPreAuth(signedCookieToken, claims);
+    }
 
-        return new ValidatedPreAuthCsrfToken(
-                claims.payload,
-                signedCookieToken,
-                claims.issuedAt,
-                claims.expiresAt);
+    public ValidatedPreAuthCsrfToken validatePreAuthCookie(String signedCookieToken) {
+        ParsedClaims claims = parseAndValidate(signedCookieToken, null, GatewayCsrfScope.PREAUTH, false);
+        return validatedPreAuth(signedCookieToken, claims);
     }
 
     public ValidatedSessionCsrfToken validateSession(String signedCookieToken, String submittedToken) {
-        ParsedClaims claims = parseAndValidate(signedCookieToken, submittedToken, GatewayCsrfScope.SESSION);
+        ParsedClaims claims = parseAndValidate(signedCookieToken, submittedToken, GatewayCsrfScope.SESSION, true);
         String canonicalSessionId = canonicalUuidOrFailure(claims.sessionId);
         String canonical = canonicalSessionJson(
                 claims.issuedAt,
@@ -118,19 +115,34 @@ public final class GatewayCsrfTokenProcessor {
                 claims.expiresAt);
     }
 
+    private ValidatedPreAuthCsrfToken validatedPreAuth(String signedCookieToken, ParsedClaims claims) {
+        String canonical = canonicalPreAuthJson(claims.issuedAt, claims.expiresAt, claims.nonce);
+        requireCanonicalPayload(claims.payload, canonical);
+        requireExactPreAuthLifetime(claims);
+
+        return new ValidatedPreAuthCsrfToken(
+                claims.payload,
+                signedCookieToken,
+                claims.issuedAt,
+                claims.expiresAt);
+    }
+
     private ParsedClaims parseAndValidate(
             String signedCookieToken,
             String submitedToken,
-            GatewayCsrfScope requiredScope) {
+            GatewayCsrfScope requiredScope,
+            boolean requireSubmittedToken) {
         requireBoundedText(signedCookieToken, properties.getMaxSignedTokenChars());
-        requireBoundedText(submitedToken, properties.getMaxSignedTokenChars());
+        if (requireSubmittedToken) {
+            requireBoundedText(submitedToken, properties.getMaxSignedTokenChars());
+        }
 
         if (!tokenSigner.verify(signedCookieToken)) {
             throw invalid();
         }
 
         String payload = tokenSigner.extractToken(signedCookieToken);
-        if (!constantTimeEquals(payload, submitedToken)) {
+        if (requireSubmittedToken && !constantTimeEquals(payload, submitedToken)) {
             throw invalid();
         }
 

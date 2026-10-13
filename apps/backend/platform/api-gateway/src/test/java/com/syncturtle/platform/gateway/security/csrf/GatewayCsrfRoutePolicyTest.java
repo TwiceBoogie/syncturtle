@@ -17,11 +17,20 @@ public class GatewayCsrfRoutePolicyTest {
 
         @Test
         void classifiesExactPreAuthRoutes() {
-            assertThat(policy.requirement(HttpMethod.POST, "/auth/sign-in")).isEqualTo(GatewayCsrfRequirement.PREAUTH);
+            assertThat(policy.requirement(HttpMethod.POST, "/auth/sign-in"))
+                    .isEqualTo(GatewayCsrfRequirement.PREAUTH);
             assertThat(policy.requirement(HttpMethod.POST, "/auth/reset-password/uid/token"))
                     .isEqualTo(GatewayCsrfRequirement.PREAUTH);
             assertThat(policy.requirement(HttpMethod.POST, "/api/instances/admins/sign-up/"))
                     .isEqualTo(GatewayCsrfRequirement.PREAUTH);
+        }
+
+        @Test
+        void classifiesAdminHandoffCompletionAsCookieValidatedPreAuth() {
+            assertThat(policy.requirement(HttpMethod.GET, "/auth/admin/session"))
+                    .isEqualTo(GatewayCsrfRequirement.PREAUTH_COOKIE);
+            assertThat(policy.requirement(HttpMethod.GET, "/auth/admin/session/"))
+                    .isEqualTo(GatewayCsrfRequirement.PREAUTH_COOKIE);
         }
 
         @Test
@@ -32,7 +41,8 @@ public class GatewayCsrfRoutePolicyTest {
                     .isEqualTo(GatewayCsrfRequirement.TRANSPORT_SESSION);
             assertThat(policy.requirement(HttpMethod.POST, "/auth/admin/sign-out"))
                     .isEqualTo(GatewayCsrfRequirement.TRANSPORT_SESSION);
-            assertThat(policy.requirement(HttpMethod.POST, "/auth/unknown")).isEqualTo(GatewayCsrfRequirement.NONE);
+            assertThat(policy.requirement(HttpMethod.POST, "/auth/unknown"))
+                    .isEqualTo(GatewayCsrfRequirement.NONE);
         }
 
         @Test
