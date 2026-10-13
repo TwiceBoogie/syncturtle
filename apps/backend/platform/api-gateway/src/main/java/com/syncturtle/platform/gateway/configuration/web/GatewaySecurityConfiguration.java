@@ -6,6 +6,7 @@ import java.time.Clock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cloud.gateway.config.GlobalCorsProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -29,6 +30,8 @@ import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.syncturtle.common.security.cookie.SecurityCookieFactory;
@@ -175,6 +178,14 @@ public class GatewaySecurityConfiguration {
     @Bean
     Clock gatewayClock() {
         return Clock.systemUTC();
+    }
+
+    // https://docs.spring.io/spring-security/reference/reactive/integrations/cors.html
+    @Bean
+    CorsConfigurationSource gatewayCorsConfigurationSource(GlobalCorsProperties properties) {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        properties.getCorsConfigurations().forEach(source::registerCorsConfiguration);
+        return source;
     }
 
     private void configureBase(ServerHttpSecurity http) {

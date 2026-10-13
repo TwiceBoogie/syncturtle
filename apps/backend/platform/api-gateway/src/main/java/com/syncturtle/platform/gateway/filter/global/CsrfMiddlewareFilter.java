@@ -141,6 +141,7 @@ public final class CsrfMiddlewareFilter implements GlobalFilter, Ordered {
                 exchange.getRequest().getPath().pathWithinApplication().value())) {
             return chain.filter(exchange);
         }
+    }
 
         return forwardPreAuthBinding(exchange, chain, validated);
     }
