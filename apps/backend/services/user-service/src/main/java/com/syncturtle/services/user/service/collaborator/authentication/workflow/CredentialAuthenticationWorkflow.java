@@ -12,6 +12,7 @@ import org.springframework.util.Assert;
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
 import com.syncturtle.common.contracts.user.event.UserEvent;
+import com.syncturtle.common.core.actor.PrincipalType;
 import com.syncturtle.services.user.messaging.kafka.factory.UserEventFactory;
 import com.syncturtle.services.user.model.Profile;
 import com.syncturtle.services.user.model.User;
@@ -109,6 +110,7 @@ public class CredentialAuthenticationWorkflow {
                 .passwordHash(passwordHash)
                 .passwordAutoset(passwordAutoset)
                 .userTimezone("America/Chicago")
+                .principalType(PrincipalType.HUMAN)
                 .initialLoginIp(completionParam.getIpAddress())
                 .initialLoginMedium(completionParam.getProvider().value())
                 .initialLoginUserAgent(completionParam.getUserAgent())

@@ -51,6 +51,7 @@ public class AdminSessionCompletionController {
                     .userAgent(requestClientContext.getUserAgent())
                     .build());
             writeSessionCookies(servletResponse, response);
+            cookieWriter.clearCsrfCookie(servletResponse);
             cookieWriter.clearAdminSessionHandoffCookie(servletResponse);
 
             return redirect(response.getLocation());

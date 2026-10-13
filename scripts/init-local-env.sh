@@ -34,6 +34,38 @@ generate_base64url_secret() {
     | tr -d '=\n'
 }
 
+ensure_shared_base64url_secret() {
+  shared_key=$1
+  shared_marker=$2
+
+  if grep -q "__${shared_marker}__" "$root_environment"; then
+    shared_value=$(generate_base64url_secret)
+    replace_marker "$root_environment" "$shared_marker" "$shared_value"
+  else
+    shared_value=$(read_value "$root_environment" "$shared_key")
+    if [ -z "$shared_value" ]; then
+      shared_value=$(generate_base64url_secret)
+      printf '\n%s=%s\n' "$shared_key" "$shared_value" >> "$root_environment"
+      chmod 600 "$root_environment"
+    fi
+  fi
+
+  for shared_file in "$host_nginx_environment" "$host_direct_environment"; do
+    if grep -q "__${shared_marker}__" "$shared_file"; then
+      replace_marker "$shared_file" "$shared_marker" "$shared_value"
+    else
+      existing_shared_value=$(read_value "$shared_file" "$shared_key")
+      if [ -z "$existing_shared_value" ]; then
+        printf '\n%s=%s\n' "$shared_key" "$shared_value" >> "$shared_file"
+        chmod 600 "$shared_file"
+      elif [ "$existing_shared_value" != "$shared_value" ]; then
+        echo "Generated environment files disagree for shared value: $shared_key" >&2
+        exit 1
+      fi
+    fi
+  done
+}
+
 cleanup_temporary_key_files() {
   rm -f \
     "$public_key_der_temporary" \
@@ -258,6 +290,14 @@ for marker in $markers; do
     fi
   fi
 done
+
+ensure_shared_base64url_secret \
+  "APP_AUTH_REFRESH_SESSION_CLIENT_BINDING_HMAC_KEY" \
+  "GENERATE_APP_AUTH_REFRESH_SESSION_CLIENT_BINDING_HMAC_KEY"
+
+ensure_shared_base64url_secret \
+  "APP_AUTH_REFRESH_SESSION_SUCCESSOR_ENVELOPE_KEY" \
+  "GENERATE_APP_AUTH_REFRESH_SESSION_SUCCESSOR_ENVELOPE_KEY"
 
 if [ ! -e "$private_key" ] && [ ! -e "$public_key" ]; then
   openssl genpkey \

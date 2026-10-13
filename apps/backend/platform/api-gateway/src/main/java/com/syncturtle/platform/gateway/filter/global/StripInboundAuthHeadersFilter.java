@@ -50,6 +50,7 @@ public class StripInboundAuthHeadersFilter implements GlobalFilter, Ordered {
             GatewayHeaders.HDR_AUTH_ISSUER,
             GatewayHeaders.HDR_AUTH_WORKSPACE_ID,
             GatewayHeaders.HDR_PREAUTH_TRANSACTION_BINDING,
+            GatewayHeaders.HDR_INTERNAL_CSRF_SESSION_ID,
             GatewayHeaders.HDR_INTERNAL_LOGIN_CONTEXT,
             GatewayHeaders.HDR_INTERNAL_LOGOUT_CONTEXT);
 

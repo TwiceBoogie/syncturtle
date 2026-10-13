@@ -8,6 +8,7 @@
     "start": "next start",
     "clean": "rm -rf .turbo .next dist",
     "lint": "eslint . --max-warnings=0",
+    "test": "node --experimental-strip-types --test core/services/csrf-token-cache.test.ts",
     "typecheck": "next typegen && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

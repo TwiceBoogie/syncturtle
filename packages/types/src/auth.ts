@@ -1,5 +1,9 @@
+export type TCsrfTokenScope = "PREAUTH" | "SESSION";
+
 export interface ICsrfTokenData {
   csrfToken: string;
+  scope: TCsrfTokenScope;
+  expiresAt: string;
 }
 
 export interface IEmailCheckData {

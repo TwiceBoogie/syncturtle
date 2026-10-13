@@ -9,8 +9,7 @@ export class AuthService extends APIService {
 
   async requestCSRFToken(): Promise<ICsrfTokenData> {
     try {
-      const response = await this.get<ICsrfTokenData>("/api/get-csrf-token");
-      return response.data;
+      return await this.requestCsrfToken();
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;
       throw err.data ?? err;
@@ -22,8 +21,10 @@ export class AuthService extends APIService {
       await this.post<void>("/auth/admin/sign-out", undefined, {
         validateStatus: (s) => s >= 200 && s < 500,
       });
-    } catch (error) {
-      console.log(error);
+    } catch {
+      // Browser cleanup below remains authoritative even when server logout fails.
+    } finally {
+      this.invalidateCsrfToken();
     }
   }
 }

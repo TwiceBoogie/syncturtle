@@ -153,6 +153,20 @@ class SecurityCookieFactoryTest {
             // verify
         }
 
+        @Test
+        @DisplayName("uses actual typed token remaining lifetime when provided")
+        void usesActualTypedTokenRemainingLifetimeWhenProvided() {
+            // arrange
+            SecurityCookieFactory factory = factory(false, false);
+            Duration remainingLifetime = Duration.ofDays(3);
+            // conditions
+            // act
+            ResponseCookie cookie = factory.csrfCookie("payload.signature", remainingLifetime);
+            // assert
+            assertCookie(cookie, "csrf_token", "/", false, "Lax", remainingLifetime);
+            // verify
+        }
+
     }
 
     private static SecurityCookieFactory factory(boolean secure, boolean managedPrefixEnabled) {
