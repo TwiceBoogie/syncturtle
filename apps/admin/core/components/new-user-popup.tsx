@@ -1,9 +1,13 @@
 "use client";
 
-import { useAppTheme } from "@/hooks/store/use-app-theme";
-import { Button, Card, CloseButton } from "@heroui/react";
-// import { useTheme } from "next-themes";
 import Link from "next/link";
+// import { useTheme } from "next-themes";
+// heroui
+import { Button, Card, CloseButton } from "@heroui/react";
+// hooks
+import { useAppTheme } from "@/hooks/store/use-app-theme";
+// utils
+import { WEB_BASE_URL } from "@syncturtle/constants";
 
 export const NewUserPopup = () => {
   // store hooks
@@ -15,16 +19,15 @@ export const NewUserPopup = () => {
   return (
     <Card className="absolute bottom-8 right-8 w-96 z-20">
       <Card.Header>
-        <Card.Header>Create workspace</Card.Header>
+        <Card.Header>Instance setup complete</Card.Header>
         <Card.Description>
-          Instance setup done! Welcome to Syncturtle instance portal. Start your journey with by creating your first
-          workspace.
+          Manage this installation here. Open SyncTurtle to set up your profile and choose a space for personal use.
         </Card.Description>
         <CloseButton aria-label="Close banner" className={`absolute top-3 right-3`} onPress={toggleNewUserPopup} />
       </Card.Header>
       <Card.Footer>
-        <Link href={`/workspace/create`}>
-          <Button size="sm">Create workspace</Button>
+        <Link href={`${WEB_BASE_URL}/onboarding`}>
+          <Button size="sm">Open SyncTurtle</Button>
         </Link>
       </Card.Footer>
     </Card>

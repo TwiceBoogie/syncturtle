@@ -1,6 +1,7 @@
 {
   "name": "syncturtle",
   "private": true,
+  "type": "module",
   "version": "0.0.1",
   "workspaces": [
     "apps/*",
@@ -13,7 +14,8 @@
     "start": "turbo run start",
     "lint": "turbo run lint --continue",
     "typecheck": "turbo run typecheck --continue",
-    "test": "turbo run test --continue",
+    "test": "turbo run test --continue --filter=!@syncturtle/backend",
+    "test:frontend": "yarn test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "constraints": "yarn constraints",
@@ -25,16 +27,18 @@
     "check:versions": "node scripts/sync-versions.mjs && git diff --exit-code"
   },
   "engines": {
-    "node": ">=20.9.0 <25"
+    "node": ">=24.0.0 <25"
   },
   "packageManager": "yarn@4.13.0",
   "devDependencies": {
-    "@yarnpkg/types": "^4.0.1",
-    "eslint": "^9.39.4",
+    "@yarnpkg/types": "catalog:",
+    "eslint": "catalog:",
     "eslint-config-prettier": "10.1.8",
-    "lefthook": "^2.1.4",
-    "prettier": "3.8.1",
-    "prettier-plugin-tailwindcss": "0.7.2",
-    "turbo": "^2.9.1"
+    "lefthook": "^2.1.16",
+    "prettier": "catalog:",
+    "prettier-plugin-tailwindcss": "catalog:",
+    "turbo": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

@@ -21,7 +21,7 @@ public interface AuthenticationService {
 
     IssueTokenResponse magicCodeSignUp(String email, String code, String nextPath);
 
-    SignOutResponse signOut(String logoutContext, String presentedRefreshToken);
+    SignOutResponse signOut(String logoutContext, String presentedRefreshToken, String trustedCsrfSessionId);
 
     IssueTokenWithUserResponse setPassword(UUID currentUserId, String sessionId, String password);
 }

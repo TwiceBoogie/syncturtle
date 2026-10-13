@@ -13,8 +13,8 @@ import { EAuthModes, EPageType } from "@/helpers/authentication.helper";
 // wrappers
 import { AuthenticationWrapper } from "@/lib/wrappers";
 // assets
-import BlackHorizontalLogo from "@/public/syncturtle-logos/syncturtle-logo-dark.png";
-import WhiteHorizontalLogo from "@/public/syncturtle-logos/syncturtle-logo-light.png";
+import BlackHorizontalLogo from "@/public/syncturtle-logos/syncturtle-lockup-dark.png";
+import WhiteHorizontalLogo from "@/public/syncturtle-logos/syncturtle-lockup-light.png";
 
 export default function SignInPage() {
   const { t } = useTranslation();
@@ -29,7 +29,7 @@ export default function SignInPage() {
           <div className="container min-w-full px-10 lg:px-20 xl:px-36 shrink-0 relative flex items-center justify-between pb-4 transition-all">
             <div className="flex items-center py-10 gap-x-2">
               <Link href="/" className="h-7.5 w-33.25">
-                <Image src={logo} alt="Syncturtle logo" />
+                <Image src={logo} alt="SyncTurtle" width={133} height={32} />
               </Link>
             </div>
             <div className="flex flex-col items-end sm:items-center sm:gap-2 sm:flex-row text-center text-sm font-medium text-onboarding-text-300">

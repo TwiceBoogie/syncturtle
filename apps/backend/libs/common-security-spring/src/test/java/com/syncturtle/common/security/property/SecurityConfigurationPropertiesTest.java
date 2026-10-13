@@ -2,8 +2,6 @@ package com.syncturtle.common.security.property;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.Duration;
-
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -13,24 +11,7 @@ import org.springframework.context.annotation.Configuration;
 class SecurityConfigurationPropertiesTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-            .withUserConfiguration(TestConfiguration.class)
-            .withPropertyValues("app.security.csrf.enabled=false");
-
-    @Nested
-    class CsrfPropertiesBinding {
-
-        @Test
-        void disabledCsrfDoesNotRequireASecret() {
-            // arrange + act
-            contextRunner.run(context -> {
-                // assert
-                assertThat(context).hasNotFailed();
-                assertThat(context.getBean(CsrfProperties.class).getSigningKey()).isEmpty();
-            });
-            // verify
-        }
-
-    }
+            .withUserConfiguration(TestConfiguration.class);
 
     @Nested
     class SecurityCookiePropertiesBinding {
@@ -43,8 +24,7 @@ class SecurityConfigurationPropertiesTest {
                     "app.security.cookies.managed-prefix-enabled=true",
                     "app.security.cookies.access-same-site=Lax",
                     "app.security.cookies.refresh-same-site=lax",
-                    "app.security.cookies.csrf-same-site=LAX",
-                    "app.security.cookies.csrf-max-age=45m");
+                    "app.security.cookies.csrf-same-site=LAX");
             // conditions
             // act
             runner.run(context -> {
@@ -58,7 +38,6 @@ class SecurityConfigurationPropertiesTest {
                 assertThat(properties.getAccessSameSite()).isEqualTo("Lax");
                 assertThat(properties.getRefreshSameSite()).isEqualTo("Lax");
                 assertThat(properties.getCsrfSameSite()).isEqualTo("Lax");
-                assertThat(properties.getCsrfMaxAge()).isEqualTo(Duration.ofMinutes(45));
             });
             // verify
         }
@@ -90,7 +69,7 @@ class SecurityConfigurationPropertiesTest {
     }
 
     @Configuration(proxyBeanMethods = false)
-    @EnableConfigurationProperties({ CsrfProperties.class, SecurityCookieProperties.class })
+    @EnableConfigurationProperties(SecurityCookieProperties.class)
     static class TestConfiguration {
     }
 

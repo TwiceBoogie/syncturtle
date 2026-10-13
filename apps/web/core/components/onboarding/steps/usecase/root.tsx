@@ -1,153 +1,94 @@
 "use client";
 
-import type { FC, FormEvent } from "react";
-import { useEffect, useMemo, useState } from "react";
+import type { FC, SyntheticEvent } from "react";
+import { useState } from "react";
 // heroui
-import { Button, Form, Spinner, toast } from "@heroui/react";
-import { Check } from "lucide-react";
-// hooks
+import { Button, Form, toast } from "@heroui/react";
+// store hooks
 import { useUserProfile } from "@/hooks/store/user";
 // components
 import { CommonOnboardingHeader } from "../common";
-// helpers
 // constants
 import { EOnboardingSteps, USE_CASES } from "@syncturtle/constants";
-// types
-import type { TOnboardingStep, TUserProfile } from "@syncturtle/types";
+// helpers
 import { cn } from "@syncturtle/ui";
+// types
+import type { TOnboardingStep } from "@syncturtle/types";
+import { Check } from "lucide-react";
 
-interface IUseCaseSetupStep {
+interface IUseCaseSetupStepProps {
   handleStepChange: (step: TOnboardingStep, skipInvites?: boolean) => void;
 }
 
-interface IUseCaseFormData {
-  useCase: string;
-}
-
-const defaultFormData: IUseCaseFormData = {
-  useCase: "",
-};
-
-export const UseCaseSetupStep: FC<IUseCaseSetupStep> = (props) => {
-  const { handleStepChange } = props;
-  // store hooks
+export const UseCaseSetupStep: FC<IUseCaseSetupStepProps> = ({ handleStepChange }) => {
+  // hooks
   const { data: profile, updateUserProfile } = useUserProfile();
   // states
-  const [formData, setFormData] = useState<IUseCaseFormData>(() => ({
-    ...defaultFormData,
-    useCase: profile?.useCase ?? "",
-  }));
+  const [useCase, setUseCase] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [wasSubmitted, setWasSubmitted] = useState(false);
 
-  useEffect(() => {
-    setFormData((prev) => ({ ...prev, useCase: profile.useCase ?? "" }));
-  }, [profile.useCase]);
-
-  const handleFormChange = (key: keyof IUseCaseFormData, value: string) =>
-    setFormData((prev) => ({ ...prev, [key]: value }));
-
-  const useCaseError = useMemo(() => {
-    if (!wasSubmitted) return undefined;
-    if (!formData.useCase.trim()) return "This field is required";
-
-    return undefined;
-  }, [formData.useCase, wasSubmitted]);
-
-  const isButtonDisabled = useMemo(() => {
-    if (isSubmitting) return true;
-    if (!formData.useCase.trim()) return true;
-
-    return false;
-  }, [formData.useCase, isSubmitting]);
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    setWasSubmitted(true);
-
-    if (!profile || isSubmitting || !formData.useCase.trim()) return;
-
-    const payload: Partial<TUserProfile> = {
-      useCase: formData.useCase,
-    };
-
-    setIsSubmitting(true);
-
+  const handleSubmitUserPersonalization = async () => {
     try {
-      const promise = updateUserProfile(payload);
-
-      toast.promise(promise, {
-        loading: "Saving preference...",
-        success: "Preference saved successfully",
-        error: () => <div>hi</div>,
-      });
-
-      await promise;
-
-      handleStepChange(EOnboardingSteps.USE_CASE_SETUP);
-    } finally {
-      setIsSubmitting(false);
+      await updateUserProfile({ useCase });
+      toast("Profile setup completed", { description: "Your purpose was saved." });
+    } catch {
+      // Plane parity: the step still advances after this caught update failure.
+      // Revisit progress and error behavior during post-parity hardening.
+      toast("Profile setup failed", { description: "Please try again later." });
     }
   };
 
-  const handleSkip = () => {
-    if (isSubmitting) return;
-
+  const onSubmit = async (event: SyntheticEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!profile || !useCase || isSubmitting) return;
+    setIsSubmitting(true);
+    await handleSubmitUserPersonalization();
+    setIsSubmitting(false);
     handleStepChange(EOnboardingSteps.USE_CASE_SETUP);
   };
 
+  const handleSkip = () => handleStepChange(EOnboardingSteps.USE_CASE_SETUP);
+
   return (
-    <Form onSubmit={handleSubmit} className="flex flex-col gap-10">
-      <CommonOnboardingHeader title="What brings you to Syncturtle" description="Tell us your goals and team size." />
-
+    <Form onSubmit={onSubmit} className="flex flex-col gap-5">
+      <CommonOnboardingHeader
+        title="What would you like to use SyncTurtle for?"
+        description="Choose a purpose to personalize your Space."
+      />
       <div className="flex flex-col gap-3">
-        <p className="text-sm font-medium text-custom-text-400">Select one</p>
-
-        <div className="flex flex-col gap-3">
-          {USE_CASES.map((useCase) => {
-            const isSelected = formData.useCase === useCase;
-
-            return (
-              <Button
-                key={useCase}
-                type="button"
-                variant="ghost"
-                fullWidth
+        <p className="text-sm font-medium text-custom-text-400">Select any</p>
+        {USE_CASES.map((option) => {
+          const isSelected = useCase === option;
+          return (
+            <button
+              key={option}
+              type="button"
+              className={cn(
+                "flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left transition-all",
+                isSelected
+                  ? "border-custom-primary-100 bg-custom-primary-10 text-custom-primary-100"
+                  : "border-custom-border-200 text-custom-text-300 hover:border-custom-border-300"
+              )}
+              onClick={() => setUseCase(option)}
+            >
+              <span
                 className={cn(
-                  "h-auto justify-start gap-2 rounded-lg border px-3 py-2 transition-all duration-200",
-                  isSelected
-                    ? "border-custom-primary-100 bg-custom-primary-10 text-custom-primary-100"
-                    : "border-custom-border-200 text-custom-text-300 hover:border-custom-border-300"
+                  "flex size-4 items-center justify-center rounded border-2",
+                  isSelected ? "border-custom-primary-100 bg-custom-primary-100" : "border-custom-border-300"
                 )}
-                onPress={() => handleFormChange("useCase", useCase)}
               >
-                <span
-                  className={cn(
-                    "flex size-4 items-center justify-center rounded border-2",
-                    isSelected ? "border-custom-primary-100 bg-custom-primary-100" : "border-custom-border-300"
-                  )}
-                >
-                  <Check className={cn("size-3 text-white", isSelected ? "opacity-100" : "opacity-0")} />
-                </span>
-                <span className="font-medium">{useCase}</span>
-              </Button>
-            );
-          })}
-        </div>
-        {useCaseError && <span className="text-sm text-red-500">{useCaseError}</span>}
+                <Check className={cn("size-3 text-white", !isSelected && "opacity-0")} />
+              </span>
+              <span className="font-medium">{option}</span>
+            </button>
+          );
+        })}
       </div>
-
       <div className="space-y-3">
-        <Button type="submit" size="sm" fullWidth isPending={isSubmitting} isDisabled={isButtonDisabled}>
-          {({ isPending }) => (
-            <>
-              {isPending ? <Spinner color="current" /> : null}
-              {isPending ? "Saving..." : "Continue"}
-            </>
-          )}
+        <Button type="submit" fullWidth isDisabled={!useCase || isSubmitting} isPending={isSubmitting}>
+          Continue
         </Button>
-        <Button type="button" variant="secondary" size="sm" fullWidth isDisabled={isSubmitting} onPress={handleSkip}>
+        <Button type="button" variant="tertiary" fullWidth onPress={handleSkip}>
           Skip
         </Button>
       </div>

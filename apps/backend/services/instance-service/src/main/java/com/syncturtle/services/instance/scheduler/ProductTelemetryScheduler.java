@@ -59,7 +59,7 @@ public class ProductTelemetryScheduler {
                 .setAttribute("syncturtle.instance_id", instance.getInstanceId())
                 .setAttribute("syncturtle.edition", instance.getEdition().name())
                 .setAttribute("syncturtle.current_version", instance.getUpdateCheck().getCurrentVersion())
-                .setAttribute("syncturtle.latest_version", instance.getUpdateCheck().getLatestVersion())
+                .setAttribute("syncturtle.latest_version", safe(instance.getUpdateCheck().getLatestVersion()))
                 .setAttribute("syncturtle.support_required", instance.isSupportRequired())
                 .setAttribute("syncturtle.setup_done", instance.isSetupDone())
                 .setAttribute("syncturtle.verified", instance.isVerified())

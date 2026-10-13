@@ -122,8 +122,8 @@ public class Workspace extends AuditedEntity {
     private void initializeForCreate(WorkspaceCreateParam param) {
         this.name = normalizeRequired(param.getName(), "name", MAX_NAME_LENGTH);
         this.slug = normalizeRequired(param.getSlug(), "slug", MAX_SLUG_LENGTH);
-        this.organizationSize = normalizeRequired(param.getOrganizationSize(), "organizationSize",
-                MAX_ORGANIZATION_SIZE_LENGTH);
+        // WorkspaceCreateParam normalizes and bounds optional legacy metadata.
+        this.organizationSize = param.getOrganizationSize();
         this.ownerId = param.getOwnerId();
         this.timezone = normalizeTimezone(param.getTimezone());
     }
