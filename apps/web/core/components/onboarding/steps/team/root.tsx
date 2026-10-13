@@ -11,6 +11,7 @@ import { EOnboardingSteps, EUserPermissions, ROLE_OPTIONS } from "@syncturtle/co
 import { useTranslation } from "@syncturtle/i18n";
 import type { IWorkspaceBulkInviteFormData, TOnboardingStep, TUserPermissions } from "@syncturtle/types";
 // store hooks
+import { useUserProfile } from "@/hooks/store/user";
 import { useWorkspace } from "@/hooks/store/use-workspace";
 // components
 import { CommonOnboardingHeader } from "../common";
@@ -32,17 +33,26 @@ interface IEmailRole {
 
 const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
-const placeholderEmails = [
-  "charlie.taylor@frstflt.com",
-  "octave.chanute@frstflt.com",
-  "george.spratt@frstflt.com",
-  "frank.coffyn@frstflt.com",
-  "amos.root@frstflt.com",
-  "edward.deeds@frstflt.com",
-  "charles.m.manly@frstflt.com",
-  "glenn.curtiss@frstflt.com",
-  "thomas.selfridge@frstflt.com",
-  "albert.zahm@frstflt.com",
+const placeholderEmails: string[] = [
+  "natasharomanoff@marvel.com", // Black Widow
+  "caroldanvers@marvel.com", // Captain Marvel
+  "wandamaximoff@marvel.com", // Scarlet Witch
+  "jenniferswalters@marvel.com", // She-Hulk
+  "kamalakhan@marvel.com", // Ms. Marvel
+  "jeangrey@marvel.com", // Phoenix
+  "storm@marvel.com", // Ororo Munroe / Storm
+  "suestorm@marvel.com", // Invisible Woman
+  "gwenstacy@marvel.com", // Ghost-Spider / Spider-Gwen
+  "jessicajones@marvel.com", // Jessica Jones
+  "katebishop@marvel.com", // Hawkeye
+  "shuri@marvel.com", // Shuri
+  "gamora@marvel.com", // Gamora
+  "hopedatvan@marvel.com", // Wasp
+  "valkyrie@marvel.com", // Valkyrie
+  "eleanorable@marvel.com", // Elektra Natchios
+  "rogue@marvel.com", // Rogue
+  "kittypryde@marvel.com", // Shadowcat
+  "emmafrost@marvel.com", // White Queen
 ];
 
 const createInviteRow = (index: number): IEmailRole => ({
@@ -70,7 +80,8 @@ export const InviteTeamStep: FC<IInviteTeamStep> = (props) => {
   const { handleStepChange } = props;
   // hooks
   const { t } = useTranslation();
-  const { workspaces } = useWorkspace();
+  const { data: profile } = useUserProfile();
+  const { getWorkspaceById } = useWorkspace();
   // states
   const [nextId, setNextId] = useState(3);
   const [members, setMembers] = useState<IEmailRole[]>([createInviteRow(0), createInviteRow(1), createInviteRow(2)]);
@@ -160,8 +171,7 @@ export const InviteTeamStep: FC<IInviteTeamStep> = (props) => {
   };
 
   // derived values
-  const workspacesList = Object.values(workspaces ?? {});
-  const workspace = workspacesList[0];
+  const workspace = profile.lastWorkspaceId ? getWorkspaceById(profile.lastWorkspaceId) : null;
   const filledMembers = useMemo(() => members.filter((member) => member.email.trim().length > 0), [members]);
   const hasValidEmail = useMemo(
     () => filledMembers.some((member) => emailRegex.test(member.email.trim())),
@@ -177,7 +187,7 @@ export const InviteTeamStep: FC<IInviteTeamStep> = (props) => {
     <Form aria-label="Invite teammates" validationBehavior="aria" onSubmit={onSubmit}>
       <CommonOnboardingHeader
         title="Invite your teammates"
-        description="Work in Syncturtle happens best with your team. Invite them now to use Syncturtle to its potential"
+        description="Work in Syncturtle happens best with your friends or family. Invite them now to use Syncturtle to its potential"
       />
 
       <div className="w-full py-4 text-sm">
@@ -276,6 +286,7 @@ export const InviteTeamStep: FC<IInviteTeamStep> = (props) => {
           variant="primary"
           type="submit"
           size="sm"
+          className={"rounded-sm"}
           fullWidth
           isDisabled={isSubmitDisabled}
           isPending={isSubmitting}
@@ -283,7 +294,15 @@ export const InviteTeamStep: FC<IInviteTeamStep> = (props) => {
           {({ isPending }) => (isPending ? <Spinner color="current" size="sm" /> : "Continue")}
         </Button>
 
-        <Button variant="secondary" type="button" size="sm" fullWidth onPress={nextStep} isDisabled={isSubmitting}>
+        <Button
+          variant="secondary"
+          type="button"
+          size="sm"
+          className={"rounded-sm"}
+          fullWidth
+          onPress={nextStep}
+          isDisabled={isSubmitting}
+        >
           I&apos;ll do it later
         </Button>
       </div>

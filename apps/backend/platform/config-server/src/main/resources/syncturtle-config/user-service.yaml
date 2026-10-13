@@ -33,7 +33,6 @@ spring:
       observation-enabled: true
     listener:
       observation-enabled: true
-      auto-startup: ${app.kafka.enabled:true}
     producer:
       acks: all
       batch-size: 32768
@@ -56,16 +55,7 @@ jdbc:
 
 app:
   auth:
-    admin-session-handoff:
-      ttl: ${APP_AUTH_ADMIN_SESSION_HANDOFF_TTL:30s}
-    token:
-      access-token-ttl: ${APP_AUTH_ACCESS_TOKEN_TTL:15m}
-      password-reset-token-ttl: ${APP_AUTH_PASSWORD_RESET_TOKEN_TTL:30m}
-      password-reset-token-bytes: ${APP_AUTH_PASSWORD_RESET_TOKEN_BYTES:48}
     refresh-session:
-      idle-lifetime: ${APP_AUTH_REFRESH_SESSION_IDLE_LIFETIME:7d}
-      absolute-lifetime: ${APP_AUTH_REFRESH_SESSION_ABSOLUTE_LIFETIME:30d}
-      grace-window: ${APP_AUTH_REFRESH_SESSION_GRACE_WINDOW:5s}
       successor-envelope:
         encryption-key: ${APP_AUTH_REFRESH_SESSION_SUCCESSOR_ENVELOPE_KEY}
       client-binding:
@@ -76,36 +66,35 @@ app:
     runtime-secret-cache:
       ttl: ${APP_CACHE_RUNTIME_SECRET_CACHE_TTL:5m}
   kafka:
-    enabled: true
     instance-configuration:
-      enabled: true
-      deployment-id: ${SYNCTURTLE_DEPLOYMENT_ID:compose}
+      deployment-id: ${app.kafka.deployment-id}
       replica-id: ${SYNCTURTLE_REPLICA_ID:${HOSTNAME:localhost}-${server.port}}
       local-replica-count: ${SYNCTURTLE_SERVICE_REPLICA_COUNT:1}
     error-handling:
       initial-interval: 500ms
       multiplier: 2.0
       max-elapsed-time: 8s
-      dlt-suffix: ".DLT"
-      ack-after-handle: true
-      commit-recovered: false
       log-retries: true
   security:
-    csrf:
-      enabled: true
-      signing-key: ${APP_SECURITY_CSRF_SIGNING_KEY}
-      form:
-        enabled: true
+    request-provenance:
+      keys:
+        signer:
+          private-key-location: ${APP_SECURITY_REQUEST_PROVENANCE_USER_SERVICE_PRIVATE_KEY_LOCATION}
+          public-key-location: ${APP_SECURITY_REQUEST_PROVENANCE_USER_SERVICE_PUBLIC_KEY_LOCATION}
+        verification-public-key-locations:
+          api-gateway:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_API_GATEWAY_PUBLIC_KEY_LOCATION}",
+            ]
+          instance-service:
+            [
+              "${APP_SECURITY_REQUEST_PROVENANCE_INSTANCE_SERVICE_PUBLIC_KEY_LOCATION}",
+            ]
     cookies:
       secure: ${APP_SECURITY_COOKIES_SECURE:false}
       managed-prefix-enabled: ${APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED:false}
       access-same-site: Lax
       refresh-same-site: Lax
-      csrf-same-site: Lax
-      csrf-max-age: 3h
-  gateway:
-    context:
-      enabled: true
   web:
     errors:
       include-path: true

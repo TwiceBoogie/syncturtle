@@ -2,12 +2,15 @@
 
 import type { FC } from "react";
 import { useState } from "react";
-// types
-import type { TCreateOrJoinWorkspaceViews, IWorkspaceMemberInvitation, TOnboardingStep } from "@syncturtle/types";
-import { ECreateOrJoinWorkspaceViews, EOnboardingSteps } from "@syncturtle/constants";
-import { useUser } from "@/hooks/store/user";
-import { WorkspaceJoinInvitesStep } from "./join-invites";
+// components
 import { WorkspaceCreateStep } from "./create";
+import { WorkspaceJoinInvitesStep } from "./join-invites";
+// hooks
+import { useUser } from "@/hooks/store/user";
+// constants
+import { ECreateOrJoinWorkspaceViews, EOnboardingSteps } from "@syncturtle/constants";
+// types
+import type { IWorkspaceMemberInvitation, TCreateOrJoinWorkspaceViews, TOnboardingStep } from "@syncturtle/types";
 
 interface IWorkspaceSetupStepProps {
   invitations: IWorkspaceMemberInvitation[];
@@ -20,9 +23,9 @@ export const WorkspaceSetupStep: FC<IWorkspaceSetupStepProps> = (props) => {
   const [selectedView, setSelectedView] = useState<TCreateOrJoinWorkspaceViews | null>(null);
   // hooks
   const { data: user } = useUser();
-  // derived values
+
   const hasInvitations = invitations.length > 0;
-  const currentView: TCreateOrJoinWorkspaceViews = hasInvitations
+  const currentView = hasInvitations
     ? (selectedView ?? ECreateOrJoinWorkspaceViews.WORKSPACE_JOIN)
     : ECreateOrJoinWorkspaceViews.WORKSPACE_CREATE;
 

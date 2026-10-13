@@ -26,7 +26,7 @@ public final class PasswordResetFixtures {
     public static final String BLANK_PASSWORD = " ";
     public static final String SHORT_PASSWORD = "short";
     public static final String BLANK_TOKEN = " ";
-    public static final int TOKEN_BYTES = 32;
+    public static final int TOKEN_BYTES = 48;
     public static final Duration TOKEN_TTL = Duration.ofMinutes(30);
     public static final int MAX_PASSWORD_LENGTH = 256;
     public static final int MAX_PRESENTED_TOKEN_LENGTH = 256;

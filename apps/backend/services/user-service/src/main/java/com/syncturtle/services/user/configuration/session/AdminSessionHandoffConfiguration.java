@@ -9,7 +9,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import com.syncturtle.common.cache.template.RedisKeyBuilder;
 import com.syncturtle.common.core.security.token.SecureTokenGenerator;
 import com.syncturtle.common.core.security.token.TokenHasher;
-import com.syncturtle.services.user.configuration.property.AdminSessionHandoffProperties;
 import com.syncturtle.services.user.service.collaborator.session.AdminSessionHandoffRedisKeys;
 import com.syncturtle.services.user.service.collaborator.session.AdminSessionHandoffScriptExecutor;
 import com.syncturtle.services.user.service.collaborator.session.AdminSessionHandoffSerializer;
@@ -43,7 +42,6 @@ public class AdminSessionHandoffConfiguration {
             TokenHasher tokenHasher,
             AdminSessionHandoffSerializer serializer,
             AdminSessionHandoffScriptExecutor scriptExecutor,
-            AdminSessionHandoffProperties properties,
             Clock clock) {
         return new AdminSessionHandoffStore(
                 redis,
@@ -52,7 +50,6 @@ public class AdminSessionHandoffConfiguration {
                 tokenHasher,
                 serializer,
                 scriptExecutor,
-                properties,
                 clock);
     }
 

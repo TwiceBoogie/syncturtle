@@ -10,20 +10,22 @@ export const MaintenanceMessage = () => {
   return (
     <>
       <div className="flex flex-col gap-2.5">
-        <h1>&#x1F6A7; Looks like Syncturtle didn&apos;t start up correctly!</h1>
-        <span className="">
+        <h1 className="text-xl font-semibold text-custom-text-100 text-left">
+          &#x1F6A7; Looks like Syncturtle didn&apos;t start up correctly!
+        </h1>
+        <span className="text-base font-medium text-custom-text-200 text-left">
           Some services might have failed to start. Please check your container logs to identitfy the problem. If
           you&apos;re stuck, reach out to our support team for more help.
         </span>
       </div>
-      <div className="flex">
+      <div className="flex items-center justify-start gap-6 mt-1">
         {linkMap.map((link) => (
           <div key={link.key}>
             <a
               href={link.value}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-custom-primary-100 hover: underline text-sm"
+              className="text-custom-primary-100 hover:underline text-sm"
             >
               {link.label}
             </a>

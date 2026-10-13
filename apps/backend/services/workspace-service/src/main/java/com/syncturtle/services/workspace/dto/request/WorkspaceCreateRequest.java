@@ -20,7 +20,8 @@ public class WorkspaceCreateRequest {
     @Pattern(regexp = "^[a-z0-9-]+$", message = "Use lowercase letters, numbers, and hyphens only.")
     String slug;
 
-    @NotBlank(message = "Organization size is required")
+    // Legacy metadata; not a prerequisite or authorization input.
+    @Size(max = 20, message = "Organization size must be 20 characters or fewer.")
     String organizationSize;
 
     String companyRole;

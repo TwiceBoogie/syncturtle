@@ -100,7 +100,8 @@ public class UserAdministrationInternalServiceImpl implements UserAdministration
         User user = User.create(param, clock);
 
         User saved = userRepository.saveAndFlush(user);
-        profileRepository.save(Profile.create(saved, clock, companyName));
+        // Installation naming belongs to instance-service, not the product profile.
+        profileRepository.save(Profile.create(saved, clock, null));
 
         UserEvent event = userEventFactory.created(saved);
         outboxWriter.saveUserEvent(event);

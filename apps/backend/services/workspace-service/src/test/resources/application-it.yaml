@@ -1,9 +1,8 @@
 app:
   kafka:
-    enabled: false
+    deployment-id: test
     instance-configuration:
-      enabled: true
-      deployment-id: test
+      deployment-id: ${app.kafka.deployment-id}
       replica-id: workspace-it
       local-replica-count: 1
   workspace:

@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 // constants
-import { ADMIN_BASE_PATH, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_TITLE } from "@syncturtle/constants";
+import { ADMIN_BASE_PATH, SITE_KEYWORDS } from "@syncturtle/constants";
 // styles
 import "@/styles/globals.css";
 
@@ -15,24 +15,53 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const faviconVersion = "emerald-shell-v1";
+
 export const metadata: Metadata = {
-  title: SITE_TITLE,
-  description: SITE_DESCRIPTION,
+  title: "SyncTurtle Admin",
+  description: "Manage your SyncTurtle instance.",
   metadataBase: new URL("https://app.syncturtle.com"),
   keywords: SITE_KEYWORDS,
+  manifest: `${ADMIN_BASE_PATH}/site.webmanifest.json`,
+  icons: {
+    icon: [
+      {
+        url: `${ADMIN_BASE_PATH}/favicon/favicon.svg?v=${faviconVersion}`,
+        type: "image/svg+xml",
+        sizes: "any",
+      },
+      {
+        url: `${ADMIN_BASE_PATH}/favicon/favicon-32x32.png?v=${faviconVersion}`,
+        type: "image/png",
+        sizes: "32x32",
+      },
+      {
+        url: `${ADMIN_BASE_PATH}/favicon/favicon-16x16.png?v=${faviconVersion}`,
+        type: "image/png",
+        sizes: "16x16",
+      },
+    ],
+    shortcut: `${ADMIN_BASE_PATH}/favicon/favicon.ico?v=${faviconVersion}`,
+    apple: {
+      url: `${ADMIN_BASE_PATH}/favicon/apple-touch-icon.png?v=${faviconVersion}`,
+      sizes: "180x180",
+      type: "image/png",
+    },
+  },
+  appleWebApp: {
+    capable: true,
+    title: "SyncTurtle Admin",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#092C2B",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const ASSET_PREFIX = ADMIN_BASE_PATH;
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="apple-touch-icon" sizes="180x180" href={`${ASSET_PREFIX}/favicon/apple-touch-icon.png`} />
-        <link rel="icon" type="image/png" sizes="32x32" href={`${ASSET_PREFIX}/favicon/favicon-32x32.png`} />
-        <link rel="icon" type="image/png" sizes="16x16" href={`${ASSET_PREFIX}/favicon/favicon-16x16.png`} />
-        <link rel="manifest" href={`${ASSET_PREFIX}/site.webmanifest.json`} />
-        <link rel="shortcut icon" href={`${ASSET_PREFIX}/favicon/favicon.ico`} />
-      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
     </html>
   );
