@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.syncturtle.common.security.annotation.AllowAnonymous;
 import com.syncturtle.common.cache.response.annotation.InvalidateCache;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
 import com.syncturtle.common.contracts.auth.flow.AuthFlow;
@@ -39,6 +40,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @Profile("!setup")
+@AllowAnonymous
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(EndpointPaths.API_INSTANCES)

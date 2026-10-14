@@ -11,6 +11,7 @@ import { useUser } from "@/hooks/store/use-user";
 // local components
 import { AdminSidebar } from "./sidebar";
 import { AdminHeader } from "./header";
+import { UpdateAvailableBanner } from "./update-available-banner";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -37,6 +38,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <AdminSidebar />
         <main className="relative flex h-full w-full flex-col overflow-hidden bg-custom-background-100">
           <AdminHeader />
+          <UpdateAvailableBanner />
           <div className="h-full w-full min-h-0 overflow-hidden">{children}</div>
         </main>
         <NewUserPopup />

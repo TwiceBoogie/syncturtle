@@ -19,14 +19,13 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.syncturtle.common.core.security.token.Base64UrlSecureTokenGenerator;
-import com.syncturtle.common.security.cookie.ReactiveCsrfCookieWriter;
 import com.syncturtle.common.security.cookie.SecurityCookieFactory;
-import com.syncturtle.common.security.csrf.impl.HmacCsrfTokenSigner;
 import com.syncturtle.common.security.property.SecurityCookieProperties;
-import com.syncturtle.platform.gateway.configuration.property.GatewayCsrfProperties;
 import com.syncturtle.platform.gateway.dto.response.CsrfTokenResponse;
 import com.syncturtle.platform.gateway.security.PassportAuthenticationToken;
+import com.syncturtle.platform.gateway.security.csrf.GatewayCsrfCookieWriter;
 import com.syncturtle.platform.gateway.security.csrf.GatewayCsrfTokenProcessor;
+import com.syncturtle.platform.gateway.security.csrf.HmacGatewayCsrfTokenSigner;
 import com.syncturtle.platform.gateway.security.session.ParsedPassportSession;
 import com.syncturtle.platform.gateway.type.GatewayCsrfScope;
 
@@ -45,12 +44,12 @@ class CsrfControllerTest {
     void setUp() {
         Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
         cookieFactory = new SecurityCookieFactory(new SecurityCookieProperties(
-                false, false, "Lax", "Lax", "Lax", Duration.ofMinutes(30)));
+                false, false, "Lax", "Lax", "Lax"));
         GatewayCsrfTokenProcessor processor = new GatewayCsrfTokenProcessor(new JsonMapper(),
-                new HmacCsrfTokenSigner("k".repeat(32).getBytes(StandardCharsets.UTF_8)),
+                new HmacGatewayCsrfTokenSigner("k".repeat(32).getBytes(StandardCharsets.UTF_8)),
                 new Base64UrlSecureTokenGenerator(),
-                new GatewayCsrfProperties(Duration.ofMinutes(30), Duration.ofDays(7), 32, 2048, 1024), clock);
-        controller = new CsrfController(processor, new ReactiveCsrfCookieWriter(cookieFactory), clock);
+                clock);
+        controller = new CsrfController(processor, new GatewayCsrfCookieWriter(cookieFactory), clock);
     }
 
     @Nested
@@ -76,19 +75,22 @@ class CsrfControllerTest {
 
         @Test
         void issuesSessionFromTheValidatedPassportFamily() {
+            // arrange
             Instant familyIdleExpiry = NOW.plus(Duration.ofHours(8));
             MockServerHttpRequest request = MockServerHttpRequest.get("/api/get-csrf-token").build();
             ServerWebExchange exchange = MockServerWebExchange.from(request)
                     .mutate()
                     .principal(Mono.just(authentication(familyIdleExpiry)))
                     .build();
-
+            // conditions
+            // act
             ResponseEntity<CsrfTokenResponse> result = controller.getCsrfToken(exchange).block();
-
+            // assert
             assertThat(result).isNotNull();
             assertThat(result.getBody().getScope()).isEqualTo(GatewayCsrfScope.SESSION);
             assertThat(result.getBody().getExpiresAt()).isEqualTo(familyIdleExpiry);
             assertThat(result.getBody().getCsrfToken()).doesNotContain(SESSION_ID);
+            // verify
         }
 
     }

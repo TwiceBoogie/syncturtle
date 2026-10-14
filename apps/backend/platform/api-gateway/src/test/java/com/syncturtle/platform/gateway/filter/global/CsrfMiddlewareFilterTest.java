@@ -31,12 +31,11 @@ import org.springframework.web.server.ServerWebExchange;
 
 import com.syncturtle.common.core.security.token.Base64UrlSecureTokenGenerator;
 import com.syncturtle.common.security.cookie.SecurityCookieFactory;
-import com.syncturtle.common.security.csrf.impl.HmacCsrfTokenSigner;
 import com.syncturtle.common.security.property.SecurityCookieProperties;
-import com.syncturtle.platform.gateway.configuration.property.GatewayCsrfProperties;
 import com.syncturtle.platform.gateway.security.PassportAuthenticationToken;
 import com.syncturtle.platform.gateway.security.csrf.GatewayCsrfRoutePolicy;
 import com.syncturtle.platform.gateway.security.csrf.GatewayCsrfTokenProcessor;
+import com.syncturtle.platform.gateway.security.csrf.HmacGatewayCsrfTokenSigner;
 import com.syncturtle.platform.gateway.security.csrf.IssuedPreAuthCsrfToken;
 import com.syncturtle.platform.gateway.security.csrf.IssuedSessionCsrfToken;
 import com.syncturtle.platform.gateway.security.session.ParsedPassportSession;
@@ -57,16 +56,12 @@ class CsrfMiddlewareFilterTest {
 
     @BeforeEach
     void setup() {
-        SecurityCookieProperties cookieProperties = new SecurityCookieProperties(false, false, "Lax", "Lax", "Lax",
-                Duration.ofMinutes(30));
+        SecurityCookieProperties cookieProperties = new SecurityCookieProperties(false, false, "Lax", "Lax", "Lax");
         cookieFactory = new SecurityCookieFactory(cookieProperties);
-        GatewayCsrfProperties csrfProperties = new GatewayCsrfProperties(Duration.ofMinutes(30), Duration.ofDays(7), 32,
-                2048, 1024);
         tokenProcessor = new GatewayCsrfTokenProcessor(
                 new JsonMapper(),
-                new HmacCsrfTokenSigner("k".repeat(32).getBytes(StandardCharsets.UTF_8)),
+                new HmacGatewayCsrfTokenSigner("k".repeat(32).getBytes(StandardCharsets.UTF_8)),
                 new Base64UrlSecureTokenGenerator(),
-                csrfProperties,
                 Clock.fixed(NOW, ZoneOffset.UTC));
         filter = new CsrfMiddlewareFilter(cookieFactory, tokenProcessor, new GatewayCsrfRoutePolicy());
     }

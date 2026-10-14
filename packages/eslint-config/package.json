@@ -40,5 +40,9 @@
   },
   "optionalDependencies": {
     "eslint-config-next": "catalog:next16"
+  },
+  "devDependencies": {
+    "eslint": "catalog:",
+    "typescript": "catalog:"
   }
 }

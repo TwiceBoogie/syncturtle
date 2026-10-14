@@ -48,6 +48,7 @@ public interface InstanceAdminRepository extends JpaRepository<InstanceAdmin, UU
             FROM InstanceAdmin admin
             WHERE admin.instance.id = :instanceId
                 AND admin.userId = :userId
+                AND admin.deletedAt IS NULL
             """)
     Optional<InstanceAdminRole> findActiveRoleByInstanceIdAndUserId(@Param("instanceId") UUID instanceId,
             @Param("userId") UUID userId);

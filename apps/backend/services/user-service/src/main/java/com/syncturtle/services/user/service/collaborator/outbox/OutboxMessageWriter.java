@@ -9,6 +9,7 @@ import org.springframework.util.Assert;
 import com.syncturtle.common.contracts.messaging.OutboxEvent;
 import com.syncturtle.common.observability.tracing.PersistedTraceContext;
 import com.syncturtle.common.observability.tracing.TraceContextPropagator;
+import com.syncturtle.services.user.messaging.outbox.UserOutboxEventMapping;
 import com.syncturtle.services.user.model.OutboxMessage;
 import com.syncturtle.services.user.model.param.OutboxMessageCreateParam;
 import com.syncturtle.services.user.repository.OutboxMessageRepository;
@@ -28,14 +29,13 @@ public class OutboxMessageWriter {
     private final TraceContextPropagator traceContextPropagator;
     private final Clock clock;
 
-    public OutboxMessage save(OutboxEvent event, String topic, String messageKey, String aggregateType,
-            UUID aggregateId) {
+    public OutboxMessage save(OutboxEvent event, String messageKey, String aggregateType, UUID aggregateId) {
         Assert.notNull(event, "outbox event is required");
-        Assert.hasText(topic, "topic is required");
         Assert.hasText(messageKey, "messageKey is required");
         Assert.hasText(aggregateType, "aggregateType is required");
         Assert.notNull(aggregateId, "aggregateId is required");
 
+        String topic = UserOutboxEventMapping.topicFor(event);
         PersistedTraceContext traceContext = traceContextPropagator.capture();
 
         OutboxMessageCreateParam param = OutboxMessageCreateParam.builder()

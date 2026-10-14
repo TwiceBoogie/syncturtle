@@ -1,4 +1,5 @@
 import { createSerwistRoute } from "@serwist/turbopack";
+import { ADMIN_BASE_PATH } from "@syncturtle/constants";
 // import { spawnSync } from "node:child_process";
 
 // This is optional!
@@ -13,4 +14,8 @@ export const { dynamic, dynamicParams, revalidate, generateStaticParams, GET } =
   // additionalPrecacheEntries: [{ url: "/_offline.html" }, revision],
   swSrc: "app/sw.ts",
   useNativeEsbuild: true,
+  esbuildOptions: {
+    // Serwist bundles sw.ts with esbuild, outside Next's public-env substitution.
+    define: { "process.env.NEXT_PUBLIC_ADMIN_BASE_PATH": JSON.stringify(ADMIN_BASE_PATH) },
+  },
 });

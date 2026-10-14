@@ -108,11 +108,6 @@ public final class CsrfMiddlewareFilter implements GlobalFilter, Ordered {
             if (requirement == GatewayCsrfRequirement.TRANSPORT_SESSION) {
                 return forwardTransportSession(exchange, chain, validated);
             }
-            return requireAuthenticatedSession(exchange, chain, validated);
-        } catch (GatewayCsrfTokenException exception) {
-            return reject(exchange);
-        }
-    }
 
             return requireAuthenticatedSession(exchange, chain, validated);
         } catch (GatewayCsrfTokenException exception) {
@@ -141,7 +136,6 @@ public final class CsrfMiddlewareFilter implements GlobalFilter, Ordered {
                 exchange.getRequest().getPath().pathWithinApplication().value())) {
             return chain.filter(exchange);
         }
-    }
 
         return forwardPreAuthBinding(exchange, chain, validated);
     }

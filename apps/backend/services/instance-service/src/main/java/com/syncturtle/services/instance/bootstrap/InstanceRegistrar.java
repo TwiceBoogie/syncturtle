@@ -4,8 +4,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
 
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -25,6 +23,7 @@ import com.syncturtle.services.instance.model.param.InstanceRegistrationParam;
 import com.syncturtle.services.instance.model.param.InstanceRuntimeParam;
 import com.syncturtle.services.instance.repository.InstanceRepository;
 import com.syncturtle.services.instance.service.collaborator.outbox.InstanceOutboxWriter;
+import com.syncturtle.services.instance.version.CurrentVersionResolver;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +38,7 @@ public class InstanceRegistrar {
     private final InstanceServiceProperties properties;
     private final ApplicationEventPublisher events;
     private final InstanceOutboxWriter outboxWriter;
-    private final ObjectProvider<BuildProperties> buildPropertiesProvider;
+    private final CurrentVersionResolver currentVersionResolver;
     private final InstanceEventFactory eventFactory;
     private final Clock clock;
 
@@ -96,7 +95,7 @@ public class InstanceRegistrar {
     private InstanceRegistrationParam buildRegistrationParam(String machineSignature) {
         Instant now = Instant.now(clock);
 
-        InstanceBinaryParam binary = InstanceBinaryParam.from(buildPropertiesProvider.getIfAvailable(), now);
+        InstanceBinaryParam binary = currentVersionResolver.resolve(now);
 
         InstanceEdition edition = InstanceEditions.parseEdition(properties.getEdition());
 

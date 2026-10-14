@@ -3,12 +3,15 @@
 import type { FC, ReactNode } from "react";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import useSWR from "swr";
+// services
+import { AuthService } from "@/services/auth.service";
 // hooks
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useUser } from "@/hooks/store/use-user";
 import { useInstance } from "@/hooks/store/use-instance";
+// utils
 import { currentUserBootstrapKey } from "./user-wrapper-policy";
-import useSWR from "swr";
 
 interface IUserWrapperProps {
   children: ReactNode;
@@ -19,7 +22,7 @@ export const UserWrapper: FC<IUserWrapperProps> = (props) => {
   const pathname = usePathname();
   // hooks
   const { isSidebarCollapsed, toggleSidebar } = useAppTheme();
-  const { currentUser, fetchCurrentUser } = useUser();
+  const { currentUser, fetchCurrentUser, transitionToSignedOut } = useUser();
   const { instance, fetchInstanceAdmins } = useInstance();
 
   useSWR(currentUserBootstrapKey(instance?.isSetupDone, pathname), () => fetchCurrentUser(), {
@@ -27,6 +30,11 @@ export const UserWrapper: FC<IUserWrapperProps> = (props) => {
   });
 
   useSWR("INSTANCE_ADMINS", () => fetchInstanceAdmins());
+
+  useEffect(() => {
+    const authService = new AuthService();
+    return authService.subscribeAuthentication(transitionToSignedOut);
+  }, [transitionToSignedOut]);
 
   useEffect(() => {
     const localValue = localStorage && localStorage.getItem("god_mode_sidebar_collapsed");

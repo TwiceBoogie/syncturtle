@@ -24,6 +24,7 @@ import org.springframework.web.method.HandlerMethod;
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
 import com.syncturtle.common.security.annotation.RequireInstancePermission;
+import com.syncturtle.common.security.annotation.AllowAnonymous;
 import com.syncturtle.common.web.context.RequestUserContext;
 import com.syncturtle.services.instance.service.InstanceAuthorizationService;
 import com.syncturtle.services.instance.type.InstanceAdminRole;
@@ -50,7 +51,7 @@ class InstanceAuthorizationInterceptorTest {
     @BeforeEach
     void setup() {
         requestUserContext = new RequestUserContext();
-        interceptor = new InstanceAuthorizationInterceptor(requestUserContext, instanceAuthorizationService, false);
+        interceptor = new InstanceAuthorizationInterceptor(requestUserContext, instanceAuthorizationService);
         request = mock(HttpServletRequest.class);
         response = mock(HttpServletResponse.class);
     }
@@ -114,15 +115,27 @@ class InstanceAuthorizationInterceptorTest {
         }
 
         @Test
-        @DisplayName("abstains for an unannotated handler when authentication is not required by default")
-        void abstainsForUnannotatedHandler() throws Exception {
+        @DisplayName("requires authentication for an unannotated handler")
+        void requiresAuthenticationForUnannotatedHandler() throws Exception {
             // arrange
             HandlerMethod handler = handler("unannotated");
             // act
-            boolean allowed = interceptor.preHandle(request, response, handler);
+            Throwable thrown = catchThrowable(() -> interceptor.preHandle(request, response, handler));
             // assert
-            assertThat(allowed).isTrue();
+            assertThat(thrown).isInstanceOf(AuthException.class);
+            assertThat(((AuthException) thrown).getAuthErrorCode())
+                    .isEqualTo(AuthErrorCode.AUTHENTICATION_REQUIRED);
             // verify
+            verifyNoInteractions(instanceAuthorizationService);
+        }
+
+        @Test
+        void allowsAuthenticatedUnannotatedHandlerAndExplicitAnonymousHandler() throws Exception {
+            requestUserContext.setAuthenticated(USER_ID);
+            assertThat(interceptor.preHandle(request, response, handler("unannotated"))).isTrue();
+
+            requestUserContext.setAnonymous();
+            assertThat(interceptor.preHandle(request, response, handler("anonymous"))).isTrue();
             verifyNoInteractions(instanceAuthorizationService);
         }
 
@@ -160,6 +173,10 @@ class InstanceAuthorizationInterceptorTest {
 
         @SuppressWarnings("unused")
         public void unannotated() {
+        }
+
+        @AllowAnonymous
+        public void anonymous() {
         }
     }
 

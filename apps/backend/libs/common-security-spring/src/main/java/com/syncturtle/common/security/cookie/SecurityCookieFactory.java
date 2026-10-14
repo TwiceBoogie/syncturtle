@@ -85,10 +85,6 @@ public final class SecurityCookieFactory {
                 normalizeMaxAge(maxAge));
     }
 
-    public ResponseCookie csrfCookie(String signedToken) {
-        return csrfCookie(signedToken, properties.getCsrfMaxAge());
-    }
-
     public ResponseCookie csrfCookie(String signedToken, Duration maxAge) {
         return createCookie(
                 csrfCookieName(),

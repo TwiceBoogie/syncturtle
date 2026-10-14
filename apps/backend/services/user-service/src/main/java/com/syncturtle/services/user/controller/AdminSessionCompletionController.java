@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.syncturtle.common.security.annotation.AllowAnonymous;
 import com.syncturtle.common.core.header.GatewayHeaders;
 import com.syncturtle.common.security.cookie.ServletAuthCookieWriter;
 import com.syncturtle.common.web.context.RequestClientContext;
@@ -25,6 +26,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
+@AllowAnonymous
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth/admin")

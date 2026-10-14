@@ -43,8 +43,7 @@ class BrowserSecurityCookieIsolationFilterTest {
 
     @BeforeEach
     void setup() {
-        Duration duration = Duration.ofMinutes(30);
-        SecurityCookieProperties properties = new SecurityCookieProperties(false, false, "Lax", "Lax", "Lax", duration);
+        SecurityCookieProperties properties = new SecurityCookieProperties(false, false, "Lax", "Lax", "Lax");
         cookieFactory = new SecurityCookieFactory(properties);
         BrowserSecurityCookiePolicy policy = new BrowserSecurityCookiePolicy(cookieFactory);
 
@@ -143,8 +142,8 @@ class BrowserSecurityCookieIsolationFilterTest {
         }
 
         @Test
-        @DisplayName("preseves the cahced form body and hiden csrf field")
-        void preservesTheCachedFormBodyAndHiddenCsrfField() {
+        @DisplayName("preserves the cached form body and hidden csrf field without forwarding the cookie")
+        void preservesTheCachedFormBodyAndHiddenCsrfFieldWithoutForwardingTheCookie() {
             // arrange
             String body = "csrfmiddlewaretoken=raw-csrf&email=user%40example.test";
             MockServerHttpRequest request = MockServerHttpRequest.post("/auth/sign-in")
@@ -167,7 +166,7 @@ class BrowserSecurityCookieIsolationFilterTest {
             // act
             filter.filter(exchange, chain).block();
             // assert
-            assertThat(downstreamCookie).hasValue("csrf_token=signed-csrf");
+            assertThat(downstreamCookie.get()).isNull();
             assertThat(downstreamBody).hasValue(body);
             // verify
         }
