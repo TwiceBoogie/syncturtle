@@ -3,11 +3,10 @@
 import type { FC } from "react";
 import { useEffect, useMemo, useRef } from "react";
 // syncturtle imports
-import type { IWorkspaceMemberInvitation, TOnboardingStep } from "@syncturtle/types";
 import { EOnboardingSteps } from "@syncturtle/constants";
+import type { IWorkspaceMemberInvitation, TOnboardingStep } from "@syncturtle/types";
 // components
 import { ProfileSetupStep } from "./profile";
-import { RoleSetupStep } from "./role";
 import { UseCaseSetupStep } from "./usecase";
 import { WorkspaceSetupStep } from "./workspace";
 import { InviteTeamStep } from "./team";
@@ -20,9 +19,9 @@ interface IOnboardingStepRootProps {
 
 export const OnboardingStepRoot: FC<IOnboardingStepRootProps> = (props) => {
   const { currentStep, invitations, handleStepChange } = props;
-
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // scroll to top when step changes
   useEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTo({
@@ -35,10 +34,9 @@ export const OnboardingStepRoot: FC<IOnboardingStepRootProps> = (props) => {
   const stepComponents = useMemo(
     () => ({
       [EOnboardingSteps.PROFILE_SETUP]: <ProfileSetupStep handleStepChange={handleStepChange} />,
-      [EOnboardingSteps.ROLE_SETUP]: <RoleSetupStep handleStepChange={handleStepChange} />,
       [EOnboardingSteps.USE_CASE_SETUP]: <UseCaseSetupStep handleStepChange={handleStepChange} />,
       [EOnboardingSteps.WORKSPACE_CREATE_OR_JOIN]: (
-        <WorkspaceSetupStep invitations={invitations} handleStepChange={handleStepChange} />
+        <WorkspaceSetupStep invitations={invitations ?? []} handleStepChange={handleStepChange} />
       ),
       [EOnboardingSteps.INVITE_MEMBERS]: <InviteTeamStep handleStepChange={handleStepChange} />,
     }),

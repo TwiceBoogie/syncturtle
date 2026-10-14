@@ -7,14 +7,51 @@ import { AppProvider } from "./provider";
 import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_TITLE } from "@syncturtle/constants";
 import { env, getDatasetMap } from "@/env";
 
+const faviconVersion = "emerald-shell-v1";
+
 export const metadata: Metadata = {
   title: SITE_TITLE,
   description: SITE_DESCRIPTION,
   metadataBase: new URL("https://app.syncturtle.com"),
   keywords: SITE_KEYWORDS,
+  // PWA manifest
+  manifest: "/site.webmanifest.json",
+  // Browser and home-screen icons
+  icons: {
+    icon: [
+      {
+        url: `/favicon/favicon.svg?v=${faviconVersion}`,
+        type: "image/svg+xml",
+        sizes: "any",
+      },
+      {
+        url: `/favicon/favicon-32x32.png?v=${faviconVersion}`,
+        type: "image/png",
+        sizes: "32x32",
+      },
+      {
+        url: `/favicon/favicon-16x16.png?v=${faviconVersion}`,
+        type: "image/png",
+        sizes: "16x16",
+      },
+    ],
+    shortcut: `/favicon/favicon.ico?v=${faviconVersion}`,
+    apple: {
+      url: `/favicon/apple-touch-icon.png?v=${faviconVersion}`,
+      sizes: "180x180",
+      type: "image/png",
+    },
+  },
+  // iOS home-screen application behavior
+  appleWebApp: {
+    capable: true,
+    title: "SyncTurtle",
+    statusBarStyle: "default",
+  },
 };
 
 export const viewport: Viewport = {
+  themeColor: "#092C2B",
   minimumScale: 1,
   initialScale: 1,
   maximumScale: 1,
@@ -28,13 +65,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   const datasetMap = getDatasetMap();
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning>
-      <head>
-        <meta name="theme-color" content="#fff" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
-        <link rel="manifest" href="/site.webmanifest.json" />
-        <link rel="shortcut icon" href="/favicon/favicon.ico" />
-      </head>
       <body {...datasetMap}>
         <AppProvider>
           <div className="h-screen w-full overflow-hidden bg-custom-background-100 relative flex flex-col">

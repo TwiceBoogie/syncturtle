@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -42,6 +43,7 @@ import com.syncturtle.services.instance.repository.projection.AdminUserDetailLit
 import com.syncturtle.services.instance.repository.projection.AdminUserDetailsProjection;
 import com.syncturtle.services.instance.repository.projection.InstanceAdminProjection;
 import com.syncturtle.services.instance.service.InstanceAdminService;
+import com.syncturtle.services.instance.service.collaborator.session.InstanceAdminSessionVersionWriter;
 import com.syncturtle.services.instance.support.clock.TestClocks;
 import com.syncturtle.services.instance.support.fixture.InstanceFixtures;
 import com.syncturtle.services.instance.type.InstanceAdminRole;
@@ -59,6 +61,8 @@ class InstanceAdminServiceImplTest {
     UserRepository userRepository;
     @Mock
     InstanceAdminApiMapper mapper;
+    @Mock
+    InstanceAdminSessionVersionWriter sessionVersionWriter;
 
     @Mock
     InstanceAdminProjection adminProjectionOne;
@@ -78,7 +82,7 @@ class InstanceAdminServiceImplTest {
     void setup() {
         clock = TestClocks.fixedUtc();
         service = new InstanceAdminServiceImpl(instanceRepository, instanceAdminRepository, userRepository, mapper,
-                clock);
+                sessionVersionWriter, clock);
     }
 
     @Nested
@@ -266,7 +270,8 @@ class InstanceAdminServiceImplTest {
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("currentUserId is required");
             // verify
-            verifyNoInteractions(instanceRepository, instanceAdminRepository, userRepository, mapper);
+            verifyNoInteractions(instanceRepository, instanceAdminRepository, userRepository, mapper,
+                    sessionVersionWriter);
         }
 
         @Test
@@ -279,7 +284,8 @@ class InstanceAdminServiceImplTest {
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("instanceAdminId is required");
             // verify
-            verifyNoInteractions(instanceRepository, instanceAdminRepository, userRepository, mapper);
+            verifyNoInteractions(instanceRepository, instanceAdminRepository, userRepository, mapper,
+                    sessionVersionWriter);
         }
 
         @Test
@@ -302,6 +308,7 @@ class InstanceAdminServiceImplTest {
                         assertThat(exception.getReason()).isEqualTo("Instance admin does not exist.");
                     });
             // verify
+            verifyNoInteractions(sessionVersionWriter);
         }
 
         @Test
@@ -326,6 +333,7 @@ class InstanceAdminServiceImplTest {
                                 .isEqualTo("You cannot remove your own admin access from this endpoint");
                     });
             // verify
+            verifyNoInteractions(sessionVersionWriter);
         }
 
         @Test
@@ -353,6 +361,7 @@ class InstanceAdminServiceImplTest {
                     });
             assertThat(target.getDeletedAt()).isNull();
             // verify
+            verifyNoInteractions(sessionVersionWriter);
         }
 
         @Test
@@ -374,8 +383,39 @@ class InstanceAdminServiceImplTest {
             service.deleteAdmin(currentUserId, instanceAdminId);
             // assert
             assertThat(target.getDeletedAt()).isEqualTo(TestClocks.NOW);
+            assertThat(target.getSessionVersion()).isEqualTo(2L);
             // verify
             verify(instanceAdminRepository, never()).save(any(InstanceAdmin.class));
+            InOrder order = inOrder(instanceAdminRepository, sessionVersionWriter);
+            order.verify(instanceAdminRepository).flush();
+            order.verify(sessionVersionWriter).write(instance.getId(), targetUserId, 2L);
+        }
+
+        @Test
+        @DisplayName("propagates administrator-version write failure after flushing the revocation")
+        void propagatesVersionWriteFailure() {
+            // arrange
+            Instance instance = InstanceFixtures.persistedInstance("Syncturtle");
+            UUID currentUserId = UUID.randomUUID();
+            UUID targetUserId = UUID.randomUUID();
+            UUID instanceAdminId = UUID.randomUUID();
+            InstanceAdmin target = InstanceAdmin.createAdmin(targetUserId, instance);
+            // conditions
+            when(instanceRepository.findFirstByDeletedAtIsNullOrderByCreatedAtDesc(Instance.class))
+                    .thenReturn(Optional.of(instance));
+            when(instanceAdminRepository.findByIdAndDeletedAtIsNull(instanceAdminId)).thenReturn(Optional.of(target));
+            when(instanceAdminRepository.countByInstance_IdAndRoleAndDeletedAtIsNull(instance.getId(),
+                    InstanceAdminRole.ADMIN)).thenReturn(2L);
+            doThrow(new IllegalStateException("Redis unavailable"))
+                    .when(sessionVersionWriter).write(instance.getId(), targetUserId, 2L);
+            // act + assert
+            assertThatThrownBy(() -> service.deleteAdmin(currentUserId, instanceAdminId))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Redis unavailable");
+            // verify
+            InOrder order = inOrder(instanceAdminRepository, sessionVersionWriter);
+            order.verify(instanceAdminRepository).flush();
+            order.verify(sessionVersionWriter).write(instance.getId(), targetUserId, 2L);
         }
 
     }

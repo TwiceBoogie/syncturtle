@@ -23,7 +23,6 @@ import com.syncturtle.common.contracts.workspace.event.WorkspaceEvent;
 import com.syncturtle.common.contracts.workspace.event.WorkspaceMemberEvent;
 import com.syncturtle.common.contracts.workspace.exception.WorkspaceException;
 import com.syncturtle.common.contracts.workspace.type.WorkspaceRole;
-import com.syncturtle.common.core.exception.SlugAlreadyExistsException;
 import com.syncturtle.common.core.security.token.SecureTokenGenerator;
 import com.syncturtle.services.workspace.dto.request.WorkspaceCreateRequest;
 import com.syncturtle.services.workspace.dto.request.WorkspaceInvitationRequest;
@@ -90,7 +89,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
             workspaceSlugPolicy.assertAvailable(normalizedSlug);
 
             return WorkspaceSlugCheckResponse.available();
-        } catch (SlugAlreadyExistsException exception) {
+        } catch (WorkspaceException exception) {
             return WorkspaceSlugCheckResponse.unavailable(exception.getMessage());
         } catch (IllegalArgumentException exception) {
             return WorkspaceSlugCheckResponse.unavailable(exception.getMessage());
@@ -189,13 +188,13 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         UserLite currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> WorkspaceException.invitationForbidden(workspace.getId(), currentUserId));
 
-        WorkspaceMember requestingMember = workspaceMemberRepository
-                .findByWorkspace_IdAndMemberIdAndActivatedTrue(workspace.getId(), currentUserId)
+        WorkspaceRole requestingRole = workspaceMemberRepository
+                .findActiveRoleByWorkspaceSlugAndUserId(normalizedSlug, currentUserId)
                 .orElseThrow(() -> WorkspaceException.invitationForbidden(workspace.getId(), currentUserId));
 
         List<InvitationDraft> invitationDrafts = normalizeInvitationDrafts(request);
 
-        assertRequesterCanInviteRoles(requestingMember.getRole(), invitationDrafts);
+        assertRequesterCanInviteRoles(requestingRole, invitationDrafts);
 
         List<String> requestedEmails = invitationDrafts.stream()
                 .map(InvitationDraft::getEmail)

@@ -8,10 +8,9 @@ server:
   port: 0
 app:
   kafka:
-    enabled: false
+    deployment-id: test
     instance-configuration:
-      enabled: true
-      deployment-id: test
+      deployment-id: ${app.kafka.deployment-id}
       replica-id: workspace-test
       local-replica-count: 1
   workspace:

@@ -36,7 +36,11 @@ public final class WorkspaceCreateParam {
 
         this.name = normalizeRequired(name, "name", MAX_NAME_LENGTH);
         this.slug = normalizeRequired(slug, "slug", MAX_SLUG_LENGTH);
-        this.organizationSize = normalizeRequired(organizationSize, "organizationSize", MAX_ORGANIZATION_SIZE_LENGTH);
+        this.organizationSize = normalizeNullable(organizationSize);
+        if (this.organizationSize != null) {
+            Assert.isTrue(this.organizationSize.length() <= MAX_ORGANIZATION_SIZE_LENGTH,
+                    "organizationSize must be " + MAX_ORGANIZATION_SIZE_LENGTH + " characters or fewer");
+        }
         this.ownerId = ownerId;
         this.timezone = normalizeTimezoneOrDefault(timezone);
     }

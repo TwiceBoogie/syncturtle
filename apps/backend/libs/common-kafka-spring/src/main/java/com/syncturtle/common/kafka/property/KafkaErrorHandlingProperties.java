@@ -5,7 +5,6 @@ import java.util.Objects;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
-import org.springframework.util.StringUtils;
 
 import lombok.Getter;
 
@@ -13,28 +12,31 @@ import lombok.Getter;
 @ConfigurationProperties(prefix = "app.kafka.error-handling")
 public final class KafkaErrorHandlingProperties {
 
+    private static final Duration MAX_INITIAL_INTERVAL = Duration.ofSeconds(5);
+    private static final Duration MAX_ELAPSED_TIME = Duration.ofMinutes(2);
+    private static final double MAX_MULTIPLIER = 4.0d;
+
     private final Duration initialInterval;
     private final double multiplier;
     private final Duration maxElapsedTime;
-    private final String dltSuffix;
-    private final boolean ackAfterHandle;
-    private final boolean commitRecovered;
     private final boolean logRetries;
 
     public KafkaErrorHandlingProperties(
             @DefaultValue("500ms") Duration initialInterval,
             @DefaultValue("2.0") double multiplier,
             @DefaultValue("8s") Duration maxElapsedTime,
-            @DefaultValue(".DLT") String dltSuffix,
-            @DefaultValue("true") boolean ackAfterHandle,
-            @DefaultValue("true") boolean commitRecovered,
             @DefaultValue("true") boolean logRetries) {
         this.initialInterval = requirePositive(initialInterval, "initial-interval");
-        this.multiplier = requireAtLeast(multiplier, 1.0d, "multiplier");
+        if (this.initialInterval.compareTo(MAX_INITIAL_INTERVAL) > 0) {
+            throw new IllegalArgumentException("app.kafka.error-handling.initial-interval must be at most 5s");
+        }
+        this.multiplier = requireMultiplier(multiplier);
         this.maxElapsedTime = requirePositive(maxElapsedTime, "max-elapsed-time");
-        this.dltSuffix = requireText(dltSuffix, "dlt-suffix");
-        this.ackAfterHandle = ackAfterHandle;
-        this.commitRecovered = commitRecovered;
+        if (this.maxElapsedTime.compareTo(this.initialInterval) < 0
+                || this.maxElapsedTime.compareTo(MAX_ELAPSED_TIME) > 0) {
+            throw new IllegalArgumentException(
+                    "app.kafka.error-handling.max-elapsed-time must be between initial-interval and 2m");
+        }
         this.logRetries = logRetries;
     }
 
@@ -48,21 +50,12 @@ public final class KafkaErrorHandlingProperties {
         return duration;
     }
 
-    private static double requireAtLeast(double value, double min, String propertyName) {
-        if (value < min) {
-            throw new IllegalArgumentException(
-                    "app.kafka.error-handling." + propertyName + " must be >= " + min);
+    private static double requireMultiplier(double value) {
+        if (!Double.isFinite(value) || value < 1.0d || value > MAX_MULTIPLIER) {
+            throw new IllegalArgumentException("app.kafka.error-handling.multiplier must be between 1 and 4");
         }
 
         return value;
-    }
-
-    private static String requireText(String value, String propertyName) {
-        if (!StringUtils.hasText(value)) {
-            throw new IllegalArgumentException("app.kafka.error-handling." + propertyName + " is required");
-        }
-
-        return value.trim();
     }
 
 }

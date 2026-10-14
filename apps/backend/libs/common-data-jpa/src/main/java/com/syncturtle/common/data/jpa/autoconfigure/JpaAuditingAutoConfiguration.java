@@ -6,7 +6,6 @@ import java.util.UUID;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration;
@@ -32,7 +31,6 @@ import jakarta.persistence.EntityManagerFactory;
         EnableJpaAuditing.class
 })
 @ConditionalOnBean(EntityManagerFactory.class)
-@ConditionalOnBooleanProperty(prefix = "app.data.jpa.auditing", name = "enabled", matchIfMissing = true)
 @EnableJpaAuditing
 public class JpaAuditingAutoConfiguration {
 

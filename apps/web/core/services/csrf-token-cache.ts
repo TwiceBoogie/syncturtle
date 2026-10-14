@@ -16,6 +16,9 @@ const browserSessionStorage = (): TSessionStorage | null => {
   }
 };
 
+/**
+ * Manages the lifecycle of CSRF tokens.
+ */
 export class CsrfTokenCache {
   private cached: ICsrfTokenData | null = null;
   private pending: Promise<ICsrfTokenData> | null = null;

@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.syncturtle.services.instance.type.VersionStatus;
 
 import lombok.Builder;
 import lombok.Value;
@@ -20,6 +21,7 @@ public class InstanceResponse {
     String instanceId;
     String currentVersion;
     String latestVersion;
+    VersionStatus versionStatus;
     Instant lastCheckedAt;
     String namespace;
     @JsonProperty("isTelemetryEnabled")

@@ -1,5 +1,7 @@
 package com.syncturtle.common.web.autoconfigure;
 
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -14,6 +16,7 @@ import com.syncturtle.common.security.provenance.RequestProvenanceSigner;
 import com.syncturtle.common.web.client.FeignAuthErrorDecoder;
 import com.syncturtle.common.web.client.RequestProvenanceFeignInterceptor;
 
+import feign.Request;
 import feign.RequestInterceptor;
 import feign.codec.ErrorDecoder;
 import tools.jackson.databind.json.JsonMapper;
@@ -24,6 +27,13 @@ import tools.jackson.databind.json.JsonMapper;
         FeignClient.class
 })
 public class FeignClientAutoConfiguration {
+
+    @Bean
+    @ConditionalOnMissingBean(Request.Options.class)
+    Request.Options syncturtleInternalClientRequestOptions() {
+        return new Request.Options(2, TimeUnit.SECONDS, 5, TimeUnit.SECONDS, true);
+    }
+
 
     @Bean(name = "syncturtleRequestProvenanceInterceptor")
     @ConditionalOnBean({ RequestProvenanceSigner.class, RequestProvenanceOutboundPolicy.class })

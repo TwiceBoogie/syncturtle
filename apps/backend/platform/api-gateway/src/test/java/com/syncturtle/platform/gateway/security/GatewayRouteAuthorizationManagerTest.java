@@ -110,6 +110,21 @@ class GatewayRouteAuthorizationManagerTest {
             // verify
         }
 
+        @Test
+        @DisplayName("email credentials check requires administrator authority at the Gateway")
+        void emailCredentialsCheckRequiresAdminAuthority() {
+            // arrange
+            AuthorizationContext context = context(HttpMethod.POST, "/api/instances/email-credentials-check");
+            TestingAuthenticationToken admin = new TestingAuthenticationToken(
+                    "admin", null, "ROLE_USER", "ROLE_INSTANCE_ADMIN");
+            // act
+            AuthorizationResult userResult = manager.authorize(Mono.just(userAuthentication()), context).block();
+            AuthorizationResult adminResult = manager.authorize(Mono.just(admin), context).block();
+            // assert
+            assertThat(userResult.isGranted()).isFalse();
+            assertThat(adminResult.isGranted()).isTrue();
+        }
+
     }
 
     private static TestingAuthenticationToken userAuthentication() {

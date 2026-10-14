@@ -1,9 +1,9 @@
+import { APIService } from "@/services/api.service";
 import { AuthService } from "@/services/auth.service";
 import { UserService } from "@/services/user.service";
-import type { IUser } from "@syncturtle/types";
 import { ExternalStore } from "@syncturtle/utils";
 import { CoreRootStore } from "./root.store";
-import { API_BASE_PATH } from "@syncturtle/constants";
+import type { IUser } from "@syncturtle/types";
 
 type TError = {
   status: string;
@@ -34,6 +34,7 @@ export interface IUserStore {
   fetchCurrentUser: () => Promise<IUser>;
   reset: () => void;
   signOut: () => void;
+  transitionToSignedOut: () => void;
 }
 
 export interface IUserStoreInternal extends IUserStore {
@@ -45,6 +46,9 @@ export interface IUserStoreInternal extends IUserStore {
 export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStoreInternal {
   private readonly userService: UserService;
   private readonly authService: AuthService;
+  private fetchCurrentUserSeq = 0;
+  private signedOut = false;
+  private signOutPromise: Promise<void> | null = null;
 
   constructor(private readonly _store: CoreRootStore) {
     super(createInitialSnapshot());
@@ -70,6 +74,8 @@ export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStor
   }
 
   public fetchCurrentUser = async (): Promise<IUser> => {
+    if (this.signedOut) throw new Error("Administrator session has ended");
+    const requestSeq = ++this.fetchCurrentUserSeq;
     this.setState((s) => ({
       ...s,
       isLoading: s.currentUser === undefined ? true : s.isLoading,
@@ -78,9 +84,10 @@ export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStor
 
     try {
       const currentUser = await this.userService.adminDetails();
-      console.log(`currentUser: ${currentUser}`);
+      if (requestSeq !== this.fetchCurrentUserSeq) return currentUser;
       if (currentUser) {
         await this._store.instance.fetchInstanceAdmins();
+        if (requestSeq !== this.fetchCurrentUserSeq) return currentUser;
 
         this.setState({
           isLoading: false,
@@ -98,6 +105,7 @@ export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStor
       }
       return currentUser;
     } catch (error) {
+      if (requestSeq !== this.fetchCurrentUserSeq) throw error;
       this.setState({
         isLoading: false,
         error: {
@@ -111,16 +119,30 @@ export class UserStore extends ExternalStore<TUserSnapshot> implements IUserStor
   };
 
   public signOut = async (): Promise<void> => {
-    try {
-      await this.authService.signOut();
-    } finally {
-      this._store.resetOnSignOut();
-
-      window.location.assign(API_BASE_PATH);
+    if (this.signedOut) return Promise.resolve();
+    if (!this.signOutPromise) {
+      this.signOutPromise = this.authService
+        .signOut()
+        .then(() => this.transitionToSignedOut())
+        .finally(() => {
+          this.signOutPromise = null;
+        });
     }
+    return this.signOutPromise;
+  };
+
+  public transitionToSignedOut = (): void => {
+    if (this.signedOut) return;
+    this.signedOut = true;
+    APIService.clearSessionCsrf();
+    this._store.resetOnSignOut();
+    this.setState({ isUserLoggedIn: false });
+    // Hard navigation disposes remaining app-local stores and SWR state.
+    if (typeof window !== "undefined") window.location.assign(AuthService.signedOutDestination());
   };
 
   public reset = () => {
+    this.fetchCurrentUserSeq += 1;
     this.replaceState(createInitialSnapshot());
   };
 }

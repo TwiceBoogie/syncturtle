@@ -1,7 +1,6 @@
 package com.syncturtle.services.email.configuration.property;
 
 import java.net.URI;
-import java.time.Duration;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.Assert;
@@ -14,16 +13,9 @@ import lombok.Getter;
 public final class InstanceServiceClientProperties {
 
     private final URI baseUrl;
-    private final Duration connectTimeout;
-    private final Duration readTimeout;
 
-    public InstanceServiceClientProperties(
-            URI baseUrl,
-            Duration connectTimeout,
-            Duration readTimeout) {
+    public InstanceServiceClientProperties(URI baseUrl) {
         this.baseUrl = normalizeRequiredOrigin(baseUrl, "app.clients.instance-service.base-url");
-        this.connectTimeout = requirePositiveDuration(connectTimeout, "app.clients.instance-service.connect-timeout");
-        this.readTimeout = requirePositiveDuration(readTimeout, "app.clients.instance-service.read-timeout");
     }
 
     private static URI normalizeRequiredOrigin(URI uri, String propertyName) {
@@ -56,10 +48,4 @@ public final class InstanceServiceClientProperties {
         return URI.create(value);
     }
 
-    private static Duration requirePositiveDuration(Duration duration, String propertyName) {
-        Assert.notNull(duration, propertyName + " is required");
-        Assert.isTrue(!duration.isNegative() && !duration.isZero(), propertyName + " must be positive");
-
-        return duration;
-    }
 }

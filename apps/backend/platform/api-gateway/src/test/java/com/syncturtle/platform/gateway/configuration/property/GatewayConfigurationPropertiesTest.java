@@ -28,7 +28,7 @@ class GatewayConfigurationPropertiesTest {
                         assertThat(context.getBean(GatewayClientMetadataProperties.class)
                                 .getTrustedProxyCount()).isEqualTo(2);
                         assertThat(context.getBean(GatewayPassportProperties.class)
-                                .getAuthHeaderPrefix()).isEqualTo("X-Auth-");
+                                .getIssuer()).isEqualTo("https://api.syncturtle.test/auth");
                     });
         }
     }

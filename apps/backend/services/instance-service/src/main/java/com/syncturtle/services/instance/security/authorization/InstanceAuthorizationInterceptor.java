@@ -16,8 +16,8 @@ public final class InstanceAuthorizationInterceptor extends AbstractAuthorizatio
     private final InstanceAuthorizationService instanceAuthorizationService;
 
     public InstanceAuthorizationInterceptor(RequestUserContext requestUserContext,
-            InstanceAuthorizationService instanceAuthorizationService, Boolean requireAuthenticationByDefault) {
-        super(requestUserContext, requireAuthenticationByDefault);
+            InstanceAuthorizationService instanceAuthorizationService) {
+        super(requestUserContext);
         this.instanceAuthorizationService = instanceAuthorizationService;
     }
 

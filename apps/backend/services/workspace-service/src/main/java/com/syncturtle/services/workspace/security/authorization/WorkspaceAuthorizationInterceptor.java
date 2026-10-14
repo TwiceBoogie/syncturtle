@@ -16,8 +16,8 @@ public final class WorkspaceAuthorizationInterceptor extends AbstractAuthorizati
     private final WorkspaceAuthorizationService workspaceAuthorizationService;
 
     public WorkspaceAuthorizationInterceptor(RequestUserContext requestUserContext,
-            WorkspaceAuthorizationService workspaceAuthorizationService, Boolean requireAuthenticationByDefault) {
-        super(requestUserContext, requireAuthenticationByDefault);
+            WorkspaceAuthorizationService workspaceAuthorizationService) {
+        super(requestUserContext);
         this.workspaceAuthorizationService = workspaceAuthorizationService;
     }
 
