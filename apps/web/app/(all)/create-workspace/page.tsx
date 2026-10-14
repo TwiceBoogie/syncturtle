@@ -1,0 +1,115 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useTheme } from "next-themes";
+// heroui
+import { Button } from "@heroui/react";
+// hooks
+import { useUser, useUserProfile } from "@/hooks/store/user";
+import { useTranslation } from "@syncturtle/i18n";
+import { useAppRouter } from "@/hooks/use-app-router";
+import { useInstance } from "@/hooks/store/use-instance";
+// components
+import { CreateWorkspaceForm, type IWorkspaceCreateFormData } from "@/components/workspace/create-workspace-form";
+// wrappers
+import { AuthenticationWrapper } from "@/lib/wrappers";
+// types
+import type { IWorkspace } from "@syncturtle/types";
+// assets
+import BlackHorizontalLogo from "@/public/syncturtle-logos/syncturtle-lockup-dark.svg";
+import WhiteHorizontalLogo from "@/public/syncturtle-logos/syncturtle-lockup-light.svg";
+
+export default function CreateWorkspacePage() {
+  const { t } = useTranslation();
+  // theme
+  const { resolvedTheme } = useTheme();
+  // router
+  const router = useAppRouter();
+  // hooks
+  const { data: currentUser } = useUser();
+  const { updateUserProfile } = useUserProfile();
+  const { config } = useInstance();
+  // states
+  const [defaultValues, setDefaultValues] = useState<IWorkspaceCreateFormData>({
+    name: "",
+    slug: "",
+    organizationSize: "",
+  });
+  // derived values
+  // if the config is missing then might as well say workspace creation is disabled.
+  // since something is going on
+  const isWorkspaceCreationDisabled = config?.isWorkspaceCreationDisabled ?? true;
+
+  const getMailtoHref = () => {
+    const subject = t("workspace_creation.request_email.subject");
+    const body = t("workspace_creation.request_email.body", {
+      firstName: currentUser?.firstName || "",
+      lastName: currentUser?.lastName || "",
+      email: currentUser?.email || "",
+    });
+
+    return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
+  const onSubmit = async (workspace: IWorkspace) => {
+    await updateUserProfile({ lastWorkspaceId: workspace.id });
+    // probably catch errors else it would push even when error occurs
+    router.push(`/${workspace.slug}`);
+  };
+
+  const logo = resolvedTheme === "dark" ? BlackHorizontalLogo : WhiteHorizontalLogo;
+  return (
+    <AuthenticationWrapper>
+      <div className="flex h-full flex-col gap-y-2 overflow-hidden sm:flex-row sm:gap-y-0">
+        <div className="relative h-1/6 shrink-0 sm:w-2/12 md:w-3/12 lg:w-1/5">
+          <div className="absolute left-0 top-1/2 h-[0.5px] w-full -translate-y-1/2 border-b-[0.5px] border-custom-border-200 sm:left-1/2 sm:top-0 sm:h-screen sm:w-[0.5px] sm:-translate-x-1/2 sm:translate-y-0 sm:border-r-[0.5px] md:left-1/3" />
+          <Link
+            className="absolute left-5 top-1/2 grid -translate-y-1/2 place-items-center bg-custom-background-100 px-3 sm:left-1/2 sm:top-12 sm:translate-x-[-15px] sm:translate-y-0 sm:px-0 sm:py-5 md:left-1/3"
+            href="/"
+          >
+            <Image src={logo} alt="SyncTurtle" width={133} height={32} />
+          </Link>
+          <div className="absolute right-4 top-1/4 -translate-y-1/2 text-sm text-custom-text-100 sm:fixed sm:right-16 sm:top-12 sm:translate-y-0 sm:py-5">
+            {currentUser?.email}
+          </div>
+        </div>
+        <div className="relative flex h-full justify-center px-8 pb-8 sm:w-10/12 sm:items-center sm:justify-start sm:p-0 sm:pr-[8.33%] md:w-9/12 lg:w-4/5">
+          {isWorkspaceCreationDisabled ? (
+            <div className="w-4/5 h-full flex flex-col items-center justify-center text-lg font-medium gap-1">
+              {/* <Image src={WorkspaceCreationDisabled} width={200} alt="Workspace creation disabled" className="mb-4" /> */}
+              <div className="text-lg font-medium text-center">
+                {t("workspace_creation.errors.creation_disabled.title")}
+              </div>
+              <p className="text-sm text-custom-text-300 wrap-break-word text-center">
+                {t("workspace_creation.errors.creation_disabled.description")}
+              </p>
+              <div className="flex gap-4 mt-6">
+                <Button className={"rounded-sm"} onPress={() => router.back()}>
+                  {t("common.go_back")}
+                </Button>
+                <a href={getMailtoHref()}>
+                  <Button variant="outline" className={"rounded-sm"}>
+                    {t("workspace_creation.errors.creation_disabled.request_button")}
+                  </Button>
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full space-y-7 sm:space-y-10">
+              <h4 className="text-2xl font-semibold">{t("workspace_creation.heading")}</h4>
+              <div className="sm:w-3/4 md:w-2/5">
+                <CreateWorkspaceForm
+                  onSubmit={onSubmit}
+                  defaultValues={defaultValues}
+                  setDefaultValues={setDefaultValues}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </AuthenticationWrapper>
+  );
+}

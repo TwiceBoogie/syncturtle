@@ -3,9 +3,9 @@ package com.syncturtle.platform.gateway.controller;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.syncturtle.common.security.cookie.ReactiveCsrfCookieWriter;
 import com.syncturtle.platform.gateway.dto.response.CsrfTokenResponse;
 import com.syncturtle.platform.gateway.security.PassportAuthenticationToken;
+import com.syncturtle.platform.gateway.security.csrf.GatewayCsrfCookieWriter;
 import com.syncturtle.platform.gateway.security.csrf.GatewayCsrfTokenProcessor;
 import com.syncturtle.platform.gateway.security.csrf.IssuedPreAuthCsrfToken;
 import com.syncturtle.platform.gateway.security.csrf.IssuedSessionCsrfToken;
@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class CsrfController {
 
     private final GatewayCsrfTokenProcessor csrfTokenProcessor;
-    private final ReactiveCsrfCookieWriter csrfCookieWriter;
+    private final GatewayCsrfCookieWriter csrfCookieWriter;
     private final Clock clock;
 
     @GetMapping("/api/get-csrf-token")

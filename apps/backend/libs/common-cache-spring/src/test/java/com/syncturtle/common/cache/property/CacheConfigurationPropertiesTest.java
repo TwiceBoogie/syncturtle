@@ -21,7 +21,7 @@ class CacheConfigurationPropertiesTest {
         contextRunner.run(context -> {
             assertThat(context).hasNotFailed();
             assertThat(context.getBean(RedisKeyProperties.class).getKeyPrefix()).isEqualTo("st:local:");
-            assertThat(context.getBean(ResponseCacheProperties.class).getHashBytes()).isEqualTo(16);
+            assertThat(context.getBean(ResponseCacheProperties.class).isEnabled()).isTrue();
         });
     }
 
@@ -30,10 +30,10 @@ class CacheConfigurationPropertiesTest {
         contextRunner
                 .withPropertyValues(
                         "app.redis.keys.key-prefix=st:test",
-                        "app.response-cache.hash-bytes=24")
+                        "app.response-cache.enabled=false")
                 .run(context -> {
                     assertThat(context.getBean(RedisKeyProperties.class).getKeyPrefix()).isEqualTo("st:test:");
-                    assertThat(context.getBean(ResponseCacheProperties.class).getHashBytes()).isEqualTo(24);
+                    assertThat(context.getBean(ResponseCacheProperties.class).isEnabled()).isFalse();
                 });
     }
 

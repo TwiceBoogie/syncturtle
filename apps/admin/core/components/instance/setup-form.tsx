@@ -42,7 +42,7 @@ const defaultFormData: TFormData = {
   firstName: "",
   lastName: "",
   email: "",
-  companyName: "",
+  companyName: "SyncTurtle",
   password: "",
   isTelemetryEnabled: true,
 };
@@ -94,7 +94,7 @@ export const InstanceSetupFrom: FC = (props) => {
     ...defaultFormData,
     firstName: firstNameParam ?? "",
     lastName: lastNameParam ?? "",
-    companyName: companyNameParam ?? "",
+    companyName: companyNameParam ?? "SyncTurtle",
     email: emailParam ?? "",
     isTelemetryEnabled: isTelemetryEnabledParam,
   }));
@@ -183,8 +183,8 @@ export const InstanceSetupFrom: FC = (props) => {
             onInvalid={() => setIsSubmitting(false)}
           >
             <Fieldset>
-              <Fieldset.Legend>Setup your Syncturtle instance</Fieldset.Legend>
-              <Description>Post setup you will be able to manage this Syncturtle instance</Description>
+              <Fieldset.Legend>Setup your SyncTurtle instance</Fieldset.Legend>
+              <Description>Post setup you will be able to manage this SyncTurtle instance</Description>
               {errorData.type &&
                 errorData?.message &&
                 ![EErrorCodes.INVALID_EMAIL, EErrorCodes.INVALID_PASSWORD].includes(errorData.type) && (
@@ -248,8 +248,8 @@ export const InstanceSetupFrom: FC = (props) => {
                   value={formData.companyName}
                   onChange={(value: string) => handleFormChange("companyName", value)}
                 >
-                  <Label>Company name</Label>
-                  <Input placeholder="Marvel Inc" />
+                  <Label>Installation name</Label>
+                  <Input placeholder="SyncTurtle" maxLength={100} />
                   <FieldError />
                 </TextField>
                 <TextField
@@ -286,7 +286,7 @@ export const InstanceSetupFrom: FC = (props) => {
                       </Button>
                     </InputGroup.Suffix>
                   </InputGroup>
-                  <Description>hello</Description>
+                  <Description>Choose a strong password for this administrator.</Description>
                   <FieldError />
                 </TextField>
                 <TextField
@@ -339,7 +339,7 @@ export const InstanceSetupFrom: FC = (props) => {
                   </Checkbox.Control>
                   <Checkbox.Content>
                     <Label>
-                      Allow Syncturtle to anonymously collect usage events.{" "}
+                      Allow SyncTurtle to anonymously collect usage events.{" "}
                       <a
                         tabIndex={-1}
                         href="#"

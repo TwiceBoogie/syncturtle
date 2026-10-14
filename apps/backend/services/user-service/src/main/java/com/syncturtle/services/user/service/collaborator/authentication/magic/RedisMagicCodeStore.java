@@ -1,6 +1,8 @@
 package com.syncturtle.services.user.service.collaborator.authentication.magic;
 
 import java.security.SecureRandom;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.time.Duration;
 import java.util.Locale;
 
@@ -8,6 +10,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
+import com.syncturtle.common.cache.template.RedisKeyBuilder;
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
 
@@ -26,6 +29,7 @@ public class RedisMagicCodeStore implements MagicCodeStore {
 
     private final StringRedisTemplate redis;
     private final JsonMapper jsonMapper;
+    private final RedisKeyBuilder keyBuilder;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Override
@@ -101,7 +105,9 @@ public class RedisMagicCodeStore implements MagicCodeStore {
     }
 
     private String redisKey(String email) {
-        return "magic_" + email.trim().toLowerCase();
+        String encodedEmail = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(email.getBytes(StandardCharsets.UTF_8));
+        return keyBuilder.authKey("user-service", "magic-code", "email", encodedEmail);
     }
 
     private String generateDashedCode() {

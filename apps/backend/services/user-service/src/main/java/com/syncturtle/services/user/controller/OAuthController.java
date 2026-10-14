@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.syncturtle.common.security.annotation.AllowAnonymous;
 import com.syncturtle.common.core.endpoint.EndpointPaths;
 import com.syncturtle.common.security.cookie.ServletAuthCookieWriter;
 import com.syncturtle.services.user.dto.response.IssueTokenResponse;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@AllowAnonymous
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(EndpointPaths.AUTH)

@@ -29,7 +29,7 @@
     "clean": "rm -rf .turbo dist storybook-static"
   },
   "peerDependencies": {
-    "@heroui/react": "^3.2.1",
+    "@heroui/react": "^3.2.6",
     "react": ">=19 <20",
     "react-dom": ">=19 <20"
   },
@@ -40,6 +40,9 @@
   "devDependencies": {
     "@heroui/react": "catalog:heroui3",
     "@heroui/styles": "catalog:heroui3",
+    "@internationalized/date": "catalog:",
+    "@react-aria/ssr": "catalog:",
+    "@react-aria/utils": "catalog:",
     "@storybook/addon-docs": "catalog:storybook10",
     "@storybook/react-vite": "catalog:storybook10",
     "@syncturtle/eslint-config": "workspace:*",
@@ -49,8 +52,11 @@
     "@types/react-dom": "catalog:react19",
     "eslint": "catalog:",
     "react": "catalog:react19",
+    "react-aria": "catalog:",
+    "react-aria-components": "catalog:",
     "react-dom": "catalog:react19",
     "storybook": "catalog:storybook10",
+    "tailwindcss": "catalog:",
     "tsup": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:"

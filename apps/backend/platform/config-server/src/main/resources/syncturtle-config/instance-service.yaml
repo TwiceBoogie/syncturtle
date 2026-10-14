@@ -5,6 +5,11 @@ spring:
   application:
     name: instance-service
 
+  data:
+    redis:
+      repositories:
+        enabled: false
+
   datasource:
     hikari:
       maximum-pool-size: 10
@@ -27,7 +32,6 @@ spring:
       observation-enabled: true
     listener:
       observation-enabled: true
-      auto-startup: ${app.kafka.enabled:true}
     producer:
       acks: all
       batch-size: 32768
@@ -49,7 +53,12 @@ jdbc:
   includes: QUERY
 
 app:
-  name: ${APP_NAME:syncturtle}
+  binary:
+    version: ${APP_VERSION:}
+
+  version-check:
+    enabled: ${APP_VERSION_CHECK_ENABLED:true}
+
   edition: ${APP_EDITION:COMMUNITY}
   test: ${APP_TEST:false}
 
@@ -97,24 +106,11 @@ app:
     encryption:
       secret-key: ${APP_SECURITY_ENCRYPTION_SECRET_KEY}
 
-    csrf:
-      enabled: ${APP_SECURITY_CSRF_ENABLED:true}
-      signing-key: ${APP_SECURITY_CSRF_SIGNING_KEY:}
-      raw-token-bytes: 32
-      form:
-        enabled: true
-
     cookies:
       secure: ${APP_SECURITY_COOKIES_SECURE:false}
       managed-prefix-enabled: ${APP_SECURITY_COOKIES_MANAGED_PREFIX_ENABLED:false}
       access-same-site: Lax
       refresh-same-site: Lax
-      csrf-same-site: Lax
-      csrf-max-age: 30m
-
-  gateway:
-    context:
-      enabled: true
 
   web:
     errors:
@@ -124,21 +120,10 @@ app:
       include-stack-trace: false
       max-stack-trace-lines: 30
 
-    authorization:
-      enabled: true
-      order: -30
-      require-authentication-by-default: false
-      path-patterns:
-        - /api/**
-      exclude-path-patterns:
-        - /actuator/**
-        - /error
-
     access-logging:
       enabled: true
 
   kafka:
-    enabled: true
     topics:
       partitions: ${APP_KAFKA_TOPIC_PARTITIONS:3}
       replicas: ${APP_KAFKA_TOPIC_REPLICAS:1}
@@ -146,9 +131,6 @@ app:
       initial-interval: 500ms
       multiplier: 2.0
       max-elapsed-time: 8s
-      dlt-suffix: ".DLT"
-      ack-after-handle: true
-      commit-recovered: false
       log-retries: true
 
   telemetry:
@@ -193,8 +175,3 @@ app:
     endpoint: ${PRODUCT_TELEMETRY_ENDPOINT:http://localhost:15317}
     api-key: ${PRODUCT_TELEMETRY_API_KEY:}
     interval: ${PRODUCT_TELEMETRY_INTERVAL:PT10M}
-
-  data:
-    jpa:
-      auditing:
-        enabled: true

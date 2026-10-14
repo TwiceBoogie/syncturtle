@@ -14,28 +14,33 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@heroui/react": "^3.0.1",
-    "@heroui/styles": "^3.0.1",
+    "@heroui/react": "catalog:heroui3",
+    "@heroui/styles": "catalog:heroui3",
+    "@internationalized/date": "catalog:",
+    "@react-aria/ssr": "catalog:",
+    "@react-aria/utils": "catalog:",
     "@syncturtle/utils": "workspace:*",
-    "next": "16.2.1",
-    "next-themes": "^0.4.6",
+    "next": "catalog:next16",
+    "next-themes": "catalog:",
     "nextra": "^4.6.1",
-    "nextra-theme-docs": "^4.6.1",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "nextra-theme-docs": "patch:nextra-theme-docs@npm%3A4.6.1#~/.yarn/patches/nextra-theme-docs-npm-4.6.1-0b59bd8bbb.patch",
+    "react": "catalog:react19",
+    "react-aria": "catalog:",
+    "react-aria-components": "catalog:",
+    "react-dom": "catalog:react19"
   },
   "devDependencies": {
     "@syncturtle/eslint-config": "workspace:*",
     "@syncturtle/tailwind-config": "workspace:*",
     "@syncturtle/typescript-config": "workspace:*",
-    "@tailwindcss/postcss": "^4.2.2",
-    "@types/node": "^25.5.0",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "eslint": "^9.39.4",
-    "eslint-config-next": "16.2.1",
-    "pagefind": "^1.4.0",
-    "tailwindcss": "^4.2.2",
-    "typescript": "^5.9.3"
+    "@tailwindcss/postcss": "catalog:",
+    "@types/node": "catalog:next16",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "eslint": "catalog:",
+    "eslint-config-next": "catalog:next16",
+    "pagefind": "^1.5.2",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:"
   }
 }

@@ -38,6 +38,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.syncturtle.common.cache.payload.CachedResponsePayload;
 import com.syncturtle.common.cache.property.ResponseCacheProperties;
+import com.syncturtle.common.cache.property.RedisKeyProperties;
 import com.syncturtle.common.cache.response.annotation.CacheResponse;
 import com.syncturtle.common.cache.response.annotation.InvalidateCache;
 import com.syncturtle.common.web.context.RequestUserContext;
@@ -49,7 +50,6 @@ import tools.jackson.databind.json.JsonMapper;
 @DisplayName("ResponseCacheAspect")
 class ResponseCacheAspectTest {
 
-    private static final String KEY_PREFIX = "st:local:rc:";
     private static final String SERVICE_NAME = "instance-service";
 
     @Mock
@@ -76,7 +76,8 @@ class ResponseCacheAspectTest {
     void setup() {
         objectMapper = new JsonMapper();
 
-        aspect = new ResponseCacheAspect(redis, objectMapper, props, new ResponseCacheKeyBuilder(), userContext,
+        aspect = new ResponseCacheAspect(redis, objectMapper, props, new RedisKeyProperties("st:local:"),
+                new ResponseCacheKeyBuilder(), userContext,
                 SERVICE_NAME);
     }
 
@@ -199,6 +200,7 @@ class ResponseCacheAspectTest {
             verify(valueOps).set(keyCaptor.capture(), jsonCaptor.capture(), eq(Duration.ofSeconds(60)));
 
             assertThat(keyCaptor.getValue()).startsWith("st:local:rc:instance-service:users:data:g7:").contains(":h:");
+            assertThat(keyCaptor.getValue()).matches(".*:h:[0-9a-f]{32}");
 
             CachedResponsePayload cached = objectMapper.readValue(jsonCaptor.getValue(), CachedResponsePayload.class);
 
@@ -355,13 +357,10 @@ class ResponseCacheAspectTest {
 
     private void enableCacheWriteDefaults() {
         when(props.isEnabled()).thenReturn(true);
-        when(props.getKeyPrefix()).thenReturn(KEY_PREFIX);
-        when(props.getHashBytes()).thenReturn(12);
     }
 
     private void enableCacheEvictDefaults() {
         when(props.isEnabled()).thenReturn(true);
-        when(props.getKeyPrefix()).thenReturn(KEY_PREFIX);
     }
 
     private static MockHttpServletRequest bindRequest(String method, String uri) {

@@ -12,7 +12,6 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.syncturtle.services.user.configuration.passport.KeyMaterial;
-import com.syncturtle.services.user.configuration.property.AuthProperties;
 import com.syncturtle.services.user.configuration.property.PassportProperties;
 import com.syncturtle.services.user.service.param.AccessTokenIssueParam;
 
@@ -23,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 public class AccessTokenIssuer {
 
     private final PassportProperties passportProperties;
-    private final AuthProperties authProperties;
     private final KeyMaterial keyMaterial;
     private final Algorithm algorithm;
 
@@ -31,7 +29,7 @@ public class AccessTokenIssuer {
         validate(spec);
 
         Instant issuedAt = Instant.now();
-        Instant expiresAt = issuedAt.plus(authProperties.getAccessTokenTtl());
+        Instant expiresAt = issuedAt.plus(AuthTokenPolicy.ACCESS_TOKEN_TTL);
 
         Map<String, Object> header = new LinkedHashMap<>();
         header.put("typ", "JWT");

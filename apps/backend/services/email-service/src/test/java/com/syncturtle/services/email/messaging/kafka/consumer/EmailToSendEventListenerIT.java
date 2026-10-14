@@ -28,6 +28,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.syncturtle.common.contracts.email.event.EmailToSendEvent;
 import com.syncturtle.common.contracts.messaging.KafkaTopics;
+import com.syncturtle.common.kafka.topic.KafkaDeploymentTopics;
 import com.syncturtle.services.email.EmailServiceApplication;
 import com.syncturtle.services.email.service.EmailInboxService;
 import com.syncturtle.services.email.support.kafka.EmailKafkaTopicsTestConfiguration;
@@ -42,7 +43,6 @@ import io.opentelemetry.api.trace.SpanContext;
 import io.opentelemetry.context.Scope;
 
 @IntegrationTest(classes = EmailServiceApplication.class, properties = {
-        "app.kafka.enabled=true",
         "spring.kafka.template.observation-enabled=true",
         "spring.kafka.listener.observation-enabled=true",
         "management.tracing.sampling.probability=1.0"
@@ -53,6 +53,9 @@ import io.opentelemetry.context.Scope;
 @Import(EmailKafkaTopicsTestConfiguration.class)
 @DisplayName("EmailToSendEventListener")
 class EmailToSendEventListenerIT {
+
+    @Autowired
+    KafkaDeploymentTopics topics;
 
     @Autowired
     KafkaTemplate<String, Object> kafkaTemplate;
@@ -97,7 +100,7 @@ class EmailToSendEventListenerIT {
             // act
             SendResult<String, Object> sendResult;
             try (Scope ignored = parent.makeCurrent()) {
-                sendResult = kafkaTemplate.send(KafkaTopics.EMAIL_EVENTS_V1, EVENT_ID, event)
+                sendResult = kafkaTemplate.send(topics.topic(KafkaTopics.EMAIL_EVENTS_V1), EVENT_ID, event)
                         .get(5, TimeUnit.SECONDS);
             } finally {
                 parent.end();

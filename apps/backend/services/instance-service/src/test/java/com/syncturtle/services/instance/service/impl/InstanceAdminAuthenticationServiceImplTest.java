@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -146,6 +147,8 @@ class InstanceAdminAuthenticationServiceImplTest {
             assertThat(request.getPreAuthBinding().getValue()).isEqualTo(PRE_AUTH_HASH);
             assertThat(request.getClientIp()).isEqualTo("192.0.2.10");
             assertThat(request.getUserAgent()).isEqualTo("Admin browser");
+            // No product-onboarding or workspace-provisioning user call is part of setup.
+            verifyNoMoreInteractions(userClient);
         }
 
         @Test
@@ -188,7 +191,7 @@ class InstanceAdminAuthenticationServiceImplTest {
             when(requestClientContext.getClientIp()).thenReturn("192.0.2.10");
             when(requestClientContext.getUserAgent()).thenReturn("Admin browser");
             when(userClient.adminSigninPost(any(AdminSigninRequest.class))).thenReturn(userResponse);
-            when(instanceAdminRepository.findByInstance_IdAndUserId(instance.getId(), USER_ID))
+            when(instanceAdminRepository.findByInstance_IdAndUserIdAndDeletedAtIsNull(instance.getId(), USER_ID))
                     .thenReturn(Optional.of(instanceAdmin));
             when(userClient.createInstanceAdminSessionHandoff(any(CreateInstanceAdminSessionHandoffRequest.class)))
                     .thenReturn(handoff);
@@ -210,7 +213,7 @@ class InstanceAdminAuthenticationServiceImplTest {
         }
 
         @Test
-        @DisplayName("does not request handoff when authenticated user is not an instance administrator")
+        @DisplayName("does not request handoff without an active, nondeleted administrator row")
         void doesNotRequestHandoffForNonAdministrator() {
             // arrange
             Instance instance = InstanceFixtures.persistedInstance("SyncTurtle");
@@ -222,7 +225,7 @@ class InstanceAdminAuthenticationServiceImplTest {
             when(requestClientContext.getClientIp()).thenReturn("192.0.2.10");
             when(requestClientContext.getUserAgent()).thenReturn("Admin browser");
             when(userClient.adminSigninPost(any(AdminSigninRequest.class))).thenReturn(userResponse);
-            when(instanceAdminRepository.findByInstance_IdAndUserId(instance.getId(), USER_ID))
+            when(instanceAdminRepository.findByInstance_IdAndUserIdAndDeletedAtIsNull(instance.getId(), USER_ID))
                     .thenReturn(Optional.empty());
             // act
             InstanceAdminAuthResponse result = service.instanceAdminSignin(
@@ -232,6 +235,7 @@ class InstanceAdminAuthenticationServiceImplTest {
             assertThat(result.getHandoff()).isNull();
             assertThat(result.getRedirection()).startsWith(hostResolver.admin(""));
             // verify
+            verify(instanceAdminRepository).findByInstance_IdAndUserIdAndDeletedAtIsNull(instance.getId(), USER_ID);
             verify(userClient, never()).createInstanceAdminSessionHandoff(any());
         }
 

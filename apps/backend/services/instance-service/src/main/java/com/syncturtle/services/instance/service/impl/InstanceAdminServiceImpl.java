@@ -27,6 +27,7 @@ import com.syncturtle.services.instance.repository.projection.AdminUserDetailLit
 import com.syncturtle.services.instance.repository.projection.AdminUserDetailsProjection;
 import com.syncturtle.services.instance.repository.projection.InstanceAdminProjection;
 import com.syncturtle.services.instance.service.InstanceAdminService;
+import com.syncturtle.services.instance.service.collaborator.session.InstanceAdminSessionVersionWriter;
 import com.syncturtle.services.instance.type.InstanceAdminRole;
 
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,7 @@ public class InstanceAdminServiceImpl implements InstanceAdminService {
     private final InstanceAdminRepository instanceAdminRepository;
     private final UserRepository userRepository;
     private final InstanceAdminApiMapper instanceAdminApiMapper;
+    private final InstanceAdminSessionVersionWriter sessionVersionWriter;
     private final Clock clock;
 
     @Override
@@ -133,6 +135,8 @@ public class InstanceAdminServiceImpl implements InstanceAdminService {
         }
 
         target.revoke(clock);
+        instanceAdminRepository.flush();
+        sessionVersionWriter.write(instance.getId(), target.getUserId(), target.getSessionVersion());
     }
 
     @Override

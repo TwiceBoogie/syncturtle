@@ -57,7 +57,6 @@ import com.syncturtle.common.contracts.email.event.EmailToSendEvent;
 import com.syncturtle.common.contracts.user.event.UserEvent;
 import com.syncturtle.common.core.security.token.SecureTokenGenerator;
 import com.syncturtle.common.core.security.token.TokenHasher;
-import com.syncturtle.services.user.configuration.property.AuthProperties;
 import com.syncturtle.services.user.messaging.kafka.factory.AuthenticationEmailEventFactory;
 import com.syncturtle.services.user.messaging.kafka.factory.UserEventFactory;
 import com.syncturtle.services.user.model.InstanceLite;
@@ -99,8 +98,6 @@ class PasswordResetServiceImplTest {
     @Mock
     TokenHasher tokenHasher;
     @Mock
-    AuthProperties authProperties;
-    @Mock
     PasswordEncoder passwordEncoder;
     @Mock
     RefreshSessionFamilyStore refreshSessionFamilyStore;
@@ -130,7 +127,6 @@ class PasswordResetServiceImplTest {
                 resetUrlBuilder,
                 tokenGenerator,
                 tokenHasher,
-                authProperties,
                 passwordEncoder,
                 refreshSessionFamilyStore,
                 emailEventFactory,
@@ -157,8 +153,6 @@ class PasswordResetServiceImplTest {
             when(userRepository.findByEmailIgnoreCaseForUpdate(NORMALIZED_EMAIL)).thenReturn(Optional.of(existingUser));
             when(passwordResetTokenRepository.findOutstandingByUserIdForUpdate(USER_ID))
                     .thenReturn(List.of(firstOutstandingToken, secondOutstandingToken));
-            when(authProperties.getPasswordResetTokenBytes()).thenReturn(TOKEN_BYTES);
-            when(authProperties.getPasswordResetTokenTtl()).thenReturn(TOKEN_TTL);
             when(tokenGenerator.generateBase64Url(TOKEN_BYTES)).thenReturn(RAW_TOKEN);
             when(tokenHasher.hash(RAW_TOKEN)).thenReturn(TOKEN_HASH);
             when(uidCodec.encode(USER_ID)).thenReturn(UIDB64);
@@ -221,8 +215,7 @@ class PasswordResetServiceImplTest {
 
             verifyNoInteractions(
                     passwordResetTokenRepository,
-                    authProperties,
-                    tokenGenerator,
+                        tokenGenerator,
                     tokenHasher,
                     uidCodec,
                     resetUrlBuilder,

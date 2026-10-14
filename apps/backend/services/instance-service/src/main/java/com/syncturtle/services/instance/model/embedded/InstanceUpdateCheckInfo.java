@@ -4,8 +4,6 @@ import java.time.Instant;
 
 import org.springframework.util.Assert;
 
-import com.syncturtle.services.instance.model.param.UpdateCheckParam;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
@@ -26,21 +24,24 @@ public class InstanceUpdateCheckInfo {
     @Column(name = "last_checked_at")
     private Instant lastCheckedAt;
 
-    public void apply(UpdateCheckParam param) {
-        Assert.notNull(param, "update check param is required");
+    public void updateCurrentVersion(String version) {
+        Assert.hasText(version, "current version is required");
 
-        if (currentVersion == null) {
-            currentVersion = param.getLatestVersion();
-        }
-
-        latestVersion = param.getLatestVersion();
-        lastCheckedAt = param.getLastCheckedAt();
+        currentVersion = version.trim();
     }
 
-    public void touch(Instant now) {
-        Assert.notNull(now, "now is required");
+    public void recordLatestRelease(String version, Instant checkedAt) {
+        Assert.notNull(checkedAt, "checkedAt is required");
 
-        lastCheckedAt = now;
+        if (version != null) {
+            Assert.hasText(version, "latest version must not be blank");
+
+            latestVersion = version.trim();
+        } else {
+            latestVersion = null;
+        }
+
+        lastCheckedAt = checkedAt;
     }
 
     public static InstanceUpdateCheckInfo empty() {

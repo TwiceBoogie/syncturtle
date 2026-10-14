@@ -116,7 +116,7 @@ public class InstanceAdminAuthenticationServiceImpl implements InstanceAdminAuth
             PendingAdminSession pending = Objects.requireNonNull(
                     transactionTemplate.execute(status -> {
                         InstanceAdmin instanceAdmin = instanceAdminRepository
-                                .findByInstance_IdAndUserId(instance.getId(), response.getUserId())
+                                .findByInstance_IdAndUserIdAndDeletedAtIsNull(instance.getId(), response.getUserId())
                                 .orElseThrow(() -> AuthException
                                         .of(AuthErrorCode.ADMIN_AUTHENTICATION_FAILED)
                                         .with("email", email));

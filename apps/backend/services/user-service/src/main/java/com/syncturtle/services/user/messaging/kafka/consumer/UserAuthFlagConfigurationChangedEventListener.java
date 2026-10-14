@@ -3,7 +3,6 @@ package com.syncturtle.services.user.messaging.kafka.consumer;
 import java.util.EnumSet;
 import java.util.Set;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-@ConditionalOnBooleanProperty(prefix = "app.kafka", name = "enabled")
 public class UserAuthFlagConfigurationChangedEventListener {
 
     private static final Set<InstanceConfigurationKey> FLAG_KEYS = EnumSet.of(
@@ -31,7 +29,7 @@ public class UserAuthFlagConfigurationChangedEventListener {
 
     private final UserAuthRuntimeConfigResolver resolver;
 
-    @KafkaListener(topics = KafkaTopics.INSTANCE_CONFIG_EVENTS_V1, groupId = "#{@instanceConfigurationConsumerGroups.sharedGroupId}", containerFactory = "instanceConfigurationKafkaListenerFactory")
+    @KafkaListener(topics = "#{@kafkaDeploymentTopics.topic('" + KafkaTopics.INSTANCE_CONFIG_EVENTS_V1 + "')}", groupId = "#{@instanceConfigurationConsumerGroups.sharedGroupId}", containerFactory = "instanceConfigurationKafkaListenerFactory")
     public void onInstanceConfigurationChanged(InstanceConfigurationEvent event) {
         if (event.getScope() != InstanceConfigurationScope.AUTH) {
             return;

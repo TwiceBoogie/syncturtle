@@ -16,7 +16,7 @@ public class WorkspaceAssetLinkEventConsumer {
 
     private final FileAssetLinkSynchronizationService synchronizationService;
 
-    @KafkaListener(topics = KafkaTopics.WORKSPACE_EVENTS_V1, groupId = "${app.file.kafka.workspace-asset-links-group-id}", containerFactory = "workspaceKafkaListenerFactory")
+    @KafkaListener(topics = "#{@kafkaDeploymentTopics.topic('" + KafkaTopics.WORKSPACE_EVENTS_V1 + "')}", groupId = "#{@kafkaConsumerGroups.workGroupId('file-service', 'workspace-asset-links-v1')}", containerFactory = "workspaceKafkaListenerFactory")
     public void onWorkspaceEvent(WorkspaceEvent event) {
         Assert.notNull(event, "workspace event is required");
 
