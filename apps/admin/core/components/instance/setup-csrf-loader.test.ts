@@ -1,9 +1,6 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, expect, it } from "vitest";
 
-// @ts-expect-error Node's native TypeScript runner requires the explicit extension.
 import { createSetupCsrfLoader, isSetupSubmitDisabled } from "./setup-csrf-loader.ts";
-// @ts-expect-error Node's native TypeScript runner requires the explicit extension.
 import { CsrfTokenCache } from "../../services/csrf-token-cache.ts";
 
 describe("createSetupCsrfLoader", () => {
@@ -26,9 +23,9 @@ describe("createSetupCsrfLoader", () => {
     const firstToken = await firstLoad;
     const secondToken = await secondLoad;
 
-    assert.equal(firstToken, "preauth-token");
-    assert.equal(secondToken, "preauth-token");
-    assert.equal(issuanceCount, 1);
+    expect(firstToken).toBe("preauth-token");
+    expect(secondToken).toBe("preauth-token");
+    expect(issuanceCount).toBe(1);
   });
 
   it("does not retain a promise after canonical cache invalidation", async () => {
@@ -49,9 +46,9 @@ describe("createSetupCsrfLoader", () => {
     cache.invalidate();
     const sessionToken = await loader();
 
-    assert.equal(preauthToken, "preauth-token");
-    assert.equal(sessionToken, "session-token");
-    assert.equal(issuanceCount, 2);
+    expect(preauthToken).toBe("preauth-token");
+    expect(sessionToken).toBe("session-token");
+    expect(issuanceCount).toBe(2);
   });
 
   it("reports an invalid canonical issuance and permits a later retry", async () => {
@@ -61,11 +58,11 @@ describe("createSetupCsrfLoader", () => {
       return { csrfToken: requestCount === 1 ? "" : "retry-token" };
     });
 
-    await assert.rejects(loader(), /CSRF token missing from response/);
+    await expect(loader()).rejects.toThrow(/CSRF token missing from response/);
     const retryToken = await loader();
 
-    assert.equal(retryToken, "retry-token");
-    assert.equal(requestCount, 2);
+    expect(retryToken).toBe("retry-token");
+    expect(requestCount).toBe(2);
   });
 });
 
@@ -97,10 +94,10 @@ describe("isSetupSubmitDisabled", () => {
       isSubmitting: false,
     });
 
-    assert.equal(loadingDisabled, true);
-    assert.equal(errorDisabled, true);
-    assert.equal(invalidFormDisabled, true);
-    assert.equal(submittingDisabled, true);
-    assert.equal(readyDisabled, false);
+    expect(loadingDisabled).toBe(true);
+    expect(errorDisabled).toBe(true);
+    expect(invalidFormDisabled).toBe(true);
+    expect(submittingDisabled).toBe(true);
+    expect(readyDisabled).toBe(false);
   });
 });

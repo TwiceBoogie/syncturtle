@@ -27,12 +27,7 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
             @Param("currentUserId") UUID currentUserId,
             @Param("workspaceId") UUID workspaceId);
 
-    boolean existsByMemberIdAndWorkspace_IdAndRoleAndDeletedAtIsNull(UUID memberId, UUID workspaceId,
-            WorkspaceRole role);
-
     long countByWorkspace_IdAndDeletedAtIsNull(UUID workspaceId);
-
-    Optional<WorkspaceMember> findByWorkspace_IdAndMemberIdAndActivatedTrue(UUID workspaceId, UUID memberId);
 
     @Query("""
             SELECT LOWER(user.email)
@@ -40,6 +35,7 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
             JOIN UserLite user on user.id = member.memberId
             WHERE member.workspace.id = :workspaceId
                 AND member.activated = true
+                AND member.deletedAt IS NULL
                 AND LOWER(user.email) IN :emails
             """)
     List<String> findActiveMemberEmailsByWorkspaceIdAndEmails(UUID workspaceId, Collection<String> emails);
@@ -55,6 +51,8 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
             WHERE workspace.slug = :workspaceSlug
                 AND member.memberId = :userId
                 AND member.activated = true
+                AND member.deletedAt IS NULL
+                AND workspace.deletedAt IS NULL
             """)
     Optional<WorkspaceRole> findActiveRoleByWorkspaceSlugAndUserId(String workspaceSlug, UUID userId);
 
@@ -65,6 +63,8 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
             WHERE workspace.slug = :workspaceSlug
                 AND member.memberId = :userId
                 AND member.activated = true
+                AND member.deletedAt IS NULL
+                AND workspace.deletedAt IS NULL
             """)
     boolean existsByWorkspaceSlugAndUserIdAndActiveTrue(String workspaceSlug, UUID userId);
 }

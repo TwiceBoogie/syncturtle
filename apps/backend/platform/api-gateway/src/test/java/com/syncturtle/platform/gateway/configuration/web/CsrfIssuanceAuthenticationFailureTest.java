@@ -2,8 +2,6 @@ package com.syncturtle.platform.gateway.configuration.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.Duration;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -35,8 +33,7 @@ class CsrfIssuanceAuthenticationFailureTest {
                 false,
                 "Lax",
                 "Lax",
-                "Lax",
-                Duration.ofMinutes(30)));
+                "Lax"));
         configuration = new GatewaySecurityConfiguration(
                 new PassportAuthenticationMetrics(new SimpleMeterRegistry()),
                 cookieFactory);

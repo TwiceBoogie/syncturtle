@@ -14,3 +14,21 @@ export interface IEmailCheckResponse {
   authenticationFlow: "MAGIC_CODE" | "CREDENTIAL";
   existingUser: boolean;
 }
+
+export interface IUserSession {
+  sessionId: string;
+  current: boolean;
+  administrator: boolean;
+  createdAt: string;
+  lastUsedAt: string;
+  idleExpiresAt: string;
+  absoluteExpiresAt: string;
+}
+
+export interface IUserSessionInventoryResponse {
+  sessions: IUserSession[];
+}
+
+export interface IUserSessionRevocationResponse {
+  currentSessionRevoked: boolean;
+}

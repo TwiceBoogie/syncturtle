@@ -493,7 +493,12 @@ end
 local function write_versions()
     redis.call('SET', ARGV[24], ARGV[14])
     if ARGV[13] == '1' then
-        redis.call('SET', ARGV[25], ARGV[15])
+        local current_admin_version = redis.call('GET', ARGV[25])
+        local parsed_current_admin_version = current_admin_version and tonumber(current_admin_version)
+        if not current_admin_version or
+            (parsed_current_admin_version and parsed_current_admin_version <= tonumber(ARGV[15])) then
+            redis.call('SET', ARGV[25], ARGV[15])
+        end
     end
 end
 

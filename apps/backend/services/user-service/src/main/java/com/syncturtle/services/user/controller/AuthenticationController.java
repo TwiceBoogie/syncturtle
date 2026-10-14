@@ -3,6 +3,8 @@ package com.syncturtle.services.user.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.syncturtle.common.security.annotation.AllowAnonymous;
+import com.syncturtle.common.security.annotation.RequireAuthentication;
 import com.syncturtle.common.cache.response.annotation.InvalidateCache;
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
@@ -62,16 +64,19 @@ public class AuthenticationController {
     private final PublicUrlResolver hostResolver;
 
     @PostMapping(EndpointPaths.EMAIL__CHECK)
+    @AllowAnonymous
     public ResponseEntity<EmailCheckResponse> emailCheck(@RequestBody EmailCheckRequest request) {
         return ResponseEntity.ok(authenticationService.emailCheck(request.getEmail()));
     }
 
     @PostMapping("/magic-generate")
+    @AllowAnonymous
     public ResponseEntity<MagicCodeResponse> generateMagicCode(@Valid @RequestBody EmailCheckRequest request) {
         return ResponseEntity.ok(authenticationService.generateMagicCode(request.getEmail()));
     }
 
     @PostMapping("/sign-in")
+    @AllowAnonymous
     public ResponseEntity<Void> signin(
             @Valid @ModelAttribute SignInRequest request,
             BindingResult bindingResult,
@@ -94,6 +99,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/sign-up")
+    @AllowAnonymous
     public ResponseEntity<Void> signup(
             @Valid @ModelAttribute SignUpRequest request,
             BindingResult bindingResult,
@@ -116,6 +122,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/magic-sign-in")
+    @AllowAnonymous
     public ResponseEntity<Void> magicSignin(@ModelAttribute MagicSignInRequest request,
             HttpServletResponse servletResponse) {
         IssueTokenResponse response = authenticationService.magicCodeSignIn(
@@ -127,6 +134,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/magic-sign-up")
+    @AllowAnonymous
     public ResponseEntity<Void> magicSignup(@ModelAttribute MagicSignUpRequest request,
             HttpServletResponse servletResponse) {
         IssueTokenResponse response = authenticationService.magicCodeSignUp(
@@ -138,6 +146,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/refresh")
+    @AllowAnonymous
     public ResponseEntity<Void> refresh(
             HttpServletResponse servletResponse,
             @RequestHeader(name = GatewayHeaders.HDR_INTERNAL_CSRF_SESSION_ID) String trustedCsrfSessionId,
@@ -167,6 +176,7 @@ public class AuthenticationController {
     }
 
     @PostMapping(EndpointPaths.SIGN__OUT)
+    @AllowAnonymous
     public ResponseEntity<Void> signOut(
             @RequestHeader(name = GatewayHeaders.HDR_INTERNAL_LOGOUT_CONTEXT, required = false, defaultValue = "WEB") String logoutContext,
             @RequestHeader(name = GatewayHeaders.HDR_INTERNAL_CSRF_SESSION_ID) String trustedCsrfSessionId,
@@ -193,6 +203,7 @@ public class AuthenticationController {
 
     @PostMapping("/set-password")
     @InvalidateCache(group = "user-me.v1")
+    @RequireAuthentication
     public ResponseEntity<UserMeResponse> setPassword(@CurrentUser UUID currentUserId,
             @RequestHeader(name = GatewayHeaders.HDR_AUTH_SESSION_ID, required = false) String sessionId,
             @Valid @RequestBody SetPasswordRequest request,

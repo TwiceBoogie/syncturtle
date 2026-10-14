@@ -44,7 +44,7 @@ export const SwitchAccountDropdown: FC<ISwitchAccountDropdown> = (props) => {
     <>
       <SwitchAccountModal isOpen={showSwitchAccountModal} onClose={() => setShowSwitchAccountModal(false)} />
       <Dropdown>
-        <Button>
+        <Button size="sm" className={"rounded-sm"}>
           {user?.avatarUrl ? (
             <img
               src={getFileURL(user.avatarUrl)}
@@ -54,7 +54,7 @@ export const SwitchAccountDropdown: FC<ISwitchAccountDropdown> = (props) => {
           ) : (
             <>{avatarFallback}</>
           )}
-          <span className="text-sm font-medium text-custom-text-200">{displayName}</span>
+          <span className="text-sm font-medium">{displayName}</span>
         </Button>
         <Dropdown.Popover placement="bottom end">
           <Dropdown.Menu onAction={handleAction}>

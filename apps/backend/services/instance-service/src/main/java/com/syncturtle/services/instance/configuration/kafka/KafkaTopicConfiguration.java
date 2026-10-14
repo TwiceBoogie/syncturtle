@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.config.TopicBuilder;
 
 import com.syncturtle.common.contracts.messaging.KafkaTopics;
+import com.syncturtle.common.kafka.topic.KafkaDeadLetterTopics;
+import com.syncturtle.common.kafka.topic.KafkaDeploymentTopics;
 import com.syncturtle.services.instance.configuration.property.KafkaTopicProperties;
 
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class KafkaTopicConfiguration {
 
     private final KafkaTopicProperties properties;
+    private final KafkaDeploymentTopics topics;
 
     @Bean
     NewTopic instanceEventsTopic() {
@@ -112,14 +115,14 @@ public class KafkaTopicConfiguration {
     }
 
     private NewTopic topic(String name) {
-        return TopicBuilder.name(name)
+        return TopicBuilder.name(topics.topic(name))
                 .partitions(properties.getPartitions())
                 .replicas(properties.getReplicas())
                 .build();
     }
 
     private NewTopic dlt(String sourceTopic) {
-        return TopicBuilder.name(sourceTopic + ".DLT")
+        return TopicBuilder.name(topics.topic(sourceTopic) + KafkaDeadLetterTopics.SUFFIX)
                 .partitions(properties.getPartitions())
                 .replicas(properties.getReplicas())
                 .build();

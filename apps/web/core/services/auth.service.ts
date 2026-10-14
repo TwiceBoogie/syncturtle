@@ -41,9 +41,15 @@ export class AuthService extends APIService {
 
   async signOut(): Promise<void> {
     try {
-      await this.post<void>("/auth/sign-out", undefined, {
+      const response = await this.post<void>("/auth/sign-out", undefined, {
         validateStatus: (s) => s >= 200 && s < 500,
       });
+
+      if (response.status >= 200 && response.status < 300) {
+        this.announceAuthStateChanged();
+      } else {
+        throw new HttpError(response.raw, response.data);
+      }
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;
       throw err.data ?? err;

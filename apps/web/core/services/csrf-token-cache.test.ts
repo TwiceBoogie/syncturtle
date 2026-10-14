@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, expect, it } from "vitest";
 import {
   CsrfTokenCache,
   revokedCurrentSession,
@@ -44,9 +43,9 @@ describe("CsrfTokenCache", () => {
       return { csrfToken: "preauth", scope: "PREAUTH" as const, expiresAt: "2026-08-27T12:30:00Z" };
     };
     const [first, second] = await Promise.all([cache.get(load), cache.get(load)]);
-    assert.equal(first.csrfToken, "preauth");
-    assert.equal(second.csrfToken, "preauth");
-    assert.equal(loads, 1);
+    expect(first.csrfToken).toBe("preauth");
+    expect(second.csrfToken).toBe("preauth");
+    expect(loads).toBe(1);
   });
 
   it("invalidates PREAUTH transition state and caches the SESSION replacement", async () => {
@@ -66,9 +65,9 @@ describe("CsrfTokenCache", () => {
       return { csrfToken: "unexpected", scope: "SESSION", expiresAt: "2026-08-28T12:00:00Z" };
     });
 
-    assert.equal(session.scope, "SESSION");
-    assert.equal(cached.csrfToken, "session");
-    assert.equal(loads, 2);
+    expect(session.scope).toBe("SESSION");
+    expect(cached.csrfToken).toBe("session");
+    expect(loads).toBe(2);
   });
 
   it("replaces expired and within-skew SESSION values", async () => {
@@ -87,7 +86,7 @@ describe("CsrfTokenCache", () => {
       expiresAt: "2026-08-28T12:00:00Z",
     }));
 
-    assert.equal(replacement.csrfToken, "replacement");
+    expect(replacement.csrfToken).toBe("replacement");
   });
 
   it("preserves a usable SESSION value when callers do not invalidate after refresh", async () => {
@@ -101,7 +100,7 @@ describe("CsrfTokenCache", () => {
     await cache.get(load);
     await cache.get(load);
 
-    assert.equal(loads, 1);
+    expect(loads).toBe(1);
   });
 
   it("does not let an invalidated in-flight PREAUTH load repopulate the cache", async () => {
@@ -114,7 +113,9 @@ describe("CsrfTokenCache", () => {
         })
     );
     await Promise.resolve();
-    assert.ok(resolveStale);
+    if (!resolveStale) {
+      throw new Error("Expected stale resolver");
+    }
 
     cache.invalidate();
     const current = cache.get(async () => ({
@@ -125,42 +126,41 @@ describe("CsrfTokenCache", () => {
     resolveStale({ csrfToken: "preauth", scope: "PREAUTH", expiresAt: "2026-08-27T12:30:00Z" });
 
     await stale;
-    assert.equal((await current).csrfToken, "session");
-    assert.equal(
+    expect((await current).csrfToken).toBe("session");
+    expect(
       (
         await cache.get(async () => ({
           csrfToken: "unexpected",
           scope: "SESSION",
           expiresAt: "2026-08-28T12:00:00Z",
         }))
-      ).csrfToken,
-      "session"
-    );
+      ).csrfToken
+    ).toBe("session");
   });
 });
 
 describe("CSRF lifecycle and recovery policy", () => {
   it("invalidates logout, current-session, and all-session outcomes", () => {
-    assert.equal(revokedCurrentSession({ currentSessionRevoked: true }), true);
-    assert.equal(revokedCurrentSession({ currentSessionRevoked: true, scope: "ALL" }), true);
+    expect(revokedCurrentSession({ currentSessionRevoked: true })).toBe(true);
+    expect(revokedCurrentSession({ currentSessionRevoked: true, scope: "ALL" })).toBe(true);
   });
 
   it("preserves non-current and revoke-others outcomes", () => {
-    assert.equal(revokedCurrentSession({ currentSessionRevoked: false }), false);
-    assert.equal(revokedCurrentSession({ currentSessionRevoked: false, scope: "OTHERS" }), false);
+    expect(revokedCurrentSession({ currentSessionRevoked: false })).toBe(false);
+    expect(revokedCurrentSession({ currentSessionRevoked: false, scope: "OTHERS" })).toBe(false);
   });
 
   it("retries only the first exact INVALID_CSRF_TOKEN response", () => {
-    assert.equal(shouldRetryInvalidCsrf(403, { key: "INVALID_CSRF_TOKEN" }, 0), true);
-    assert.equal(shouldRetryInvalidCsrf(403, { error: "INVALID_CSRF_TOKEN" }, 0), true);
-    assert.equal(shouldRetryInvalidCsrf(403, { error: "INVALID_CSRF_TOKEN" }, 1), false);
+    expect(shouldRetryInvalidCsrf(403, { key: "INVALID_CSRF_TOKEN" }, 0)).toBe(true);
+    expect(shouldRetryInvalidCsrf(403, { error: "INVALID_CSRF_TOKEN" }, 0)).toBe(true);
+    expect(shouldRetryInvalidCsrf(403, { error: "INVALID_CSRF_TOKEN" }, 1)).toBe(false);
   });
 
   it("does not retry arbitrary 403, 401, or 5xx responses", () => {
-    assert.equal(shouldRetryInvalidCsrf(403, { key: "FORBIDDEN" }, 0), false);
-    assert.equal(shouldRetryInvalidCsrf(401, { key: "INVALID_CSRF_TOKEN" }, 0), false);
-    assert.equal(shouldRetryInvalidCsrf(500, { key: "INVALID_CSRF_TOKEN" }, 0), false);
-    assert.equal(shouldRetryInvalidCsrf(503, { error: "INVALID_CSRF_TOKEN" }, 0), false);
+    expect(shouldRetryInvalidCsrf(403, { key: "FORBIDDEN" }, 0)).toBe(false);
+    expect(shouldRetryInvalidCsrf(401, { key: "INVALID_CSRF_TOKEN" }, 0)).toBe(false);
+    expect(shouldRetryInvalidCsrf(500, { key: "INVALID_CSRF_TOKEN" }, 0)).toBe(false);
+    expect(shouldRetryInvalidCsrf(503, { error: "INVALID_CSRF_TOKEN" }, 0)).toBe(false);
   });
 });
 
@@ -179,9 +179,9 @@ describe("per-tab SESSION persistence", () => {
       return { csrfToken: "unexpected", scope: "SESSION", expiresAt: "2026-08-28T12:00:00Z" };
     });
 
-    assert.equal(restored.csrfToken, "stored-session");
-    assert.equal(restored.scope, "SESSION");
-    assert.equal(loads, 0);
+    expect(restored.csrfToken).toBe("stored-session");
+    expect(restored.scope).toBe("SESSION");
+    expect(loads).toBe(0);
   });
 
   it("preserves restored SESSION state for refresh without rewriting storage", async () => {
@@ -196,8 +196,8 @@ describe("per-tab SESSION persistence", () => {
     await cache.get(async () => ({ csrfToken: "unexpected", scope: "SESSION", expiresAt: "2026-08-28T12:00:00Z" }));
     await cache.get(async () => ({ csrfToken: "unexpected", scope: "SESSION", expiresAt: "2026-08-28T12:00:00Z" }));
 
-    assert.equal(storage.writes, writesBeforeRestore);
-    assert.notEqual(storage.getItem(SESSION_CSRF_STORAGE_KEY), null);
+    expect(storage.writes).toBe(writesBeforeRestore);
+    expect(storage.getItem(SESSION_CSRF_STORAGE_KEY)).not.toBe(null);
   });
 
   it("persists only the exact public SESSION response shape", async () => {
@@ -214,8 +214,8 @@ describe("per-tab SESSION persistence", () => {
     }));
 
     const serialized = storage.getItem(SESSION_CSRF_STORAGE_KEY);
-    assert.notEqual(serialized, null);
-    assert.deepEqual(Object.keys(JSON.parse(serialized as string)).sort(), ["csrfToken", "expiresAt", "scope"]);
+    expect(serialized).not.toBe(null);
+    expect(Object.keys(JSON.parse(serialized as string)).sort()).toEqual(["csrfToken", "expiresAt", "scope"]);
   });
 
   it("never persists PREAUTH", async () => {
@@ -231,8 +231,8 @@ describe("per-tab SESSION persistence", () => {
       expiresAt: "2026-08-27T12:30:00Z",
     }));
 
-    assert.equal(storage.getItem(SESSION_CSRF_STORAGE_KEY), null);
-    assert.equal(storage.writes, 0);
+    expect(storage.getItem(SESSION_CSRF_STORAGE_KEY)).toBe(null);
+    expect(storage.writes).toBe(0);
   });
 
   it("deletes stored PREAUTH and loads a fresh value", async () => {
@@ -252,8 +252,8 @@ describe("per-tab SESSION persistence", () => {
       return { csrfToken: "fresh-preauth", scope: "PREAUTH", expiresAt: "2026-08-27T12:30:00Z" };
     });
 
-    assert.equal(loads, 1);
-    assert.equal(storage.getItem(SESSION_CSRF_STORAGE_KEY), null);
+    expect(loads).toBe(1);
+    expect(storage.getItem(SESSION_CSRF_STORAGE_KEY)).toBe(null);
   });
 
   it("deletes malformed JSON without sending it", async () => {
@@ -270,8 +270,8 @@ describe("per-tab SESSION persistence", () => {
       return { csrfToken: "fresh", scope: "PREAUTH", expiresAt: "2026-08-27T12:30:00Z" };
     });
 
-    assert.equal(loads, 1);
-    assert.equal(storage.getItem(SESSION_CSRF_STORAGE_KEY), null);
+    expect(loads).toBe(1);
+    expect(storage.getItem(SESSION_CSRF_STORAGE_KEY)).toBe(null);
   });
 
   it("rejects stored values with missing or extra fields", async () => {
@@ -290,8 +290,8 @@ describe("per-tab SESSION persistence", () => {
         loads += 1;
         return { csrfToken: "fresh", scope: "PREAUTH", expiresAt: "2026-08-27T12:30:00Z" };
       });
-      assert.equal(loads, 1);
-      assert.equal(storage.getItem(SESSION_CSRF_STORAGE_KEY), null);
+      expect(loads).toBe(1);
+      expect(storage.getItem(SESSION_CSRF_STORAGE_KEY)).toBe(null);
     }
   });
 
@@ -308,8 +308,8 @@ describe("per-tab SESSION persistence", () => {
         loads += 1;
         return { csrfToken: "fresh", scope: "PREAUTH", expiresAt: "2026-08-27T12:30:00Z" };
       });
-      assert.equal(loads, 1);
-      assert.equal(storage.getItem(SESSION_CSRF_STORAGE_KEY), null);
+      expect(loads).toBe(1);
+      expect(storage.getItem(SESSION_CSRF_STORAGE_KEY)).toBe(null);
     }
   });
 
@@ -327,8 +327,8 @@ describe("per-tab SESSION persistence", () => {
       return { csrfToken: "fresh", scope: "PREAUTH", expiresAt: "2026-08-27T12:30:00Z" };
     });
 
-    assert.equal(loads, 1);
-    assert.equal(storage.getItem(SESSION_CSRF_STORAGE_KEY), null);
+    expect(loads).toBe(1);
+    expect(storage.getItem(SESSION_CSRF_STORAGE_KEY)).toBe(null);
   });
 
   it("clears memory and persisted SESSION state on invalidation", async () => {
@@ -341,8 +341,8 @@ describe("per-tab SESSION persistence", () => {
 
     cache.invalidate();
 
-    assert.equal(storage.getItem(SESSION_CSRF_STORAGE_KEY), null);
-    assert.ok(storage.removals >= 1);
+    expect(storage.getItem(SESSION_CSRF_STORAGE_KEY)).toBe(null);
+    expect(storage.removals >= 1).toBeTruthy();
   });
 
   it("removes persisted SESSION state when the canonical value expires", async () => {
@@ -357,7 +357,7 @@ describe("per-tab SESSION persistence", () => {
 
     await cache.get(async () => ({ csrfToken: "fresh", scope: "PREAUTH", expiresAt: "2026-08-27T12:30:00Z" }));
 
-    assert.equal(storage.getItem(SESSION_CSRF_STORAGE_KEY), null);
+    expect(storage.getItem(SESSION_CSRF_STORAGE_KEY)).toBe(null);
   });
 
   it("does not let invalidated in-flight SESSION issuance repopulate storage", async () => {
@@ -374,13 +374,15 @@ describe("per-tab SESSION persistence", () => {
         })
     );
     await Promise.resolve();
-    assert.ok(resolveStale);
+    if (!resolveStale) {
+      throw new Error("Expected stale resolver");
+    }
 
     cache.invalidate();
     resolveStale(storedSession());
     await stale;
 
-    assert.equal(storage.getItem(SESSION_CSRF_STORAGE_KEY), null);
+    expect(storage.getItem(SESSION_CSRF_STORAGE_KEY)).toBe(null);
   });
 
   it("does not clear restored SESSION state for an access-bootstrap 401", async () => {
@@ -391,15 +393,15 @@ describe("per-tab SESSION persistence", () => {
       () => storage
     );
 
-    assert.equal(shouldRetryInvalidCsrf(401, { error: "UNAUTHORIZED" }, 0), false);
+    expect(shouldRetryInvalidCsrf(401, { error: "UNAUTHORIZED" }, 0)).toBe(false);
     const restored = await cache.get(async () => ({
       csrfToken: "unexpected",
       scope: "SESSION",
       expiresAt: "2026-08-28T12:00:00Z",
     }));
 
-    assert.equal(restored.csrfToken, "stored-session");
-    assert.notEqual(storage.getItem(SESSION_CSRF_STORAGE_KEY), null);
+    expect(restored.csrfToken).toBe("stored-session");
+    expect(storage.getItem(SESSION_CSRF_STORAGE_KEY)).not.toBe(null);
   });
 
   it("continues with the in-memory cache when sessionStorage is unavailable", async () => {
@@ -412,6 +414,6 @@ describe("per-tab SESSION persistence", () => {
 
     const value = await cache.get(async () => storedSession());
 
-    assert.equal(value.scope, "SESSION");
+    expect(value.scope).toBe("SESSION");
   });
 });

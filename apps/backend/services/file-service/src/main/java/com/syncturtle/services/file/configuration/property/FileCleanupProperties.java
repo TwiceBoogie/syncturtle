@@ -18,15 +18,13 @@ public final class FileCleanupProperties {
     private final long initialDelayMs;
     private final int batchSize;
     private final Duration claimLease;
-    private final Duration unlinkedAssetRetention;
 
     public FileCleanupProperties(
             @DefaultValue("true") boolean enabled,
             @DefaultValue("60000") long fixedDelayMs,
             @DefaultValue("10000") long initialDelayMs,
             @DefaultValue("50") int batchSize,
-            @DefaultValue("5m") Duration claimLease,
-            @DefaultValue("7d") Duration unlinkedAssetRetention) {
+            @DefaultValue("5m") Duration claimLease) {
         Assert.isTrue(fixedDelayMs >= 1_000, "app.file.cleanup.fixedDelayMs must be at least 1000");
         Assert.isTrue(initialDelayMs >= 0, "app.file.cleanup.initialDelayMs must not be negative");
         Assert.isTrue(batchSize >= 1 && batchSize <= 1_000,
@@ -35,17 +33,12 @@ public final class FileCleanupProperties {
         Duration normalizedLease = Objects.requireNonNull(claimLease, "app.file.cleanup.claimLease is required");
         Assert.isTrue(!normalizedLease.isZero() && !normalizedLease.isNegative(),
                 "app.file.cleanup.claimLease must be positive");
-        Duration normalizedUnlinkedRetention = Objects.requireNonNull(unlinkedAssetRetention,
-                "app.file.cleanup.unlinkedAssetRetention is required");
-        Assert.isTrue(!normalizedUnlinkedRetention.isZero() && !normalizedUnlinkedRetention.isNegative(),
-                "app.file.cleanup.unlinkedAssetRetention must be positive");
 
         this.enabled = enabled;
         this.fixedDelayMs = fixedDelayMs;
         this.initialDelayMs = initialDelayMs;
         this.batchSize = batchSize;
         this.claimLease = normalizedLease;
-        this.unlinkedAssetRetention = normalizedUnlinkedRetention;
     }
 
 }

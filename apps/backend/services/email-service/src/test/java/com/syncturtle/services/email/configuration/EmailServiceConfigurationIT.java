@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import com.syncturtle.services.email.configuration.property.EmailInboxProperties;
-import com.syncturtle.services.email.configuration.property.EmailKafkaProperties;
 import com.syncturtle.services.email.configuration.property.EmailRuntimeConfigCacheProperties;
 import com.syncturtle.services.email.configuration.property.EmailTransportProperties;
 import com.syncturtle.services.email.configuration.property.InstanceServiceClientProperties;
@@ -22,9 +21,6 @@ class EmailServiceConfigurationIT {
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
             .withUserConfiguration(EmailServicePropertiesConfiguration.class)
             .withPropertyValues(
-                    "app.kafka.enabled=true",
-                    "app.kafka.consumer-group=email-workers",
-                    "app.kafka.config-broadcast-group=email-config-broadcast",
                     "app.email.inbox.processing.lease=2m",
                     "app.email.inbox.processing.batch-size=17",
                     "app.email.inbox.retry.max-attempts=4",
@@ -36,9 +32,7 @@ class EmailServiceConfigurationIT {
                     "app.email.transport.read-timeout=2s",
                     "app.email.transport.write-timeout=3s",
                     "app.email.runtime-config-cache.ttl=90s",
-                    "app.clients.instance-service.base-url=https://instance.internal/",
-                    "app.clients.instance-service.connect-timeout=2s",
-                    "app.clients.instance-service.read-timeout=5s");
+                    "app.clients.instance-service.base-url=https://instance.internal/");
 
     @Nested
     @DisplayName("valid configuration")
@@ -49,10 +43,6 @@ class EmailServiceConfigurationIT {
         void bindsAllPropertyFamilies() {
             contextRunner.run(context -> {
                 assertThat(context).hasNotFailed();
-
-                EmailKafkaProperties kafka = context.getBean(EmailKafkaProperties.class);
-                assertThat(kafka.isEnabled()).isTrue();
-                assertThat(kafka.getConsumerGroup()).isEqualTo("email-workers");
 
                 EmailInboxProperties inbox = context.getBean(EmailInboxProperties.class);
                 assertThat(inbox.getProcessing().getLease()).isEqualTo(Duration.ofMinutes(2));
@@ -73,8 +63,6 @@ class EmailServiceConfigurationIT {
 
                 InstanceServiceClientProperties client = context.getBean(InstanceServiceClientProperties.class);
                 assertThat(client.getBaseUrl()).isEqualTo(URI.create("https://instance.internal"));
-                assertThat(client.getConnectTimeout()).isEqualTo(Duration.ofSeconds(2));
-                assertThat(client.getReadTimeout()).isEqualTo(Duration.ofSeconds(5));
             });
         }
 

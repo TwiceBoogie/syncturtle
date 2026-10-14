@@ -439,8 +439,14 @@ The most important rule is:
 From the repository root:
 
 ```sh
-docker compose up -d
+docker compose up -d --build
 ```
+
+The Compose stack builds its MinIO server from a pinned source release and its
+`minio-init` client from a pinned official release binary with a verified
+checksum. No manual MinIO image pull or local retag is needed. `--build` refreshes
+the application images after source changes; the named data volumes remain in
+place.
 
 ---
 
@@ -586,7 +592,30 @@ Common local frontend URLs:
 
 ## Testing
 
-### Unit tests
+### Frontend and TypeScript unit tests
+
+Vitest runs the web, admin, and test-bearing TypeScript package suites. The root
+command uses Turbo and does not run backend Maven tests:
+
+```sh
+yarn test
+yarn workspace @syncturtle/utils test
+yarn workspace web test
+yarn workspace admin test
+yarn workspace @syncturtle/utils test src/browser-session-coordinator.test.ts
+yarn workspace @syncturtle/utils test:watch
+```
+
+Use `.test.ts` or `.test.tsx` (also `.spec.ts` or `.spec.tsx`) and import
+`describe`, `expect`, and `it` explicitly from `vitest`. Tests may import
+colocated production modules by relative path. Node is the default runtime.
+For DOM or React tests, put `/** @vitest-environment jsdom */` at the top of
+the test file; web and admin provide React Testing Library, user-event,
+DOM matchers, and automatic cleanup. The web and admin Vitest configs use their
+TypeScript path aliases. Keep timing deterministic and avoid real network calls
+in unit tests. Storybook stories and backend system tests are separate.
+
+### Backend unit tests
 
 ```sh
 cd apps/backend

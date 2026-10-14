@@ -1,6 +1,5 @@
 package com.syncturtle.services.user.service.collaborator.session;
 
-import static com.syncturtle.services.user.support.fixture.RefreshSessionPropertyFixtures.lifecycleProperties;
 import static com.syncturtle.services.user.support.fixture.RefreshSessionPropertyFixtures.successorEnvelopeProperties;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
@@ -34,7 +33,6 @@ import com.syncturtle.common.cache.template.RedisKeyBuilder;
 import com.syncturtle.common.contracts.auth.session.RefreshSessionFamilyRecord;
 import com.syncturtle.common.core.security.token.Base64UrlSecureTokenGenerator;
 import com.syncturtle.common.core.security.token.Sha256TokenHasher;
-import com.syncturtle.services.user.configuration.property.RefreshSessionLifecycleProperties;
 import com.syncturtle.services.user.exception.RefreshSessionLifecycleException;
 import com.syncturtle.services.user.service.param.RefreshSessionFamilyCreateParam;
 import com.syncturtle.services.user.service.param.RefreshSessionFamilyRotateParam;
@@ -79,7 +77,6 @@ class RefreshSessionFamilyStoreIT {
 
         RedisKeyBuilder keyBuilder = new RedisKeyBuilder(new RedisKeyProperties(KEY_PREFIX));
         keys = new RefreshSessionRedisKeys(keyBuilder);
-        RefreshSessionLifecycleProperties lifecycleProperties = lifecycleProperties();
 
         RefreshSessionSuccessorEnvelopeCipher envelopeCipher = new RefreshSessionSuccessorEnvelopeCipher(
                 successorEnvelopeProperties(), new SecureRandom());
@@ -89,10 +86,9 @@ class RefreshSessionFamilyStoreIT {
                 new Base64UrlSecureTokenGenerator(),
                 new Sha256TokenHasher(),
                 serializer,
-                new RefreshSessionLifetimeDecider(lifecycleProperties, clock),
+                new RefreshSessionLifetimeDecider(clock),
                 envelopeCipher,
                 new RefreshSessionLifecycleScriptExecutor(redis),
-                lifecycleProperties,
                 jsonMapper);
     }
 
@@ -133,6 +129,19 @@ class RefreshSessionFamilyStoreIT {
 
             Long ttl = redis.getExpire(keys.session(result.getSessionId()), TimeUnit.MILLISECONDS);
             assertThat(ttl).isPositive().isLessThanOrEqualTo(Duration.ofDays(7).plusSeconds(1).toMillis());
+        }
+
+        @Test
+        @DisplayName("late elevated session creation cannot restore a revoked administrator version")
+        void lateElevatedCreationCannotRestoreRevokedVersion() {
+            // arrange
+            store.create(adminCreateParam("existing-admin"));
+            redis.opsForValue().set(keys.adminSessionVersion(INSTANCE_ID, USER_ID), "4");
+            // act
+            RefreshSessionLifecycleResult late = store.create(adminCreateParam("late-admin"));
+            // assert
+            assertThat(late.getFamily().getAdminSessionVersion()).isEqualTo(3L);
+            assertThat(redis.opsForValue().get(keys.adminSessionVersion(INSTANCE_ID, USER_ID))).isEqualTo("4");
         }
 
         @Test
@@ -200,6 +209,19 @@ class RefreshSessionFamilyStoreIT {
     @Nested
     @DisplayName("rotate(RefreshSessionFamilyRotateParam)")
     class RotateTests {
+
+        @Test
+        @DisplayName("late elevated rotation cannot restore a revoked administrator version")
+        void lateElevatedRotationCannotRestoreRevokedVersion() {
+            // arrange
+            RefreshSessionLifecycleResult created = store.create(adminCreateParam("admin"));
+            redis.opsForValue().set(keys.adminSessionVersion(INSTANCE_ID, USER_ID), "4");
+            // act
+            RefreshSessionLifecycleResult late = store.rotate(adminRotateParam(created.getRefreshToken()));
+            // assert
+            assertThat(late.getFamily().getAdminSessionVersion()).isEqualTo(3L);
+            assertThat(redis.opsForValue().get(keys.adminSessionVersion(INSTANCE_ID, USER_ID))).isEqualTo("4");
+        }
 
         @Test
         @DisplayName("rotates current token without changing family or absolute boundary")

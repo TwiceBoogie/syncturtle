@@ -20,14 +20,10 @@ export type TInstanceAuthenticationMethodKeys =
 export type TInstanceGoogleAuthenticationConfigurationKeys = "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET";
 
 export type TInstanceGithubAuthenticationConfigurationKeys =
-  | "GITHUB_CLIENT_ID"
-  | "GITHUB_CLIENT_SECRET"
-  | "GITHUB_ORGANIZATION_ID";
+  "GITHUB_CLIENT_ID" | "GITHUB_CLIENT_SECRET" | "GITHUB_ORGANIZATION_ID";
 
 export type TInstanceGitlabAuthenticationConfigurationKeys =
-  | "GITLAB_HOST"
-  | "GITLAB_CLIENT_ID"
-  | "GITLAB_CLIENT_SECRET";
+  "GITLAB_HOST" | "GITLAB_CLIENT_ID" | "GITLAB_CLIENT_SECRET";
 
 export type TInstanceAuthenticationConfigurationKeys =
   | TInstanceGoogleAuthenticationConfigurationKeys

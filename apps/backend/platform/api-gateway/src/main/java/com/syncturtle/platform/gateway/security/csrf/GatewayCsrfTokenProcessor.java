@@ -3,14 +3,14 @@ package com.syncturtle.platform.gateway.security.csrf;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Set;
 import java.util.UUID;
 
+import com.syncturtle.common.contracts.auth.session.RefreshSessionFamilyRecord;
 import com.syncturtle.common.core.security.token.SecureTokenGenerator;
-import com.syncturtle.common.security.csrf.CsrfTokenSigner;
-import com.syncturtle.platform.gateway.configuration.property.GatewayCsrfProperties;
 import com.syncturtle.platform.gateway.exception.GatewayCsrfTokenException;
 import com.syncturtle.platform.gateway.type.GatewayCsrfScope;
 
@@ -21,34 +21,35 @@ import tools.jackson.databind.json.JsonMapper;
 public final class GatewayCsrfTokenProcessor {
 
     private static final int CURRENT_VERSION = 1;
+    private static final int NONCE_BYTES = 32;
+    private static final int MAX_SIGNED_TOKEN_CHARS = 2048;
+    private static final int MAX_PAYLOAD_BYTES = 1024;
+    private static final Duration PRE_AUTH_LIFETIME = Duration.ofMinutes(30);
     private static final Set<String> PREAUTH_FIELDS = Set.of("v", "scp", "iat", "exp", "n");
     private static final Set<String> SESSION_FIELDS = Set.of("v", "scp", "iat", "exp", "sid", "n");
     private static final Base64.Encoder B64URL = Base64.getUrlEncoder().withoutPadding();
     private static final Base64.Decoder B64URL_DECODER = Base64.getUrlDecoder();
 
     private final JsonMapper jsonMapper;
-    private final CsrfTokenSigner tokenSigner;
+    private final GatewayCsrfTokenSigner tokenSigner;
     private final SecureTokenGenerator tokenGenerator;
-    private final GatewayCsrfProperties properties;
     private final Clock clock;
 
     public GatewayCsrfTokenProcessor(
             JsonMapper jsonMapper,
-            CsrfTokenSigner tokenSigner,
+            GatewayCsrfTokenSigner tokenSigner,
             SecureTokenGenerator tokenGenerator,
-            GatewayCsrfProperties properties,
             Clock clock) {
         this.jsonMapper = jsonMapper;
         this.tokenSigner = tokenSigner;
         this.tokenGenerator = tokenGenerator;
         this.clock = clock;
-        this.properties = properties;
     }
 
     public IssuedPreAuthCsrfToken issuePreAuth() {
         Instant issuedAt = Instant.now(clock);
-        Instant expiresAt = issuedAt.plus(properties.getPreAuthLifetime());
-        String nonce = tokenGenerator.generateBase64Url(properties.getNonceBytes());
+        Instant expiresAt = issuedAt.plus(PRE_AUTH_LIFETIME);
+        String nonce = tokenGenerator.generateBase64Url(NONCE_BYTES);
         String json = canonicalPreAuthJson(issuedAt, expiresAt, nonce);
         String payload = encodePayload(json);
 
@@ -62,7 +63,7 @@ public final class GatewayCsrfTokenProcessor {
         }
 
         Instant issuedAt = Instant.now(clock);
-        Instant expiresAt = issuedAt.plus(properties.getSessionMaxLifetime());
+        Instant expiresAt = issuedAt.plus(RefreshSessionFamilyRecord.IDLE_LIFETIME);
         if (validatedFamilyIdleExpiresAt.isBefore(expiresAt)) {
             expiresAt = validatedFamilyIdleExpiresAt;
         }
@@ -71,7 +72,7 @@ public final class GatewayCsrfTokenProcessor {
             throw new IllegalArgumentException("validated family must remain active after issuance");
         }
 
-        String nonce = tokenGenerator.generateBase64Url(properties.getNonceBytes());
+        String nonce = tokenGenerator.generateBase64Url(NONCE_BYTES);
         String json = canonicalSessionJson(issuedAt, expiresAt, canonicalSessionId, nonce);
         String payload = encodePayload(json);
 
@@ -103,7 +104,7 @@ public final class GatewayCsrfTokenProcessor {
                 claims.nonce);
         requireCanonicalPayload(claims.payload, canonical);
 
-        if (claims.expiresAt.isAfter(claims.issuedAt.plus(properties.getSessionMaxLifetime()))) {
+        if (claims.expiresAt.isAfter(claims.issuedAt.plus(RefreshSessionFamilyRecord.IDLE_LIFETIME))) {
             throw invalid();
         }
 
@@ -132,9 +133,10 @@ public final class GatewayCsrfTokenProcessor {
             String submitedToken,
             GatewayCsrfScope requiredScope,
             boolean requireSubmittedToken) {
-        requireBoundedText(signedCookieToken, properties.getMaxSignedTokenChars());
+        requireBoundedText(signedCookieToken, MAX_SIGNED_TOKEN_CHARS);
+
         if (requireSubmittedToken) {
-            requireBoundedText(submitedToken, properties.getMaxSignedTokenChars());
+            requireBoundedText(submitedToken, MAX_SIGNED_TOKEN_CHARS);
         }
 
         if (!tokenSigner.verify(signedCookieToken)) {
@@ -147,7 +149,7 @@ public final class GatewayCsrfTokenProcessor {
         }
 
         byte[] jsonBytes = decodeCanonicalBase64Url(payload);
-        if (jsonBytes.length > properties.getMaxPayloadBytes()) {
+        if (jsonBytes.length > MAX_PAYLOAD_BYTES) {
             throw invalid();
         }
 
@@ -206,7 +208,7 @@ public final class GatewayCsrfTokenProcessor {
     }
 
     private void requireExactPreAuthLifetime(ParsedClaims claims) {
-        if (!claims.issuedAt.plus(properties.getPreAuthLifetime()).equals(claims.expiresAt)) {
+        if (!claims.issuedAt.plus(PRE_AUTH_LIFETIME).equals(claims.expiresAt)) {
             throw invalid();
         }
     }
@@ -230,7 +232,7 @@ public final class GatewayCsrfTokenProcessor {
 
     private String encodePayload(String json) {
         byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
-        if (bytes.length > properties.getMaxPayloadBytes()) {
+        if (bytes.length > MAX_PAYLOAD_BYTES) {
             throw new IllegalStateException("Generated CSRF payload exceeds configured bound");
         }
 
@@ -256,7 +258,7 @@ public final class GatewayCsrfTokenProcessor {
 
     private void validateNonce(String nonce) {
         byte[] decoded = decodeCanonicalBase64Url(nonce);
-        if (decoded.length != properties.getNonceBytes()) {
+        if (decoded.length != NONCE_BYTES) {
             throw invalid();
         }
     }
