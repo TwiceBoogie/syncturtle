@@ -2,8 +2,6 @@ package com.syncturtle.platform.gateway.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.Duration;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,8 +26,7 @@ class BrowserSecurityCookiePolicyTest {
                 false,
                 "Lax",
                 "Lax",
-                "Lax",
-                Duration.ofMinutes(30));
+                "Lax");
         policy = new BrowserSecurityCookiePolicy(new SecurityCookieFactory(properties));
     }
 
@@ -148,8 +145,8 @@ class BrowserSecurityCookiePolicyTest {
     class LogoutTests {
 
         @Test
-        @DisplayName("forwards refresh and forms csrf on both final logout routes")
-        void forwardsRefreshAndFormCsrfOnBothFinalLogoutRoutes() {
+        @DisplayName("forwards only refresh on unified logout route")
+        void forwardsOnlyRefreshOnUnifiedLogoutRoute() {
             // arrange
             HttpCookie secureRefreshToken = new HttpCookie("__Secure-refresh_token", "refresh");
             HttpCookie refreshToken = new HttpCookie("refresh_token", "refresh");
@@ -167,16 +164,14 @@ class BrowserSecurityCookiePolicyTest {
             // assert
             assertThat(normalDecision.getDownstreamCookies())
                     .extracting(HttpCookie::toString)
-                    .containsExactly("refresh_token=refresh", "csrf_token=csrf");
-            assertThat(adminDecision.getDownstreamCookies())
-                    .extracting(HttpCookie::toString)
-                    .containsExactly("refresh_token=refresh", "csrf_token=csrf");
+                    .containsExactly("refresh_token=refresh");
+            assertThat(adminDecision.getDownstreamCookies()).isEmpty();
             // verify
         }
 
         @Test
-        @DisplayName("conflict forwards no refresh but still allows browser logout")
-        void conflictForwardsNoRefreshButStillAllowsBrowserLogout() {
+        @DisplayName("conflict forwards no browser cookie but still allows browser logout")
+        void conflictForwardsNoBrowserCookieButStillAllowsBrowserLogout() {
             // arrange
             HttpCookie refreshToken = new HttpCookie("refresh_token", "one");
             HttpCookie hostRefreshToken = new HttpCookie("__Host-refresh_token", "two");
@@ -189,17 +184,15 @@ class BrowserSecurityCookiePolicyTest {
             Decision decision = policy.decide(request);
             // assert
             assertThat(decision.isRefreshConflict()).isFalse();
-            assertThat(decision.getDownstreamCookies())
-                    .extracting(HttpCookie::toString)
-                    .containsExactly("csrf_token=csrf");
+            assertThat(decision.getDownstreamCookies()).isEmpty();
             // verify
         }
 
     }
 
     @Nested
-    @DisplayName("transitional csrf and handoff")
-    class TransitionalCsrfAndHandoffTests {
+    @DisplayName("edge csrf isolation and handoff")
+    class EdgeCsrfIsolationAndHandoffTests {
 
         @Test
         @DisplayName("completion gets exactly one handoff cookie and no raw csrf cookie")
@@ -223,8 +216,8 @@ class BrowserSecurityCookiePolicyTest {
         }
 
         @Test
-        @DisplayName("forwards csrf only for exact current form routes")
-        void forwardsCsrfOnlyForExactCurrentFormRoutes() {
+        @DisplayName("forwards no csrf cookie on former downstream form routes")
+        void forwardsNoCsrfCookieOnFormerDownstreamFormRoutes() {
             // arrange
             HttpCookie csrfToken = new HttpCookie("csrf_token", "csrf");
             MockServerHttpRequest exact = formPost("/auth/forgot-password/")
@@ -236,17 +229,20 @@ class BrowserSecurityCookiePolicyTest {
             MockServerHttpRequest nearMatch = formPost("/auth/sign-in/extra")
                     .cookie(csrfToken)
                     .build();
+            MockServerHttpRequest instance = formPost("/api/instances/admins/sign-in")
+                    .cookie(csrfToken)
+                    .build();
             // conditions
             // act
             Decision exactDecision = policy.decide(exact);
             Decision dynamicDecision = policy.decide(dynamicReset);
             Decision nearMatchDecision = policy.decide(nearMatch);
+            Decision instanceDecision = policy.decide(instance);
             // assert
-            assertThat(exactDecision.getDownstreamCookies())
-                    .extracting(HttpCookie::toString)
-                    .containsExactly("csrf_token=csrf");
+            assertThat(exactDecision.getDownstreamCookies()).isEmpty();
             assertThat(dynamicDecision.getDownstreamCookies()).isEmpty();
             assertThat(nearMatchDecision.getDownstreamCookies()).isEmpty();
+            assertThat(instanceDecision.getDownstreamCookies()).isEmpty();
             // verify
         }
 
@@ -273,29 +269,6 @@ class BrowserSecurityCookiePolicyTest {
             // verify
         }
 
-        @Test
-        @DisplayName("forwards no cookies to session inventory or revocation routes")
-        void forwardsNoCookiesToSessionInventoryOrRevocationRoutes() {
-            // arrange
-            HttpCookie accessToken = new HttpCookie("access_token", "access");
-            HttpCookie refreshToken = new HttpCookie("refresh_token", "refresh");
-            HttpCookie csrfToken = new HttpCookie("csrf_token", "csrf");
-            MockServerHttpRequest inventory = MockServerHttpRequest.get("/api/users/me/sessions")
-                    .cookie(accessToken, refreshToken, csrfToken)
-                    .build();
-            MockServerHttpRequest revocation = MockServerHttpRequest
-                    .delete("/api/users/me/sessions/others")
-                    .cookie(accessToken, refreshToken, csrfToken)
-                    .build();
-            // conditions
-            // act
-            Decision inventoryDecision = policy.decide(inventory);
-            Decision revocationDecision = policy.decide(revocation);
-            // assert
-            assertThat(inventoryDecision.getDownstreamCookies()).isEmpty();
-            assertThat(revocationDecision.getDownstreamCookies()).isEmpty();
-            // verify
-        }
 
     }
 

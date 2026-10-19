@@ -5,8 +5,10 @@ import static com.syncturtle.services.user.support.fixture.AuthenticationFixture
 import static com.syncturtle.services.user.support.fixture.AuthenticationFixtures.REFRESH_TOKEN;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -23,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import com.syncturtle.common.contracts.auth.provider.AuthProvider;
+import com.syncturtle.common.contracts.auth.exception.AuthException;
 import com.syncturtle.common.web.context.RequestClientContext;
 import com.syncturtle.services.user.dto.response.IssueTokenResponse;
 import com.syncturtle.services.user.model.InstanceLite;
@@ -45,6 +48,7 @@ import com.syncturtle.services.user.service.param.OAuthAuthenticationParam;
 @MockitoSettings(strictness = Strictness.STRICT_STUBS)
 class OAuthServiceImplSessionTest {
 
+    private static final String BINDING_HASH = "a".repeat(64);
     private static final String CODE = "oauth-code";
     private static final String STATE = "oauth-state";
     private static final String NEXT_PATH = "/projects";
@@ -92,6 +96,21 @@ class OAuthServiceImplSessionTest {
     class GoogleOAuthCallback {
 
         @Test
+        void rejectsStateFromAnotherBrowserBeforeProviderExchange() {
+            InstanceLite instance = mock(InstanceLite.class);
+            when(instance.isSetupDone()).thenReturn(true);
+            when(instanceRepository.findFirstByOrderByCreatedAtAsc()).thenReturn(Optional.of(instance));
+            when(oAuthStateStore.consume(STATE, AuthProvider.GOOGLE)).thenReturn(Optional.of(oAuthState()));
+            when(authenticationRedirector.signInFailure(any(AuthException.class), eq(NEXT_PATH)))
+                    .thenReturn(IssueTokenResponse.redirect("https://app.syncturtle.test/sign-in"));
+
+            IssueTokenResponse result = service.googleOAuthCallback(CODE, STATE, "b".repeat(64));
+
+            assertThat(result.getAccessToken()).isNull();
+            verifyNoInteractions(googleProvider, authenticatedSessionIssuer);
+        }
+
+        @Test
         void issuesTheAuthenticatedUserThroughTheSharedV2SessionIssuer() {
             // arrange
             User user = mock(User.class);
@@ -101,7 +120,7 @@ class OAuthServiceImplSessionTest {
                     .thenReturn(OAuthAuthenticationReceipt.existingUser(user));
 
             // act
-            IssueTokenResponse result = service.googleOAuthCallback(CODE, STATE);
+            IssueTokenResponse result = service.googleOAuthCallback(CODE, STATE, BINDING_HASH);
 
             // assert
             assertSuccessfulV2Issuance(result, user);
@@ -121,7 +140,7 @@ class OAuthServiceImplSessionTest {
                     .thenReturn(OAuthAuthenticationReceipt.existingUser(user));
 
             // act
-            IssueTokenResponse result = service.githubOAuthCallback(CODE, STATE);
+            IssueTokenResponse result = service.githubOAuthCallback(CODE, STATE, BINDING_HASH);
 
             // assert
             assertSuccessfulV2Issuance(result, user);
@@ -141,7 +160,7 @@ class OAuthServiceImplSessionTest {
                     .thenReturn(OAuthAuthenticationReceipt.existingUser(user));
 
             // act
-            IssueTokenResponse result = service.gitlabOAuthCallback(CODE, STATE);
+            IssueTokenResponse result = service.gitlabOAuthCallback(CODE, STATE, BINDING_HASH);
 
             // assert
             assertSuccessfulV2Issuance(result, user);
@@ -178,6 +197,7 @@ class OAuthServiceImplSessionTest {
         return OAuthState.builder()
                 .state(STATE)
                 .nextPath(NEXT_PATH)
+                .browserBindingHash(BINDING_HASH)
                 .build();
     }
 }

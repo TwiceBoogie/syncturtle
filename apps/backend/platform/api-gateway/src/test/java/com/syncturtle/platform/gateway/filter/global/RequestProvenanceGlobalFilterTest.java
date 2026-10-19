@@ -91,7 +91,7 @@ class RequestProvenanceGlobalFilterTest {
             // act
             filter.filter(exchange, chain).block();
             // assert
-            assertThat(policy.routeCount()).isEqualTo(20);
+            assertThat(policy.routeCount()).isEqualTo(19);
             assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
             // verify
             verify(chain, never()).filter(any());

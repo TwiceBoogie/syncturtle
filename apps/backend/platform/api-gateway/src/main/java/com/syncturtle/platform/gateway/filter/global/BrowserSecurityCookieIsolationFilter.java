@@ -1,6 +1,6 @@
 package com.syncturtle.platform.gateway.filter.global;
 
-import static com.syncturtle.common.core.cookie.CsrfConstants.CSRF_HEADER_NAME;
+import static com.syncturtle.common.core.header.GatewayHeaders.HDR_BROWSER_REQUEST;
 
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
@@ -16,7 +16,6 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.syncturtle.common.security.cookie.SecurityCookieFactory;
 import com.syncturtle.platform.gateway.filter.GatewayFilterOrders;
 import com.syncturtle.platform.gateway.security.BrowserSecurityCookiePolicy;
 import com.syncturtle.platform.gateway.security.BrowserSecurityCookiePolicy.Decision;
@@ -29,7 +28,6 @@ import reactor.core.publisher.Mono;
 public final class BrowserSecurityCookieIsolationFilter implements GlobalFilter, Ordered {
 
     private final BrowserSecurityCookiePolicy policy;
-    private final SecurityCookieFactory cookieFactory;
 
     @Override
     public int getOrder() {
@@ -51,7 +49,7 @@ public final class BrowserSecurityCookieIsolationFilter implements GlobalFilter,
                 .headers(headers -> {
                     headers.remove(HttpHeaders.COOKIE);
                     headers.remove(HttpHeaders.AUTHORIZATION);
-                    headers.remove(CSRF_HEADER_NAME);
+                    headers.remove(HDR_BROWSER_REQUEST);
 
                     if (!downstreamCookieHeader.isEmpty()) {
                         headers.set(HttpHeaders.COOKIE, downstreamCookieHeader);
@@ -63,8 +61,8 @@ public final class BrowserSecurityCookieIsolationFilter implements GlobalFilter,
     }
 
     private Mono<Void> rejectRefreshConflict(ServerWebExchange exchange) {
-        cookieFactory.clearRefreshTokenCookies().forEach(exchange.getResponse()::addCookie);
         exchange.getResponse().setStatusCode(HttpStatus.BAD_REQUEST);
+        exchange.getResponse().getHeaders().setCacheControl("no-store");
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
         byte[] body = """

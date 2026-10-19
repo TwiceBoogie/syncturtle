@@ -47,9 +47,11 @@ export class UserService extends APIService {
     }
   }
 
-  async getCurrentUserProfile(): Promise<TUserProfile> {
+  async getCurrentUserProfile(bustCache: boolean = false): Promise<TUserProfile> {
     try {
-      const response = await this.get<TUserProfile>("/api/users/me/profile");
+      const response = await this.get<TUserProfile>(
+        bustCache ? `/api/users/me/profile?t=${Date.now()}` : "/api/users/me/profile"
+      );
       return response.data;
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;

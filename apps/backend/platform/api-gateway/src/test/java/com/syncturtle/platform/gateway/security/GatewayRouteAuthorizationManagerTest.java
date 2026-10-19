@@ -56,8 +56,8 @@ class GatewayRouteAuthorizationManagerTest {
         }
 
         @Test
-        @DisplayName("requires authentication for every exact session management route")
-        void requiresAuthenticationForEveryExactSessionManagementRoute() {
+        @DisplayName("denies retired session inventory routes even for authenticated users")
+        void deniesRetiredSessionInventoryRoutes() {
             // arrange
             List<AuthorizationContext> contexts = List.of(
                     context(HttpMethod.GET, "/api/users/me/sessions"),
@@ -71,7 +71,7 @@ class GatewayRouteAuthorizationManagerTest {
                 AuthorizationResult authenticated = manager.authorize(Mono.just(userAuthentication()), context)
                         .block();
                 assertThat(anonymous.isGranted()).isFalse();
-                assertThat(authenticated.isGranted()).isTrue();
+                assertThat(authenticated.isGranted()).isFalse();
             }
             // verify
         }
@@ -108,6 +108,21 @@ class GatewayRouteAuthorizationManagerTest {
             assertThat(result).isNotNull();
             assertThat(result.isGranted()).isTrue();
             // verify
+        }
+
+        @Test
+        @DisplayName("email credentials check requires administrator authority at the Gateway")
+        void emailCredentialsCheckRequiresAdminAuthority() {
+            // arrange
+            AuthorizationContext context = context(HttpMethod.POST, "/api/instances/email-credentials-check");
+            TestingAuthenticationToken admin = new TestingAuthenticationToken(
+                    "admin", null, "ROLE_USER", "ROLE_INSTANCE_ADMIN");
+            // act
+            AuthorizationResult userResult = manager.authorize(Mono.just(userAuthentication()), context).block();
+            AuthorizationResult adminResult = manager.authorize(Mono.just(admin), context).block();
+            // assert
+            assertThat(userResult.isGranted()).isFalse();
+            assertThat(adminResult.isGranted()).isTrue();
         }
 
     }

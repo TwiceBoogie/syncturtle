@@ -18,7 +18,8 @@ import com.syncturtle.common.contracts.email.event.EmailToSendEvent;
 import com.syncturtle.common.contracts.user.event.UserEvent;
 import com.syncturtle.common.core.security.token.SecureTokenGenerator;
 import com.syncturtle.common.core.security.token.TokenHasher;
-import com.syncturtle.services.user.configuration.property.AuthProperties;
+import com.syncturtle.common.web.error.exception.RemoteServiceException;
+import com.syncturtle.services.user.exception.RefreshSessionException;
 import com.syncturtle.services.user.messaging.kafka.factory.AuthenticationEmailEventFactory;
 import com.syncturtle.services.user.messaging.kafka.factory.UserEventFactory;
 import com.syncturtle.services.user.model.InstanceLite;
@@ -34,7 +35,8 @@ import com.syncturtle.services.user.service.collaborator.outbox.EmailOutboxWrite
 import com.syncturtle.services.user.service.collaborator.outbox.UserOutboxWriter;
 import com.syncturtle.services.user.service.collaborator.runtime.UserAuthRuntimeConfigResolver;
 import com.syncturtle.services.user.service.collaborator.runtime.UserAuthRuntimeSnapshot;
-import com.syncturtle.services.user.service.collaborator.session.RefreshSessionFamilyStore;
+import com.syncturtle.services.user.service.collaborator.session.UserAuthVersionStore;
+import com.syncturtle.services.user.service.collaborator.token.AuthTokenPolicy;
 
 import lombok.RequiredArgsConstructor;
 
@@ -54,9 +56,8 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final PasswordResetUrlBuilder resetUrlBuilder;
     private final SecureTokenGenerator tokenGenerator;
     private final TokenHasher tokenHasher;
-    private final AuthProperties authProperties;
     private final PasswordEncoder passwordEncoder;
-    private final RefreshSessionFamilyStore refreshSessionFamilyStore;
+    private final UserAuthVersionStore userAuthVersionStore;
     private final AuthenticationEmailEventFactory emailEventFactory;
     private final EmailOutboxWriter emailOutboxWriter;
     private final UserEventFactory userEventFactory;
@@ -81,9 +82,9 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
         invalidateOutstandingTokens(user.getId(), now);
 
-        String rawToken = tokenGenerator.generateBase64Url(authProperties.getPasswordResetTokenBytes());
+        String rawToken = tokenGenerator.generateBase64Url(AuthTokenPolicy.PASSWORD_RESET_TOKEN_BYTES);
         String tokenHash = tokenHasher.hash(rawToken);
-        Instant expiresAt = now.plus(authProperties.getPasswordResetTokenTtl());
+        Instant expiresAt = now.plus(AuthTokenPolicy.PASSWORD_RESET_TOKEN_TTL);
 
         PasswordResetToken passwordResetToken = PasswordResetToken.issue(user, tokenHash, expiresAt);
 
@@ -93,7 +94,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         String resetUrl = resetUrlBuilder.build(uidb64, rawToken);
 
         EmailToSendEvent emailEvent = emailEventFactory.passwordReset(normalizedEmail, resetUrl,
-                authProperties.getPasswordResetTokenTtl());
+                AuthTokenPolicy.PASSWORD_RESET_TOKEN_TTL);
         emailOutboxWriter.saveEmailToSendEvent(emailEvent, user.getId());
     }
 
@@ -129,7 +130,11 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
         userRepository.flush();
 
-        refreshSessionFamilyStore.revokeAll(user.getId().toString());
+        try {
+            userAuthVersionStore.advanceUser(user.getId().toString(), user.getAuthVersion());
+        } catch (RefreshSessionException exception) {
+            throw RemoteServiceException.unavailable("session-state", exception);
+        }
 
         UserEvent userEvent = userEventFactory.updated(user);
         userOutboxWriter.saveUserEvent(userEvent);
@@ -184,7 +189,6 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
     private void verifyResetToken(PasswordResetToken resetToken, Instant now) {
         Assert.notNull(resetToken, "passwordResetToken is required");
-
         Assert.notNull(now, "now is required");
 
         if (resetToken.isExpired(now)) {
@@ -195,7 +199,6 @@ public class PasswordResetServiceImpl implements PasswordResetService {
                 || resetToken.isInvalidated()
                 || resetToken.isDeleted()
                 || !resetToken.matchesCurrentAuthVersion()) {
-
             throw invalidPasswordToken();
         }
     }

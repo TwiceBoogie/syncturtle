@@ -8,9 +8,9 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
-import com.syncturtle.common.contracts.auth.session.RefreshSessionFamilyRecord;
+import com.syncturtle.common.contracts.auth.session.RefreshSessionRecord;
 import com.syncturtle.common.web.error.exception.RemoteServiceException;
-import com.syncturtle.services.user.exception.RefreshSessionLifecycleException;
+import com.syncturtle.services.user.exception.RefreshSessionException;
 import com.syncturtle.services.user.model.User;
 import com.syncturtle.services.user.service.collaborator.authorization.InstanceAuthorizationResolver;
 import com.syncturtle.services.user.service.collaborator.authorization.InstanceAuthorizationSnapshot;
@@ -19,8 +19,6 @@ import com.syncturtle.services.user.service.collaborator.token.IssuedAccessToken
 import com.syncturtle.services.user.service.param.AccessTokenIssueParam;
 import com.syncturtle.services.user.service.param.AuthenticatedSessionIssueParam;
 import com.syncturtle.services.user.service.param.AuthorizedSessionIssueParam;
-import com.syncturtle.services.user.service.param.RefreshSessionFamilyCreateParam;
-import com.syncturtle.services.user.service.param.RefreshSessionFamilyRotateParam;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,8 +28,7 @@ public class AuthenticatedSessionIssuer {
 
     private static final String INSTANCE_ADMIN_ROLE = "INSTANCE_ADMIN";
 
-    private final RefreshSessionFamilyStore refreshSessionFamilyStore;
-    private final RefreshSessionClientFingerprintFactory fingerprintFactory;
+    private final RefreshSessionStore refreshSessionStore;
     private final AccessTokenIssuer accessTokenIssuer;
     private final InstanceAuthorizationResolver authorizationResolver;
 
@@ -59,86 +56,54 @@ public class AuthenticatedSessionIssuer {
     public AuthenticatedSessionReceipt issueAuthorizedSession(AuthorizedSessionIssueParam param) {
         Assert.notNull(param, "authorized session issue param is required");
 
-        List<String> roles = canonicalRoles(param.getRoles(), param.getAdminSessionVersion());
-        RefreshSessionClientFingerprint fingerprint = fingerprintFactory.create(param.getIpAddress(),
-                param.getUserAgent());
-        RefreshSessionLifecycleResult refresh;
+        AuthorizedSessionIssueParam canonicalParam = AuthorizedSessionIssueParam.builder()
+                .userId(param.getUserId())
+                .instanceId(param.getInstanceId())
+                .roles(canonicalRoles(param.getRoles(), param.getAdminSessionVersion()))
+                .authVersion(param.getAuthVersion())
+                .adminSessionVersion(param.getAdminSessionVersion())
+                .ipAddress(param.getIpAddress())
+                .userAgent(param.getUserAgent())
+                .build();
+        RefreshSessionReceipt refresh;
+
         try {
-            refresh = refreshSessionFamilyStore.create(
-                    RefreshSessionFamilyCreateParam.builder()
-                            .userId(param.getUserId())
-                            .instanceId(param.getInstanceId())
-                            .roles(roles)
-                            .authVersion(param.getAuthVersion())
-                            .adminSessionVersion(param.getAdminSessionVersion())
-                            .deviceLabel(fingerprint.getDeviceLabel())
-                            .clientBindingHash(fingerprint.getClientBindingHash())
-                            .build());
-        } catch (RefreshSessionLifecycleException exception) {
-            throw mapInfrastructureFailure(exception);
+            refresh = refreshSessionStore.create(canonicalParam);
+        } catch (RefreshSessionException exception) {
+            throw mapFailure(exception);
         }
 
         try {
             return completeSession(refresh);
         } catch (RuntimeException signingFailure) {
-            revokeFailedCreation(refresh, signingFailure);
+            try {
+                refreshSessionStore.revokeSession(refresh.getSessionId());
+            } catch (RuntimeException cleanupFailure) {
+                signingFailure.addSuppressed(cleanupFailure);
+            }
+
             throw signingFailure;
         }
     }
 
-    public AuthenticatedSessionReceipt rotateSession(
-            AuthenticatedSessionIssueParam param,
-            String presentedRefreshToken,
-            InstanceAuthorizationSnapshot authorization) {
-        Assert.notNull(param, "param is required");
-        Assert.hasText(presentedRefreshToken, "presentedRefreshToken is required");
-        Assert.notNull(authorization, "authorization is required");
+    public AuthenticatedSessionReceipt completeSession(RefreshSessionReceipt refresh) {
+        Assert.notNull(refresh, "refresh session receipt is required");
 
-        User user = param.getUser();
-        validatePrincipal(user, param.getInstanceId());
-
-        List<String> roles = canonicalRoles(
-                authorization.getRoles(),
-                authorization.getAdminSessionVersion());
-        RefreshSessionClientFingerprint fingerprint = fingerprintFactory.create(
-                param.getIpAddress(),
-                param.getUserAgent());
-        RefreshSessionLifecycleResult refresh;
-        try {
-            refresh = refreshSessionFamilyStore.rotate(
-                    RefreshSessionFamilyRotateParam.builder()
-                            .presentedRefreshToken(presentedRefreshToken)
-                            .roles(roles)
-                            .authVersion(user.getAuthVersion())
-                            .adminSessionVersion(authorization.getAdminSessionVersion())
-                            .deviceLabel(fingerprint.getDeviceLabel())
-                            .clientBindingHash(fingerprint.getClientBindingHash())
-                            .build());
-        } catch (RefreshSessionLifecycleException exception) {
-            throw mapInfrastructureFailure(exception);
-        }
-
-        // If access signing fails after rotation, the browser still has the previous
-        // refresh token. The one bounded grace recovery is its safe retry path.
-        return completeSession(refresh);
-    }
-
-    private AuthenticatedSessionReceipt completeSession(RefreshSessionLifecycleResult refresh) {
-        RefreshSessionFamilyRecord family = refresh.getFamily();
+        RefreshSessionRecord record = refresh.getRecord();
         IssuedAccessTokenReceipt access = accessTokenIssuer.issueAccessToken(
                 AccessTokenIssueParam.builder()
-                        .userId(family.getUserId())
-                        .instanceId(family.getInstanceId())
+                        .userId(record.getUserId())
+                        .instanceId(record.getInstanceId())
                         .sessionId(refresh.getSessionId())
-                        .roles(family.getRoles())
-                        .userAuthVersion(family.getAuthVersion())
-                        .adminSessionVersion(family.getAdminSessionVersion())
+                        .roles(record.getRoles())
+                        .userAuthVersion(record.getAuthVersion())
+                        .adminSessionVersion(record.getAdminSessionVersion())
                         .build());
         IssuedRefreshTokenReceipt refreshReceipt = IssuedRefreshTokenReceipt.builder()
                 .sessionId(refresh.getSessionId())
                 .token(refresh.getRefreshToken())
-                .issuedAt(family.getLastUsedAt())
-                .expiresAt(family.getIdleExpiresAt())
+                .issuedAt(refresh.getIssuedAt())
+                .expiresAt(record.getIdleExpiresAt())
                 .build();
 
         return AuthenticatedSessionReceipt.builder()
@@ -147,22 +112,8 @@ public class AuthenticatedSessionIssuer {
                 .build();
     }
 
-    private void revokeFailedCreation(RefreshSessionLifecycleResult refresh, RuntimeException signingFailure) {
-        try {
-            refreshSessionFamilyStore.revokeOne(
-                    refresh.getFamily().getUserId(),
-                    refresh.getSessionId());
-        } catch (RuntimeException cleanupFailure) {
-            signingFailure.addSuppressed(cleanupFailure);
-        }
-    }
-
-    private static RuntimeException mapInfrastructureFailure(RefreshSessionLifecycleException exception) {
-        if (exception.getReason() == RefreshSessionLifecycleException.Reason.REDIS_FAILURE
-                || exception.getReason() == RefreshSessionLifecycleException.Reason.INVARIANT_VIOLATION) {
-            return RemoteServiceException.unavailable("session-state", exception);
-        }
-        return exception;
+    private static RuntimeException mapFailure(RefreshSessionException exception) {
+        return RemoteServiceException.unavailable("session-state", exception);
     }
 
     private static List<String> canonicalRoles(List<String> values, Long adminSessionVersion) {

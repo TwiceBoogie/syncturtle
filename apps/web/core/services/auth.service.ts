@@ -2,26 +2,16 @@ import { APIService, HttpError } from "./api.service";
 // constants
 import { API_BASE_URL } from "@syncturtle/constants";
 // types
-import type { IApiErrorPayload, ICsrfTokenData, IEmailCheckData, IEmailCheckResponse, IUser } from "@syncturtle/types";
+import type { IApiErrorPayload, IEmailCheckData, IEmailCheckResponse, IUser } from "@syncturtle/types";
 
 export class AuthService extends APIService {
   constructor() {
     super(API_BASE_URL);
   }
 
-  async requestCSRFToken(): Promise<ICsrfTokenData> {
-    try {
-      return this.requestCsrfToken();
-    } catch (error) {
-      const err = error as HttpError<IApiErrorPayload>;
-      throw err.data ?? err;
-    }
-  }
-
   async setPassword(data: { password: string }): Promise<IUser> {
     try {
       const response = await this.post<IUser>("/auth/set-password", data);
-      this.invalidateCsrfToken();
       return response.data;
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;
@@ -31,7 +21,7 @@ export class AuthService extends APIService {
 
   async emailCheck(data: IEmailCheckData): Promise<IEmailCheckResponse> {
     try {
-      const response = await this.post<IEmailCheckResponse>("/auth/email-check", data);
+      const response = await this.post<IEmailCheckResponse>("/auth/email-check", data, { skipAuthRefresh: true });
       return response.data;
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;
@@ -41,20 +31,20 @@ export class AuthService extends APIService {
 
   async signOut(): Promise<void> {
     try {
-      await this.post<void>("/auth/sign-out", undefined, {
-        validateStatus: (s) => s >= 200 && s < 500,
-      });
+      await this.post<void>("/auth/sign-out", undefined, { skipAuthRefresh: true });
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;
       throw err.data ?? err;
-    } finally {
-      this.invalidateCsrfToken();
     }
   }
 
   async generateUniqueCode(email: string): Promise<{ key: string }> {
     try {
-      const response = await this.post<{ key: string }>("/auth/magic-generate", { email: email });
+      const response = await this.post<{ key: string }>(
+        "/auth/magic-generate",
+        { email: email },
+        { skipAuthRefresh: true }
+      );
       return response.data;
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;

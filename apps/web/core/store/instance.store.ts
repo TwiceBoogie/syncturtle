@@ -51,6 +51,10 @@ export class InstanceStore extends ExternalStore<TInstanceSnapshot> implements I
     this.instanceService = new InstanceService();
   }
 
+  public reset = (): void => {
+    this.replaceState(createInitialSnapshot());
+  };
+
   // raw getters for data
   get isLoading(): boolean {
     return this.state.isLoading;

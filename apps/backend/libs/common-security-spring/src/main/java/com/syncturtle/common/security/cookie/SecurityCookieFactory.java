@@ -29,6 +29,8 @@ public final class SecurityCookieFactory {
     private static final String HOST_REFRESH_COOKIE_NAME = HOST_PREFIX + COOKIE_NAME_REFRESH_TOKEN;
     private static final String SECURE_REFRESH_COOKIE_NAME = SECURE_PREFIX + COOKIE_NAME_REFRESH_TOKEN;
     private static final String HOST_CSRF_COOKIE_NAME = HOST_PREFIX + COOKIE_NAME_CSRF_TOKEN;
+    private static final String ADMIN_BINDING_COOKIE_NAME = "st_admin_handoff_binding";
+    private static final String OAUTH_BINDING_COOKIE_NAME = "st_oauth_browser_binding";
 
     private final SecurityCookieProperties properties;
 
@@ -44,17 +46,43 @@ public final class SecurityCookieFactory {
                 : COOKIE_NAME_REFRESH_TOKEN;
     }
 
-    public String csrfCookieName() {
-        return properties.shouldUseManagedPrefix()
-                ? HOST_CSRF_COOKIE_NAME
-                : COOKIE_NAME_CSRF_TOKEN;
-    }
-
     public String adminSessionHandoffCookieName() {
         if (properties.isSecure()) {
             return SECURE_PREFIX + COOKIE_NAME_ADMIN_SESSION_HANDOFF;
         }
         return COOKIE_NAME_ADMIN_SESSION_HANDOFF;
+    }
+
+    public String adminHandoffBindingCookieName() {
+        return properties.shouldUseManagedPrefix()
+                ? HOST_PREFIX + ADMIN_BINDING_COOKIE_NAME
+                : ADMIN_BINDING_COOKIE_NAME;
+    }
+
+    public String oauthBindingCookieName() {
+        return properties.shouldUseManagedPrefix()
+                ? HOST_PREFIX + OAUTH_BINDING_COOKIE_NAME
+                : OAUTH_BINDING_COOKIE_NAME;
+    }
+
+    public ResponseCookie adminHandoffBindingCookie(String secret, Duration maxAge) {
+        Assert.hasText(secret, "handoff binding is required");
+        return createCookie(adminHandoffBindingCookieName(), secret, ROOT_PATH,
+                properties.isSecure(), "Strict", normalizeMaxAge(maxAge));
+    }
+
+    public ResponseCookie oauthBindingCookie(String secret, Duration maxAge) {
+        Assert.hasText(secret, "OAuth binding is required");
+        return createCookie(oauthBindingCookieName(), secret, ROOT_PATH,
+                properties.isSecure(), "Lax", normalizeMaxAge(maxAge));
+    }
+
+    public ResponseCookie clearAdminHandoffBindingCookie() {
+        return clearCookie(adminHandoffBindingCookieName(), ROOT_PATH, properties.isSecure(), "Strict");
+    }
+
+    public ResponseCookie clearOauthBindingCookie() {
+        return clearCookie(oauthBindingCookieName(), ROOT_PATH, properties.isSecure(), "Lax");
     }
 
     /**
@@ -85,20 +113,6 @@ public final class SecurityCookieFactory {
                 normalizeMaxAge(maxAge));
     }
 
-    public ResponseCookie csrfCookie(String signedToken) {
-        return csrfCookie(signedToken, properties.getCsrfMaxAge());
-    }
-
-    public ResponseCookie csrfCookie(String signedToken, Duration maxAge) {
-        return createCookie(
-                csrfCookieName(),
-                signedToken,
-                ROOT_PATH,
-                properties.isSecure(),
-                properties.getCsrfSameSite(),
-                normalizeMaxAge(maxAge));
-    }
-
     public ResponseCookie adminSessionHandoffCookie(String completionCode, Duration maxAge) {
         Assert.hasText(completionCode, "completionCode is required");
 
@@ -121,10 +135,6 @@ public final class SecurityCookieFactory {
      */
     public List<ResponseCookie> legacyRefreshTokenCookies() {
         return clearAllExcept(clearRefreshTokenCookies(), refreshCookieName(), REFRESH_PATH);
-    }
-
-    public List<ResponseCookie> legacyCsrfCookies() {
-        return clearAllExcept(clearCsrfCookies(), csrfCookieName(), ROOT_PATH);
     }
 
     public List<ResponseCookie> clearAccessTokenCookies() {

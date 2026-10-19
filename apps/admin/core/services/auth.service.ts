@@ -1,30 +1,23 @@
-import { API_BASE_URL } from "@syncturtle/constants";
+import { ADMIN_BASE_PATH, ADMIN_BASE_URL, API_BASE_URL } from "@syncturtle/constants";
 import { APIService, HttpError } from "./api.service";
-import type { IApiErrorPayload, ICsrfTokenData } from "@syncturtle/types";
+import type { IApiErrorPayload } from "@syncturtle/types";
 
 export class AuthService extends APIService {
   constructor() {
     super(API_BASE_URL);
   }
 
-  async requestCSRFToken(): Promise<ICsrfTokenData> {
+  async signOut(): Promise<void> {
     try {
-      return await this.requestCsrfToken();
+      await this.post<void>("/auth/sign-out", undefined, { skipAuthRefresh: true });
     } catch (error) {
       const err = error as HttpError<IApiErrorPayload>;
       throw err.data ?? err;
     }
   }
 
-  async signOut(): Promise<void> {
-    try {
-      await this.post<void>("/auth/admin/sign-out", undefined, {
-        validateStatus: (s) => s >= 200 && s < 500,
-      });
-    } catch {
-      // Browser cleanup below remains authoritative even when server logout fails.
-    } finally {
-      this.invalidateCsrfToken();
-    }
+  static signedOutDestination(): string {
+    const path = `${(ADMIN_BASE_PATH || "/god-mode").replace(/\/+$/, "")}/`;
+    return new URL(path, ADMIN_BASE_URL || window.location.origin).href;
   }
 }

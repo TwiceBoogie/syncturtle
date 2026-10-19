@@ -30,11 +30,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -75,7 +78,10 @@ import com.syncturtle.services.user.service.collaborator.runtime.UserAuthRuntime
 import com.syncturtle.services.user.service.collaborator.runtime.UserAuthRuntimeSnapshot;
 import com.syncturtle.services.user.service.collaborator.session.AuthenticatedSessionIssuer;
 import com.syncturtle.services.user.service.collaborator.session.AuthenticatedSessionReceipt;
-import com.syncturtle.services.user.service.collaborator.session.RefreshSessionFamilyStore;
+import com.syncturtle.services.user.service.collaborator.session.RefreshSessionStore;
+import com.syncturtle.services.user.service.collaborator.session.UserAuthVersionStore;
+import com.syncturtle.services.user.exception.RefreshSessionException;
+import com.syncturtle.common.web.error.exception.RemoteServiceException;
 import com.syncturtle.services.user.service.param.AuthenticatedSessionIssueParam;
 import com.syncturtle.services.user.service.param.CredentialAuthenticationParam;
 import com.syncturtle.services.user.type.AuthenticationFlowType;
@@ -102,7 +108,9 @@ class AuthenticationServiceImplTest {
     @Mock
     AuthenticatedSessionIssuer authenticatedSessionIssuer;
     @Mock
-    RefreshSessionFamilyStore refreshSessionFamilyStore;
+    RefreshSessionStore refreshSessionStore;
+    @Mock
+    UserAuthVersionStore userAuthVersionStore;
     @Mock
     PasswordEncoder passwordEncoder;
     @Mock
@@ -133,7 +141,8 @@ class AuthenticationServiceImplTest {
                 emailPasswordProvider,
                 magicCodeProvider,
                 authenticatedSessionIssuer,
-                refreshSessionFamilyStore,
+                refreshSessionStore,
+                userAuthVersionStore,
                 passwordEncoder,
                 userEventFactory,
                 userOutboxWriter,
@@ -334,7 +343,7 @@ class AuthenticationServiceImplTest {
                     .issueNewSession(any(AuthenticatedSessionIssueParam.class));
             order.verify(authenticationRedirector).successLocation(NEXT_PATH);
 
-            verifyNoInteractions(magicCodeProvider, refreshSessionFamilyStore, passwordEncoder,
+            verifyNoInteractions(magicCodeProvider, refreshSessionStore, passwordEncoder,
                     userApiMapper);
         }
 
@@ -359,7 +368,7 @@ class AuthenticationServiceImplTest {
             // verify
             verify(authenticationRedirector).signInFailure(any(AuthException.class), eq(NEXT_PATH));
             verifyNoInteractions(emailPasswordProvider, magicCodeProvider, authenticatedSessionIssuer,
-                    refreshSessionFamilyStore, passwordEncoder, userApiMapper);
+                    refreshSessionStore, passwordEncoder, userApiMapper);
         }
 
         @Test
@@ -387,7 +396,7 @@ class AuthenticationServiceImplTest {
 
             // verify
             verify(authenticationRedirector).signInFailure(same(failureException), eq(NEXT_PATH));
-            verifyNoInteractions(magicCodeProvider, authenticatedSessionIssuer, refreshSessionFamilyStore,
+            verifyNoInteractions(magicCodeProvider, authenticatedSessionIssuer, refreshSessionStore,
                     passwordEncoder, userApiMapper);
         }
 
@@ -460,10 +469,31 @@ class AuthenticationServiceImplTest {
 
             // verify
             verify(authenticationRedirector).signUpFailure(same(failureException), eq(NEXT_PATH));
-            verifyNoInteractions(magicCodeProvider, authenticatedSessionIssuer, refreshSessionFamilyStore,
+            verifyNoInteractions(magicCodeProvider, authenticatedSessionIssuer, refreshSessionStore,
                     passwordEncoder, userApiMapper);
         }
 
+    }
+
+    @Test
+    void setPasswordStopsIssuanceWhenRedisVersionAdvanceFails() {
+        UUID userId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        InstanceLite instance = configuredInstance();
+        User principal = mock(User.class);
+        when(instanceRepository.findFirstByOrderByCreatedAtAsc()).thenReturn(Optional.of(instance));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(principal));
+        when(principal.isPasswordAutoset()).thenReturn(true);
+        when(principal.getAuthVersion()).thenReturn(5L);
+        when(passwordEncoder.encode(PASSWORD)).thenReturn("encoded-password");
+        doThrow(new RefreshSessionException(RefreshSessionException.Reason.UNAVAILABLE, "redis unavailable"))
+                .when(userAuthVersionStore).advanceUser(userId.toString(), 5L);
+
+        assertThatThrownBy(() -> service.setPassword(userId,
+                "33333333-3333-3333-3333-333333333333", PASSWORD))
+                .isInstanceOf(RemoteServiceException.class);
+
+        verify(userRepository).flush();
+        verifyNoInteractions(authenticatedSessionIssuer, userOutboxWriter);
     }
 
     private static void assertIssuedTokenResponse(IssueTokenResponse actual) {

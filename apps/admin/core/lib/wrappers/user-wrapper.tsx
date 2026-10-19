@@ -3,12 +3,13 @@
 import type { FC, ReactNode } from "react";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import useSWR from "swr";
 // hooks
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useUser } from "@/hooks/store/use-user";
 import { useInstance } from "@/hooks/store/use-instance";
+// utils
 import { currentUserBootstrapKey } from "./user-wrapper-policy";
-import useSWR from "swr";
 
 interface IUserWrapperProps {
   children: ReactNode;

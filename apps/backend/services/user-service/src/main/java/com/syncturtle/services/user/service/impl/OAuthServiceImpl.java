@@ -48,7 +48,7 @@ public class OAuthServiceImpl implements OAuthService {
 
     @Override
     @Transactional(readOnly = true)
-    public String googleOAuthInitiate(String nextPath) {
+    public String googleOAuthInitiate(String nextPath, String browserBindingHash) {
         try {
             requireInstanceSetup();
             requireGoogleOAuthEnabled();
@@ -58,6 +58,7 @@ public class OAuthServiceImpl implements OAuthService {
             oAuthStateStore.save(OAuthState.builder()
                     .state(state)
                     .nextPath(nextPath)
+                    .browserBindingHash(requireBindingHash(browserBindingHash))
                     .build(), AuthProvider.GOOGLE);
 
             return googleProvider.authorizationUrl(state);
@@ -68,7 +69,7 @@ public class OAuthServiceImpl implements OAuthService {
 
     @Override
     @Transactional
-    public IssueTokenResponse googleOAuthCallback(String code, String state) {
+    public IssueTokenResponse googleOAuthCallback(String code, String state, String browserBindingHash) {
         OAuthState oAuthState = null;
 
         try {
@@ -78,6 +79,7 @@ public class OAuthServiceImpl implements OAuthService {
 
             oAuthState = oAuthStateStore.consume(state, AuthProvider.GOOGLE)
                     .orElseThrow(() -> AuthException.of(AuthErrorCode.GOOGLE_OAUTH_PROVIDER_ERROR));
+            requireBrowserBinding(oAuthState, browserBindingHash, AuthErrorCode.GOOGLE_OAUTH_PROVIDER_ERROR);
 
             OAuthAuthenticationReceipt result = googleProvider
                     .authenticate(OAuthAuthenticationParam.builder()
@@ -95,7 +97,7 @@ public class OAuthServiceImpl implements OAuthService {
 
     @Override
     @Transactional(readOnly = true)
-    public String githubOAuthInitiate(String nextPath) {
+    public String githubOAuthInitiate(String nextPath, String browserBindingHash) {
         try {
             requireInstanceSetup();
             requireGitHubOAuthEnabled();
@@ -104,7 +106,7 @@ public class OAuthServiceImpl implements OAuthService {
 
             oAuthStateStore.save(OAuthState.builder()
                     .state(state)
-                    .nextPath(nextPath).build(), AuthProvider.GITHUB);
+                    .nextPath(nextPath).browserBindingHash(requireBindingHash(browserBindingHash)).build(), AuthProvider.GITHUB);
 
             return githubProvider.authorizationUrl(state);
         } catch (AuthException exception) {
@@ -114,7 +116,7 @@ public class OAuthServiceImpl implements OAuthService {
 
     @Override
     @Transactional
-    public IssueTokenResponse githubOAuthCallback(String code, String state) {
+    public IssueTokenResponse githubOAuthCallback(String code, String state, String browserBindingHash) {
         OAuthState oAuthState = null;
 
         try {
@@ -124,6 +126,7 @@ public class OAuthServiceImpl implements OAuthService {
 
             oAuthState = oAuthStateStore.consume(state, AuthProvider.GITHUB)
                     .orElseThrow(() -> AuthException.of(AuthErrorCode.GITHUB_OAUTH_PROVIDER_ERROR));
+            requireBrowserBinding(oAuthState, browserBindingHash, AuthErrorCode.GITHUB_OAUTH_PROVIDER_ERROR);
 
             OAuthAuthenticationReceipt result = githubProvider
                     .authenticate(OAuthAuthenticationParam.builder()
@@ -141,7 +144,7 @@ public class OAuthServiceImpl implements OAuthService {
 
     @Override
     @Transactional(readOnly = true)
-    public String gitlabOAuthInitiate(String nextPath) {
+    public String gitlabOAuthInitiate(String nextPath, String browserBindingHash) {
         try {
             requireInstanceSetup();
             requireGitLabOAuthEnabled();
@@ -150,7 +153,7 @@ public class OAuthServiceImpl implements OAuthService {
 
             oAuthStateStore.save(OAuthState.builder()
                     .state(state)
-                    .nextPath(nextPath).build(), AuthProvider.GITLAB);
+                    .nextPath(nextPath).browserBindingHash(requireBindingHash(browserBindingHash)).build(), AuthProvider.GITLAB);
 
             return gitlabProvider.authorizationUrl(state);
         } catch (AuthException exception) {
@@ -160,7 +163,7 @@ public class OAuthServiceImpl implements OAuthService {
 
     @Override
     @Transactional
-    public IssueTokenResponse gitlabOAuthCallback(String code, String state) {
+    public IssueTokenResponse gitlabOAuthCallback(String code, String state, String browserBindingHash) {
         OAuthState oAuthState = null;
 
         try {
@@ -170,6 +173,7 @@ public class OAuthServiceImpl implements OAuthService {
 
             oAuthState = oAuthStateStore.consume(state, AuthProvider.GITLAB)
                     .orElseThrow(() -> AuthException.of(AuthErrorCode.GITLAB_OAUTH_PROVIDER_ERROR));
+            requireBrowserBinding(oAuthState, browserBindingHash, AuthErrorCode.GITLAB_OAUTH_PROVIDER_ERROR);
 
             OAuthAuthenticationReceipt result = gitlabProvider
                     .authenticate(OAuthAuthenticationParam.builder()
@@ -182,6 +186,23 @@ public class OAuthServiceImpl implements OAuthService {
         } catch (AuthException exception) {
             String nextPath = oAuthState == null ? null : oAuthState.getNextPath();
             return authenticationRedirector.signInFailure(exception, nextPath);
+        }
+    }
+
+    private static String requireBindingHash(String value) {
+        if (value == null || !value.matches("[0-9a-f]{64}")) {
+            throw AuthException.of(AuthErrorCode.AUTHENTICATION_FAILED);
+        }
+        return value;
+    }
+
+    private static void requireBrowserBinding(OAuthState state, String presented, AuthErrorCode failure) {
+        String stored = state.getBrowserBindingHash();
+        if (stored == null || presented == null
+                || !java.security.MessageDigest.isEqual(
+                        stored.getBytes(java.nio.charset.StandardCharsets.US_ASCII),
+                        presented.getBytes(java.nio.charset.StandardCharsets.US_ASCII))) {
+            throw AuthException.of(failure);
         }
     }
 

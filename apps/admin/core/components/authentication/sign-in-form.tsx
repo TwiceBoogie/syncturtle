@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 // heroui
@@ -21,8 +21,6 @@ import { AuthHeader } from "../common/auth-header";
 import { Banner } from "../common/banner";
 // syncturtle imports
 import { API_BASE_URL } from "@syncturtle/constants";
-// services
-import { AuthService } from "@/services/auth.service";
 
 enum EErrorCodes {
   INSTANCE_NOT_CONFIGURED = "INSTANCE_NOT_CONFIGURED",
@@ -30,7 +28,6 @@ enum EErrorCodes {
   INVALID_EMAIL = "INVALID_EMAIL",
   USER_DOES_NOT_EXIST = "USER_DOES_NOT_EXIST",
   AUTHENTICATION_FAILED = "AUTHENTICATION_FAILED",
-  INVALID_CSRF_TOKEN = "INVALID_CSRF_TOKEN",
 }
 
 type TError = {
@@ -48,8 +45,6 @@ const defaultFormData: TFormData = {
   password: "",
 };
 
-const authService = new AuthService();
-
 export const InstanceSignInForm = () => {
   // search params
   const searchParams = useSearchParams();
@@ -62,17 +57,10 @@ export const InstanceSignInForm = () => {
     email: emailParam ?? "",
   }));
   const [showPassword, setShowPassword] = useState(false);
-  const [csrfToken, setCsrfToken] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFormChange = (key: keyof TFormData, value: string | boolean) =>
     setFormData((prev) => ({ ...prev, [key]: value }));
-
-  useEffect(() => {
-    if (csrfToken === undefined) {
-      authService.requestCSRFToken().then((data) => data.csrfToken && setCsrfToken(data.csrfToken));
-    }
-  }, [csrfToken]);
 
   // derived values
   const errorData: TError = useMemo(() => {
@@ -88,18 +76,13 @@ export const InstanceSignInForm = () => {
           return { type: EErrorCodes.USER_DOES_NOT_EXIST, message: errorMessage };
         case EErrorCodes.AUTHENTICATION_FAILED:
           return { type: EErrorCodes.AUTHENTICATION_FAILED, message: errorMessage };
-        case EErrorCodes.INVALID_CSRF_TOKEN:
-          return { type: EErrorCodes.INVALID_CSRF_TOKEN, message: errorMessage };
         default:
           return { type: undefined, message: undefined };
       }
     } else return { type: undefined, message: undefined };
   }, [errorCode, errorMessage]);
 
-  const isButtonDisabled = useMemo(
-    () => (!isSubmitting && formData.email && formData.password ? false : true),
-    [formData.email, formData.password, isSubmitting]
-  );
+  const isButtonDisabled = isSubmitting || !formData.email || !formData.password;
 
   return (
     <>
@@ -114,11 +97,10 @@ export const InstanceSignInForm = () => {
               onInvalid={() => setIsSubmitting(false)}
             >
               <Fieldset className="w-full">
-                <Fieldset.Legend>Manage your Syncturtle instance</Fieldset.Legend>
+                <Fieldset.Legend>Manage your SyncTurtle instance</Fieldset.Legend>
                 <Description>Configure instance-wide settings to secure your instance</Description>
                 {errorData.type && errorData.message && <Banner type="error" message={errorData.message} />}
                 <FieldGroup>
-                  <Input type="hidden" name="csrfmiddlewaretoken" value={csrfToken ?? ""} />
                   <TextField
                     isRequired
                     name="email"

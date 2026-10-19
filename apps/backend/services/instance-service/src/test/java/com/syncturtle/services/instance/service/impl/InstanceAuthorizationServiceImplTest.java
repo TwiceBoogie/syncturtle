@@ -133,6 +133,46 @@ class InstanceAuthorizationServiceImplTest {
             verify(instanceAdminRepository).findActiveRoleByInstanceIdAndUserId(instanceId, userId);
         }
 
+        @Test
+        @DisplayName("rejects a current role below the required role")
+        void rejectsInsufficientCurrentRole() {
+            // arrange
+            UUID instanceId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+            InstanceIdProjection instanceIdProjection = mock(InstanceIdProjection.class);
+            // conditions
+            when(instanceIdProjection.getId()).thenReturn(instanceId);
+            when(instanceRepository.findFirstByDeletedAtIsNullOrderByCreatedAtDesc(InstanceIdProjection.class))
+                    .thenReturn(Optional.of(instanceIdProjection));
+            when(instanceAdminRepository.findActiveRoleByInstanceIdAndUserId(instanceId, userId))
+                    .thenReturn(Optional.of(InstanceAdminRole.USER));
+            // act
+            boolean allowed = service.hasCurrentInstanceRoleAtLeast(userId, InstanceAdminRole.ADMIN);
+            // assert
+            assertThat(allowed).isFalse();
+            // verify
+            verify(instanceAdminRepository).findActiveRoleByInstanceIdAndUserId(instanceId, userId);
+        }
+
+        @Test
+        @DisplayName("propagates a role lookup failure instead of granting access")
+        void propagatesRoleLookupFailure() {
+            // arrange
+            UUID instanceId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+            InstanceIdProjection instanceIdProjection = mock(InstanceIdProjection.class);
+            // conditions
+            when(instanceIdProjection.getId()).thenReturn(instanceId);
+            when(instanceRepository.findFirstByDeletedAtIsNullOrderByCreatedAtDesc(InstanceIdProjection.class))
+                    .thenReturn(Optional.of(instanceIdProjection));
+            when(instanceAdminRepository.findActiveRoleByInstanceIdAndUserId(instanceId, userId))
+                    .thenThrow(new IllegalStateException("database unavailable"));
+            // act + assert
+            assertThatThrownBy(() -> service.hasCurrentInstanceRoleAtLeast(userId, InstanceAdminRole.ADMIN))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("database unavailable");
+        }
+
     }
 
 }

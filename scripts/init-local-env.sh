@@ -310,16 +310,11 @@ REDIS_PASSWORD
 MINIO_ROOT_PASSWORD
 APP_STORAGE_SECRET_KEY
 APP_SECURITY_ENCRYPTION_SECRET_KEY
-APP_SECURITY_CSRF_SIGNING_KEY
 "
 
 for marker in $markers; do
   if grep -q "__GENERATE_${marker}__" "$root_environment"; then
-    if [ "$marker" = "APP_SECURITY_CSRF_SIGNING_KEY" ]; then
-      value=$(generate_base64url_secret)
-    else
-      value=$(generate_secret)
-    fi
+    value=$(generate_secret)
 
     replace_marker \
       "$root_environment" \
@@ -360,10 +355,6 @@ done
 ensure_shared_base64url_secret \
   "APP_AUTH_REFRESH_SESSION_CLIENT_BINDING_HMAC_KEY" \
   "GENERATE_APP_AUTH_REFRESH_SESSION_CLIENT_BINDING_HMAC_KEY"
-
-ensure_shared_base64url_secret \
-  "APP_AUTH_REFRESH_SESSION_SUCCESSOR_ENVELOPE_KEY" \
-  "GENERATE_APP_AUTH_REFRESH_SESSION_SUCCESSOR_ENVELOPE_KEY"
 
 if [ ! -e "$private_key" ] && [ ! -e "$public_key" ]; then
   openssl genpkey \

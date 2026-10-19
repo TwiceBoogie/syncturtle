@@ -37,6 +37,7 @@ public class InstanceController {
     }
 
     @PatchMapping
+    @RequireInstancePermission(minRole = InstanceAdminRoleCodes.ADMIN)
     @InvalidateCache(group = "instance.public-info.v1")
     public ResponseEntity<InstanceResponse> updateInstance(@Valid @RequestBody InstanceUpdateRequest request) {
         return ResponseEntity.ok(service.instanceUpdate(request));

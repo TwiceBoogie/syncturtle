@@ -1,13 +1,31 @@
 {
-  "name": "Syncturtle",
-  "short_name": "Syncturtle",
-  "description": "Syncturtle - Open-source, extensible personal management",
-  "start_url": ".",
+  "id": "/",
+  "name": "SyncTurtle",
+  "short_name": "SyncTurtle",
+  "description": "A calm home for your tasks, goals, and everyday plans—all organized around the life you’re building.",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#f9fafb",
-  "theme_color": "#3f76ff",
+  "background_color": "#F8FAF9",
+  "theme_color": "#092C2B",
   "icons": [
-    { "src": "favicon/apple-touch-icon.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "favicon/apple-touch-icon.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "/favicon/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

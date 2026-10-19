@@ -34,6 +34,7 @@ class GatewayCorsConfigurationTest {
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
         corsConfiguration.setAllowCredentials(true);
+        corsConfiguration.setExposedHeaders(List.of("X-ST-Gateway-Auth-Rejection"));
 
         GlobalCorsProperties properties = new GlobalCorsProperties();
         properties.getCorsConfigurations().put("/**", corsConfiguration);
@@ -60,6 +61,8 @@ class GatewayCorsConfigurationTest {
             assertThat(exchange.getResponse().getHeaders().getAccessControlAllowOrigin())
                     .isEqualTo("http://localhost:3000");
             assertThat(exchange.getResponse().getHeaders().getAccessControlAllowCredentials()).isTrue();
+            assertThat(exchange.getResponse().getHeaders().getAccessControlExposeHeaders())
+                    .contains("X-ST-Gateway-Auth-Rejection");
         }
 
         @Test

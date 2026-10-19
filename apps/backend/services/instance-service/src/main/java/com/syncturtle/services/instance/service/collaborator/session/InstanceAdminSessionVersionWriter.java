@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class InstanceAdminSessionVersionWriter {
 
+    private static final int MAX_ADVANCE_ATTEMPTS = 5;
     private static final String OWNER = "user-service";
     private static final String RESOURCE_ADMIN_SESSION_VERSION = "admin-session-version";
     private static final String SCOPE_INSTANCE_ID = "i";
@@ -26,15 +27,34 @@ public class InstanceAdminSessionVersionWriter {
         Assert.notNull(instanceId, "instanceId is required");
         Assert.notNull(userId, "userId is required");
         Assert.notNull(sessionVersion, "sessionVersion is required");
+        Assert.isTrue(sessionVersion >= 0, "sessionVersion must be nonnegative");
 
-        redis.opsForValue().set(key(instanceId, userId), String.valueOf(sessionVersion));
-    }
+        String redisKey = key(instanceId, userId);
+        String next = sessionVersion.toString();
+        for (int attempt = 0; attempt < MAX_ADVANCE_ATTEMPTS; attempt++) {
+            String current = redis.opsForValue().get(redisKey);
+            if (current == null) {
+                if (Boolean.TRUE.equals(redis.opsForValue().setIfAbsent(redisKey, next))) {
+                    return;
+                }
+                continue;
+            }
 
-    public void delete(UUID instanceId, UUID userId) {
-        Assert.notNull(instanceId, "instanceId is required");
-        Assert.notNull(userId, "userId is required");
+            long currentVersion = Long.parseLong(current);
+            if (currentVersion > sessionVersion) {
+                throw new IllegalStateException("admin session version cannot regress");
+            }
 
-        redis.delete(key(instanceId, userId));
+            if (currentVersion == sessionVersion) {
+                return;
+            }
+
+            if (Boolean.TRUE.equals(redis.opsForValue().compareAndSet(redisKey, current, next))) {
+                return;
+            }
+        }
+
+        throw new IllegalStateException("admin session version changed repeatedly");
     }
 
     private String key(UUID instanceId, UUID userId) {

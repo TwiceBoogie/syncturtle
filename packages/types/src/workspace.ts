@@ -18,7 +18,8 @@ export interface IWorkspace {
   readonly slug: string;
   readonly createdById: string;
   readonly updatedById: string;
-  organizationSize: string;
+  /** Retained legacy metadata; new spaces may omit it. */
+  organizationSize?: string | null;
   role: TUserPermissions;
 }
 
@@ -54,12 +55,7 @@ export interface IWorkspaceBulkInviteFormData {
   emails: { email: string; role: TUserPermissions }[];
 }
 
-export type TOnboardingStep =
-  | "PROFILE_SETUP"
-  | "ROLE_SETUP"
-  | "USE_CASE_SETUP"
-  | "WORKSPACE_CREATE_OR_JOIN"
-  | "INVITE_MEMBERS";
+export type TOnboardingStep = "PROFILE_SETUP" | "USE_CASE_SETUP" | "WORKSPACE_CREATE_OR_JOIN" | "INVITE_MEMBERS";
 
 export type TCreateOrJoinWorkspaceViews = "WORKSPACE_CREATE" | "WORKSPACE_JOIN";
 

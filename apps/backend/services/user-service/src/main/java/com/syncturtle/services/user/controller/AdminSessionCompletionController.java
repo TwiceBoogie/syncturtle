@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.syncturtle.common.security.annotation.AllowAnonymous;
 import com.syncturtle.common.core.header.GatewayHeaders;
 import com.syncturtle.common.security.cookie.ServletAuthCookieWriter;
 import com.syncturtle.common.web.context.RequestClientContext;
@@ -25,6 +26,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
+@AllowAnonymous
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth/admin")
@@ -37,13 +39,14 @@ public class AdminSessionCompletionController {
 
     @GetMapping("/session")
     public ResponseEntity<Void> complete(
-            @RequestHeader(GatewayHeaders.HDR_PREAUTH_TRANSACTION_BINDING) String preAuthBinding,
+            @RequestHeader(name = GatewayHeaders.HDR_PREAUTH_TRANSACTION_BINDING, required = false) String preAuthBinding,
             HttpServletRequest servletRequest,
             HttpServletResponse servletResponse) {
         String completionCode = readSingleCookie(servletRequest, cookieWriter.adminSessionHandoffCookieName());
 
         if (!StringUtils.hasText(completionCode) || !StringUtils.hasText(preAuthBinding)) {
             cookieWriter.clearAdminSessionHandoffCookie(servletResponse);
+            cookieWriter.clearAdminHandoffBindingCookie(servletResponse);
             return redirect(hostResolver.admin(""));
         }
 
@@ -57,6 +60,7 @@ public class AdminSessionCompletionController {
             writeSessionCookies(servletResponse, response);
             cookieWriter.clearCsrfCookie(servletResponse);
             cookieWriter.clearAdminSessionHandoffCookie(servletResponse);
+            cookieWriter.clearAdminHandoffBindingCookie(servletResponse);
 
             return redirect(response.getLocation());
         } catch (AdminSessionHandoffException exception) {
@@ -65,9 +69,11 @@ public class AdminSessionCompletionController {
             }
 
             cookieWriter.clearAdminSessionHandoffCookie(servletResponse);
+            cookieWriter.clearAdminHandoffBindingCookie(servletResponse);
             return redirect(hostResolver.admin(""));
         } catch (IllegalArgumentException exception) {
             cookieWriter.clearAdminSessionHandoffCookie(servletResponse);
+            cookieWriter.clearAdminHandoffBindingCookie(servletResponse);
 
             return redirect(hostResolver.admin(""));
         }
@@ -88,6 +94,7 @@ public class AdminSessionCompletionController {
     private static ResponseEntity<Void> redirect(String location) {
         return ResponseEntity.status(HttpStatus.SEE_OTHER)
                 .location(URI.create(location))
+                .cacheControl(org.springframework.http.CacheControl.noStore())
                 .build();
     }
 

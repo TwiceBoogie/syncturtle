@@ -1,6 +1,7 @@
 package com.syncturtle.services.instance.model;
 
 import java.time.Clock;
+import java.time.Instant;
 
 import org.springframework.util.Assert;
 
@@ -11,7 +12,6 @@ import com.syncturtle.services.instance.model.embedded.InstanceRuntimeInfo;
 import com.syncturtle.services.instance.model.embedded.InstanceUpdateCheckInfo;
 import com.syncturtle.services.instance.model.param.InstanceRegistrationParam;
 import com.syncturtle.services.instance.model.param.InstanceSetupCompletionParam;
-import com.syncturtle.services.instance.model.param.UpdateCheckParam;
 
 import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;
@@ -89,13 +89,23 @@ public class Instance extends AuditedEntity {
         requireActive("Instance");
         Assert.notNull(param, "setup completion param is required");
 
-        updateCheck.apply(UpdateCheckParam.initial(param.getBinary().getBinaryVersion(), param.getRegisteredAt()));
+        updateCheck.updateCurrentVersion(param.getBinary().getBinaryVersion());
 
         telemetryEnabled = param.getFlags().isTelemetryEnabled();
         supportRequired = param.getFlags().isSupportRequired();
         test = param.getFlags().isTest();
 
         runtime.apply(param.getRuntime());
+    }
+
+    public void updateCurrentVersion(String version) {
+        requireActive("Instance");
+        updateCheck.updateCurrentVersion(version);
+    }
+
+    public void recordLatestRelease(String version, Instant checkedAt) {
+        requireActive("Instance");
+        updateCheck.recordLatestRelease(version, checkedAt);
     }
 
     public void completeSetup(InstanceSetupCompletionParam param) {
@@ -182,7 +192,7 @@ public class Instance extends AuditedEntity {
 
         runtime.apply(param.getRuntime());
 
-        updateCheck.apply(UpdateCheckParam.initial(param.getBinary().getBinaryVersion(), param.getRegisteredAt()));
+        updateCheck.updateCurrentVersion(param.getBinary().getBinaryVersion());
         config.initialize(param.getRegisteredAt());
     }
 

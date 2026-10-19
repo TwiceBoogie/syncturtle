@@ -439,8 +439,14 @@ The most important rule is:
 From the repository root:
 
 ```sh
-docker compose up -d
+docker compose up -d --build
 ```
+
+The Compose stack builds its MinIO server from a pinned source release and its
+`minio-init` client from a pinned official release binary with a verified
+checksum. No manual MinIO image pull or local retag is needed. `--build` refreshes
+the application images after source changes; the named data volumes remain in
+place.
 
 ---
 
@@ -582,11 +588,45 @@ Common local frontend URLs:
 | Admin app        | `http://localhost:3001` |
 | Observability UI | `http://localhost:3002` |
 
+### Preview browser authentication configuration
+
+For a deployed Preview, set `GATEWAY_CORS_ALLOWED_ORIGINS` to the exact browser-visible
+Web and Admin origins, including scheme and port where applicable. The Docker
+Gateway configuration requires this value; the local Compose override supplies
+`http://localhost`. Configure the public API/Web/Admin origins and frontend API
+base URL to match the addresses users actually open. Keep Web, Admin, and API
+same-site for the `SameSite=Lax` refresh cookie and Admin native-form handoff.
+Serve them over HTTPS and set `APP_SECURITY_COOKIES_SECURE=true`; choose the
+managed host-only cookie prefix setting for that deployment. The Gateway
+requires `Origin` on unsafe browser requests and exposes
+`X-ST-Gateway-Auth-Rejection` to allowed origins for one bounded refresh retry.
+
 ---
 
 ## Testing
 
-### Unit tests
+### Frontend and TypeScript unit tests
+
+Vitest runs the web, admin, and test-bearing TypeScript package suites. The root
+command uses Turbo and does not run backend Maven tests:
+
+```sh
+yarn test
+yarn workspace web test
+yarn workspace admin test
+yarn workspace @syncturtle/utils typecheck
+```
+
+Use `.test.ts` or `.test.tsx` (also `.spec.ts` or `.spec.tsx`) and import
+`describe`, `expect`, and `it` explicitly from `vitest`. Tests may import
+colocated production modules by relative path. Node is the default runtime.
+For DOM or React tests, put `/** @vitest-environment jsdom */` at the top of
+the test file; web and admin provide React Testing Library, user-event,
+DOM matchers, and automatic cleanup. The web and admin Vitest configs use their
+TypeScript path aliases. Keep timing deterministic and avoid real network calls
+in unit tests. Storybook stories and backend system tests are separate.
+
+### Backend unit tests
 
 ```sh
 cd apps/backend

@@ -13,7 +13,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import com.syncturtle.common.contracts.auth.session.RefreshSessionFamilyRecord;
+import com.syncturtle.common.contracts.auth.session.RefreshSessionRecord;
 import com.syncturtle.platform.gateway.exception.PassportAuthenticationException;
 import com.syncturtle.platform.gateway.type.PassportAuthenticationFailureReason;
 
@@ -34,13 +34,9 @@ public final class PassportSessionRecordParser {
             "authVersion",
             "adminSessionVersion",
             "currentRefreshTokenHash",
-            "rotationCounter",
             "createdAt",
-            "lastUsedAt",
             "idleExpiresAt",
-            "absoluteExpiresAt",
-            "deviceLabel",
-            "clientBindingHash");
+            "absoluteExpiresAt");
 
     private final JsonMapper jsonMapper;
     private final Clock clock;
@@ -50,7 +46,7 @@ public final class PassportSessionRecordParser {
             throw failure(PassportAuthenticationFailureReason.SESSION_MISSING);
         }
 
-        RefreshSessionFamilyRecord record;
+        RefreshSessionRecord record;
         try {
             JsonNode root = jsonMapper.readTree(json);
             if (root == null || !root.isObject()) {
@@ -61,12 +57,14 @@ public final class PassportSessionRecordParser {
             if (recordVersion == null || !recordVersion.isInt()) {
                 throw failure(PassportAuthenticationFailureReason.SESSION_MALFORMED);
             }
-            if (recordVersion.intValue() != RefreshSessionFamilyRecord.CURRENT_RECORD_VERSION) {
+
+            if (recordVersion.intValue() != RefreshSessionRecord.CURRENT_RECORD_VERSION) {
                 throw failure(PassportAuthenticationFailureReason.SESSION_VERSION_UNSUPPORTED);
             }
+
             requireSupportedFields(root);
 
-            record = jsonMapper.treeToValue(root, RefreshSessionFamilyRecord.class);
+            record = jsonMapper.treeToValue(root, RefreshSessionRecord.class);
         } catch (PassportAuthenticationException exception) {
             throw exception;
         } catch (JacksonException exception) {
@@ -93,9 +91,11 @@ public final class PassportSessionRecordParser {
             if (issuedAt == null || expiresAt == null || absoluteExpiresAt == null) {
                 throw failure(PassportAuthenticationFailureReason.SESSION_MALFORMED);
             }
+
             if (roles.contains("INSTANCE_ADMIN") != (adminSessionVersion != null)) {
                 throw failure(PassportAuthenticationFailureReason.SESSION_MALFORMED);
             }
+
             Instant now = Instant.now(clock);
             if (!expiresAt.isAfter(now) || !absoluteExpiresAt.isAfter(now)) {
                 throw failure(PassportAuthenticationFailureReason.SESSION_EXPIRED);
@@ -131,6 +131,7 @@ public final class PassportSessionRecordParser {
         if (!StringUtils.hasText(value)) {
             throw failure(PassportAuthenticationFailureReason.SESSION_MALFORMED);
         }
+
         String normalized = value.trim();
         UUID.fromString(normalized);
         return normalized;
@@ -147,12 +148,15 @@ public final class PassportSessionRecordParser {
             if (!StringUtils.hasText(value)) {
                 throw failure(PassportAuthenticationFailureReason.SESSION_MALFORMED);
             }
+
             String role = value.trim();
             if (!distinct.add(role)) {
                 throw failure(PassportAuthenticationFailureReason.SESSION_MALFORMED);
             }
+
             roles.add(role);
         }
+
         Collections.sort(roles);
         return roles;
     }
@@ -162,6 +166,7 @@ public final class PassportSessionRecordParser {
         if (version == null) {
             throw failure(PassportAuthenticationFailureReason.SESSION_MALFORMED);
         }
+
         return version;
     }
 
@@ -169,9 +174,11 @@ public final class PassportSessionRecordParser {
         if (value == null) {
             return null;
         }
+
         if (value < 0) {
             throw failure(PassportAuthenticationFailureReason.SESSION_MALFORMED);
         }
+
         return value;
     }
 

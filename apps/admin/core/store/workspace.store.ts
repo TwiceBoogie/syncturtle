@@ -56,6 +56,11 @@ export class WorkspaceStore extends ExternalStore<TWorkspaceSnapshot> implements
     this.workspaceService = new WorkspaceService();
   }
 
+  public reset = (): void => {
+    this.workspacesVersion += 1;
+    this.replaceState(createInitialSnapshot());
+  };
+
   // raw getters for data
   get loader(): TLoader {
     return this.state.loader;

@@ -9,7 +9,7 @@ public final class RedisContainerSingleton {
 
     @SuppressWarnings("resource")
     private static final GenericContainer<?> INSTANCE = new GenericContainer<>(
-            DockerImageName.parse("redis:7.2-alpine"))
+            DockerImageName.parse("redis:8.10.2-alpine"))
             .withExposedPorts(REDIS_PORT);
 
     static {

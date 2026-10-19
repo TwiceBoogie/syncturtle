@@ -76,12 +76,16 @@ export const RESTRICTED_URLS = [
   "instance",
 ];
 
+// Optional onboarding suggestions, never domain types or authorization roles.
 export const USE_CASES = [
-  "Plan and track product roadmaps",
-  "Manage engineering sprints",
-  "Coordinate cross-functional projects",
-  "Replace our current tool",
-  "Just exploring",
+  "Personal goals",
+  "Household",
+  "Fitness",
+  "Study",
+  "Family",
+  "Trip",
+  "Side project",
+  "Exploring",
 ];
 
 export const ECreateOrJoinWorkspaceViews = {
@@ -91,7 +95,6 @@ export const ECreateOrJoinWorkspaceViews = {
 
 export const EOnboardingSteps = {
   PROFILE_SETUP: "PROFILE_SETUP",
-  ROLE_SETUP: "ROLE_SETUP",
   USE_CASE_SETUP: "USE_CASE_SETUP",
   WORKSPACE_CREATE_OR_JOIN: "WORKSPACE_CREATE_OR_JOIN",
   INVITE_MEMBERS: "INVITE_MEMBERS",

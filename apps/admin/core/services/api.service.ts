@@ -1,6 +1,3 @@
-import { CsrfTokenCache, revokedCurrentSession, shouldRetryInvalidCsrf } from "./csrf-token-cache";
-import type { ICsrfTokenData } from "@syncturtle/types";
-
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 export interface IRequestConfig {
@@ -9,21 +6,9 @@ export interface IRequestConfig {
   body?: unknown;
   signal?: AbortSignal;
   credentials?: RequestCredentials;
-  csrf?: boolean;
   validateStatus?: (status: number) => boolean;
-  /**
-   * Hard optout. use for public/bootstrap endpoints where 401 is expected but shouldn't really trigger refresh
-   */
-  skipAuthRefresh?: boolean;
-  /**
-   * Opt-in refresh. only endpoints that are truly protected should attempt silent refresh if this is set to true
-   */
   authRefresh?: boolean;
-  /**
-   * Internal retry counter used to prevent infinite refresh loops
-   */
-  _retryAttempt?: number;
-  _csrfRetryAttempt?: number;
+  skipAuthRefresh?: boolean;
 }
 
 export interface IHttpResponse<T> {
@@ -51,65 +36,37 @@ export class HttpError<T> extends Error {
 }
 
 export abstract class APIService {
-  protected baseUrl: string;
-
-  /**
-   * All APIService subclasses share these promises in the same browser runtime
-   */
-  private static readonly csrfCache = new CsrfTokenCache();
   private static refreshPromise: Promise<void> | null = null;
+  private static readonly BROWSER_HEADER = "X-ST-Browser-Request";
+  private static readonly REJECTION_HEADER = "X-ST-Gateway-Auth-Rejection";
+
+  protected baseUrl: string;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
   }
 
-  protected requestCsrfToken(): Promise<ICsrfTokenData> {
-    return APIService.csrfCache.get(async () => {
-      const response = await this.get<ICsrfTokenData>("/api/get-csrf-token", { csrf: false, skipAuthRefresh: true });
-      return response.data;
-    });
-  }
-
-  protected invalidateCsrfToken(): void {
-    APIService.csrfCache.invalidate();
-  }
-
   private async refreshSession(): Promise<void> {
     if (!APIService.refreshPromise) {
-      APIService.refreshPromise = this.request<void>("POST", "/auth/refresh", {
-        // keep refresh from recursively trying to refresh itself
-        skipAuthRefresh: true,
-        // CSRF remains enabled for the cookie-authenticated refresh request.
-        // accept 401/403 as parsed responses so we can convert them into a normal "refresh failed" error
-        validateStatus: (status) => status === 200 || status === 204 || status === 401 || status === 403,
-      })
-        .then((res) => {
-          if (res.status !== 200 && res.status !== 204) {
-            throw new Error("Refresh session failed");
-          }
-        })
-        .finally(() => {
-          APIService.refreshPromise = null;
+      const rotate = async () => {
+        const headers = new Headers();
+        headers.set(APIService.BROWSER_HEADER, "1");
+        const response = await fetch(this.buildUrl("/auth/refresh"), {
+          method: "POST",
+          headers,
+          credentials: "include",
+          cache: "no-store",
         });
+
+        if (!response.ok) {
+          throw new HttpError(response, await this.parseResponseBody(response));
+        }
+      };
+      APIService.refreshPromise = rotate().finally(() => {
+        APIService.refreshPromise = null;
+      });
     }
-    return APIService.refreshPromise;
-  }
-
-  private shouldAttachCsrf(method: HttpMethod, config: IRequestConfig): boolean {
-    const unsafe = method === "POST" || method === "DELETE" || method === "PATCH" || method === "PUT";
-    return config.csrf !== false && unsafe;
-  }
-
-  private async withCsrfIfNeeded(method: HttpMethod, config: IRequestConfig): Promise<IRequestConfig> {
-    if (!this.shouldAttachCsrf(method, config)) {
-      return config;
-    }
-
-    const token = await this.requestCsrfToken();
-    const headers = new Headers(config.headers);
-    headers.set("X-CSRF-Token", token.csrfToken);
-
-    return { ...config, headers };
+    await APIService.refreshPromise;
   }
 
   private buildUrl(path: string, params?: IRequestConfig["params"]): string {
@@ -127,37 +84,6 @@ export abstract class APIService {
     return url.toString();
   }
 
-  private shouldAttemptRefresh(path: string, status: number, config: IRequestConfig): boolean {
-    if (status !== 401) {
-      return false;
-    }
-    /**
-     * Refresh is now opt-in.
-     *
-     * This key behavior change public/bootstrap endpoints can return 401 without triggering /auth/refresh
-     */
-    if (config.authRefresh !== true) {
-      return false;
-    }
-    // Hard opt-out still wins
-    if (config.skipAuthRefresh === true) {
-      return false;
-    }
-    // Prevent infinite loops
-    if ((config._retryAttempt ?? 0) >= 1) {
-      return false;
-    }
-    // never refresh the refresh endpoint
-    if (path.startsWith("/auth/refresh")) {
-      return false;
-    }
-    // never refresh the CSRF endpoint
-    if (path.startsWith("/api/get-csrf-token")) {
-      return false;
-    }
-    return true;
-  }
-
   private async parseResponseBody(response: Response): Promise<unknown> {
     const text = await response.text();
     if (!text) {
@@ -171,16 +97,38 @@ export abstract class APIService {
     }
   }
 
-  private async request<T>(method: HttpMethod, path: string, config: IRequestConfig = {}): Promise<IHttpResponse<T>> {
-    const configWithCsrf = await this.withCsrfIfNeeded(method, config);
-    const { params, headers, body, signal, credentials, validateStatus } = configWithCsrf;
-    const requestHeaders = new Headers(headers);
-    const init: RequestInit = { method, headers: requestHeaders, credentials: credentials ?? "include" };
+  private shouldRefresh(path: string, response: Response, config: IRequestConfig, retryAttempt: number): boolean {
+    return (
+      response.status === 401 &&
+      response.headers.get(APIService.REJECTION_HEADER) === "1" &&
+      config.authRefresh !== false &&
+      config.skipAuthRefresh !== true &&
+      retryAttempt === 0 &&
+      path !== "/auth/refresh" &&
+      path !== "/auth/sign-out"
+    );
+  }
 
+  private async request<T>(
+    method: HttpMethod,
+    path: string,
+    config: IRequestConfig = {},
+    retryAttempt = 0
+  ): Promise<IHttpResponse<T>> {
+    const { params, headers, body, signal, credentials, validateStatus } = config;
+    const requestHeaders = new Headers(headers);
+    if (method !== "GET") {
+      requestHeaders.set(APIService.BROWSER_HEADER, "1");
+    }
+    const init: RequestInit = {
+      method,
+      headers: requestHeaders,
+      credentials: credentials ?? "include",
+      cache: "no-store",
+    };
     if (signal) {
       init.signal = signal;
     }
-
     if (body !== undefined && body !== null && method !== "GET") {
       if (body instanceof FormData || body instanceof URLSearchParams || typeof body === "string") {
         init.body = body;
@@ -191,51 +139,31 @@ export abstract class APIService {
         init.body = JSON.stringify(body);
       }
     }
-
     const response = await fetch(this.buildUrl(path, params), init);
     const parsed = await this.parseResponseBody(response);
-
-    // refresh before validate status so caller accepts some 4xx, it still silent refresh on 401
-    if (this.shouldAttemptRefresh(path, response.status, configWithCsrf)) {
-      try {
-        await this.refreshSession();
-        return this.request<T>(method, path, {
-          ...config,
-          _retryAttempt: (config._retryAttempt ?? 0) + 1,
-        });
-      } catch {
-        throw new HttpError(response, parsed);
-      }
+    if (this.shouldRefresh(path, response, config, retryAttempt)) {
+      // Gateway sets this marker only when it rejects before routing. A downstream
+      // 401 or an uncertain network result never authorizes replay of a mutation.
+      await this.refreshSession();
+      return this.request<T>(method, path, config, 1);
     }
-
-    if (
-      this.shouldAttachCsrf(method, configWithCsrf) &&
-      shouldRetryInvalidCsrf(response.status, parsed, config._csrfRetryAttempt ?? 0)
-    ) {
-      this.invalidateCsrfToken();
-      return this.request<T>(method, path, { ...config, _csrfRetryAttempt: (config._csrfRetryAttempt ?? 0) + 1 });
-    }
-
     const isOk = validateStatus ? validateStatus(response.status) : response.ok;
-
     if (!isOk) {
       throw new HttpError<T>(response, parsed as T | null);
     }
-
-    if (revokedCurrentSession(parsed)) {
-      this.invalidateCsrfToken();
-    }
-
-    return {
-      data: parsed as T,
-      status: response.status,
-      headers: response.headers,
-      raw: response,
-    };
+    return { data: parsed as T, status: response.status, headers: response.headers, raw: response };
   }
 
   protected get<T>(url: string, config: Omit<IRequestConfig, "body"> = {}): Promise<IHttpResponse<T>> {
     return this.request<T>("GET", url, config);
+  }
+
+  protected post<T>(url: string, body?: unknown, config: Omit<IRequestConfig, "body"> = {}): Promise<IHttpResponse<T>> {
+    return this.request<T>("POST", url, { ...config, body });
+  }
+
+  protected put<T>(url: string, body?: unknown, config: Omit<IRequestConfig, "body"> = {}): Promise<IHttpResponse<T>> {
+    return this.request<T>("PUT", url, { ...config, body });
   }
 
   protected patch<T>(
@@ -245,11 +173,6 @@ export abstract class APIService {
   ): Promise<IHttpResponse<T>> {
     return this.request<T>("PATCH", url, { ...config, body });
   }
-
-  protected post<T>(url: string, body?: unknown, config: Omit<IRequestConfig, "body"> = {}): Promise<IHttpResponse<T>> {
-    return this.request<T>("POST", url, { ...config, body });
-  }
-
   protected delete<T>(
     url: string,
     body?: unknown,

@@ -33,12 +33,6 @@ public enum AuthErrorCode implements ErrorCode {
             400,
             "One or more fields are invalid."),
 
-    INVALID_CSRF_TOKEN(
-            5012,
-            "INVALID_CSRF_TOKEN",
-            403,
-            "Security token is invalid or expired."),
-
     SIGNUP_DISABLED(
             5015,
             "SIGNUP_DISABLED",

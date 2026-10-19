@@ -7,6 +7,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.server.authorization.AuthorizationContext;
 import org.springframework.stereotype.Component;
 
+import com.syncturtle.platform.gateway.type.GatewayRouteSecurityCategory;
+
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -27,6 +29,9 @@ public final class GatewayRouteAuthorizationManager implements ReactiveAuthoriza
     }
 
     private boolean isAuthorized(Authentication authentication, AuthorizationContext context) {
+        if (routeSecurityrPolicy.classify(context.getExchange()) != GatewayRouteSecurityCategory.PROTECTED) {
+            return false;
+        }
         if (!routeSecurityrPolicy.requiresInstanceAdmin(context.getExchange())) {
             return true;
         }

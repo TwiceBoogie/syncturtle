@@ -65,6 +65,7 @@ export interface IWorkspaceMemberStoreInternal extends IWorkspaceMemberStore {
   _getServerSnapshot: ExternalStore<TWorkspaceMemberSnapshot>["_getServerSnapshot"];
 
   dispose: () => void;
+  reset: () => void;
 }
 
 export class WorkspaceMemberStore
@@ -113,6 +114,20 @@ export class WorkspaceMemberStore
       })
     );
   }
+
+  public reset = (): void => {
+    this.fetchMembersRequestSeq += 1;
+    this.fetchInvitationsRequestSeq += 1;
+    this.workspaceMemberMapVersion += 1;
+    this.workspaceMemberInvitationVersion += 1;
+    this.workspaceMemberIdsCache.clear();
+    this.filteredWorkspaceMemberIdsCache.clear();
+    this.searchedWorkspaceMemberIdsCache.clear();
+    this.workspaceMemberDetailsCache.clear();
+    this.workspaceMemberInvitationIdsCache.clear();
+    this.searchedWorkspaceInvitationIdsCache.clear();
+    this.replaceState(createInitialSnapshot());
+  };
 
   // raw getters
   public get workspaceMemberMap(): Record<string, Record<string, IWorkspaceMembership>> {

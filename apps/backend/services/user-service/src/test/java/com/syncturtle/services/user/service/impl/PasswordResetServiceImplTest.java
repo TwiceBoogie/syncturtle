@@ -57,7 +57,6 @@ import com.syncturtle.common.contracts.email.event.EmailToSendEvent;
 import com.syncturtle.common.contracts.user.event.UserEvent;
 import com.syncturtle.common.core.security.token.SecureTokenGenerator;
 import com.syncturtle.common.core.security.token.TokenHasher;
-import com.syncturtle.services.user.configuration.property.AuthProperties;
 import com.syncturtle.services.user.messaging.kafka.factory.AuthenticationEmailEventFactory;
 import com.syncturtle.services.user.messaging.kafka.factory.UserEventFactory;
 import com.syncturtle.services.user.model.InstanceLite;
@@ -73,7 +72,9 @@ import com.syncturtle.services.user.service.collaborator.outbox.EmailOutboxWrite
 import com.syncturtle.services.user.service.collaborator.outbox.UserOutboxWriter;
 import com.syncturtle.services.user.service.collaborator.runtime.UserAuthRuntimeConfigResolver;
 import com.syncturtle.services.user.service.collaborator.runtime.UserAuthRuntimeSnapshot;
-import com.syncturtle.services.user.service.collaborator.session.RefreshSessionFamilyStore;
+import com.syncturtle.services.user.service.collaborator.session.UserAuthVersionStore;
+import com.syncturtle.services.user.exception.RefreshSessionException;
+import com.syncturtle.common.web.error.exception.RemoteServiceException;
 import com.syncturtle.services.user.support.clock.TestClocks;
 import com.syncturtle.services.user.support.fixture.PasswordResetFixtures;
 
@@ -99,11 +100,9 @@ class PasswordResetServiceImplTest {
     @Mock
     TokenHasher tokenHasher;
     @Mock
-    AuthProperties authProperties;
-    @Mock
     PasswordEncoder passwordEncoder;
     @Mock
-    RefreshSessionFamilyStore refreshSessionFamilyStore;
+    UserAuthVersionStore userAuthVersionStore;
     @Mock
     AuthenticationEmailEventFactory emailEventFactory;
     @Mock
@@ -130,9 +129,8 @@ class PasswordResetServiceImplTest {
                 resetUrlBuilder,
                 tokenGenerator,
                 tokenHasher,
-                authProperties,
                 passwordEncoder,
-                refreshSessionFamilyStore,
+                userAuthVersionStore,
                 emailEventFactory,
                 emailOutboxWriter,
                 userEventFactory,
@@ -157,8 +155,6 @@ class PasswordResetServiceImplTest {
             when(userRepository.findByEmailIgnoreCaseForUpdate(NORMALIZED_EMAIL)).thenReturn(Optional.of(existingUser));
             when(passwordResetTokenRepository.findOutstandingByUserIdForUpdate(USER_ID))
                     .thenReturn(List.of(firstOutstandingToken, secondOutstandingToken));
-            when(authProperties.getPasswordResetTokenBytes()).thenReturn(TOKEN_BYTES);
-            when(authProperties.getPasswordResetTokenTtl()).thenReturn(TOKEN_TTL);
             when(tokenGenerator.generateBase64Url(TOKEN_BYTES)).thenReturn(RAW_TOKEN);
             when(tokenHasher.hash(RAW_TOKEN)).thenReturn(TOKEN_HASH);
             when(uidCodec.encode(USER_ID)).thenReturn(UIDB64);
@@ -204,7 +200,7 @@ class PasswordResetServiceImplTest {
             order.verify(emailEventFactory).passwordReset(NORMALIZED_EMAIL, RESET_URL, TOKEN_TTL);
             order.verify(emailOutboxWriter).saveEmailToSendEvent(emailEvent, USER_ID);
 
-            verifyNoInteractions(passwordEncoder, refreshSessionFamilyStore, userEventFactory, userOutboxWriter);
+            verifyNoInteractions(passwordEncoder, userAuthVersionStore, userEventFactory, userOutboxWriter);
         }
 
         @Test
@@ -221,8 +217,7 @@ class PasswordResetServiceImplTest {
 
             verifyNoInteractions(
                     passwordResetTokenRepository,
-                    authProperties,
-                    tokenGenerator,
+                        tokenGenerator,
                     tokenHasher,
                     uidCodec,
                     resetUrlBuilder,
@@ -300,6 +295,29 @@ class PasswordResetServiceImplTest {
     class ResetPasswordTests {
 
         @Test
+        void redisVersionFailureStopsOutboxAfterDatabaseFlush() {
+            User existingUser = user(USER_ID);
+            PasswordResetToken resetToken = validResetToken(RESET_TOKEN_ID);
+            stubResetTokenLookup(existingUser, resetToken);
+            when(passwordResetTokenRepository.findOutstandingByUserIdForUpdate(USER_ID))
+                    .thenReturn(List.of(resetToken));
+            when(passwordEncoder.encode(VALID_PASSWORD)).thenReturn(PASSWORD_HASH);
+            when(existingUser.getAuthVersion()).thenReturn(5L);
+            org.mockito.Mockito.doThrow(new RefreshSessionException(
+                    RefreshSessionException.Reason.UNAVAILABLE, "redis unavailable"))
+                    .when(userAuthVersionStore).advanceUser(USER_ID.toString(), 5L);
+
+            RemoteServiceException failure = org.assertj.core.api.Assertions.catchThrowableOfType(
+                    RemoteServiceException.class,
+                    () -> service.resetPassword(UIDB64, RAW_TOKEN, VALID_PASSWORD));
+
+            assertThat(failure.getHttpStatusCode()).isEqualTo(503);
+            verify(userRepository).flush();
+            verify(userEventFactory, never()).updated(any());
+            verifyNoInteractions(userOutboxWriter);
+        }
+
+        @Test
         @DisplayName("changes password, consumes token, revokes sessions, and writes event")
         void changesPasswordConsumesTokenRevokesSessionsAndWritesEvent() {
             // arrange
@@ -312,6 +330,7 @@ class PasswordResetServiceImplTest {
             when(passwordResetTokenRepository.findOutstandingByUserIdForUpdate(USER_ID))
                     .thenReturn(List.of(resetToken, otherResetToken));
             when(passwordEncoder.encode(VALID_PASSWORD)).thenReturn(PASSWORD_HASH);
+            when(existingUser.getAuthVersion()).thenReturn(5L);
             when(userEventFactory.updated(existingUser)).thenReturn(userEvent);
             // act
             service.resetPassword(UIDB64, RAW_TOKEN, VALID_PASSWORD);
@@ -321,7 +340,7 @@ class PasswordResetServiceImplTest {
             verify(otherResetToken).invalidate(TestClocks.NOW);
             verify(existingUser).markPasswordChanged(PASSWORD_HASH, false);
             verify(userRepository).flush();
-            verify(refreshSessionFamilyStore).revokeAll(USER_ID.toString());
+            verify(userAuthVersionStore).advanceUser(USER_ID.toString(), 5L);
             verify(userEventFactory).updated(existingUser);
             verify(userOutboxWriter).saveUserEvent(userEvent);
             // verify order
@@ -334,7 +353,7 @@ class PasswordResetServiceImplTest {
                     resetToken,
                     otherResetToken,
                     existingUser,
-                    refreshSessionFamilyStore,
+                    userAuthVersionStore,
                     userEventFactory,
                     userOutboxWriter);
             order.verify(uidCodec).decode(UIDB64);
@@ -347,7 +366,7 @@ class PasswordResetServiceImplTest {
             order.verify(otherResetToken).invalidate(TestClocks.NOW);
             order.verify(existingUser).markPasswordChanged(PASSWORD_HASH, false);
             order.verify(userRepository).flush();
-            order.verify(refreshSessionFamilyStore).revokeAll(USER_ID.toString());
+            order.verify(userAuthVersionStore).advanceUser(USER_ID.toString(), 5L);
             order.verify(userEventFactory).updated(existingUser);
             order.verify(userOutboxWriter).saveUserEvent(userEvent);
         }
@@ -365,7 +384,7 @@ class PasswordResetServiceImplTest {
                     passwordResetTokenRepository,
                     tokenHasher,
                     passwordEncoder,
-                    refreshSessionFamilyStore,
+                    userAuthVersionStore,
                     userEventFactory,
                     userOutboxWriter);
         }
@@ -398,6 +417,7 @@ class PasswordResetServiceImplTest {
             when(passwordResetTokenRepository.findOutstandingByUserIdForUpdate(USER_ID))
                     .thenReturn(List.of(resetToken));
             when(passwordEncoder.encode(maximumLengthPassword)).thenReturn(PASSWORD_HASH);
+            when(existingUser.getAuthVersion()).thenReturn(5L);
             when(userEventFactory.updated(existingUser)).thenReturn(userEvent);
             // act + assert
             assertThatCode(() -> service.resetPassword(UIDB64, RAW_TOKEN, maximumLengthPassword))

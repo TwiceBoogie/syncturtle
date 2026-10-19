@@ -77,47 +77,30 @@ export class WorkspaceService extends APIService {
     }
   }
 
+  /** @deprecated Disconnected until implement-workspace-invitation-acceptance supplies a verified-principal contract. */
   async joinWorkspace(workspaceSlug: string, invitationId: string, data: unknown): Promise<unknown> {
-    try {
-      const response = await this.post<unknown>(
-        `/api/workspaces/${workspaceSlug}/invitations/${invitationId}/join`,
-        data,
-        {
-          headers: {},
-        }
-      );
-      return response.data;
-    } catch (error) {
-      const err = error as HttpError<IApiErrorPayload>;
-      throw err.data ?? err;
-    }
+    void workspaceSlug;
+    void invitationId;
+    void data;
+    throw new Error("Workspace invitation acceptance is not available yet.");
   }
 
+  /** @deprecated Retained for the immediate invitation child; never sends the unsupported bulk POST. */
   async joinWorkspaces(data: { invitations: string[] }): Promise<unknown> {
-    try {
-      const response = await this.post<unknown>("/api/users/me/workspaces/invitations", data);
-      return response.data;
-    } catch (error) {
-      const err = error as HttpError<IApiErrorPayload>;
-      throw err.data ?? err;
-    }
+    void data;
+    throw new Error("Workspace invitation acceptance is not available yet.");
   }
 
+  /** @deprecated No supported detail endpoint exists; invitation links must not imply identity or membership. */
   async getWorkspaceInvitation(workspaceSlug: string, invitationId: string): Promise<IWorkspaceMemberInvitation> {
-    try {
-      const response = await this.get<IWorkspaceMemberInvitation>(
-        `/api/workspaces/${workspaceSlug}/invitations/${invitationId}/join/`
-      );
-      return response.data;
-    } catch (error) {
-      const err = error as HttpError<IApiErrorPayload>;
-      throw err.data ?? err;
-    }
+    void workspaceSlug;
+    void invitationId;
+    throw new Error("Workspace invitation details are not available yet.");
   }
 
   async workspaceSlugCheck(slug: string, signal?: AbortSignal): Promise<TSlugCheckResult> {
     try {
-      const response = await this.get<TSlugCheckResult>("/api/instances/workspaces/slug-check", {
+      const response = await this.get<TSlugCheckResult>("/api/workspaces/slug-check", {
         params: { slug },
         signal,
       });

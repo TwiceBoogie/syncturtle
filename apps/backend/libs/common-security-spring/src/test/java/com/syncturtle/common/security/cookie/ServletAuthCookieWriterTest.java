@@ -3,7 +3,9 @@ package com.syncturtle.common.security.cookie;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -67,8 +69,8 @@ class ServletAuthCookieWriterTest {
     class ClearAllSecurityCookies {
 
         @Test
-        @DisplayName("clears every bounded access refresh and csrf identity")
-        void clearsEveryBoundedAccessRefreshAndCsrfIdentity() {
+        @DisplayName("clears every bounded auth csrf and browser binding identity")
+        void clearsEveryBoundedAuthCsrfAndBrowserBindingIdentity() {
             // arrange
             ServletAuthCookieWriter writer = writer(true, true);
             MockHttpServletResponse response = new MockHttpServletResponse();
@@ -77,15 +79,35 @@ class ServletAuthCookieWriterTest {
             writer.clearAllSecurityCookies(response);
             // assert
             Collection<String> headers = response.getHeaders(HttpHeaders.SET_COOKIE);
-            assertThat(headers).hasSize(9);
-            assertThat(headers).allMatch(header -> header.contains("Max-Age=0"));
-            assertThat(headers).anyMatch(header -> header.startsWith("__Host-access_token="));
-            assertThat(headers).anyMatch(header -> header.startsWith("__Host-refresh_token="));
-            assertThat(headers).anyMatch(header -> header.startsWith("__Secure-refresh_token="));
-            assertThat(headers).anyMatch(header -> header.startsWith("__Host-csrf_token="));
+            assertThat(headers).hasSize(11);
+            assertClearingCookie(headers, "access_token", "/", "Lax");
+            assertClearingCookie(headers, "__Host-access_token", "/", "Lax");
+            assertClearingCookie(headers, "refresh_token", "/", "Lax");
+            assertClearingCookie(headers, "refresh_token", "/auth", "Lax");
+            assertClearingCookie(headers, "__Host-refresh_token", "/", "Lax");
+            assertClearingCookie(headers, "__Secure-refresh_token", "/", "Lax");
+            assertClearingCookie(headers, "__Secure-refresh_token", "/auth", "Lax");
+            assertClearingCookie(headers, "csrf_token", "/", "Lax");
+            assertClearingCookie(headers, "__Host-csrf_token", "/", "Lax");
+            assertClearingCookie(headers, "__Host-st_admin_handoff_binding", "/", "Strict");
+            assertClearingCookie(headers, "__Host-st_oauth_browser_binding", "/", "Lax");
             // verify
         }
 
+    }
+
+    private static void assertClearingCookie(Collection<String> headers, String name, String path, String sameSite) {
+        assertThat(headers)
+                .filteredOn(header -> header.startsWith(name + "=")
+                        && Arrays.asList(header.split("; ")).contains("Path=" + path))
+                .singleElement()
+                .satisfies(header -> {
+                    List<String> attributes = Arrays.asList(header.split("; "));
+                    assertThat(attributes.getFirst()).isEqualTo(name + "=");
+                    assertThat(attributes).contains("Path=" + path, "Max-Age=0", "Secure", "HttpOnly",
+                            "SameSite=" + sameSite);
+                    assertThat(attributes).noneMatch(attribute -> attribute.startsWith("Domain="));
+                });
     }
 
     private static ServletAuthCookieWriter writer(boolean secure, boolean managedPrefixEnabled) {
@@ -94,8 +116,7 @@ class ServletAuthCookieWriterTest {
                 managedPrefixEnabled,
                 "Lax",
                 "Lax",
-                "Lax",
-                Duration.ofMinutes(30));
+                "Lax");
         return new ServletAuthCookieWriter(new SecurityCookieFactory(properties));
     }
 

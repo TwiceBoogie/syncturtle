@@ -10,7 +10,6 @@ import org.springframework.cloud.gateway.config.GlobalCorsProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -34,7 +33,7 @@ import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.syncturtle.common.security.cookie.SecurityCookieFactory;
+import com.syncturtle.common.core.header.GatewayHeaders;
 import com.syncturtle.platform.gateway.configuration.property.GatewayClientMetadataProperties;
 import com.syncturtle.platform.gateway.configuration.property.GatewayPassportProperties;
 import com.syncturtle.platform.gateway.exception.PassportAuthenticationException;
@@ -54,16 +53,10 @@ import reactor.core.publisher.Mono;
 public class GatewaySecurityConfiguration {
 
     private final PassportAuthenticationMetrics metrics;
-    private final SecurityCookieFactory cookieFactory;
 
     @Autowired
-    public GatewaySecurityConfiguration(PassportAuthenticationMetrics metrics, SecurityCookieFactory cookieFactory) {
+    public GatewaySecurityConfiguration(PassportAuthenticationMetrics metrics) {
         this.metrics = metrics;
-        this.cookieFactory = cookieFactory;
-    }
-
-    GatewaySecurityConfiguration(PassportAuthenticationMetrics metrics) {
-        this(metrics, null);
     }
 
     @Bean
@@ -234,12 +227,7 @@ public class GatewaySecurityConfiguration {
             metrics.rejected(PassportAuthenticationFailureReason.AUTHENTICATION_REQUIRED);
         }
 
-        if (isCsrfIssuance(exchange)) {
-            cookieFactory.clearAccessTokenCookies().forEach(exchange.getResponse()::addCookie);
-            cookieFactory.clearRefreshTokenCookies().forEach(exchange.getResponse()::addCookie);
-            cookieFactory.clearCsrfCookies().forEach(exchange.getResponse()::addCookie);
-        }
-
+        exchange.getResponse().getHeaders().set(GatewayHeaders.HDR_GATEWAY_AUTH_REJECTION, "1");
         return writeJson(exchange, HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Authentication required.");
     }
 
@@ -254,11 +242,6 @@ public class GatewaySecurityConfiguration {
         return null;
     }
 
-    private static boolean isCsrfIssuance(ServerWebExchange exchange) {
-        return HttpMethod.GET.equals(exchange.getRequest().getMethod())
-                && "/api/get-csrf-token".equals(exchange.getRequest().getPath().pathWithinApplication().value());
-    }
-
     private Mono<Void> writeJson(
             ServerWebExchange exchange,
             HttpStatus status,
@@ -270,6 +253,7 @@ public class GatewaySecurityConfiguration {
         }
 
         response.setStatusCode(status);
+        response.getHeaders().setCacheControl("no-store");
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
         String body = """

@@ -1,7 +1,9 @@
 package com.syncturtle.services.user.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -10,11 +12,8 @@ import static org.mockito.Mockito.when;
 import java.time.Instant;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
@@ -29,90 +28,63 @@ import com.syncturtle.services.user.service.RefreshSessionService;
 
 class AuthenticationControllerRefreshTest {
 
-    private static final String SESSION_ID = "33333333-3333-3333-3333-333333333333";
-    private static final String PRESENTED = SESSION_ID + ".presented";
-
-    private RefreshSessionService refreshSessionService;
-    private ServletAuthCookieWriter cookieWriter;
+    private static final String PRESENTED = "33333333-3333-3333-3333-333333333333.presented";
+    private RefreshSessionService refreshService;
+    private ServletAuthCookieWriter cookies;
     private AuthenticationController controller;
-    private MockHttpServletResponse servletResponse;
+    private MockHttpServletResponse response;
 
     @BeforeEach
     void setUp() {
-        refreshSessionService = mock(RefreshSessionService.class);
-        cookieWriter = mock(ServletAuthCookieWriter.class);
-        controller = new AuthenticationController(
-                mock(AuthenticationService.class),
-                refreshSessionService,
-                cookieWriter,
-                mock(AuthFormValidator.class),
-                mock(PublicUrlResolver.class));
-        servletResponse = new MockHttpServletResponse();
+        refreshService = mock(RefreshSessionService.class);
+        cookies = mock(ServletAuthCookieWriter.class);
+        controller = new AuthenticationController(mock(AuthenticationService.class), refreshService, cookies,
+                mock(AuthFormValidator.class), mock(PublicUrlResolver.class));
+        response = new MockHttpServletResponse();
     }
 
-    @Nested
-    class Refresh {
+    @Test
+    void missingRefreshCookieNeverClearsNewerCookies() {
+        var result = controller.refresh(response, null);
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(result.getHeaders().getCacheControl()).contains("no-store");
+        verify(cookies, never()).clearAuthCookies(response);
+        verify(cookies, never()).clearAllSecurityCookies(response);
+    }
 
-        @Test
-        void writesRotatedCookiesFromSuccessfulAtomicResponse() {
-            // arrange
-            Instant now = Instant.parse("2026-08-19T10:00:00Z");
-            IssueTokenResponse issued = IssueTokenResponse.builder()
-                    .accessToken("access-token")
-                    .refreshToken(SESSION_ID + ".successor")
-                    .accessIssuedAt(now)
-                    .accessExpiresAt(now.plusSeconds(900))
-                    .refreshIssuedAt(now)
-                    .refreshExpiresAt(now.plusSeconds(3600))
-                    .build();
-            // conditions
-            when(refreshSessionService.refreshSession(PRESENTED, SESSION_ID)).thenReturn(issued);
-            // act
-            ResponseEntity<Void> result = controller.refresh(servletResponse, SESSION_ID, PRESENTED);
-            // assert
-            assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-            // verify
-            verify(cookieWriter).setAuthCookies(
-                    ArgumentMatchers.eq(servletResponse),
-                    ArgumentMatchers.eq("access-token"),
-                    ArgumentMatchers.any(),
-                    ArgumentMatchers.eq(SESSION_ID + ".successor"),
-                    ArgumentMatchers.any());
-            verify(cookieWriter, never()).clearCsrfCookie(servletResponse);
-        }
+    @Test
+    void expiredAccessCookieIsNotRequiredForRefresh() {
+        Instant now = Instant.parse("2026-10-17T12:00:00Z");
+        IssueTokenResponse issued = IssueTokenResponse.builder()
+                .accessToken("new-access").refreshToken("new-refresh")
+                .accessIssuedAt(now).accessExpiresAt(now.plusSeconds(3600))
+                .refreshIssuedAt(now).refreshExpiresAt(now.plusSeconds(3600)).build();
+        when(refreshService.refreshSession(PRESENTED)).thenReturn(issued);
+        var result = controller.refresh(response, PRESENTED);
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(result.getHeaders().getCacheControl()).contains("no-store");
+        verify(cookies).setAuthCookies(eq(response), eq("new-access"), any(), eq("new-refresh"), any());
+        verify(cookies, never()).clearAuthCookies(response);
+    }
 
-        @Test
-        void clearsAuthCookiesForRejectedOrReplayedFamily() {
-            // arrange
-            AuthException rejected = AuthException.of(AuthErrorCode.AUTHENTICATION_FAILED);
-            // conditions
-            when(refreshSessionService.refreshSession(PRESENTED, SESSION_ID)).thenThrow(rejected);
-            // act
-            AuthException failure = catchThrowableOfType(
-                    AuthException.class,
-                    () -> controller.refresh(servletResponse, SESSION_ID, PRESENTED));
-            // assert
-            assertThat(failure).isSameAs(rejected);
-            // verify
-            verify(cookieWriter).clearAuthCookies(servletResponse);
-        }
+    @Test
+    void staleRefreshFailureCannotClearAConcurrentSuccessorCookie() {
+        AuthException stale = AuthException.of(AuthErrorCode.AUTHENTICATION_FAILED);
+        when(refreshService.refreshSession(PRESENTED)).thenThrow(stale);
 
-        @Test
-        void preservesPreviousCookieWhenRedisOutcomeIsUnavailableForSafeRetry() {
-            // arrange
-            RemoteServiceException unavailable = RemoteServiceException.unavailable(
-                    "session-state",
-                    new IllegalStateException("redis unavailable"));
-            // conditions
-            when(refreshSessionService.refreshSession(PRESENTED, SESSION_ID)).thenThrow(unavailable);
-            // act
-            RemoteServiceException failure = catchThrowableOfType(
-                    RemoteServiceException.class,
-                    () -> controller.refresh(servletResponse, SESSION_ID, PRESENTED));
-            // assert
-            assertThat(failure).isSameAs(unavailable);
-            // verify
-            verify(cookieWriter, never()).clearAuthCookies(servletResponse);
-        }
+        assertThatThrownBy(() -> controller.refresh(response, PRESENTED)).isSameAs(stale);
+        verify(cookies, never()).clearAuthCookies(response);
+        verify(cookies, never()).clearAllSecurityCookies(response);
+    }
+
+    @Test
+    void redisOutageDoesNotClearThePresentedCredential() {
+        RemoteServiceException unavailable = RemoteServiceException.unavailable(
+                "session-state", new IllegalStateException("redis unavailable"));
+        when(refreshService.refreshSession(PRESENTED)).thenThrow(unavailable);
+
+        assertThatThrownBy(() -> controller.refresh(response, PRESENTED)).isSameAs(unavailable);
+        verify(cookies, never()).clearAuthCookies(response);
+        verify(cookies, never()).clearAllSecurityCookies(response);
     }
 }
