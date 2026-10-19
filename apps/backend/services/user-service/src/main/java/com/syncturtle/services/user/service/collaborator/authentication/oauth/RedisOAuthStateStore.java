@@ -1,6 +1,8 @@
 package com.syncturtle.services.user.service.collaborator.authentication.oauth;
 
 import java.time.Duration;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Optional;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -8,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import com.syncturtle.common.cache.template.RedisKeyBuilder;
 import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
 import com.syncturtle.common.contracts.auth.provider.AuthProvider;
@@ -20,12 +23,10 @@ import tools.jackson.databind.json.JsonMapper;
 public class RedisOAuthStateStore implements OAuthStateStore {
 
     private static final Duration EXPIRATION = Duration.ofMinutes(10);
-    private static final String GOOGLE_KEY_PREFIX = "oauth_google_state_";
-    private static final String GITLAB_KEY_PREFIX = "oauth_gitlab_state_";
-    private static final String GITHUB_KEY_PREFIX = "oauth_github_state_";
 
     private final StringRedisTemplate redis;
     private final JsonMapper jsonMapper;
+    private final RedisKeyBuilder keyBuilder;
 
     @Override
     public void save(OAuthState state, AuthProvider provider) {
@@ -45,13 +46,11 @@ public class RedisOAuthStateStore implements OAuthStateStore {
         Assert.hasText(state, provider.name().toLowerCase() + " oauth state value is required");
 
         String redisKey = redisKey(state, provider);
-        String json = redis.opsForValue().get(redisKey);
+        String json = redis.opsForValue().getAndDelete(redisKey);
 
         if (!StringUtils.hasText(json)) {
             return Optional.empty();
         }
-
-        redis.delete(redisKey);
 
         try {
             return Optional.of(jsonMapper.readValue(json, OAuthState.class));
@@ -61,16 +60,9 @@ public class RedisOAuthStateStore implements OAuthStateStore {
     }
 
     private String redisKey(String state, AuthProvider provider) {
-        switch (provider) {
-            case GOOGLE:
-                return GOOGLE_KEY_PREFIX + state;
-            case GITHUB:
-                return GITHUB_KEY_PREFIX + state;
-            case GITLAB:
-                return GITLAB_KEY_PREFIX + state;
-            default:
-                throw new IllegalArgumentException("Uknown auth provider");
-        }
+        String encodedState = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(state.getBytes(StandardCharsets.UTF_8));
+        return keyBuilder.authKey("user-service", "oauth-state", provider.name(), encodedState);
     }
 
 }

@@ -3,9 +3,7 @@ package com.syncturtle.common.web.autoconfigure;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,14 +13,12 @@ import com.syncturtle.common.web.context.RequestClientContext;
 import com.syncturtle.common.web.context.RequestUserContext;
 import com.syncturtle.common.web.filter.GatewayClientHeaderFilter;
 import com.syncturtle.common.web.filter.GatewayUserHeaderFilter;
-import com.syncturtle.common.web.property.GatewayContextProperties;
 
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
 
 @AutoConfiguration
 @ConditionalOnClass({ RequestUserContext.class, RequestClientContext.class })
-@EnableConfigurationProperties(GatewayContextProperties.class)
 public class GatewayContextAutoConfiguration {
 
     private static final int USER_HEADER_FILTER_ORDER = -50;
@@ -47,7 +43,6 @@ public class GatewayContextAutoConfiguration {
             OncePerRequestFilter.class,
             GatewayUserHeaderFilter.class,
             GatewayClientHeaderFilter.class })
-    @ConditionalOnProperty(prefix = "app.gateway.context", name = "enabled", havingValue = "true", matchIfMissing = true)
     static class GatewayContextFilterConfiguration {
 
         @Bean

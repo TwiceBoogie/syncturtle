@@ -11,7 +11,7 @@ public final class GatewayFilterOrders {
     public static final int STRIP_INBOUND_AUTH_HEADERS = Ordered.HIGHEST_PRECEDENCE;
     public static final int CLIENT_METADATA_HEADERS = Ordered.HIGHEST_PRECEDENCE + 10;
     public static final int AUTHENTICATED_PASSPORT_HEADERS = Ordered.HIGHEST_PRECEDENCE + 20;
-    public static final int CSRF = Ordered.HIGHEST_PRECEDENCE + 30;
+    public static final int BROWSER_REQUEST_POLICY = Ordered.HIGHEST_PRECEDENCE + 30;
     public static final int BROWSER_SECURITY_COOKIE_ISOLATION = Ordered.HIGHEST_PRECEDENCE + 40;
     /**
      * Spring Cloud Gateway's RouteToRequestUrlFilter currently uses order 10000.

@@ -28,7 +28,7 @@ class GatewayRouteSecurityPolicyTest {
             // assert
             assertThat(refresh).isEqualTo(GatewayRouteSecurityCategory.PUBLIC);
             assertThat(normalLogout).isEqualTo(GatewayRouteSecurityCategory.PUBLIC);
-            assertThat(adminLogout).isEqualTo(GatewayRouteSecurityCategory.PUBLIC);
+            assertThat(adminLogout).isEqualTo(GatewayRouteSecurityCategory.DEFAULT_DENY);
             // verify
         }
 
@@ -78,24 +78,14 @@ class GatewayRouteSecurityPolicyTest {
         }
 
         @Test
-        void protectsOnlyTheExactSessionManagementMethodsAndPaths() {
-            // arrange
-            String sessionId = "11111111-1111-1111-1111-111111111111";
-            // conditions
-            // act + assert
-            assertThat(policy.classify(HttpMethod.GET, "/api/users/me/sessions"))
-                    .isEqualTo(GatewayRouteSecurityCategory.PROTECTED);
-            assertThat(policy.classify(HttpMethod.DELETE, "/api/users/me/sessions"))
-                    .isEqualTo(GatewayRouteSecurityCategory.PROTECTED);
-            assertThat(policy.classify(HttpMethod.DELETE, "/api/users/me/sessions/others"))
-                    .isEqualTo(GatewayRouteSecurityCategory.PROTECTED);
-            assertThat(policy.classify(HttpMethod.DELETE, "/api/users/me/sessions/" + sessionId))
-                    .isEqualTo(GatewayRouteSecurityCategory.PROTECTED);
-            assertThat(policy.classify(HttpMethod.OPTIONS, "/api/users/me/sessions"))
-                    .isEqualTo(GatewayRouteSecurityCategory.PUBLIC);
-            assertThat(policy.classify(HttpMethod.OPTIONS, "/api/users/me/sessions/" + sessionId))
-                    .isEqualTo(GatewayRouteSecurityCategory.PUBLIC);
-            // verify
+        void deniesRemovedSessionInventoryForEveryMethod() {
+            String path = "/api/users/me/sessions";
+            for (HttpMethod method : new HttpMethod[] { HttpMethod.GET, HttpMethod.POST, HttpMethod.DELETE,
+                    HttpMethod.OPTIONS, HttpMethod.HEAD }) {
+                assertThat(policy.classify(method, path)).isEqualTo(GatewayRouteSecurityCategory.DEFAULT_DENY);
+                assertThat(policy.classify(method, path + "/others"))
+                        .isEqualTo(GatewayRouteSecurityCategory.DEFAULT_DENY);
+            }
         }
 
         @Test

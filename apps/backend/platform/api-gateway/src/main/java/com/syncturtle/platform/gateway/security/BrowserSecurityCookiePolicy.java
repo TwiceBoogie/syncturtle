@@ -5,9 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.http.HttpCookie;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
@@ -23,20 +21,8 @@ import lombok.RequiredArgsConstructor;
 public final class BrowserSecurityCookiePolicy {
 
     private static final String REFRESH_PATH = "/auth/refresh";
-    private static final Set<String> LOGOUT_PATHS = Set.of(
-            "/auth/sign-out",
-            "/auth/admin/sign-out");
+    private static final Set<String> LOGOUT_PATHS = Set.of("/auth/sign-out");
     private static final String ADMIN_SESSION_COMPLETION_PATH = "/auth/admin/session";
-    private static final Set<String> USER_FORM_PATHS = Set.of(
-            "/auth/sign-in",
-            "/auth/sign-up",
-            "/auth/sign-out",
-            "/auth/admin/sign-out",
-            "/auth/forgot-password",
-            "/auth/reset-password");
-    private static final Set<String> INSTANCE_FORM_PATHS = Set.of(
-            "/api/instances/admins/sign-in",
-            "/api/instances/admins/sign-up");
 
     private final SecurityCookieFactory cookieFactory;
 
@@ -47,7 +33,6 @@ public final class BrowserSecurityCookiePolicy {
 
         HttpMethod method = request.getMethod();
         String path = normalizePath(request.getPath().pathWithinApplication().value());
-        boolean formUrlEncoded = isFormUrlEncoded(request);
         MultiValueMap<String, HttpCookie> requestCookies = request.getCookies();
         List<HttpCookie> downstreamCookies = new ArrayList<>();
 
@@ -67,22 +52,12 @@ public final class BrowserSecurityCookiePolicy {
                 addSelectedRefresh(downstreamCookies, selection);
             }
 
-            if (formUrlEncoded) {
-                addSingleCookie(downstreamCookies, requestCookies, cookieFactory.csrfCookieName());
-            }
-
             return Decision.forward(downstreamCookies);
         }
 
         if (HttpMethod.GET.equals(method) && ADMIN_SESSION_COMPLETION_PATH.equals(path)) {
             addSingleCookie(downstreamCookies, requestCookies, cookieFactory.adminSessionHandoffCookieName());
             return Decision.forward(downstreamCookies);
-        }
-
-        if (HttpMethod.POST.equals(method)
-                && formUrlEncoded
-                && (USER_FORM_PATHS.contains(path) || INSTANCE_FORM_PATHS.contains(path))) {
-            addSingleCookie(downstreamCookies, requestCookies, cookieFactory.csrfCookieName());
         }
 
         return Decision.forward(downstreamCookies);
@@ -133,16 +108,6 @@ public final class BrowserSecurityCookiePolicy {
         if (StringUtils.hasText(value)) {
             downstreamCookies.add(new HttpCookie(cookieName, value.trim()));
         }
-    }
-
-    private static boolean isFormUrlEncoded(ServerHttpRequest request) {
-        String contentType = request.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE);
-
-        if (contentType == null) {
-            return false;
-        }
-
-        return contentType.startsWith(MediaType.APPLICATION_FORM_URLENCODED_VALUE);
     }
 
     private static String normalizePath(String rawPath) {

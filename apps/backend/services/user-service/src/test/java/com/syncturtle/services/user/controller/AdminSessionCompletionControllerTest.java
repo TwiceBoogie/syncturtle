@@ -99,6 +99,7 @@ class AdminSessionCompletionControllerTest {
                     Duration.ofSeconds(3600));
             verify(cookieWriter).clearCsrfCookie(response);
             verify(cookieWriter).clearAdminSessionHandoffCookie(response);
+            verify(cookieWriter).clearAdminHandoffBindingCookie(response);
             verify(cookieWriter, never()).clearAuthCookies(response);
         }
 
@@ -122,6 +123,7 @@ class AdminSessionCompletionControllerTest {
             // assert
             assertThat(result.getHeaders().getLocation()).hasToString("https://admin.example.test");
             verify(cookieWriter).clearAdminSessionHandoffCookie(response);
+            verify(cookieWriter).clearAdminHandoffBindingCookie(response);
             verify(cookieWriter, never()).clearAuthCookies(response);
         }
 
@@ -144,6 +146,7 @@ class AdminSessionCompletionControllerTest {
             // verify
             verifyNoInteractions(service, requestClientContext);
             verify(cookieWriter).clearAdminSessionHandoffCookie(response);
+            verify(cookieWriter).clearAdminHandoffBindingCookie(response);
         }
 
         @Test
@@ -164,6 +167,7 @@ class AdminSessionCompletionControllerTest {
             assertThatThrownBy(() -> controller.complete(PREAUTH_BINDING, request, response)).isSameAs(unavailable);
             // verify
             verify(cookieWriter, never()).clearAdminSessionHandoffCookie(response);
+            verify(cookieWriter, never()).clearAdminHandoffBindingCookie(response);
             verify(cookieWriter, never()).clearAuthCookies(response);
         }
 

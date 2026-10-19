@@ -2,6 +2,7 @@
   "name": "admin",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev --port 3001",
     "build": "next build",
@@ -9,12 +10,16 @@
     "start": "next start",
     "clean": "rm -rf .turbo .next dist",
     "lint": "eslint . --max-warnings=0",
-    "test": "tsx --test core/services/csrf-token-cache.test.ts core/components/instance/setup-csrf-loader.test.ts core/lib/wrappers/user-wrapper-policy.test.ts",
-    "typecheck": "next typegen && tsc -p tsconfig.json --noEmit"
+    "test": "vitest run",
+    "typecheck": "next typegen && tsc -p tsconfig.json --noEmit",
+    "test:watch": "vitest watch"
   },
   "dependencies": {
     "@heroui/react": "catalog:heroui3",
     "@heroui/styles": "catalog:heroui3",
+    "@internationalized/date": "catalog:",
+    "@react-aria/ssr": "catalog:",
+    "@react-aria/utils": "catalog:",
     "@syncturtle/constants": "workspace:*",
     "@syncturtle/hooks": "workspace:*",
     "@syncturtle/types": "workspace:*",
@@ -25,6 +30,8 @@
     "next": "catalog:next16",
     "next-themes": "catalog:",
     "react": "catalog:react19",
+    "react-aria": "catalog:",
+    "react-aria-components": "catalog:",
     "react-dom": "catalog:react19",
     "swr": "catalog:"
   },
@@ -33,14 +40,20 @@
     "@syncturtle/tailwind-config": "workspace:*",
     "@syncturtle/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "catalog:",
+    "@testing-library/dom": "catalog:",
+    "@testing-library/jest-dom": "catalog:",
+    "@testing-library/react": "catalog:",
+    "@testing-library/user-event": "catalog:",
     "@types/lodash": "catalog:",
     "@types/node": "catalog:next16",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
     "eslint": "catalog:",
     "eslint-config-next": "catalog:next16",
+    "jsdom": "catalog:",
     "tailwindcss": "catalog:",
-    "tsx": "^4.23.13",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

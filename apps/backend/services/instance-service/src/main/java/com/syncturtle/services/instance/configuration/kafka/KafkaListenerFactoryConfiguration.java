@@ -8,6 +8,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
@@ -23,6 +24,7 @@ import com.syncturtle.common.contracts.workspace.event.WorkspaceMemberEvent;
 
 import tools.jackson.databind.json.JsonMapper;
 
+@Profile("!setup")
 @Configuration(proxyBeanMethods = false)
 public class KafkaListenerFactoryConfiguration {
 

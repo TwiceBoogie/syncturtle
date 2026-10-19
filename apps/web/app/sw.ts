@@ -4,6 +4,7 @@
 import { Serwist, type PrecacheEntry, type SerwistGlobalConfig } from "serwist";
 import { defaultCache } from "@serwist/turbopack/worker";
 import { withLeadingSlash } from "ufo";
+import { bypassRuntimeCache } from "./sw-auth-policy";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -16,6 +17,7 @@ declare const self: ServiceWorkerGlobalScope;
 const scopePathname = new URL(self.registration.scope).pathname;
 const basePath = scopePathname.replace(/\/serwist\/$/, "").replace(/\/$/, "");
 const offlineUrl = `${basePath}/_offline.html`;
+const adminBasePath = (process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || "/god-mode").replace(/\/+$/, "");
 
 const normalizeManifestUrl = (url: string): string => {
   if (url.startsWith("/serwist/")) return url.replace(/^\/serwist\//, "/");
@@ -38,7 +40,16 @@ const serwist = new Serwist({
   disableDevLogs: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: defaultCache,
+  runtimeCaching: [
+    {
+      // The root-scoped Web worker also sees Admin pages and their root-level API calls.
+      // Keep those requests out of Web caches and its offline document fallback.
+      matcher: ({ sameOrigin, url: { pathname } }) => sameOrigin && bypassRuntimeCache(pathname, adminBasePath),
+      // A plain handler has no Serwist Strategy fallback plugin.
+      handler: ({ request }) => fetch(request),
+    },
+    ...defaultCache,
+  ],
   fallbacks: {
     entries: [
       {

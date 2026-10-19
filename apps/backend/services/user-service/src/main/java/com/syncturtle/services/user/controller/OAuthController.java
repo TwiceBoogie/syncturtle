@@ -10,8 +10,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestHeader;
+import com.syncturtle.common.core.header.GatewayHeaders;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.syncturtle.common.security.annotation.AllowAnonymous;
 import com.syncturtle.common.core.endpoint.EndpointPaths;
 import com.syncturtle.common.security.cookie.ServletAuthCookieWriter;
 import com.syncturtle.services.user.dto.response.IssueTokenResponse;
@@ -22,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@AllowAnonymous
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(EndpointPaths.AUTH)
@@ -31,8 +35,10 @@ public class OAuthController {
     private final ServletAuthCookieWriter cookieWriter;
 
     @GetMapping("/google")
-    public ResponseEntity<Void> googleInitiate(@RequestParam(name = "nextPath", required = false) String nextPath) {
-        String redirection = service.googleOAuthInitiate(nextPath);
+    public ResponseEntity<Void> googleInitiate(
+            @RequestParam(name = "nextPath", required = false) String nextPath,
+            @RequestHeader(name = GatewayHeaders.HDR_OAUTH_BROWSER_BINDING, required = false) String binding) {
+        String redirection = service.googleOAuthInitiate(nextPath, binding);
 
         return redirect(redirection);
     }
@@ -41,8 +47,10 @@ public class OAuthController {
     public ResponseEntity<Void> googleCallback(
             @RequestParam(name = "code", required = false) String code,
             @RequestParam(name = "state", required = false) String state,
+            @RequestHeader(name = GatewayHeaders.HDR_OAUTH_BROWSER_BINDING, required = false) String binding,
             HttpServletResponse servletResponse) {
-        IssueTokenResponse response = service.googleOAuthCallback(code, state);
+        IssueTokenResponse response = service.googleOAuthCallback(code, state, binding);
+        cookieWriter.clearOauthBindingCookie(servletResponse);
 
         writeSessionCookiesIfPresent(servletResponse, response);
 
@@ -50,8 +58,10 @@ public class OAuthController {
     }
 
     @GetMapping("/github")
-    public ResponseEntity<Void> githubInitiate(@RequestParam(name = "nextPath", required = false) String nextPath) {
-        String redirection = service.githubOAuthInitiate(nextPath);
+    public ResponseEntity<Void> githubInitiate(
+            @RequestParam(name = "nextPath", required = false) String nextPath,
+            @RequestHeader(name = GatewayHeaders.HDR_OAUTH_BROWSER_BINDING, required = false) String binding) {
+        String redirection = service.githubOAuthInitiate(nextPath, binding);
 
         return redirect(redirection);
     }
@@ -60,8 +70,10 @@ public class OAuthController {
     public ResponseEntity<Void> githubCallback(
             @RequestParam(name = "code", required = false) String code,
             @RequestParam(name = "state", required = false) String state,
+            @RequestHeader(name = GatewayHeaders.HDR_OAUTH_BROWSER_BINDING, required = false) String binding,
             HttpServletResponse servletResponse) {
-        IssueTokenResponse response = service.githubOAuthCallback(code, state);
+        IssueTokenResponse response = service.githubOAuthCallback(code, state, binding);
+        cookieWriter.clearOauthBindingCookie(servletResponse);
 
         writeSessionCookiesIfPresent(servletResponse, response);
 
@@ -69,8 +81,10 @@ public class OAuthController {
     }
 
     @GetMapping("/gitlab")
-    public ResponseEntity<Void> gitlabInitiate(@RequestParam(name = "nextPath", required = false) String nextPath) {
-        String redirection = service.gitlabOAuthInitiate(nextPath);
+    public ResponseEntity<Void> gitlabInitiate(
+            @RequestParam(name = "nextPath", required = false) String nextPath,
+            @RequestHeader(name = GatewayHeaders.HDR_OAUTH_BROWSER_BINDING, required = false) String binding) {
+        String redirection = service.gitlabOAuthInitiate(nextPath, binding);
 
         return redirect(redirection);
     }
@@ -79,8 +93,10 @@ public class OAuthController {
     public ResponseEntity<Void> gitlabCallback(
             @RequestParam(name = "code", required = false) String code,
             @RequestParam(name = "state", required = false) String state,
+            @RequestHeader(name = GatewayHeaders.HDR_OAUTH_BROWSER_BINDING, required = false) String binding,
             HttpServletResponse servletResponse) {
-        IssueTokenResponse response = service.gitlabOAuthCallback(code, state);
+        IssueTokenResponse response = service.gitlabOAuthCallback(code, state, binding);
+        cookieWriter.clearOauthBindingCookie(servletResponse);
 
         writeSessionCookiesIfPresent(servletResponse, response);
 
@@ -92,6 +108,7 @@ public class OAuthController {
 
         return ResponseEntity.status(HttpStatus.SEE_OTHER)
                 .location(URI.create(redirection))
+                .cacheControl(org.springframework.http.CacheControl.noStore())
                 .build();
     }
 

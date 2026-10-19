@@ -19,6 +19,8 @@ spring:
                   - OPTIONS
                   - HEAD
                 allowedHeaders: "*"
+                exposedHeaders:
+                  - X-ST-Gateway-Auth-Rejection
                 allowCredentials: true
 
   data:

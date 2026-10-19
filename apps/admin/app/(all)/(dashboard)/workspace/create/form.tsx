@@ -1,18 +1,21 @@
 "use client";
 
-import type { SyntheticEvent, Key } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { SyntheticEvent } from "react";
 import { useRouter } from "next/navigation";
 // heroui
-import { FieldError, Form, Input, InputGroup, Label, TextField, Select, ListBox, Button, toast } from "@heroui/react";
+import { FieldError, Form, Input, InputGroup, Label, TextField, Button, toast } from "@heroui/react";
+// services
+import { WorkspaceService } from "@/services/workspace.service";
+import { useWorkspace } from "@/hooks/store/use-workspace";
+// hooks
+import { useDebouncerValue } from "@syncturtle/hooks";
+// helpers
+import { getFieldErrors, getPublicErrorMessage } from "@/helpers/error.helper";
 // constants
-import { ORGANIZATION_SIZE, WEBSITE_URL } from "@syncturtle/constants";
+import { WEBSITE_URL } from "@syncturtle/constants";
 // types
 import type { IWorkspace, TFieldErrors, TSlugStatus } from "@syncturtle/types";
-import { WorkspaceService } from "@/services/workspace.service";
-import { useDebouncerValue } from "@syncturtle/hooks";
-import { useWorkspace } from "@/hooks/store/use-workspace";
-import { getFieldErrors, getPublicErrorMessage } from "@/helpers/error.helper";
 
 const workspaceService = new WorkspaceService();
 
@@ -30,7 +33,6 @@ export const WorkspaceCreateForm = () => {
   const [formData, setFormData] = useState<Partial<IWorkspace>>({
     name: "",
     slug: "",
-    organizationSize: "",
   });
   const [serverErrors, setServerErrors] = useState<TFieldErrors>({});
   // async state
@@ -206,30 +208,6 @@ export const WorkspaceCreateForm = () => {
           </InputGroup>
           <FieldError />
         </TextField>
-        <Select
-          isRequired
-          placeholder="Select a range"
-          value={formData.organizationSize}
-          onChange={(value: Key | null) =>
-            handleFormChange("organizationSize", value === null ? "" : (value as string))
-          }
-        >
-          <Label>How many people will use this workspace?</Label>
-          <Select.Trigger>
-            <Select.Value />
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover>
-            <ListBox>
-              {ORGANIZATION_SIZE.map((size) => (
-                <ListBox.Item key={size} id={size} textValue={size}>
-                  {size}
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-              ))}
-            </ListBox>
-          </Select.Popover>
-        </Select>
       </div>
       <Button type="submit">Submit</Button>
     </Form>

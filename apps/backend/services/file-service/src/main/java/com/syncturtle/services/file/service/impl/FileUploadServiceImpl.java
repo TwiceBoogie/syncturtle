@@ -18,7 +18,7 @@ import org.springframework.util.StringUtils;
 
 import com.syncturtle.common.contracts.file.exception.FileException;
 import com.syncturtle.common.core.asset.AssetContentUrlFactory;
-import com.syncturtle.services.file.configuration.property.FileUploadProperties;
+import com.syncturtle.services.file.policy.FileLifecyclePolicy;
 import com.syncturtle.services.file.configuration.property.StorageProperties;
 import com.syncturtle.services.file.dto.response.FileUploadCreateResponse;
 import com.syncturtle.services.file.dto.response.PresignedPostResponse;
@@ -55,7 +55,6 @@ public class FileUploadServiceImpl implements FileUploadService {
     private final AssetContentUrlFactory assetContentUrlFactory;
     private final ObjectStorageGateway storage;
     private final StorageProperties storageProperties;
-    private final FileUploadProperties uploadProperties;
     private final TransactionTemplate transactionTemplate;
     private final JsonMapper jsonMapper;
     private final Clock clock;
@@ -224,7 +223,7 @@ public class FileUploadServiceImpl implements FileUploadService {
                 FileUploadCreateResponse boundaryResponse = toResponse(created);
                 String responseBody = toJson(boundaryResponse);
 
-                record.complete(processingToken, 200, responseBody, uploadProperties.getIdempotencyRetention(), clock);
+                record.complete(processingToken, 200, responseBody, FileLifecyclePolicy.UPLOAD_IDEMPOTENCY_RETENTION, clock);
 
                 return boundaryResponse;
             });

@@ -17,6 +17,8 @@ export abstract class CoreRootStore {
   }
 
   resetOnSignOut() {
+    this.instance.reset();
+    this.workspace.reset();
     this.user.reset();
   }
 }

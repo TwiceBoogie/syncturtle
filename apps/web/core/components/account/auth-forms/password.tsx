@@ -1,10 +1,10 @@
 "use client";
 
 import type { FC } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 // heroui
-import { Alert, Button, CloseButton, FieldError, Input, InputGroup, Label, Meter, TextField } from "@heroui/react";
+import { Alert, Button, CloseButton, FieldError, InputGroup, Label, Meter, TextField } from "@heroui/react";
 import { Eye, EyeOff, Info, XCircle } from "lucide-react";
 // syncturtle imports
 import { API_BASE_URL, E_PASSWORD_STRENGTH } from "@syncturtle/constants";
@@ -12,8 +12,6 @@ import { useTranslation } from "@syncturtle/i18n";
 import { getPasswordStrength } from "@syncturtle/utils";
 // helpers
 import { EAuthModes, EAuthSteps } from "@/helpers/authentication.helper";
-// services
-import { AuthService } from "@/services/auth.service";
 import { ForgotPasswordPopover } from "./forgot-password-popoer";
 
 interface IAuthPasswordFormProps {
@@ -91,8 +89,6 @@ const PasswordStrengthFeedback = (props: IPasswordStrengthFeedbackProps) => {
   );
 };
 
-const authService = new AuthService();
-
 export const AuthPasswordForm: FC<IAuthPasswordFormProps> = (props) => {
   const { email, isSMTPConfigured, mode, handleEmailClear, handleAuthStep, nextPath } = props;
   // store hooks
@@ -100,7 +96,6 @@ export const AuthPasswordForm: FC<IAuthPasswordFormProps> = (props) => {
   // ref
   const formRef = useRef<HTMLFormElement>(null);
   // states
-  const [csrfToken, setCsrfToken] = useState<string | undefined>(undefined);
   const [passwordFormData, setPasswordFormData] = useState<IPasswordFormValues>({ ...defaultValues, email });
   const [showPassword, setShowPassword] = useState<IShowPasswordState>({
     password: false,
@@ -124,11 +119,6 @@ export const AuthPasswordForm: FC<IAuthPasswordFormProps> = (props) => {
   const handleFormChange = (key: keyof IPasswordFormValues, value: string) => {
     setPasswordFormData((prev) => ({ ...prev, [key]: value }));
   };
-
-  useEffect(() => {
-    if (csrfToken !== undefined) return;
-    authService.requestCSRFToken().then((data) => data?.csrfToken && setCsrfToken(data.csrfToken));
-  }, [csrfToken]);
 
   const redirectToUniqueCodeSignIn = async () => {
     handleAuthStep(EAuthSteps.UNIQUE_CODE);
@@ -205,7 +195,6 @@ export const AuthPasswordForm: FC<IAuthPasswordFormProps> = (props) => {
           setIsSubmitting(false);
         }}
       >
-        <Input type="hidden" name="csrfmiddlewaretoken" value={csrfToken ?? ""} />
         <input type="hidden" value={passwordFormData.email} name="email" />
 
         {nextPath && <input type="hidden" value={nextPath} name="nextPath" />}

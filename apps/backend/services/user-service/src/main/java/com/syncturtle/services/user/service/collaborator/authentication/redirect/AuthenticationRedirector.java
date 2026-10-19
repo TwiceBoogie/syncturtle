@@ -10,15 +10,12 @@ import org.springframework.util.StringUtils;
 import com.syncturtle.common.contracts.auth.exception.AuthException;
 import com.syncturtle.common.web.url.PublicUrlResolver;
 import com.syncturtle.services.user.dto.response.IssueTokenResponse;
-import com.syncturtle.services.user.dto.response.SignOutResponse;
 
 import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
 public class AuthenticationRedirector {
-
-    private static final String ADMIN_LOGOUT_CONTEXT = "ADMIN";
 
     private static final String SIGN_IN_PATH = "/sign-in";
     private static final String SIGN_UP_PATH = "/sign-up";
@@ -37,16 +34,6 @@ public class AuthenticationRedirector {
 
     public String successLocation(String nextPath) {
         return hostResolver.userApp(safeNextPathOrDefault(nextPath));
-    }
-
-    public SignOutResponse signOutRedirect(String logoutContext) {
-        boolean adminLogout = ADMIN_LOGOUT_CONTEXT.equalsIgnoreCase(logoutContext);
-
-        String location = adminLogout
-                ? hostResolver.admin("")
-                : hostResolver.userApp(SIGN_IN_PATH);
-
-        return SignOutResponse.redirect(location);
     }
 
     public String passwordResetSuccess() {

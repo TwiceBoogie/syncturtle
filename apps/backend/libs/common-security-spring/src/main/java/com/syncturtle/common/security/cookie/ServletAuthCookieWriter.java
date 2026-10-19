@@ -21,10 +21,6 @@ public final class ServletAuthCookieWriter {
         return cookieFactory.refreshCookieName();
     }
 
-    public String csrfCookieName() {
-        return cookieFactory.csrfCookieName();
-    }
-
     public String adminSessionHandoffCookieName() {
         return cookieFactory.adminSessionHandoffCookieName();
     }
@@ -69,6 +65,14 @@ public final class ServletAuthCookieWriter {
         addCookie(response, cookieFactory.clearAdminSessionHandoffCookie());
     }
 
+    public void clearAdminHandoffBindingCookie(HttpServletResponse response) {
+        addCookie(response, cookieFactory.clearAdminHandoffBindingCookie());
+    }
+
+    public void clearOauthBindingCookie(HttpServletResponse response) {
+        addCookie(response, cookieFactory.clearOauthBindingCookie());
+    }
+
     public void clearAuthCookies(HttpServletResponse response) {
         clearAccessTokenCookie(response);
         clearRefreshTokenCookie(response);
@@ -77,6 +81,8 @@ public final class ServletAuthCookieWriter {
     public void clearAllSecurityCookies(HttpServletResponse response) {
         clearAuthCookies(response);
         clearCsrfCookie(response);
+        clearAdminHandoffBindingCookie(response);
+        clearOauthBindingCookie(response);
     }
 
     private void addCookie(HttpServletResponse response, ResponseCookie cookie) {

@@ -21,15 +21,11 @@ import jakarta.servlet.http.HttpServletResponse;
 public abstract class AbstractAuthorizationInterceptor implements HandlerInterceptor {
 
     private final RequestUserContext requestUserContext;
-    private final boolean requireAuthenticationByDefault;
 
-    protected AbstractAuthorizationInterceptor(RequestUserContext requestUserContext,
-            Boolean requireAuthenticationByDefault) {
+    protected AbstractAuthorizationInterceptor(RequestUserContext requestUserContext) {
         Assert.notNull(requestUserContext, "requestUserContext is required");
-        Assert.notNull(requireAuthenticationByDefault, "requireAuthenticationByDefault is required");
 
         this.requestUserContext = requestUserContext;
-        this.requireAuthenticationByDefault = requireAuthenticationByDefault;
     }
 
     @Override
@@ -54,10 +50,7 @@ public abstract class AbstractAuthorizationInterceptor implements HandlerInterce
             throw domainDecision.toException();
         }
 
-        if (requiresAuthentication(handlerMethod)) {
-            requireAuthenticated();
-        }
-
+        requireAuthenticated();
         return true;
     }
 
@@ -77,11 +70,6 @@ public abstract class AbstractAuthorizationInterceptor implements HandlerInterce
 
     private boolean allowsAnonymous(HandlerMethod handlerMethod) {
         return findMethodOrClassAnnotation(handlerMethod, AllowAnonymous.class) != null;
-    }
-
-    private boolean requiresAuthentication(HandlerMethod handlerMethod) {
-        return requireAuthenticationByDefault
-                || findMethodOrClassAnnotation(handlerMethod, RequireAuthentication.class) != null;
     }
 
     private static void validateGeneralAnnotationCobination(HandlerMethod handlerMethod) {

@@ -22,5 +22,9 @@ export class CoreRootStore {
     this.memberRoot = new MemberRootStore(this);
   }
 
-  resetOnSignOut() {}
+  resetOnSignOut() {
+    this.instance.reset();
+    this.workspace.reset();
+    this.memberRoot.reset();
+  }
 }

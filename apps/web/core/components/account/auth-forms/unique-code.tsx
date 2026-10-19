@@ -1,7 +1,7 @@
 "use client";
 
 import type { FC } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { CircleCheck, XCircle } from "lucide-react";
 // heroui
 import { Button, Description, Input, InputGroup, Label, Spinner, TextField } from "@heroui/react";
@@ -10,8 +10,6 @@ import { API_BASE_URL } from "@syncturtle/constants";
 import { useTranslation } from "@syncturtle/i18n";
 // hooks
 import { useCountdown } from "@/hooks/use-countdown";
-// services
-import { AuthService } from "@/services/auth.service";
 // helpers
 import { EAuthModes } from "@/helpers/authentication.helper";
 
@@ -36,14 +34,11 @@ const defaultValues: IUniqueCodeFormValues = {
 
 const RESEND_COOLDOWN_SECONDS = 5;
 
-const authService = new AuthService();
-
 export const AuthUniqueCodeForm: FC<IAuthUniqueCodeForm> = (props) => {
   const { mode, email, isExistingEmail, handleEmailClear, generateEmailUniqueCode, nextPath } = props;
   console.log(isExistingEmail);
   // states
   const [formData, setFormData] = useState<IUniqueCodeFormValues>({ ...defaultValues, email });
-  const [csrfToken, setCsrfToken] = useState("");
   const [isRequestingNewCode, setIsRequestingNewCode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // hooks
@@ -54,25 +49,6 @@ export const AuthUniqueCodeForm: FC<IAuthUniqueCodeForm> = (props) => {
     start: startResendCooldown,
     reset: resetResendCooldown,
   } = useCountdown(0);
-
-  useEffect(() => {
-    let ignore = false;
-
-    authService
-      .requestCSRFToken()
-      .then((data) => {
-        if (!ignore && data.csrfToken) {
-          setCsrfToken(data.csrfToken);
-        }
-      })
-      .catch(() => {
-        console.error("Error while requesting CSRF token");
-      });
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
 
   const handleFormChange = (key: keyof IUniqueCodeFormValues, value: string) =>
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -109,8 +85,7 @@ export const AuthUniqueCodeForm: FC<IAuthUniqueCodeForm> = (props) => {
   const isVerifyDisabled = isRequestingNewCode || isSubmitting || !formData.code.trim();
 
   return (
-    <form className="mt-5 space-y-4" action={formAction} onSubmit={() => setIsSubmitting(true)}>
-      <input type="hidden" name="csrfmiddlewaretoken" value={csrfToken} />
+    <form className="mt-5 space-y-4" method="post" action={formAction} onSubmit={() => setIsSubmitting(true)}>
       {nextPath && <input type="hidden" name="nextPath" value={nextPath} />}
 
       <TextField type="email" name="email" value={email} autoComplete="email" fullWidth variant="secondary" isReadOnly>

@@ -16,6 +16,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import com.syncturtle.common.cache.property.ResponseCacheProperties;
+import com.syncturtle.common.cache.property.RedisKeyProperties;
 import com.syncturtle.common.cache.response.ResponseCacheAspect;
 import com.syncturtle.common.cache.response.ResponseCacheKeyBuilder;
 import com.syncturtle.common.web.autoconfigure.GatewayContextAutoConfiguration;
@@ -28,6 +29,7 @@ import tools.jackson.databind.json.JsonMapper;
         DataRedisAutoConfiguration.class,
         JacksonAutoConfiguration.class,
         AopAutoConfiguration.class,
+        RedisKeyAutoConfiguration.class,
         GatewayContextAutoConfiguration.class
 })
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
@@ -57,6 +59,7 @@ public class ResponseCacheAutoConfiguration {
             StringRedisTemplate redis,
             JsonMapper jsonMapper,
             ResponseCacheProperties properties,
+            RedisKeyProperties redisKeyProperties,
             ResponseCacheKeyBuilder keyBuilder,
             ObjectProvider<RequestUserContext> requestUserContextProvider,
             Environment environment) {
@@ -68,6 +71,7 @@ public class ResponseCacheAutoConfiguration {
                 redis,
                 jsonMapper,
                 properties,
+                redisKeyProperties,
                 keyBuilder,
                 requestUserContextProvider.getIfAvailable(),
                 serviceName);

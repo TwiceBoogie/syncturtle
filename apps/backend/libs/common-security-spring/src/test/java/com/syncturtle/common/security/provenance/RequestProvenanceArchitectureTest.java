@@ -62,9 +62,7 @@ class RequestProvenanceArchitectureTest {
                             lower(GatewayHeaders.HDR_CLIENT_DEVICE_ID),
                             lower(GatewayHeaders.HDR_CLIENT_LOCALE),
                             lower(GatewayHeaders.HDR_PREAUTH_TRANSACTION_BINDING),
-                            lower(GatewayHeaders.HDR_INTERNAL_CSRF_SESSION_ID),
-                            lower(GatewayHeaders.HDR_INTERNAL_LOGIN_CONTEXT),
-                            lower(GatewayHeaders.HDR_INTERNAL_LOGOUT_CONTEXT),
+                            lower(GatewayHeaders.HDR_OAUTH_BROWSER_BINDING),
                             lower(GatewayHeaders.HDR_INTERNAL_ACTOR_USER_ID));
         }
 

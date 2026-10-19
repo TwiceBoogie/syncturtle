@@ -26,9 +26,9 @@ public final class GatewayHeaders {
     public static final String HDR_CLIENT_LOCALE = "X-ST-Client-Locale";
 
     public static final String HDR_PREAUTH_TRANSACTION_BINDING = "X-ST-Preauth-Transaction-Binding";
-    public static final String HDR_INTERNAL_CSRF_SESSION_ID = "X-ST-Internal-CSRF-Session-Id";
-    public static final String HDR_INTERNAL_LOGIN_CONTEXT = "X-ST-Internal-Login-CTX";
-    public static final String HDR_INTERNAL_LOGOUT_CONTEXT = "X-ST-Internal-Logout-CTX";
+    public static final String HDR_OAUTH_BROWSER_BINDING = "X-ST-OAuth-Browser-Binding";
+    public static final String HDR_BROWSER_REQUEST = "X-ST-Browser-Request";
+    public static final String HDR_GATEWAY_AUTH_REJECTION = "X-ST-Gateway-Auth-Rejection";
     public static final String HDR_INTERNAL_REQUEST_PROVENANCE = "X-ST-Internal-Request-Provenance";
     public static final String HDR_INTERNAL_ACTOR_USER_ID = "X-ST-Internal-Actor-User-Id";
 }

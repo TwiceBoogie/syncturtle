@@ -11,7 +11,8 @@ import com.syncturtle.services.user.service.collaborator.runtime.UserAuthRuntime
 import com.syncturtle.services.user.service.collaborator.runtime.UserAuthRuntimeSnapshot;
 import com.syncturtle.services.user.service.collaborator.session.AuthenticatedSessionIssuer;
 import com.syncturtle.services.user.service.collaborator.session.AuthenticatedSessionReceipt;
-import com.syncturtle.services.user.service.collaborator.session.RefreshSessionFamilyStore;
+import com.syncturtle.services.user.service.collaborator.session.RefreshSessionStore;
+import com.syncturtle.services.user.service.collaborator.session.UserAuthVersionStore;
 import com.syncturtle.services.user.service.param.AuthenticatedSessionIssueParam;
 import com.syncturtle.services.user.service.param.CredentialAuthenticationParam;
 
@@ -29,11 +30,12 @@ import com.syncturtle.common.contracts.email.event.EmailToSendEvent;
 import com.syncturtle.common.contracts.user.event.UserEvent;
 import com.syncturtle.common.contracts.user.exception.UserException;
 import com.syncturtle.common.web.context.RequestClientContext;
+import com.syncturtle.common.web.error.exception.RemoteServiceException;
 import com.syncturtle.services.user.dto.response.EmailCheckResponse;
 import com.syncturtle.services.user.dto.response.IssueTokenResponse;
 import com.syncturtle.services.user.dto.response.IssueTokenWithUserResponse;
 import com.syncturtle.services.user.dto.response.MagicCodeResponse;
-import com.syncturtle.services.user.dto.response.SignOutResponse;
+import com.syncturtle.services.user.exception.RefreshSessionException;
 import com.syncturtle.services.user.mapper.UserApiMapper;
 import com.syncturtle.services.user.messaging.kafka.factory.AuthenticationEmailEventFactory;
 import com.syncturtle.services.user.messaging.kafka.factory.UserEventFactory;
@@ -63,7 +65,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final EmailPasswordCredentialProvider emailPasswordProvider;
     private final MagicCodeCredentialProvider magicCodeProvider;
     private final AuthenticatedSessionIssuer authenticatedSessionIssuer;
-    private final RefreshSessionFamilyStore refreshSessionFamilyStore;
+    private final RefreshSessionStore refreshSessionStore;
+    private final UserAuthVersionStore userAuthVersionStore;
     private final PasswordEncoder passwordEncoder;
     private final UserEventFactory userEventFactory;
     private final UserOutboxWriter userOutboxWriter;
@@ -209,26 +212,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     @Transactional
-    public SignOutResponse signOut(String logoutContext, String presentedRefreshToken, String trustedCsrfSessionId) {
-        Assert.hasText(logoutContext, "logout context is required");
-
-        String canonicalCsrfSessionId = requireCanonicalCsrfSessionId(trustedCsrfSessionId);
-
-        if (StringUtils.hasText(presentedRefreshToken)) {
-            try {
-                String refreshSessionId = refreshSessionFamilyStore.extractSessionId(presentedRefreshToken);
-                if (!refreshSessionId.equals(canonicalCsrfSessionId)) {
-                    throw AuthException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
-                }
-
-                refreshSessionFamilyStore.revokePresented(presentedRefreshToken);
-            } catch (IllegalArgumentException exception) {
-                throw AuthException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
-            }
+    public void signOut(String presentedRefreshToken) {
+        if (!StringUtils.hasText(presentedRefreshToken)) {
+            throw AuthException.of(AuthErrorCode.AUTHENTICATION_FAILED);
         }
-
-        String location = authenticationRedirector.signOutRedirect(logoutContext).getRedirection();
-        return SignOutResponse.redirect(location);
+        try {
+            if (!refreshSessionStore.revokePresented(presentedRefreshToken)) {
+                throw AuthException.of(AuthErrorCode.AUTHENTICATION_FAILED);
+            }
+        } catch (RefreshSessionException exception) {
+            if (exception.getReason() == RefreshSessionException.Reason.UNAVAILABLE) {
+                throw RemoteServiceException.unavailable("session-state", exception);
+            }
+            throw AuthException.of(AuthErrorCode.AUTHENTICATION_FAILED);
+        }
     }
 
     @Override
@@ -249,7 +246,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String passwordhash = passwordEncoder.encode(password);
         user.markPasswordChanged(passwordhash, false);
         userRepository.flush();
-        refreshSessionFamilyStore.revokeAll(currentUserId.toString());
+
+        try {
+            userAuthVersionStore.advanceUser(currentUserId.toString(), user.getAuthVersion());
+        } catch (RefreshSessionException exception) {
+            throw RemoteServiceException.unavailable("session-state", exception);
+        }
 
         UserEvent event = userEventFactory.updated(user);
         userOutboxWriter.saveUserEvent(event);
@@ -290,20 +292,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         .build());
 
         return IssueTokenResponse.issued(session, authenticationRedirector.successLocation(nextPath));
-    }
-
-    private static String requireCanonicalCsrfSessionId(String value) {
-        try {
-            String canonical = UUID.fromString(value).toString();
-            if (!canonical.equals(value)) {
-                throw AuthException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
-            }
-            return canonical;
-        } catch (AuthException exception) {
-            throw exception;
-        } catch (RuntimeException exception) {
-            throw AuthException.of(AuthErrorCode.INVALID_CSRF_TOKEN);
-        }
     }
 
     private static void requireEmailPasswordInput(String email, String password, AuthErrorCode errorCode) {

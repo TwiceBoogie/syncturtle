@@ -7,15 +7,15 @@ import { useTheme } from "next-themes";
 // syncturtle imports
 import type { TOnboardingStep } from "@syncturtle/types";
 import { EOnboardingSteps } from "@syncturtle/constants";
+import { cn } from "@syncturtle/ui";
 // components
 import { Tooltip } from "./tool-tip";
 import { SwitchAccountDropdown } from "./switch-account-dropdown";
 // hooks
 import { useUser } from "@/hooks/store/user";
-import { cn } from "@syncturtle/ui";
 // assets
-import BlackHorizontalLogo from "@/public/syncturtle-logos/syncturtle-logo-dark.png";
-import WhiteHorizontalLogo from "@/public/syncturtle-logos/syncturtle-logo-light.png";
+import BlackHorizontalLogo from "@/public/syncturtle-logos/syncturtle-lockup-dark.svg";
+import WhiteHorizontalLogo from "@/public/syncturtle-logos/syncturtle-lockup-light.svg";
 
 interface IOnboardingHeaderProps {
   currentStep: TOnboardingStep;
@@ -30,13 +30,11 @@ export const OnboardingHeader: FC<IOnboardingHeaderProps> = (props) => {
   // store hooks
   const { data: user } = useUser();
 
+  // handle step back
   const handleStepBack = () => {
     switch (currentStep) {
-      case EOnboardingSteps.ROLE_SETUP:
-        updateCurrentStep(EOnboardingSteps.PROFILE_SETUP);
-        break;
       case EOnboardingSteps.USE_CASE_SETUP:
-        updateCurrentStep(EOnboardingSteps.ROLE_SETUP);
+        updateCurrentStep(EOnboardingSteps.PROFILE_SETUP);
         break;
       case EOnboardingSteps.WORKSPACE_CREATE_OR_JOIN:
         updateCurrentStep(EOnboardingSteps.USE_CASE_SETUP);
@@ -44,14 +42,13 @@ export const OnboardingHeader: FC<IOnboardingHeaderProps> = (props) => {
     }
   };
 
-  const noBackStep: readonly TOnboardingStep[] = [EOnboardingSteps.PROFILE_SETUP, EOnboardingSteps.INVITE_MEMBERS];
-  const canGoBack = !noBackStep.includes(currentStep);
+  // can go back
+  const canGoBack = currentStep !== EOnboardingSteps.PROFILE_SETUP && currentStep !== EOnboardingSteps.INVITE_MEMBERS;
 
-  // Get current step number for progress tracking
+  // get current step number for progress tracking
   const getCurrentStepNumber = (): number => {
     const stepOrder: TOnboardingStep[] = [
       EOnboardingSteps.PROFILE_SETUP,
-      EOnboardingSteps.ROLE_SETUP,
       EOnboardingSteps.USE_CASE_SETUP,
       ...(hasInvitations
         ? [EOnboardingSteps.WORKSPACE_CREATE_OR_JOIN]
@@ -62,7 +59,7 @@ export const OnboardingHeader: FC<IOnboardingHeaderProps> = (props) => {
 
   // derived values
   const currentStepNumber = getCurrentStepNumber();
-  const totalSteps = hasInvitations ? 4 : 5; // 4 if invites available, 5 if not
+  const totalSteps = hasInvitations ? 3 : 4;
   const username =
     user?.displayName || [user?.firstName, user?.lastName].filter(Boolean).join(" ") || user?.email || "";
 
@@ -84,7 +81,7 @@ export const OnboardingHeader: FC<IOnboardingHeaderProps> = (props) => {
               <ChevronLeft className="size-6 text-custom-text-400" />
             </button>
           )}
-          <Image src={logo} alt="Syncturtle logo" className="h-7.5 w-33.25" />
+          <Image src={logo} alt="SyncTurtle" width={133} height={32} className="h-7.5 w-33.25" />
         </div>
         <SwitchAccountDropdown fullName={username} />
       </div>

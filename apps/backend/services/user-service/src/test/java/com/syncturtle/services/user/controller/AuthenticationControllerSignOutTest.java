@@ -1,25 +1,25 @@
 package com.syncturtle.services.user.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import java.lang.reflect.Method;
-import java.net.URI;
 
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.bind.annotation.CookieValue;
 
+import com.syncturtle.common.contracts.auth.exception.AuthException;
+import com.syncturtle.common.contracts.auth.error.AuthErrorCode;
 import com.syncturtle.common.security.cookie.ServletAuthCookieWriter;
 import com.syncturtle.common.web.url.PublicUrlResolver;
 import com.syncturtle.services.user.controller.validation.AuthFormValidator;
-import com.syncturtle.services.user.dto.response.SignOutResponse;
 import com.syncturtle.services.user.service.AuthenticationService;
 import com.syncturtle.services.user.service.RefreshSessionService;
 
@@ -27,57 +27,50 @@ import jakarta.servlet.http.HttpServletResponse;
 
 class AuthenticationControllerSignOutTest {
 
-    private static final String REFRESH_TOKEN = "3a428175-bef1-4c13-ae53-997b6fbfc508.refresh-secret";
-    private static final String SESSION_ID = "3a428175-bef1-4c13-ae53-997b6fbfc508";
+    private static final String PRESENTED = "33333333-3333-3333-3333-333333333333.presented";
 
-    @Nested
-    class SignOut {
+    @Test
+    void bindsOnlyTheRefreshCookieAndRequiresNoAccessJwt() throws Exception {
+        Method method = AuthenticationController.class.getDeclaredMethod("signOut", String.class,
+                HttpServletResponse.class);
+        CookieValue cookie = method.getParameters()[0].getAnnotation(CookieValue.class);
+        assertThat(cookie.name()).isEqualTo("#{@securityCookieFactory.refreshCookieName()}");
+        assertThat(cookie.required()).isFalse();
+    }
 
-        @Test
-        void bindsPresentedRefreshTokenFromConfiguredCookie() throws Exception {
-            // arrange
-            Method method = AuthenticationController.class.getDeclaredMethod(
-                    "signOut",
-                    String.class,
-                    String.class,
-                    String.class,
-                    HttpServletResponse.class);
-            // act
-            CookieValue cookieValue = method.getParameters()[2].getAnnotation(CookieValue.class);
-            // assert
-            assertThat(cookieValue).isNotNull();
-            assertThat(cookieValue.name()).isEqualTo("#{@securityCookieFactory.refreshCookieName()}");
-            assertThat(cookieValue.required()).isFalse();
-            // verify
-        }
+    @Test
+    void successfulRevocationClearsCookiesAndReturnsNoStore() {
+        AuthenticationService service = mock(AuthenticationService.class);
+        ServletAuthCookieWriter cookies = mock(ServletAuthCookieWriter.class);
+        AuthenticationController controller = controller(service, cookies);
+        MockHttpServletResponse response = new MockHttpServletResponse();
 
-        @Test
-        void clearsEverySecurityCookieAndDelegatesOnePublicUseCase() {
-            // arrange
-            AuthenticationService authenticationService = mock(AuthenticationService.class);
-            RefreshSessionService refreshSessionService = mock(RefreshSessionService.class);
-            ServletAuthCookieWriter cookieWriter = mock(ServletAuthCookieWriter.class);
-            AuthFormValidator authFormValidator = mock(AuthFormValidator.class);
-            PublicUrlResolver hostResolver = mock(PublicUrlResolver.class);
-            AuthenticationController controller = new AuthenticationController(
-                    authenticationService,
-                    refreshSessionService,
-                    cookieWriter,
-                    authFormValidator,
-                    hostResolver);
-            MockHttpServletResponse servletResponse = new MockHttpServletResponse();
-            // conditions
-            when(authenticationService.signOut("WEB", REFRESH_TOKEN, SESSION_ID))
-                    .thenReturn(SignOutResponse.redirect("https://syncturtle.test/sign-in"));
-            // act
-            ResponseEntity<Void> result = controller.signOut("WEB", SESSION_ID, REFRESH_TOKEN, servletResponse);
-            // assert
-            assertThat(result.getStatusCode()).isEqualTo(HttpStatus.SEE_OTHER);
-            assertThat(result.getHeaders().getLocation()).isEqualTo(URI.create("https://syncturtle.test/sign-in"));
-            // verify
-            InOrder order = inOrder(cookieWriter, authenticationService);
-            order.verify(authenticationService).signOut("WEB", REFRESH_TOKEN, SESSION_ID);
-            order.verify(cookieWriter).clearAllSecurityCookies(servletResponse);
-        }
+        var result = controller.signOut(PRESENTED, response);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(result.getHeaders().getCacheControl()).contains("no-store");
+        InOrder order = inOrder(service, cookies);
+        order.verify(service).signOut(PRESENTED);
+        order.verify(cookies).clearAllSecurityCookies(response);
+        order.verify(cookies).clearAdminSessionHandoffCookie(response);
+    }
+
+    @Test
+    void staleLogoutCannotClearSuccessorCookies() {
+        AuthenticationService service = mock(AuthenticationService.class);
+        ServletAuthCookieWriter cookies = mock(ServletAuthCookieWriter.class);
+        AuthenticationController controller = controller(service, cookies);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        doThrow(AuthException.of(AuthErrorCode.AUTHENTICATION_FAILED)).when(service).signOut(PRESENTED);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> controller.signOut(PRESENTED, response))
+                .isInstanceOf(AuthException.class);
+        verify(cookies, never()).clearAllSecurityCookies(response);
+        verify(cookies, never()).clearAdminSessionHandoffCookie(response);
+    }
+
+    private static AuthenticationController controller(AuthenticationService service, ServletAuthCookieWriter cookies) {
+        return new AuthenticationController(service, mock(RefreshSessionService.class), cookies,
+                mock(AuthFormValidator.class), mock(PublicUrlResolver.class));
     }
 }

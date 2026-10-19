@@ -15,12 +15,14 @@ type TError = {
 
 export type TWorkspaceSnapshot = {
   loader: boolean;
+  hasLoaded: boolean;
   workspaces: Record<string, IWorkspace>;
   error: TError | undefined;
 };
 
 const createInitialSnapshot = (): TWorkspaceSnapshot => ({
   loader: false,
+  hasLoaded: false,
   workspaces: {},
   error: undefined,
 });
@@ -44,13 +46,14 @@ type TWorkspacesCreatedByUserCache = {
 export interface IWorkspaceStore {
   // observables
   loader: boolean;
+  hasLoaded: boolean;
   workspaces: Record<string, IWorkspace>;
   error: TError | undefined;
   // computed
   currentWorkspace: IWorkspace | null;
   workspacesCreatedByCurrentUser: IWorkspace[] | null;
   // computed actions
-  getWorkspaceRedirectionUrl: () => string;
+  getWorkspaceRedirectionUrl: () => string | null;
   getWorkspaceBySlug: (workspaceSlug: string) => IWorkspace | null;
   getWorkspaceById: (workspaceId: string) => IWorkspace | null;
 
@@ -95,9 +98,19 @@ export class WorkspaceStore extends ExternalStore<TWorkspaceSnapshot> implements
     this.user = _store.user;
   }
 
+  public reset = (): void => {
+    this.fetchRequestSeq += 1;
+    this.workspacesVersion += 1;
+    this.replaceState(createInitialSnapshot());
+  };
+
   // State getters
   get loader(): boolean {
     return this.state.loader;
+  }
+
+  get hasLoaded(): boolean {
+    return this.state.hasLoaded;
   }
 
   get workspaces(): Record<string, IWorkspace> {
@@ -139,17 +152,23 @@ export class WorkspaceStore extends ExternalStore<TWorkspaceSnapshot> implements
   }
 
   // Computed actions / selectors
-  public getWorkspaceRedirectionUrl = (): string => {
-    const currentWorkspaceSlug =
-      this.user.userSettings?.data?.workspace?.lastWorkspaceSlug ||
-      this.user.userSettings?.data?.workspace?.fallbackWorkspaceSlug;
+  public getWorkspaceRedirectionUrl = (): string | null => {
+    // An uninitialized/loading list is not evidence that the user has no workspace.
+    if (!this.hasLoaded || this.loader || (this.error && !this.workspaceList.length)) return null;
 
-    if (!currentWorkspaceSlug) return "/create-workspace";
+    const profileWorkspaceId = this.user.userProfile?.data?.lastWorkspaceId;
+    const profileWorkspace = profileWorkspaceId ? this.getWorkspaceById(profileWorkspaceId) : null;
+    if (profileWorkspace) return `/${profileWorkspace.slug}`;
 
-    const workspace = this.getWorkspaceBySlug(currentWorkspaceSlug);
-    if (!workspace) return "/create-workspace";
+    const settings = this.user.userSettings?.data?.workspace;
+    for (const slug of [settings?.lastWorkspaceSlug, settings?.fallbackWorkspaceSlug]) {
+      const workspace = slug ? this.getWorkspaceBySlug(slug) : null;
+      if (workspace) return `/${workspace.slug}`;
+    }
 
-    return `/${currentWorkspaceSlug}`;
+    // Settings may lag workspace creation. Membership in this store decides availability.
+    const firstWorkspace = this.workspaceList[0];
+    return firstWorkspace ? `/${firstWorkspace.slug}` : "/create-workspace";
   };
 
   public getWorkspaceBySlug = (workspaceSlug: string): IWorkspace | null => {
@@ -177,7 +196,7 @@ export class WorkspaceStore extends ExternalStore<TWorkspaceSnapshot> implements
 
       this.batch(() => {
         this.upsertMany(workspaces);
-        this.setState({ loader: false, error: undefined });
+        this.setState({ loader: false, hasLoaded: true, error: undefined });
       });
 
       return workspaces;
@@ -202,7 +221,7 @@ export class WorkspaceStore extends ExternalStore<TWorkspaceSnapshot> implements
 
       this.batch(() => {
         this.upsertOne(workspace);
-        this.setState({ error: undefined });
+        this.setState({ hasLoaded: true, error: undefined });
       });
 
       return workspace;

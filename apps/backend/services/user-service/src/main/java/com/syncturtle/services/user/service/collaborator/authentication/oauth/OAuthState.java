@@ -8,4 +8,5 @@ import lombok.Value;
 public class OAuthState {
     String state;
     String nextPath;
+    String browserBindingHash;
 }

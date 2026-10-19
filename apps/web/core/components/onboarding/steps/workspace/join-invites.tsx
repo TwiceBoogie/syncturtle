@@ -25,6 +25,7 @@ interface IWorkspaceJoinInvitesStep {
 
 const workspaceService = new WorkspaceService();
 
+/** @deprecated Disconnected from onboarding. Enable only after verified-identity acceptance is implemented. */
 export const WorkspaceJoinInvitesStep: FC<IWorkspaceJoinInvitesStep> = (props) => {
   const { invitations, handleNextStep, handleCurrentViewChange } = props;
   // states
@@ -58,7 +59,10 @@ export const WorkspaceJoinInvitesStep: FC<IWorkspaceJoinInvitesStep> = (props) =
 
   return (
     <div className="flex flex-col gap-10">
-      <CommonOnboardingHeader title="Join invite or create a workspace" description="All your work - unified" />
+      <CommonOnboardingHeader
+        title="Invitation acceptance is not available yet"
+        description="A pending invitation does not grant access to a space."
+      />
       <CheckboxGroup
         aria-label="Workspace invitations"
         value={invitationsRespond}
@@ -93,13 +97,7 @@ export const WorkspaceJoinInvitesStep: FC<IWorkspaceJoinInvitesStep> = (props) =
       </CheckboxGroup>
 
       <div className="flex flex-col gap-4">
-        <Button
-          size="sm"
-          fullWidth
-          onPress={submitInvitations}
-          isDisabled={isJoiningWorkspaces || !invitationsRespond.length}
-          isPending={isJoiningWorkspaces}
-        >
+        <Button size="sm" fullWidth onPress={submitInvitations} isDisabled={true} isPending={isJoiningWorkspaces}>
           {({ isPending }) => (isPending ? <Spinner color="current" /> : "Continue")}
         </Button>
 

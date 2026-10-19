@@ -8,6 +8,6 @@
 }
 
 body {
-  background: var(--background);
+  background: rgb(var(--color-background-100));
   color: var(--foreground);
 }

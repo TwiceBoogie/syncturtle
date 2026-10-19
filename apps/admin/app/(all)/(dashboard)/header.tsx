@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { Breadcrumbs } from "@heroui/react";
 // icons
 import { Settings } from "lucide-react";
+// components
+import { InstanceVersionStatus } from "./instance-version-status";
 // constants
 import { ADMIN_BASE_PATH } from "@syncturtle/constants";
 
@@ -55,7 +57,7 @@ export const AdminHeader = () => {
   const breadcrumbItems = generateBreadcrumbItems(pathName);
   return (
     <div className="relative z-10 flex h-header w-full shrink-0 items-center justify-between gap-x-2 gap-y-4 border-b border-custom-sidebar-border-200 bg-custom-sidebar-background-100 p-4">
-      <div className="flex w-full grow items-center gap-2 overflow-ellipsis whitespace-nowrap">
+      <div className="flex min-w-0 grow items-center gap-2 overflow-hidden whitespace-nowrap">
         <Breadcrumbs>
           <Breadcrumbs.Item href={`${ADMIN_BASE_PATH}/general/`}>
             <Settings className="h-4 w-4" /> &nbsp; Settings
@@ -70,6 +72,7 @@ export const AdminHeader = () => {
           )}
         </Breadcrumbs>
       </div>
+      <InstanceVersionStatus />
     </div>
   );
 };

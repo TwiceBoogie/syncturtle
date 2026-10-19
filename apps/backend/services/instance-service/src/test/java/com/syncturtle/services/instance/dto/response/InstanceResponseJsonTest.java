@@ -34,12 +34,14 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.syncturtle.common.cache.payload.CachedResponsePayload;
 import com.syncturtle.common.cache.property.ResponseCacheProperties;
+import com.syncturtle.common.cache.property.RedisKeyProperties;
 import com.syncturtle.common.cache.response.ResponseCacheAspect;
 import com.syncturtle.common.cache.response.ResponseCacheKeyBuilder;
 import com.syncturtle.common.cache.response.annotation.CacheResponse;
 import com.syncturtle.common.contracts.instance.config.InstanceConfigurationKey;
 import com.syncturtle.services.instance.controller.InstanceController;
 import com.syncturtle.services.instance.type.InstanceAdminRole;
+import com.syncturtle.services.instance.type.VersionStatus;
 
 import tools.jackson.databind.JavaType;
 import tools.jackson.databind.json.JsonMapper;
@@ -102,6 +104,7 @@ class InstanceResponseJsonTest {
                     .instanceId("instance-test")
                     .currentVersion("0.0.1")
                     .latestVersion("0.0.2")
+                    .versionStatus(VersionStatus.UPDATE_AVAILABLE)
                     .lastCheckedAt(UPDATED_AT)
                     .namespace("test")
                     .telemetryEnabled(true)
@@ -209,16 +212,12 @@ class InstanceResponseJsonTest {
         void readsWrittenPayloadWithoutDeletingOrRecomputing() throws Throwable {
             // arrange
             JsonMapper jsonMapper = JsonMapper.builder().findAndAddModules().build();
-            ResponseCacheProperties properties = new ResponseCacheProperties(
-                    true,
-                    "st:test:rc:",
-                    12,
-                    "com.syncturtle.",
-                    "X-Workspace-Id");
+            ResponseCacheProperties properties = new ResponseCacheProperties(true);
             ResponseCacheAspect aspect = new ResponseCacheAspect(
                     redis,
                     jsonMapper,
                     properties,
+                    new RedisKeyProperties("st:test:"),
                     new ResponseCacheKeyBuilder(),
                     null,
                     "instance-service");

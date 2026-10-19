@@ -27,7 +27,7 @@ public class KafkaWorkspaceMemberInviteEventConsumer {
     private final Clock clock;
 
     @Transactional
-    @KafkaListener(topics = KafkaTopics.WORKSPACE_MEMBER_INVITE_EVENTS_V1, groupId = "user-svc-workspace-member-invite-event-v1", containerFactory = "workspaceMemberInviteKafkaListenerFactory")
+    @KafkaListener(topics = "#{@kafkaDeploymentTopics.topic('" + KafkaTopics.WORKSPACE_MEMBER_INVITE_EVENTS_V1 + "')}", groupId = "#{@kafkaConsumerGroups.workGroupId('user-service', 'workspace-member-invite-event-v1')}", containerFactory = "workspaceMemberInviteKafkaListenerFactory")
     public void onWorkspaceMemberInvite(WorkspaceMemberInviteEvent event) {
         Assert.notNull(event, "workspace member invite is required");
 

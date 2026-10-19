@@ -51,7 +51,7 @@ export default function InstanceGithubAuthenticationPage() {
       <div className="border-b border-custom-border-100 mx-4 py-4 space-y-1 shrink-0">
         <AuthenticationMethodCard
           name="GitHub"
-          description="Allow members to login or sign up to plane with their Github accounts."
+          description="Allow members to login or sign up to SyncTurtle with their Github accounts."
           icon={
             <Image
               src={resolvedTheme === "dark" ? githubDarkModeImage : githubLightModeImage}

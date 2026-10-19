@@ -7,7 +7,7 @@ import { useUser } from "@/hooks/store/user";
 import { useTranslation } from "@syncturtle/i18n";
 import type { IUser } from "@syncturtle/types";
 
-export const mockUser: IUser = {
+const mockUser: IUser = {
   id: "usr_01JZKJQ7YQ8A6X8H4J2M9R1N3F",
   displayName: "Sebastian Garcia",
   username: "sebastian",
@@ -31,7 +31,7 @@ export const mockUser: IUser = {
 
   joining_date: "2026-01-15T09:30:00Z",
   userTimezone: "America/Chicago",
-  lastLoginMedium: "email", // Adjust to your TLoginMediums type
+  lastLoginMedium: "email",
 
   lastWorkspaceId: "ws_01JZKK8D7M3XJ2P5N8Q4R6T1Y",
   theme: {

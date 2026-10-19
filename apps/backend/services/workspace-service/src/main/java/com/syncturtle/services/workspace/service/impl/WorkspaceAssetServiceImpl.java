@@ -38,7 +38,7 @@ public class WorkspaceAssetServiceImpl implements WorkspaceAssetService {
         Assert.notNull(request, "workspace logo update request is required");
 
         Workspace workspace = requireWorkspace(workspaceSlug);
-        requireWorkspaceAdmin(currentUserId, workspace.getId());
+        requireWorkspaceAdmin(currentUserId, workspace.getSlug());
         logoAssetVerifier.requireValidLogoAsset(request.getAssetId(), workspace.getId(), currentUserId);
 
         workspace.updateLogo(request.getAssetId());
@@ -54,7 +54,7 @@ public class WorkspaceAssetServiceImpl implements WorkspaceAssetService {
         Assert.notNull(currentUserId, "currentUserId is required");
 
         Workspace workspace = requireWorkspace(workspaceSlug);
-        requireWorkspaceAdmin(currentUserId, workspace.getId());
+        requireWorkspaceAdmin(currentUserId, workspace.getSlug());
 
         workspace.clearLogo();
         workspaceRepository.flush();
@@ -70,9 +70,10 @@ public class WorkspaceAssetServiceImpl implements WorkspaceAssetService {
                 .orElseThrow(() -> WorkspaceException.of(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
     }
 
-    private void requireWorkspaceAdmin(UUID currentUserId, UUID workspaceId) {
-        boolean allowed = workspaceMemberRepository.existsByMemberIdAndWorkspace_IdAndRoleAndDeletedAtIsNull(
-                currentUserId, workspaceId, WorkspaceRole.ADMIN);
+    private void requireWorkspaceAdmin(UUID currentUserId, String workspaceSlug) {
+        WorkspaceRole currentRole = workspaceMemberRepository.findActiveRoleByWorkspaceSlugAndUserId(
+                workspaceSlug, currentUserId).orElse(null);
+        boolean allowed = currentRole != null && currentRole.isAtLeast(WorkspaceRole.ADMIN);
 
         if (!allowed) {
             throw WorkspaceException.of(WorkspaceErrorCode.WORKSPACE_OWNER_NOT_FOUND);

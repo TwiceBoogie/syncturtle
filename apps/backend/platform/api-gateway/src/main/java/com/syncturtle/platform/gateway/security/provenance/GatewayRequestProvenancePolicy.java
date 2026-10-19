@@ -11,7 +11,6 @@ public final class GatewayRequestProvenancePolicy {
             Map.entry("auth-admin-session-completion-public", "user-service"),
             Map.entry("auth-sign-out-public", "user-service"),
             Map.entry("auth-set-password-protected", "user-service"),
-            Map.entry("auth-admin-sign-out-public-rewrite", "user-service"),
             Map.entry("user-protected", "user-service"),
             Map.entry("instance-root-public", "instance-service"),
             Map.entry("instance-admin-session-optional-auth", "instance-service"),

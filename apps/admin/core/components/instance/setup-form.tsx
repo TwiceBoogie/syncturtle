@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 // heroui
 import {
@@ -20,11 +20,8 @@ import { Eye, EyeOff, Mail } from "lucide-react";
 // components
 import { AuthHeader } from "../common/auth-header";
 import { Banner } from "../common/banner";
-import { createSetupCsrfLoader, isSetupSubmitDisabled } from "./setup-csrf-loader";
 // constants
 import { API_BASE_URL, E_PASSWORD_STRENGTH } from "@syncturtle/constants";
-// services
-import { AuthService } from "@/services/auth.service";
 // utils
 import { getPasswordStrength } from "@syncturtle/utils";
 
@@ -42,12 +39,10 @@ const defaultFormData: TFormData = {
   firstName: "",
   lastName: "",
   email: "",
-  companyName: "",
+  companyName: "SyncTurtle",
   password: "",
   isTelemetryEnabled: true,
 };
-
-const authService = new AuthService();
 
 enum EErrorCodes {
   INSTANCE_NOT_CONFIGURED = "INSTANCE_NOT_CONFIGURED",
@@ -62,8 +57,6 @@ type TError = {
   type: EErrorCodes | undefined;
   message: string | undefined;
 };
-
-type TCsrfStatus = "loading" | "ready" | "error";
 
 const parseBool = (value: string | null, defaultValue: boolean) => {
   if (value == null) return defaultValue;
@@ -94,46 +87,21 @@ export const InstanceSetupFrom: FC = (props) => {
     ...defaultFormData,
     firstName: firstNameParam ?? "",
     lastName: lastNameParam ?? "",
-    companyName: companyNameParam ?? "",
+    companyName: companyNameParam ?? "SyncTurtle",
     email: emailParam ?? "",
     isTelemetryEnabled: isTelemetryEnabledParam,
   }));
 
-  const [csrfToken, setCsrfToken] = useState<string | undefined>(undefined);
-  const [csrfStatus, setCsrfStatus] = useState<TCsrfStatus>("loading");
   const [isPasswordInputFocused, setIsPasswordInputFocused] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRetryPasswordInputFocused, setIsRetryPasswordInputFocus] = useState(false);
   const [confirmTouched, setConfirmTouched] = useState(false);
-
-  const loadCsrfToken = useMemo(() => createSetupCsrfLoader(() => authService.requestCSRFToken()), []);
 
   const handleShowPassword = (key: keyof typeof showPassword) =>
     setShowPassword((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const handleFormChange = (key: keyof TFormData, value: string | boolean) =>
     setFormData((prev) => ({ ...prev, [key]: value }));
-
-  const requestCsrfToken = useCallback(async () => {
-    void loadCsrfToken()
-      .then((token) => {
-        setCsrfToken(token);
-        setCsrfStatus("ready");
-      })
-      .catch(() => {
-        setCsrfStatus("error");
-      });
-  }, [loadCsrfToken]);
-
-  const retryCsrfToken = useCallback(() => {
-    setCsrfStatus("loading");
-    setCsrfToken(undefined);
-    requestCsrfToken();
-  }, [requestCsrfToken]);
-
-  useEffect(() => {
-    requestCsrfToken();
-  }, [requestCsrfToken]);
 
   // derived values
   const errorData: TError = useMemo(() => {
@@ -167,8 +135,8 @@ export const InstanceSetupFrom: FC = (props) => {
       formData.password === formData.confirmPassword
     );
 
-    return isSetupSubmitDisabled({ csrfToken, hasValidFormData, isSubmitting });
-  }, [csrfToken, isSubmitting, formData]);
+    return !hasValidFormData || isSubmitting;
+  }, [isSubmitting, formData]);
 
   return (
     <>
@@ -183,23 +151,14 @@ export const InstanceSetupFrom: FC = (props) => {
             onInvalid={() => setIsSubmitting(false)}
           >
             <Fieldset>
-              <Fieldset.Legend>Setup your Syncturtle instance</Fieldset.Legend>
-              <Description>Post setup you will be able to manage this Syncturtle instance</Description>
+              <Fieldset.Legend>Setup your SyncTurtle instance</Fieldset.Legend>
+              <Description>Post setup you will be able to manage this SyncTurtle instance</Description>
               {errorData.type &&
                 errorData?.message &&
                 ![EErrorCodes.INVALID_EMAIL, EErrorCodes.INVALID_PASSWORD].includes(errorData.type) && (
                   <Banner type="error" message={errorData?.message} />
                 )}
-              {csrfStatus === "error" && (
-                <div className="flex flex-col items-center gap-2" role="alert">
-                  <Banner type="error" message="Unable to prepare secure setup. Try again." />
-                  <Button type="button" onPress={retryCsrfToken}>
-                    Retry secure setup
-                  </Button>
-                </div>
-              )}
               <FieldGroup>
-                <Input type="hidden" name="csrfmiddlewaretoken" value={csrfToken ?? ""} />
                 <Input type="hidden" name="isTelemetryEnabled" value={formData.isTelemetryEnabled ? "True" : "False"} />
                 <div className="flex flex-col items-center gap-4 sm:flex-row">
                   <TextField
@@ -248,8 +207,8 @@ export const InstanceSetupFrom: FC = (props) => {
                   value={formData.companyName}
                   onChange={(value: string) => handleFormChange("companyName", value)}
                 >
-                  <Label>Company name</Label>
-                  <Input placeholder="Marvel Inc" />
+                  <Label>Installation name</Label>
+                  <Input placeholder="SyncTurtle" maxLength={100} />
                   <FieldError />
                 </TextField>
                 <TextField
@@ -286,7 +245,7 @@ export const InstanceSetupFrom: FC = (props) => {
                       </Button>
                     </InputGroup.Suffix>
                   </InputGroup>
-                  <Description>hello</Description>
+                  <Description>Choose a strong password for this administrator.</Description>
                   <FieldError />
                 </TextField>
                 <TextField
@@ -339,7 +298,7 @@ export const InstanceSetupFrom: FC = (props) => {
                   </Checkbox.Control>
                   <Checkbox.Content>
                     <Label>
-                      Allow Syncturtle to anonymously collect usage events.{" "}
+                      Allow SyncTurtle to anonymously collect usage events.{" "}
                       <a
                         tabIndex={-1}
                         href="#"

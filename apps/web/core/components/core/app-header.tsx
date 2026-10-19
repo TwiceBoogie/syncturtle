@@ -9,12 +9,11 @@ interface IAppHeaderProps {
 }
 
 export const AppHeader: FC<IAppHeaderProps> = (props) => {
-  const { header, mobileHeader } = props;
-  console.log(header, mobileHeader);
+  const { header } = props;
   return (
     <div className="z-18">
       <Row className="h-header flex gap-2 w-full items-center border-b border-custom-border-200 bg-custom-sidebar-background-100">
-        hi
+        {header}
       </Row>
     </div>
   );
@@ -51,4 +50,4 @@ const Row = forwardRef<HTMLDivElement, RowProps>((props, ref) => {
   );
 });
 
-Row.displayName = "plane-ui-row";
+Row.displayName = "syncturtle-ui-row";

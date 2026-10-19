@@ -16,6 +16,7 @@ import com.syncturtle.common.core.actor.PrincipalType;
 import com.syncturtle.services.user.model.Profile;
 import com.syncturtle.services.user.model.User;
 import com.syncturtle.services.user.model.param.UserCreateParam;
+import com.syncturtle.services.user.model.param.UserProfileUpdateParam;
 import com.syncturtle.services.user.model.support.JsonDefaults;
 import com.syncturtle.testing.annotation.JpaIntegrationTest;
 import com.syncturtle.testing.annotation.UsePostgresDb;
@@ -69,6 +70,38 @@ class ProfileJsonPersistenceIT {
         assertThat(reloaded.getTheme()).isEqualTo(JsonDefaults.emptyObject());
         assertThat(reloaded.getOnboardingStep()).isEqualTo(JsonDefaults.profileOnboarding());
         assertThat(reloaded.getBillingAddress()).isEqualTo(JsonDefaults.emptyObject());
+        assertThat(reloaded.getCompanyName()).isEqualTo("Marvel Inc");
+    }
+
+    @Test
+    void onboardingCompletionAndLegacyOccupationSurviveReload() {
+        // arrange
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        User user = userRepository.saveAndFlush(User.create(UserCreateParam.builder()
+                .username("solo-" + suffix).email("solo-" + suffix + "@example.test")
+                .firstName("Solo").lastName("")
+                .passwordHash("test-hash-with-at-least-twenty-characters")
+                .passwordAutoset(false)
+                .principalType(PrincipalType.HUMAN)
+                .initialLoginIp("192.0.2.1")
+                .initialLoginMedium("PASSWORD")
+                .initialLoginUserAgent("JUnit-test")
+                .build(), CLOCK));
+        Profile profile = Profile.create(user, CLOCK, null);
+        profile.updateProfile(UserProfileUpdateParam.builder().role("Product Manager").build());
+        profile.completeOnboarding();
+        // act
+        Profile saved = profileRepository.saveAndFlush(profile);
+        UUID id = saved.getId();
+        entityManager.clear();
+        Profile reloaded = profileRepository.findById(id).orElseThrow();
+        // assert
+        assertThat(reloaded.isOnboarded()).isTrue();
+        assertThat(reloaded.getCompanyName()).isEmpty();
+        assertThat(reloaded.getRole()).isEqualTo("Product Manager");
+        assertThat(reloaded.getUseCase()).isNull();
+        reloaded.completeOnboarding();
+        assertThat(reloaded.isOnboarded()).isTrue();
     }
 
 }

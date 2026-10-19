@@ -68,6 +68,12 @@ export class MemberRootStore extends ExternalStore<TMemberRootSnapshot> implemen
     );
   }
 
+  public reset = (): void => {
+    this.memberMapVersion += 1;
+    this.workspace.reset();
+    this.replaceState(createInitialSnapshot());
+  };
+
   // raw getters
   public get memberMap(): Record<string, IUserLite> {
     return this.state.memberMap;

@@ -38,9 +38,7 @@ public final class RequestProvenanceCanonicalizer {
             GatewayHeaders.HDR_CLIENT_DEVICE_ID,
             GatewayHeaders.HDR_CLIENT_LOCALE,
             GatewayHeaders.HDR_PREAUTH_TRANSACTION_BINDING,
-            GatewayHeaders.HDR_INTERNAL_CSRF_SESSION_ID,
-            GatewayHeaders.HDR_INTERNAL_LOGIN_CONTEXT,
-            GatewayHeaders.HDR_INTERNAL_LOGOUT_CONTEXT,
+            GatewayHeaders.HDR_OAUTH_BROWSER_BINDING,
             GatewayHeaders.HDR_INTERNAL_ACTOR_USER_ID));
 
     public String canonicalMethod(String method) {
